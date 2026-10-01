@@ -1,0 +1,6 @@
+<Project>
+  <Target Name="RequireUnifiedCubeControlPublish" BeforeTargets="PrepareForPublish"
+          Condition="'$(MSBuildProjectName)' == 'Cube.Desktop' and '$(CubeUnifiedPublish)' != 'true'">
+    <Error Text="Gere o pacote usando $(MSBuildThisFileDirectory)..\..\..\scripts\Build-CubeControl.ps1. Todas as saidas ficam fora do repositorio." />
+  </Target>
+</Project>

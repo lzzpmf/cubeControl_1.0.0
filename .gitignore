@@ -89,6 +89,7 @@ artifacts/
 
 # Publish output
 publish/
+/builds/
 
 ### Java
 # Compiled class file

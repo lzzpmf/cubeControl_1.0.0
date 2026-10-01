@@ -1,6 +1,0 @@
-<Project>
-  <Target Name="RequireUnifiedCubeControlPublish" BeforeTargets="PrepareForPublish"
-          Condition="'$(MSBuildProjectName)' == 'Cube.Desktop' and '$(CubeUnifiedPublish)' != 'true'">
-    <Error Text="Publique usando C:\Users\lzzpm\Downloads\cubeSuiteReverse\Publicar-CubeControl.ps1 para sincronizar e verificar todos os destinos." />
-  </Target>
-</Project>
