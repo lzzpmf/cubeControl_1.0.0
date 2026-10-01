@@ -14,7 +14,7 @@ public sealed partial class EditorViewModel
     private bool readingInventory;
     private bool searchingPorts;
     public bool SearchingPorts { get => searchingPorts; private set { if (Set(ref searchingPorts, value)) RefreshPresentation(); } }
-    public bool ShowBusyPanel => Busy && !SearchingPorts && !IsAmpPreviewSending;
+    public bool ShowBusyPanel => Busy && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
     public bool ShowBusyRing => ShowBusyPanel && !ReadingInventory && !ShowTransferProgress;
     public bool ShowTransferProgress => Busy && !ReadingInventory && Ir.TransferActive && Ir.HasMeasuredProgress;
     public string BusyDetail { get => busyDetail; private set { if (Set(ref busyDetail, value)) Notify(nameof(HeaderConnectionStatus)); } }

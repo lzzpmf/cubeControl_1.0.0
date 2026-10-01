@@ -3,6 +3,12 @@ using System.Buffers.Binary;
 
 int passed = 0;
 void Check(bool result, string name) { if (!result) throw new Exception(name); Console.WriteLine("PASS " + name); passed++; }
+if (args.Contains("--delay-only")) { await DelayTests.Run(Check); Console.WriteLine($"{passed} delay checks passed."); return; }
+if (args.Contains("--reverb-only")) { await ReverbTests.Run(Check); Console.WriteLine($"{passed} reverb checks passed."); return; }
+if (args.Contains("--chorus-preview-only")) { await ChorusPreviewTests.Run(Check); Console.WriteLine($"{passed} chorus preview checks passed."); return; }
+if (args.Contains("--chorus-only")) { await ChorusTests.Run(Check); Console.WriteLine($"{passed} chorus checks passed."); return; }
+await PhaserTests.Run(Check);
+if (args.Contains("--phaser-only")) { Console.WriteLine($"{passed} phaser checks passed."); return; }
 void Reject(Action action, string name) { try { action(); } catch (Exception ex) when (ex is FormatException or ArgumentOutOfRangeException) { Check(true, name); return; } throw new Exception(name); }
 Check(Convert.ToHexString(CubePacket.Identify().Encode()) == "005911000000FF", "identity envelope");
 Check(Convert.ToHexString(UsbSysEx.Encode(CubePacket.Identify())) == "F0003245000000407FF7", "identity matches USB capture");

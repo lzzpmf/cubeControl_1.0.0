@@ -34,8 +34,8 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public PresetViewModel[] Presets { get; }
     public bool Busy { get => busy; private set { Set(ref busy, value); Refresh(); } }
     public bool Connected => session != null;
-    public bool CanEdit => Connected && !Busy && !blocked && edited != null && !Ir.PreviewActive && !AmpPreviewActive;
-    public bool CanOperate => Connected && !Busy && !blocked;
+    public bool CanEdit => Connected && !Busy && !blocked && !chorusRecoveryInvalid && !reverbRecoveryInvalid && !delayRecoveryInvalid && edited != null && !Ir.PreviewActive && !AmpPreviewActive && !PhaserPreviewActive && !ChorusPreviewActive && !ReverbPreviewActive && !DelayPreviewActive;
+    public bool CanOperate => Connected && !Busy && !blocked && !chorusRecoveryInvalid && !reverbRecoveryInvalid && !delayRecoveryInvalid && !PhaserPreviewActive && !ChorusPreviewActive && !ReverbPreviewActive && !DelayPreviewActive;
     public bool CanConnect => !Connected && !Busy;
     public bool HasBank => edited != null;
     public bool Dirty => baseline != null && edited != null && !baseline.SequenceEqual(edited);
@@ -78,12 +78,16 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         IrLibrary.SelectionChanged += SelectLibraryIr;
         InitializeVisual();
         Amp.Edited += AmpEdited;
+        Phaser.Edited += PhaserEdited;
+        Chorus.Edited += ChorusEdited;
+        Reverb.Edited += ReverbEdited;
+        Delay.Edited += DelayEdited;
         RefreshPorts = Command(async () => { SearchingPorts = true;
         try { await Connection.Refresh(); }
         finally { SearchingPorts = false; } Status = Connection.Input == null ? "USB-Midi não encontrado. Verifique o cabo de dados." : "USB-Midi encontrado. Conecte para ler os presets."; }, () => CanConnect);
         Connect = Command(ConnectAsync, () => CanConnect);
         Disconnect = Command(DisconnectAsync, () => Connected && !Busy);
-        Reload = Command(async () => { if (!Dirty || await Ask("Reler o banco atual e descartar as alterações locais?")) { await RestorePreviewAsync(); await LoadBank(); Completed("Presets atualizados com a leitura do pedal."); } }, () => Connected && !Busy);
+        Reload = Command(async () => { if (!Dirty || await Ask("Reler o banco atual e descartar as alterações locais?")) { await EndDelayPreviewAsync(); await EndReverbPreviewAsync(); await EndChorusPreviewAsync(); await EndPhaserPreviewAsync(); await RestorePreviewAsync(); await LoadBank(); Completed("Presets atualizados com a leitura do pedal."); } }, () => Connected && !Busy);
         Save = new UiCommand(async () => { if (CanEdit && Dirty) await Execute(SaveAsync); }, () => CanEdit && Dirty);
         Export = Command(ExportAsync, () => HasBank && !Busy);
         Import = Command(ImportAsync, () => CanEdit);
@@ -121,6 +125,14 @@ public sealed partial class EditorViewModel : Observable, IDisposable
 
     private void Refresh()
     {
+        Notify(nameof(DelayPreviewActive)); Notify(nameof(CanStartDelay)); Notify(nameof(CanRestoreDelay));
+        Notify(nameof(CanEditDelay)); Notify(nameof(CanUseDelayFiles)); Notify(nameof(CanApplyDelay));
+        Notify(nameof(ReverbPreviewActive)); Notify(nameof(CanStartReverb)); Notify(nameof(CanRestoreReverb));
+        Notify(nameof(CanEditReverb)); Notify(nameof(CanUseReverbFiles)); Notify(nameof(CanApplyReverb));
+        Notify(nameof(ChorusPreviewActive)); Notify(nameof(CanStartChorus)); Notify(nameof(CanRestoreChorus));
+        Notify(nameof(CanEditChorus)); Notify(nameof(CanUseChorusFiles)); Notify(nameof(CanApplyChorus));
+        Notify(nameof(PhaserPreviewActive)); Notify(nameof(CanStartPhaser)); Notify(nameof(CanRestorePhaser));
+        Notify(nameof(CanEditPhaser)); Notify(nameof(CanUsePhaserFiles));
         Notify(nameof(CanUseAmp)); Notify(nameof(CanAdjustAmp)); Notify(nameof(CanOpenGearGallery)); Notify(nameof(CanEditAmpLocally)); Notify(nameof(AmpPreviewActive));
         Notify(nameof(CanChooseIr));
         Notify(nameof(Connected)); Notify(nameof(CanConnect)); Notify(nameof(CanEdit)); Notify(nameof(CanOperate)); Notify(nameof(HasBank)); Notify(nameof(Dirty));
@@ -136,6 +148,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     public async Task Initialize() => await Execute(async () =>
     {
+        await LoadPendingDelay(); await LoadPendingReverb(); await LoadPendingChorus(); await LoadPendingPhaser();
         BusyDetail = "Procurando portas USB-MIDI…";
         SearchingPorts = true;
         try { await Connection.Refresh(); }
@@ -245,6 +258,26 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private void Fault(Exception ex)
     {
+        if (DelayPreviewActive)
+        {
+            delayStopped = true; delayPending = false;
+            Delay.Message = "Prévia interrompida. Restauração do delay não confirmada; backup preservado.";
+        }
+        if (ReverbPreviewActive)
+        {
+            reverbStopped = true; reverbPending = false;
+            Reverb.Message = "Prévia interrompida. Restauração do reverb não confirmada; backup preservado.";
+        }
+        if (ChorusPreviewActive)
+        {
+            chorusStopped = true; chorusPending = false;
+            Chorus.Message = "Prévia interrompida. Restauração do chorus não confirmada; backup preservado.";
+        }
+        if (PhaserPreviewActive)
+        {
+            phaserStopped = true; phaserPending = false;
+            Phaser.Message = "Prévia interrompida. Restauração do phaser não confirmada; backup preservado.";
+        }
         Ir.PreviewConfirmed = false;
         blocked = true;
         if (queue != null) { queue.Failed -= Fault; queue.Stop(); queue = null; }
@@ -264,6 +297,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public async Task DisconnectAsync()
     {
         automaticConnectionPaused = true;
+        await EndDelayPreviewAsync(); await EndReverbPreviewAsync(); await EndChorusPreviewAsync(); await EndPhaserPreviewAsync();
         await RestoreAmpCore();
         await RestorePreviewAsync(); queue?.Stop(); session?.Dispose(); session = null;
         inventory.Clear(); RebuildCabinets();
@@ -343,6 +377,10 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private async Task PreviewAsync()
     {
+        if (DelayPreviewActive) throw new InvalidOperationException("Restaure o delay antes de iniciar uma prévia de IR.");
+        if (ReverbPreviewActive) throw new InvalidOperationException("Restaure o reverb antes de iniciar uma prévia de IR.");
+        if (ChorusPreviewActive) throw new InvalidOperationException("Restaure o chorus antes de iniciar uma prévia de IR.");
+        if (PhaserPreviewActive) throw new InvalidOperationException("Restaure o phaser antes de iniciar uma prévia de IR.");
         BusyDetail = "Preparando prévia de IR…";
         if (originalRam == null)
         {
@@ -473,5 +511,5 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         return await dialog.ShowDialogAsync() == Wpf.Ui.Controls.MessageBoxResult.Primary;
     };
     public async Task Flush() { if (queue != null) await queue.Flush(); }
-    public void Dispose() { Amp.Edited -= AmpEdited; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
+    public void Dispose() { delayMonitorStop?.Cancel(); Delay.Edited -= DelayEdited; reverbMonitorStop?.Cancel(); Reverb.Edited -= ReverbEdited; chorusMonitorStop?.Cancel(); Chorus.Edited -= ChorusEdited; phaserMonitorStop?.Cancel(); Phaser.Edited -= PhaserEdited; Amp.Edited -= AmpEdited; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
 }

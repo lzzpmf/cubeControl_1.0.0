@@ -10,7 +10,7 @@ public static class CubeBabyProfile
             ["1 · Power-Zone Clean · Clean", "2 · US Gold 100 Clean · Clean", "3 · Two Stone Coral OD · Overdrive", "4 · Doctor3 B · Overdrive", "5 · Cali JP A · Overdrive", "6 · Day Tripper OD · Distortion", "7 · Shittcow Dist · Distortion", "8 · Wo Stone Coral OD · Distortion", "9 · Mr Smith Dist · Distortion"]),
         new("Gain", 1, 7, "Amp", "Quantidade de ganho do amplificador."),
         new("Tone", 2, 15, "Amp", "Brilho do timbre."),
-        new("Reverb", 3, 15, "Reverb", "Mistura de reverberação. Em zero, sem reverb."),
+        new("Reverb", 3, 15, "Reverb", "Quantidade de reverberação: combina realimentação e sinal reverberado. Em zero, sem reverb."),
         new("Repetições", 4, 127, "Delay", "Quantidade de realimentação das repetições (FB)."),
         new("Volume", 5, 127, "Saída", "Nível geral do preset."),
         new("Tempo", 6, 31, "Delay", "Ajuste TIME do pedal; escala própria, sem conversão para milissegundos."),

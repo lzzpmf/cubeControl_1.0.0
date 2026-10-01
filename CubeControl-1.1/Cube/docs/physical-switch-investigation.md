@@ -6,6 +6,8 @@ Na árvore atual, `CubeSession.Footswitch.cs` e `EditorViewModel.Footswitch.cs` 
 
 ## Estado atual: investigação adiada
 
+Atualização de 01/10/2026: a [investigação do phaser](../../../engenharia-reversa/cube-baby/CUBE_BABY_PHASER.md) encontrou diferenças no código instalado em relação à imagem `.up` citada abaixo. O novo perfil usa base DSP `0x8347F8`, banco CPU `0x80CA74` e seleção/modo em `0x80C9FA`, com assinaturas e alias conferidos; a leitura `00 01` correspondeu ao PRESET A confirmado pelo usuário. Isso não valida retrospectivamente os endereços antigos nem constitui uma série completa A/B/C/bypass.
+
 O usuário testou a versão experimental 3.3.69 e informou que não funcionou.
 A pedido dele, naquela etapa o inicializador voltou ao executável preservado 3.3.68 e o
 monitoramento experimental foi retirado da inicialização do aplicativo.

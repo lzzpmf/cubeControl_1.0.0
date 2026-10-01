@@ -1,0 +1,2027 @@
+{
+  "format": "cubecontrol-chorus-evidence-v1",
+  "archiveSha256": "b24f3ad9271fbc46e550641c7c170699ff1e1e09fad55f1bc50c6b1362effec3",
+  "sha256": {
+    "controls-01/0-combined-filter-gain-before.bin": "366b9a8bcb6203f75a7d64fb5c6779c445ae2b39ab4135cf1acde51b0a6bbad0",
+    "controls-01/0-combined-filter-gain-before.json": "68ec986db287ab41fc6394a35f2083801bcb4f3e2aa599a34e5c79f354196efc",
+    "controls-01/0-combined-filter-gain-delayed.bin": "3cf547b41c4f7863fece2b1b233552a77a011b836582a1c379563551dd27b173",
+    "controls-01/0-combined-filter-gain-delayed.json": "4e06546d8cdf33a03ae58166602ba77e730ea7f717f9621790a09fc8a6e4ad85",
+    "controls-01/0-combined-filter-gain-immediate.bin": "e661b8ab9e79b17c54c8d52f15e3b1b952d43ab235d4b8c4a2e48973847782a2",
+    "controls-01/0-combined-filter-gain-immediate.json": "89563970bdcfca152b14aa581ff7adf4be8486b82496886c62f1ad1508b6db7a",
+    "controls-01/0-combined-filter-gain-mod4.bin": "f9037e2985039659e0dddb10b64af03121e4b1740c4a1cd3abf75cbe45dfc33d",
+    "controls-01/0-combined-filter-gain-mod4.json": "cce99b5e8baa41d38f49a4da4cefc22b1761726cb286ca0de66452fd08d75430",
+    "controls-01/0-combined-filter-gain-restored.bin": "1ad923b434f6910c69b4190f2e7021ed2fab518ed37537f9e092a4e8e64affa1",
+    "controls-01/0-combined-filter-gain-restored.json": "fdacc122a046ad6472a1eaa34346a73fa4fb5e2a7d5a0fa0f04bb43defce3527",
+    "controls-01/0-depth-half-before.bin": "fbf89a6704d0741c890cfc8f05683a10e441cb78c64335c2e7b27fb522aecf43",
+    "controls-01/0-depth-half-before.json": "b24ec373a06ae0d062f9c4653cf068e9b47603eb1c0c1bcbf2ed2922924eb5bf",
+    "controls-01/0-depth-half-delayed.bin": "12ed4c0240f18ed0021fa464b597c7e9e20b4d89fc2a0cc2eaec53bfe5b39c04",
+    "controls-01/0-depth-half-delayed.json": "665a406eaf235fb58c2a9c6b89e7962644f25980051448cc8529849a2909e2c2",
+    "controls-01/0-depth-half-immediate.bin": "6712dab19b54ec45e7124e8406f217ad8c91fa94bbf637cf07e602b1c697e30c",
+    "controls-01/0-depth-half-immediate.json": "7fc31a0501f72d11e2c456c9caffdfaca84e6eaa34ae132b4662f755e0b15bae",
+    "controls-01/0-depth-half-mod4.bin": "fdb07373028069561642c9a5ee6a7a883f316aa7effdd842bdc31ff23ef95639",
+    "controls-01/0-depth-half-mod4.json": "3ed5e42dee15d1b240a1b4c1644aa145ae727aa0c2329c4cb3bf8f01fc6cd72a",
+    "controls-01/0-depth-half-restored.bin": "73bb366bde2685dfdb4f98ac573580ecd04736ec845c5652bf5d906ea34dc53f",
+    "controls-01/0-depth-half-restored.json": "54cf21cdf4c7653c1b3fe1e3f779a64709e054f773bbbe321ee44d6e8c470494",
+    "controls-01/0-depth-zero-before.bin": "10ac1317e762a85e5a1a414404d78315cb4bf6be486a8c9f7daa438d6bf3075c",
+    "controls-01/0-depth-zero-before.json": "77cee5cdac33f2bd82bcce97dbb693ec562d5e85b8fc333c87659ea1d57eaa0b",
+    "controls-01/0-depth-zero-delayed.bin": "c2d058384bbe270375eeb854ca80e5e55a5eb340797abb127c93e0688deb933e",
+    "controls-01/0-depth-zero-delayed.json": "603bbca9c6c340e89f852ae14c6cd18cc7dbc1e19a49c7b415d7d4790b43c541",
+    "controls-01/0-depth-zero-immediate.bin": "0fd0ed9074c4b3988a1fa3e957c90a402e296c24023334d23e076317bc74aa44",
+    "controls-01/0-depth-zero-immediate.json": "307592ea5a87f087b0b998c8384c558b4abd65fc0e58e0cd73179a72c7bd2eb8",
+    "controls-01/0-depth-zero-mod4.bin": "e0244f83c568077466ab0df519fb1c346015a9d6e78785839b7ee37806f256d6",
+    "controls-01/0-depth-zero-mod4.json": "1dcbc20ae52cb540608ebe4976b4a687644cf43c722a08f4a66015b8e784f765",
+    "controls-01/0-depth-zero-restored.bin": "ef8dfa9adcba07328b65102b97ff2a2afb00ec4582ef06a180e0ee6a65548c18",
+    "controls-01/0-depth-zero-restored.json": "5c6af5eb208938a1c775716fa6b68cff2a3a066111aa88331473cc0b833221c5",
+    "controls-01/0-feedback-small-before.bin": "e4e4791797c99a1de85528f292e2639a15fadb3eb2bceeb7d39f7262738c76e2",
+    "controls-01/0-feedback-small-before.json": "0034e3f7b060dc91739228888dc67ba24319ec370dd6dc0bcea50c9213454df3",
+    "controls-01/0-feedback-small-delayed.bin": "542736eed44aeedcc11f14de4548b1ea717bf827e53fdb9a15269c3a0a7f2f92",
+    "controls-01/0-feedback-small-delayed.json": "dac53df8505bf1de465731f770a2842c5b6928536bb5757259cc6e9a25746696",
+    "controls-01/0-feedback-small-immediate.bin": "e8c7987e591dcd08392d682e45b446604681e5799b702177082c3434492a7d80",
+    "controls-01/0-feedback-small-immediate.json": "ebf2ac774686520bf3364c430897ec953281d4b4321d237ed68cd00669ac9ece",
+    "controls-01/0-feedback-small-mod4.bin": "ab0911a350e088f0d0d23fb801d391b2fc97d2e980c40489c05d62f68a45d1f2",
+    "controls-01/0-feedback-small-mod4.json": "0b195c97d132ae7221c05ef42e11889fbff09272930dfa818a9167ea093ecbc1",
+    "controls-01/0-feedback-small-restored.bin": "883bff67b93617543cd155832f6fbbc06fd595107fb40430e43b353337f59fa1",
+    "controls-01/0-feedback-small-restored.json": "7290240b6cb944d6182d6757324d481aa9b940f5441e7687975151342d87dfbf",
+    "controls-01/0-mix-half-before.bin": "a131cbc750dea2d436f8d1b663f7488a9a05af5f7c2c6f61e18ed912f71fa2e6",
+    "controls-01/0-mix-half-before.json": "10288c1076941449492b7a8fc3bbf9f7e0d9bf0013dc1dad977e7d75c293da31",
+    "controls-01/0-mix-half-delayed.bin": "5583884cdd969bb4132b01675b9f9e0d29e8eba2a061e857528b947f1453a39f",
+    "controls-01/0-mix-half-delayed.json": "b3487a65609b01e2f14c75ca775617f5424ca73bb49eafd85210bda6b47f183c",
+    "controls-01/0-mix-half-immediate.bin": "160b121b8223db00261568427ea9de3dfb35ef9fb8babf6f0ab9a17aec23575d",
+    "controls-01/0-mix-half-immediate.json": "909cc3035045ab19708f7a75744904bbd75549e8c5440a0f9b043a6bbf5ed9c5",
+    "controls-01/0-mix-half-mod4.bin": "28cbe093b7f03cbc9156674537e8a378ceafa85c1dafce23f63c5226d3a28740",
+    "controls-01/0-mix-half-mod4.json": "27ef0e9bb378ea7e4885d2af1975e28b4007a5f349fc025f156155b19d27f84d",
+    "controls-01/0-mix-half-restored.bin": "ba187c1499267de84a41a24066ae151e63f3d8d18515109c91a53f604415833a",
+    "controls-01/0-mix-half-restored.json": "b8cb737e75f44f71edaf2e2dcd1871b75b625c4a01d087ceed0487f276438a67",
+    "controls-01/0-mix-zero-before.bin": "35a934f91429be9df218090d56b1307d7e8e9337054ed2d311e726f715da0d22",
+    "controls-01/0-mix-zero-before.json": "17e6014397f920acd5b63c286e981e897c8365fa39792c19fffe9c85db52e0b3",
+    "controls-01/0-mix-zero-delayed.bin": "804ee37553d793d45b6380b458ae0c9ab020a3dc4d7fa88be89d78ce45e7ed5f",
+    "controls-01/0-mix-zero-delayed.json": "82188228ce742663fdd8a96a62c9815e10449572aaae470381cc2f5b297df257",
+    "controls-01/0-mix-zero-immediate.bin": "3d87482bb5634407c984729a0c56c181d763ecf26f4c88da875c726e0363af9f",
+    "controls-01/0-mix-zero-immediate.json": "75c30c268f45dd4d267eb3d0cc3f4a28f343dec150c3565b8b63123aa0237d37",
+    "controls-01/0-mix-zero-mod4.bin": "c0b99e492af2d05a0628157e0acad1dd8af1309cf705bb585a0ac1bd1dc420a2",
+    "controls-01/0-mix-zero-mod4.json": "88b34b5ab01e2020044ebbd6fb417225b854a0a2c51bc36bc3d8cba95d34ed0d",
+    "controls-01/0-mix-zero-restored.bin": "792fd66f36c18984408a8ad3700d939494eddb5fc9e236bf64a39d905a6c922b",
+    "controls-01/0-mix-zero-restored.json": "0fc44638d31b675c9151adb939850777a86983a02d7fba1efd1d8d8e47a6b086",
+    "controls-01/0-rate-high-before.bin": "a740d4f0b93dbc97322f4ee2dce2883f8649fec467480a4ffc3b80fd70f1ca1e",
+    "controls-01/0-rate-high-before.json": "af32dd6dd606b12b545eeac2ac31e782562af2950c717e5590cfc71f40718654",
+    "controls-01/0-rate-high-delayed.bin": "34b4fe84e63e84f08516b51b7c359727c6661f283df6ea45729c97846650d22f",
+    "controls-01/0-rate-high-delayed.json": "1e2d6c7dde09573424280021264e449acbf9a9516ef11cd10e8f988f7d46310f",
+    "controls-01/0-rate-high-immediate.bin": "026f7f35811aad20798ae77f28d2f5d5335d93480697d538fade5479f8c5d879",
+    "controls-01/0-rate-high-immediate.json": "4e91d571c4d5430cab8266dd80fbb181f5538750da29e47d56d4a491b04b3fcc",
+    "controls-01/0-rate-high-mod4.bin": "4d5d8a33c3cb80161095f32362d5d8aa6f5d0dc08061d942abb002658300bf4c",
+    "controls-01/0-rate-high-mod4.json": "a0a5579316ae426db1bbc70aa42c65a1f8566718e1eaf42a96ad12b35bfaff97",
+    "controls-01/0-rate-high-restored.bin": "5765f4cb89b646a4bb99dadef131f5fe250d81f2775177a1ea64d7cc542f6306",
+    "controls-01/0-rate-high-restored.json": "8fe371380dca4dd89d311825c4ac9ca0d926e30278646f7852e9136d79373c72",
+    "controls-01/0-rate-low-before.bin": "1abc8297cebb5185bb12188df1ddf8b73afbed0eefffd7fb0bf78b3cb156e74a",
+    "controls-01/0-rate-low-before.json": "589ed4019b8e4ac3343d0713dbf0ba6b808db355fd1fe5dcefe8f7b2db801ff2",
+    "controls-01/0-rate-low-delayed.bin": "e809e01ecfa8b34a251f71a6cc16edca583134c1e2bd948bbbc0166ddd55dbf4",
+    "controls-01/0-rate-low-delayed.json": "c7354fbe46869d6b394a2868a3f2b0ba34b76b30021bc80f480b3edbb0898b54",
+    "controls-01/0-rate-low-immediate.bin": "307d28083290eeaa6b4878a9e364e7c1d2ca94e7d09a461ee49ab400dfa68872",
+    "controls-01/0-rate-low-immediate.json": "80247ed0b366984a07ef543908fc33849d3a85eb7830747ba759941ae31e0fd6",
+    "controls-01/0-rate-low-mod4.bin": "7a35a13cc93eb75056e7d48082b51e0e93dc985d2c56cbfab8e7bf2871425131",
+    "controls-01/0-rate-low-mod4.json": "3a0a45f6233000c227b6833831f4c01014531b1fdc543cf01d049ed73545a8cf",
+    "controls-01/0-rate-low-restored.bin": "1ffe5c90e9d16aef73ac9b51825b380e349649fce99ec3a8c4332f46ce61d5e4",
+    "controls-01/0-rate-low-restored.json": "3c6268e0f62b2abfa23094d124222969af077038b95a558f6cf33748f29d6f44",
+    "controls-01/0-wave-triangle-before.bin": "c8e63084c02f510f201b37ad1dd7575b194291e112f293dcf585508d6f5beefe",
+    "controls-01/0-wave-triangle-before.json": "d3d00802872965b7423082fd46c7f575f1cc1a814726d41bd1dc43e2c3088ba0",
+    "controls-01/0-wave-triangle-delayed.bin": "3c681b0f0214f1916f347c9fb639c20a19048bc188e42ade6e93adcd24b61252",
+    "controls-01/0-wave-triangle-delayed.json": "ee26fa15bf7038665cdf2448b2f841f0e90620db7e460fc89c1a8d6ae06bad10",
+    "controls-01/0-wave-triangle-immediate.bin": "0b516174e30a08f487c7a1e063527b6c4d9077ccd988dbc8a8563076d9c608aa",
+    "controls-01/0-wave-triangle-immediate.json": "a75869b89f156f5b04d987db597e67158148f835909be04323e552c7d243f356",
+    "controls-01/0-wave-triangle-mod4.bin": "d4cd0413b83da31fbba4ee435af13add73547d28b811671b9ce415817ead3ce4",
+    "controls-01/0-wave-triangle-mod4.json": "24e904e6c2df09d6f53a4848fee81f9665bc7434bff254b0a790fdf9f5878e1d",
+    "controls-01/0-wave-triangle-restored.bin": "af34664044f4868d424895e3206dd734c3d187294923be381a1f7d86d3b3b27f",
+    "controls-01/0-wave-triangle-restored.json": "4000f88271a5817c228ff33729ba2357d62001160ca3e747f90050beb5836b67",
+    "controls-01/0-wet-filter-gain-before.bin": "d8e96b01258e5adbfa0a528dded4c4b1b906ba91923e4d8c52807bc3071e6fdc",
+    "controls-01/0-wet-filter-gain-before.json": "f536fbc1868035817b3d4d48044254c36756eddff2b46f5f1055e032bf3af84c",
+    "controls-01/0-wet-filter-gain-delayed.bin": "1314ff762b2cfb719a2a02afc96951d666491006b06121eddafc04076a414f6d",
+    "controls-01/0-wet-filter-gain-delayed.json": "9e26483687533c620b22781740e0bde10adf0a06f390d43d8f5d32a47fe04a4f",
+    "controls-01/0-wet-filter-gain-immediate.bin": "1a9f6d9a6376fe56d5a7bbb6e4fb3d61b80e25af81fb2085b77896274956ce30",
+    "controls-01/0-wet-filter-gain-immediate.json": "41d9b540d742541159a631b2aefcdc3112cbe3f123451a367c9d711f2eac61b3",
+    "controls-01/0-wet-filter-gain-mod4.bin": "418cf09ff2af58b553f7da37eef45e083ba9b7b5390f6112a5914bf29539b740",
+    "controls-01/0-wet-filter-gain-mod4.json": "f09c5185de0b81d8fddb67d81876bfeff8793f3178ae1d969c891e2a058299dc",
+    "controls-01/0-wet-filter-gain-restored.bin": "76840e2a6cb01c95265460d1fdccd662e21985657cde8b84aec9a3c9b1d06c9e",
+    "controls-01/0-wet-filter-gain-restored.json": "3fd8b0f4738fc3e2fff51f517e58004e06cacc0183fa5590a139b9670db03ba2",
+    "controls-01/1-combined-filter-gain-before.bin": "bd2ecda79d0d7a5207ac288e52ea1055217a7400e69f54e26499d44312f39e31",
+    "controls-01/1-combined-filter-gain-before.json": "f144205e3c5d419a674eaa69b00d6bc8cd4205e81191d84648f54d059c64f852",
+    "controls-01/1-combined-filter-gain-delayed.bin": "463e480a048f2955032bcf2a4a28d43b7433d18e1be42fe6e6bbfbf67858ddfe",
+    "controls-01/1-combined-filter-gain-delayed.json": "a729254d24714d83e82f96fffb390c514061c1746040b641e74934f02bb913ed",
+    "controls-01/1-combined-filter-gain-immediate.bin": "7e024cb150c6e6b77e805412a1407dfc50e695fab36261a6162e8ffc6e441288",
+    "controls-01/1-combined-filter-gain-immediate.json": "a24b372b57320ad919454ce5a8511fe45503660af0b28f9c3263d688ee2f64d0",
+    "controls-01/1-combined-filter-gain-mod4.bin": "8e9505aadddf45079baa9fc83dcaa4f7e24a53c501230ab12c64551ed35ad7c4",
+    "controls-01/1-combined-filter-gain-mod4.json": "9d51069ad917f3325545f56f377bc11cd3036587b2bc8bdc92a2429f1b67a6f4",
+    "controls-01/1-combined-filter-gain-restored.bin": "bcdc9636307c6344e179ebfd2c9dc7163806ac2130e3bfa95b46bd1a63d77f02",
+    "controls-01/1-combined-filter-gain-restored.json": "1a74a620d0693437d3022d035335143a31f1f7dfa6783f8abf36e2bd781f7659",
+    "controls-01/1-depth-half-before.bin": "e00f8b2355060ba1222692db11ad0b203086aa136006d7e01741931ea5f9aa7c",
+    "controls-01/1-depth-half-before.json": "ffdd13423dfa57fc3051c8ded1b61268becb1bb8839ef876980d8973b59f8345",
+    "controls-01/1-depth-half-delayed.bin": "ca017cba422691b8da457fe76a59a9a82aa0efe3e0130093fd8c1d08dbe8644e",
+    "controls-01/1-depth-half-delayed.json": "538577d32ee6f280243cf46f5a359073270b19128cb0fa49152b2bc096e7f33c",
+    "controls-01/1-depth-half-immediate.bin": "ca1bc512c78807a27d108f41430cafe301291e65b8602ab64142041ca8230a09",
+    "controls-01/1-depth-half-immediate.json": "3a729e9e12231ab0a2d7d5ad1352779b716be8d289b3ed30211651689e9949c3",
+    "controls-01/1-depth-half-mod4.bin": "115f50eae29196e218c514042a16159491aae12f18b52e15282fe730fd138650",
+    "controls-01/1-depth-half-mod4.json": "47ae9b547df817e006e843675306dea4989e11f958d060a89fd8754790e1dac2",
+    "controls-01/1-depth-half-restored.bin": "afaafdb3698e3d96774c1faddcf012c49b7ee6ca422d4be1d7d284b81e24b0a3",
+    "controls-01/1-depth-half-restored.json": "3039f9e409e237127c006e187a692b2ec1b1e60904e160c4f8c178e259ec7986",
+    "controls-01/1-depth-zero-before.bin": "64c55fea8c4545efb97fbb895cb6df9dbd9d84017aaa918e376e10c7dacfee77",
+    "controls-01/1-depth-zero-before.json": "88884ccbe46f70254593a71a18cdbc6a47c92b339e61dffdb6025a5c13b151c4",
+    "controls-01/1-depth-zero-delayed.bin": "5d2435e96fdf9e01fd55e569e9b5a11b25d8595926344b74cfdd82b887ed1214",
+    "controls-01/1-depth-zero-delayed.json": "ff287159757c228f82d4486c39e4c397e6faa4599e163e9a0853003cda14ef93",
+    "controls-01/1-depth-zero-immediate.bin": "041899a7467d4c7f622eb39012ee7be1f0015085c82e736f79d3c599b9dd0722",
+    "controls-01/1-depth-zero-immediate.json": "b9899ee0e9a8a453b23d599830e39521be33b562b4000b514608d744b346908d",
+    "controls-01/1-depth-zero-mod4.bin": "0df7833f95d54229263b5016ab510b05faccdb02564c7b71287551dc1c7b8688",
+    "controls-01/1-depth-zero-mod4.json": "f709e80e55496f3b79bfd53eeb87d2bd2dd6e8362892cafe08d01189fa99ac1c",
+    "controls-01/1-depth-zero-restored.bin": "ef42b175ee427f0fb00095fde1ceb51315840d1048753a8295c3142ec2a35f27",
+    "controls-01/1-depth-zero-restored.json": "1b81e74fd042bfa3c47c59ca2dcb43f1b0a7cb13ccb09a389040e67ab93f82ae",
+    "controls-01/1-feedback-small-before.bin": "a90c1ab480d868d812f6c945dbd2402165a588bee185272463ba9ab1391680d1",
+    "controls-01/1-feedback-small-before.json": "26b9eec4557a4b1fadf4fc71729c844ce295060b80cf4dc30bd304d078f177d0",
+    "controls-01/1-feedback-small-delayed.bin": "3b8d1ce9d3de12e2ab4e711ad35dabbd397b99d218055f36851354e028f74a8c",
+    "controls-01/1-feedback-small-delayed.json": "a6f675c37279f890405c3f55298d63bf0af6229e0edc7d2a009251dd5976a60f",
+    "controls-01/1-feedback-small-immediate.bin": "b67f590ac5a82b452239ec5ebb357342adbcf70ecb00a02af6ddd260e8d08572",
+    "controls-01/1-feedback-small-immediate.json": "0eafdc6989263cf2c2f34e19af6ca02092b8c0f22f3cfd913ce99ed8d3d8e5b4",
+    "controls-01/1-feedback-small-mod4.bin": "56bb29525be9be8af9a707eafe385a720b94270d28dfede8cd642f5c69e8c917",
+    "controls-01/1-feedback-small-mod4.json": "89c91108c7a3454f359860d2206d48841869b24c70f401b4688f51f58103695d",
+    "controls-01/1-feedback-small-restored.bin": "c40e544676ae061fbaa49280de2f9c3109733f8099ba7e06daaf269eed601f16",
+    "controls-01/1-feedback-small-restored.json": "1c58754307e0a236a0bbac4963a34c637a44c74cd7183911a7edaede4733800e",
+    "controls-01/1-mix-half-before.bin": "115b1e7f065e40d72da8f22a46ff1b90b57d99af8405bc9a0a35a6310298e590",
+    "controls-01/1-mix-half-before.json": "24e189267c630eb51a6e1f0b7a72782c47dc63dc747203622c5fb5ffbda8dc0b",
+    "controls-01/1-mix-half-delayed.bin": "4ff212e87d4f5367e7f28499b5430a9440da73562600b8bc48d1313f473b4c8b",
+    "controls-01/1-mix-half-delayed.json": "ecbbde821636213011839e34172f19577ab78f1873a1e467d48ceb7c0c53fb81",
+    "controls-01/1-mix-half-immediate.bin": "7894bd2a06d3c33fe9537cd6e7c36c14002adbb91dc20f0a8f7bf209cff7e5bc",
+    "controls-01/1-mix-half-immediate.json": "944c6aa7b41121cf2c22de8919143d86b2daecfa493164ef69980601b0d86175",
+    "controls-01/1-mix-half-mod4.bin": "e8049168446a5aa2c3df8df04ed598d6bb15dae3de08656054f27d8c34ff8ffc",
+    "controls-01/1-mix-half-mod4.json": "fc9b19b68068a2aaccfa9d0da7b42896878c766e7dc2cd773e32588febf486d8",
+    "controls-01/1-mix-half-restored.bin": "d003bf77e7631343efe839b913556911075eaa9c1f635319140f55e9f8756b4b",
+    "controls-01/1-mix-half-restored.json": "91dfafa67878707f2877388165d4fc066b77427ed32e14814574bf11f60d0490",
+    "controls-01/1-mix-zero-before.bin": "7b732e9f4e56a9b341fdc3178dae99f54f40fe730c0c8bd5b33ecae5ef78f0de",
+    "controls-01/1-mix-zero-before.json": "3cd637f738c0ef4eccb668908234ed8d540ff575ebe3fcd43aa9b49a3d75a9fa",
+    "controls-01/1-mix-zero-delayed.bin": "44e03a64acdb4a0f9ff73c9661bbbda2cd38ce3015b903a78e3aaea9da4ac852",
+    "controls-01/1-mix-zero-delayed.json": "7be8f51f97d141f3a9bb4db2a6291e4642229031d830b3d4d459ca69bfd978e9",
+    "controls-01/1-mix-zero-immediate.bin": "96c79754f4cef17176a979f64b012653642eaf35901a8e3b0f4aa85648522f53",
+    "controls-01/1-mix-zero-immediate.json": "6fdc0ac7f365b1cab0d98f3ed0e973a8fd7ba2e3cd113a39438504b9e71c0788",
+    "controls-01/1-mix-zero-mod4.bin": "b2999171bbad14fcd78364adf4ab07a7009912c85f4bd930b7deaa6252247b1d",
+    "controls-01/1-mix-zero-mod4.json": "7de7ac035f9926ed4392f4d3d8538ca8f87fde6b5f2138accad2c62af146f2fc",
+    "controls-01/1-mix-zero-restored.bin": "e8992313bdf8562c4983f1d3742ca4338d06105cf7f5605475666f7e81752846",
+    "controls-01/1-mix-zero-restored.json": "32ce4297efde1aefcb849cc260f869968122a2f81354941165e0c4d4633a3ae4",
+    "controls-01/1-rate-high-before.bin": "7b27086de98fbae0826f0d22e44a7f48642b4e0b2e8d293e76986890c98244cb",
+    "controls-01/1-rate-high-before.json": "7bb6464ff3c6a0a2d418fdea35cf55dc8ef1b646aa7fe6d823171f68eb693c92",
+    "controls-01/1-rate-high-delayed.bin": "9c3556eedac464d5cce49f5f9905babfa6f4f10de25e4dc805829cfce7615c4e",
+    "controls-01/1-rate-high-delayed.json": "f0b77c434effb889a827105d8ad5368b13cbfa9dfdd2ed4a255739c5c1bcb464",
+    "controls-01/1-rate-high-immediate.bin": "805ec7d8ab33085c2d18803c723c426f6fe4e79f70d99f8189fe0d32ae02db88",
+    "controls-01/1-rate-high-immediate.json": "c3bc4d37c2947f23d2ffc21479ed25ce648879eb0de9ca1a46fe37704cddd10a",
+    "controls-01/1-rate-high-mod4.bin": "e0a5e35c5777c13b01f6bba62429602c864e0023f523f78ce50a4aed30f405a9",
+    "controls-01/1-rate-high-mod4.json": "1263c380af9a0d78da95e828dc91361a49300ad4473be4f19ca3374fa7e629ed",
+    "controls-01/1-rate-high-restored.bin": "122f87ce0e41c6724cf1061edf013f1c857259305141e70c7a99f5cecacdc268",
+    "controls-01/1-rate-high-restored.json": "6d99252e13f128cef946e8fd69d739d55ff47f8e57656844dfeefeff451ba41f",
+    "controls-01/1-rate-low-before.bin": "900045fcb3151166b0b1dc431d58654dc99cb42d2a98cef156a7a14f7c14dae4",
+    "controls-01/1-rate-low-before.json": "59349a7b543b11aa9f904a6fee78bec28b28111baf435acaf316f590d5470680",
+    "controls-01/1-rate-low-delayed.bin": "1989813c581b5b6946d94e7d54f4a1166054e6074f8944a7e8bf98d04d0c8c53",
+    "controls-01/1-rate-low-delayed.json": "eec5b99fb8ce4bc36ab74843ba07891f3e15f6069080549401a8a7be8ec60f06",
+    "controls-01/1-rate-low-immediate.bin": "d57854886a0f38de80182b290374538ea2b9a9edfcc684d764a7483bce8c8851",
+    "controls-01/1-rate-low-immediate.json": "0ffa3add31ed1da619cf9cd31ec664d0c816080f13c438d1214352426b5b4c5c",
+    "controls-01/1-rate-low-mod4.bin": "998412f64ec8ea8f5e19d204254bd7f17d3775203e33d0fa0106d9f2375bbd9e",
+    "controls-01/1-rate-low-mod4.json": "92ee7dab73c5adef400b81ac964c5dc573d10c33950d947e065a0b86b5fc03c9",
+    "controls-01/1-rate-low-restored.bin": "4f59e4f29b44ba9d3f450f5c141694911c20ce68bb3ff55e5f7dfa3bc0209289",
+    "controls-01/1-rate-low-restored.json": "c3a04b000526f9434495a248097dc1ade64dac8515ccb222579279c74560ea11",
+    "controls-01/1-wave-triangle-before.bin": "8d70ebb72158023149d740b736c64b2ff2d1e756eaa834c2aa8bb8d93e57d194",
+    "controls-01/1-wave-triangle-before.json": "5efa51c03119ea0b237df842e078063f3f501587e57480701d671cd4cdc70d54",
+    "controls-01/1-wave-triangle-delayed.bin": "76afa511383f93619861dc9983e2a9e32a6239e958052fd42984d65db469dc83",
+    "controls-01/1-wave-triangle-delayed.json": "793f8fb6259720805bc5b3eda70e31c6950ed6f619d9f0f8df9a1138ff16d7a6",
+    "controls-01/1-wave-triangle-immediate.bin": "e8a1d4ded9cdf94a6d6734899163b64e6dcc2462243c685367e6918a81ad1ce7",
+    "controls-01/1-wave-triangle-immediate.json": "d1c69663d53bd2e3d05843801268a0fdc583e5cd9163a69da22c505ed49df4bd",
+    "controls-01/1-wave-triangle-mod4.bin": "615ab849b97248c4a870f8d18aaf49381ac43710b0c197a29b09972982a1d395",
+    "controls-01/1-wave-triangle-mod4.json": "14266fbc436b8a556f2da48be4b1cdf22572f270372a875a33e703063b2cfb38",
+    "controls-01/1-wave-triangle-restored.bin": "ba5cec2c2009d7e6c233325b429d6edf64731552f0398dd87644d9d7d04a79ed",
+    "controls-01/1-wave-triangle-restored.json": "5dd3fb212a8841c0141ab39ac30930fd4e94246340d7aec11a656ddf0ac57994",
+    "controls-01/1-wet-filter-gain-before.bin": "89e9ad3a4abfe86ac4e2348498320fb76491f5caf17079cec3cfc4093ccd488f",
+    "controls-01/1-wet-filter-gain-before.json": "47cec617ded8982ed1f68b50eb9c244b6e3c51154e4937358bedb4911f4566e9",
+    "controls-01/1-wet-filter-gain-delayed.bin": "9d18ffbb9ee3ead0b247c2e6c27d34038010996930368e3ec5c0f77d37a9e506",
+    "controls-01/1-wet-filter-gain-delayed.json": "4421230dac103106cdcf6a57164b6d8f303a6e78dc9bfce0f87ef507bcf9535f",
+    "controls-01/1-wet-filter-gain-immediate.bin": "45fbaff3971afdeada4d63f01de1a435dc6aafb6a93e70f4a673397f1673b1de",
+    "controls-01/1-wet-filter-gain-immediate.json": "28704c6530d26a4811432a9dd84ea15ab9ed650c57d2e9d87f3450d609e99483",
+    "controls-01/1-wet-filter-gain-mod4.bin": "9345b1405908d3da0e08e076b93ed505fe4d67951024782f0d75646b0083bff0",
+    "controls-01/1-wet-filter-gain-mod4.json": "3dde0d4046a4e68aa7f42504ae0b97b5ec86e8a4a7fee34e3eeff7fa98bd711d",
+    "controls-01/1-wet-filter-gain-restored.bin": "43ba73a2bb21b099a59628a9bdb275d54af462e8bfc83b9341f575f7d2a43449",
+    "controls-01/1-wet-filter-gain-restored.json": "36985ce6bc14ee5fc1a87204b2134aa55c72aa3df511822891771ad1623b23ab",
+    "controls-01/intent-0000.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "controls-01/intent-0001.json": "edb09e6464b39948fc8421f02121f179a548f07a3e3616efe3d3cb10f78c55e1",
+    "controls-01/intent-0002.json": "065c80d6efda27838172b1b3a57b57aea769c0bde7cdda33e2dc66cb2eb4f051",
+    "controls-01/intent-0003.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0004.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0005.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0006.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0007.json": "1027c8e7b7d11cbf8b869f7a6ee9754377a043181201b3c95b357adb79c816a6",
+    "controls-01/intent-0008.json": "016b38dff1539e6e11417c058b8ea22f616714c1c498748c30f315bdeb5d132f",
+    "controls-01/intent-0009.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0010.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0011.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0012.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0013.json": "b893c414171406b594597254dcb142136071c5f48deb3ca89197943f655752d0",
+    "controls-01/intent-0014.json": "a6c6923f0b4c0201258b3089799231621092224ed3ff49e029a689502bfb4557",
+    "controls-01/intent-0015.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0016.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0017.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0018.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0019.json": "98158099a5f5e85a7914cd0f04c14264dca69c91dd9d4a97e3ac867e1f86d33b",
+    "controls-01/intent-0020.json": "e3446e039118bd25c6a0de019057ebdf5745f3b440dc55600de9134765724f80",
+    "controls-01/intent-0021.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0022.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0023.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0024.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0025.json": "70f20c0d063a190317f527347e623277345c5d8e97f0d57cb97e9fbc56e0807c",
+    "controls-01/intent-0026.json": "8a477025d824e70e7b96d03f9b8a5a8db5066971886c474c1709a99aba2aa647",
+    "controls-01/intent-0027.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0028.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0029.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0030.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0031.json": "86fbbc84e110f195f7bf98599dbe83a43eb164ede283dd25ae2b6991b23e8572",
+    "controls-01/intent-0032.json": "246e08a12f14fa85719021da89120ff001ceb2e52a39caa0c2ddcfbbe2f6f5b3",
+    "controls-01/intent-0033.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0034.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0035.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0036.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0037.json": "e87be5116d4e8c91ecb286cb0ef5e57da798722065880ce163284f8de41cdb2b",
+    "controls-01/intent-0038.json": "7e3a27b1d326a8dabc1a8859e2455b2874a5fb45465cba178aad2e09de16a44e",
+    "controls-01/intent-0039.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0040.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0041.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0042.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0043.json": "8559c6da0a9fc97bfe708715c3965985bbb5fa6fad67dde134f3b9dd26b26f30",
+    "controls-01/intent-0044.json": "e36dec0cbc837d40527487417c22ac24eb1adc0c5eb150537c1e89f4f5057200",
+    "controls-01/intent-0045.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0046.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0047.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0048.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0049.json": "2bb26a7f1dc258e85442fb131d4e9d40a06da554838ae1d2f99ae130807af6f0",
+    "controls-01/intent-0050.json": "5ed97b27a0e5d70bb1fc36fa1c3ac5649eedbbb22b78b5f1aedc1864c7c7269a",
+    "controls-01/intent-0051.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0052.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0053.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0054.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0055.json": "41ee2c2a3d8415ef5ffc67d459b11550f90efe21fc2d5d7e2870c04bc70e3943",
+    "controls-01/intent-0056.json": "9a9357e6728004947e9725aad5e207943fcd88355c92137c4b21930e2daca3ee",
+    "controls-01/intent-0057.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0058.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0059.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0060.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0061.json": "c978f6b5aedd72a9f40c97249b0da6585d9775ab91ecce7a555e1f389f2ade6e",
+    "controls-01/intent-0062.json": "c8955a6c89b6351ca74897a97f5790846494ad953041f944038ba96d1450e33b",
+    "controls-01/intent-0063.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0064.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0065.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0066.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0067.json": "28da0fdf17ca341527a018b700f2fc3a0990fba43b3da17f4cacb13f4c6dd37f",
+    "controls-01/intent-0068.json": "d79a5e5c2869d117a8a02c589ee39291eb1bd8f4298b65ae36acb222f252d451",
+    "controls-01/intent-0069.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0070.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0071.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0072.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0073.json": "1ff1ce826360ee279c148eb5d41e7139b370f743eab8862dcb726f8925350f98",
+    "controls-01/intent-0074.json": "5a6b108ca636ef1dd6a205c789b48fe835ee48786696161d5b72ea211338cb54",
+    "controls-01/intent-0075.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0076.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0077.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0078.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0079.json": "1b0915ec8f64c22c4aa71c40e37e10c86d24c9451e42f2c7b714be129f4cfad6",
+    "controls-01/intent-0080.json": "d0567628b4cc48c519667240889e76663ff09370f19946dba25cf92256e700d2",
+    "controls-01/intent-0081.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0082.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0083.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0084.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0085.json": "16c52a3c48caadf1c90e505a1e6cc0d885fb3cff6101b3c85ad6656aaec4c238",
+    "controls-01/intent-0086.json": "13c14b58e0dbd6e114d87f5df5f1558392bcffe2f2fd453d9de773c9235b2fe2",
+    "controls-01/intent-0087.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0088.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0089.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0090.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0091.json": "11d8658d772fd3b755aa0a68e4dad65ebe862fca6c0692a772cd9acadde3a2ab",
+    "controls-01/intent-0092.json": "cf6278f102e5ad6fa385e9456b66c1b458f9506d5b15b2391cbf53580346bf27",
+    "controls-01/intent-0093.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0094.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0095.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0096.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0097.json": "a66bffcded4629fff3194171e43e7e55a775f3d4d383ee51e13448278217da55",
+    "controls-01/intent-0098.json": "caee8c683cc5e7d858f8f1e7029825faba472def962840706070e0f94c1c060d",
+    "controls-01/intent-0099.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0100.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0101.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0102.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0103.json": "bd97fcfba493b65a24d82473010678e8983663bf523f4fe8eb5b71ecf1e4d8d6",
+    "controls-01/intent-0104.json": "6e733b240648600e8dacf4e71ecb0f7a820c90d2bd206441001362c5569abbe6",
+    "controls-01/intent-0105.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0106.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0107.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0108.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0109.json": "168daaf3d5841daa0d124a4901bea65ca7dd73597887e937d98b4124d5da70f1",
+    "controls-01/intent-0110.json": "556ec2d3e732af6e7a6d11e9504c3ee62a328b564ace69d4cb5d1c15db3e6388",
+    "controls-01/intent-0111.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0112.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0113.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0114.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0115.json": "a5761c56d1ec1f437834d1e9afe9bde5f2d02da567a83f244339bb1337f3e073",
+    "controls-01/intent-0116.json": "64e27253c1f88ae8911c1b2b9c5ffdf0edcdf72eb5238a6fb77bd007ac5bac5b",
+    "controls-01/intent-0117.json": "d242752f43a6ee98b4ae1ba762fc47a7f8611417f2ca2c997c342b99998e6c72",
+    "controls-01/intent-0118.json": "246de7409865f1ebd60ed19524bb71f4b493c81729c3283288ec2b91bde7a275",
+    "controls-01/intent-0119.json": "7811b42aa13ded71d424967515a57c1287db4adbe56992588d610110951e88f3",
+    "controls-01/intent-0120.json": "6a25f48ef92eeff5f70a24b178608a56030df86ddfb59f61e55dc178cb7e771a",
+    "controls-01/intent-0121.json": "7bd2777f5280089149c6148f05eb4bd5d64dcfa028bd40c832a4e2cb9e467365",
+    "controls-01/intent-0122.json": "5858823beb670a4e8ffc01c86eb7fa1c53b142d4f11234b0c557dca9715387c6",
+    "controls-01/intent-0123.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "controls-01/intent-0124.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "controls-01/intent-0125.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "controls-01/intent-0126.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "controls-01/intent-0127.json": "e0972a4d90355cbd1aaaf59a8289f4908d1840ee4e435401a385f309dcd8d761",
+    "controls-01/intent-0128.json": "a4c4a1aff924cf19d903cf720be8321a9d3ee4770448d25c675008525ae7c420",
+    "controls-01/mod-03-0.bin": "b1a5e3335509cc8645f1c279704a17b67f8a919d90c0e4bb16366f6476216abb",
+    "controls-01/mod-03-0.json": "4a657ed505d01a01e1dd00aec075767d536affade1fa22cdca49ac16c1b52566",
+    "controls-01/mod-03-1.bin": "ac0c35d24215368a31457bb7bc76cd7398ca8ade9b9bcd77382f34d2b165f32b",
+    "controls-01/mod-03-1.json": "84d3fb3cca62671fd430af50c65ae7698d6fe44a372d86d8ebfd62f129c25840",
+    "controls-01/mod-03-2.bin": "ccde9779b86372d8aac4ded7d1a2189595aa43e3aa0ebbc6ba47ddc1e7abb2f9",
+    "controls-01/mod-03-2.json": "a3e99a45d47b84cc606c4861cdcd31e3f2dfa4a616e1783685576f9fb6e85333",
+    "controls-01/original.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "controls-01/original.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "controls-01/restored.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "controls-01/restored.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "controls-01/transport.log": "4483dd1870f8bdc831845d7682413f8b0ced694856a205c0c3f6c2f0053b00cd",
+    "map-01/delay-and-phase.bin": "1eb86dcfd8f7d15dfc4bee9fde2641522a88b315d3ddd26040552b19547cd5fb",
+    "map-01/dispatch.bin": "d0feaea71cf98165e92b4e101263605445228f20117137582096f452bd910d8a",
+    "map-01/initial-filters.bin": "278940a3c42fee604f374a9b44f6f5d0bca5c0106d74403a1c89da737dd16c07",
+    "map-01/mapping.json": "5a2ff7373e56624ba8ef073b0f7a809c3508c76095651ed7aaa6afacdff9733e",
+    "map-01/mod-table.bin": "5a840ad03aeda4ce715e31728b375acf9b70d20b53e3d30c424f2d8c20d4cb18",
+    "map-01/oscillators.bin": "ad1131d06b65a75fae21a5ef3312ea30a07e5564e8c858fe9087245ca5d64300",
+    "map-01/preset.bin": "cf811d5442a4ecd134f315d7c89f408efcbf363c926ab029db7a790c48d94484",
+    "map-01/transport.log": "019869b3f7be781b5865d12218b8cac6561fe7b4b1489b6db890f13418e0f980",
+    "map-01/worker.bin": "4b3f852a0f15934beacea107471de2877f89052d3eaef4652bead312a28369aa",
+    "map-02/delay-and-phase.bin": "1eb86dcfd8f7d15dfc4bee9fde2641522a88b315d3ddd26040552b19547cd5fb",
+    "map-02/dispatch.bin": "d0feaea71cf98165e92b4e101263605445228f20117137582096f452bd910d8a",
+    "map-02/filter-helper.bin": "ff25deca4a60fa67328b346207190781456b7320b8566db90dea0c80a860e342",
+    "map-02/initial-filters.bin": "278940a3c42fee604f374a9b44f6f5d0bca5c0106d74403a1c89da737dd16c07",
+    "map-02/initialize.bin": "1e0f6dcd85c2465e9035e7cc80ddc47912015ff2af523e6dedb189db00b2fa33",
+    "map-02/mapping.json": "cf07ea8daef00ec052e5dd39b26d86b5944840aa606bd0efcec0ef2e13315b02",
+    "map-02/mod-table.bin": "5a840ad03aeda4ce715e31728b375acf9b70d20b53e3d30c424f2d8c20d4cb18",
+    "map-02/oscillators.bin": "ad1131d06b65a75fae21a5ef3312ea30a07e5564e8c858fe9087245ca5d64300",
+    "map-02/preset.bin": "cf811d5442a4ecd134f315d7c89f408efcbf363c926ab029db7a790c48d94484",
+    "map-02/transport.log": "6376ca5d858af748a8bf4fb42e105cc891a487c65558eba08da2eaf2055c0689",
+    "map-02/waveforms.bin": "78adc5ec3bc6558618428322d2d5d2394a0e9d3d091a32e297bc01572b0697bb",
+    "map-02/worker.bin": "4b3f852a0f15934beacea107471de2877f89052d3eaef4652bead312a28369aa",
+    "read-only-01/bank-0.bin": "1175b60eaab558dedcedef9b9ab96ff67dd77fc8754caaaec1ed87977d9a51af",
+    "read-only-01/bank-1.bin": "1175b60eaab558dedcedef9b9ab96ff67dd77fc8754caaaec1ed87977d9a51af",
+    "read-only-01/bank-2.bin": "1175b60eaab558dedcedef9b9ab96ff67dd77fc8754caaaec1ed87977d9a51af",
+    "read-only-01/dsp-0.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "read-only-01/dsp-1.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "read-only-01/dsp-2.bin": "c4810ac91bbeb94a47bcddabca212638338e93dacaa7b91033f31d3d9ddec2c8",
+    "read-only-01/report.json": "743cc0fc680bb9dda204a096b71a60d5085eb2a6bb9f3df905cb10339c71e93e",
+    "read-only-01/transport.log": "ebab2f70ae82880622104e2f5324f8497e37513d678ba76ea0d8b758c4506bb6",
+    "sweep-01/intent-0000.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0001.json": "072667175af946363b4138e866024537a611ce350f597f43d3dfa3f7156ca990",
+    "sweep-01/intent-0002.json": "2cc0a942632ca4099884fd6d9b36d95726fa2182a60d61dd6464f66788fec2ab",
+    "sweep-01/intent-0003.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0004.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0005.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0006.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0007.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0008.json": "20d6bdb11f52156b60b11047cda75a1ceca088f970dac2563b18c64138ced087",
+    "sweep-01/intent-0009.json": "c0db289954430fdbcf2ea6f1dcef839a73a01d5d2ed2e36550d246120d1f6069",
+    "sweep-01/intent-0010.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0011.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0012.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0013.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0014.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0015.json": "c07767c5be219bf5c5a0fecd9279bb51807eb233f7d0bc9d7546c8ccc991ac00",
+    "sweep-01/intent-0016.json": "5fe936e3ef4a6f6b51846d53e9f4181dabce05d7e0f82eb04316feaefd959b2f",
+    "sweep-01/intent-0017.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0018.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0019.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0020.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0021.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0022.json": "edb09e6464b39948fc8421f02121f179a548f07a3e3616efe3d3cb10f78c55e1",
+    "sweep-01/intent-0023.json": "5858823beb670a4e8ffc01c86eb7fa1c53b142d4f11234b0c557dca9715387c6",
+    "sweep-01/intent-0024.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0025.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0026.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0027.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0028.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0029.json": "31d5606edf66693fdded38f18f0fad4f4b68bf24ae00097ee471ecec33a191b0",
+    "sweep-01/intent-0030.json": "259294bd60ad638023c8210e05917a1d1bba4ce27c0a683ce1955dcd6bccec49",
+    "sweep-01/intent-0031.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0032.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0033.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0034.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0035.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0036.json": "af270cf2a6685c5f56bb1bffea94659cf3eb8ec7b88315425ef998ee4522a62a",
+    "sweep-01/intent-0037.json": "f8c85afcbce29c6fdfa6817045b0a4f84a149cde29b5c86fb9f5d17ef16f9860",
+    "sweep-01/intent-0038.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0039.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0040.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0041.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0042.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0043.json": "3ea68c349f90e6b32e55d051fc1504bdfdbc6a5b70f09e87638a5918a3c50fbf",
+    "sweep-01/intent-0044.json": "cce5518272ccf00f5c5e110eef363605414f4d8d43476b5df784832a8b5b2eab",
+    "sweep-01/intent-0045.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0046.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0047.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0048.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0049.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0050.json": "e0972a4d90355cbd1aaaf59a8289f4908d1840ee4e435401a385f309dcd8d761",
+    "sweep-01/intent-0051.json": "e0972a4d90355cbd1aaaf59a8289f4908d1840ee4e435401a385f309dcd8d761",
+    "sweep-01/intent-0052.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0053.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0054.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0055.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0056.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0057.json": "181df96ee4960e4802538aabcad4db4a828f2ebd81a1114e98c92a5efbee6fc7",
+    "sweep-01/intent-0058.json": "3170f906e905f8f3c6d14403a507217e78f8d50b7259d868f58bcff781651695",
+    "sweep-01/intent-0059.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0060.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0061.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0062.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0063.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0064.json": "01b95fd7895348b2a6acc90fd1e592a33096cc66f0ddfce053950419497c2c3a",
+    "sweep-01/intent-0065.json": "14951c21a1b7ea25008dbff5ef802a70483d47d39371283574e7d77789d501e4",
+    "sweep-01/intent-0066.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0067.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0068.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0069.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0070.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "sweep-01/intent-0071.json": "edb09e6464b39948fc8421f02121f179a548f07a3e3616efe3d3cb10f78c55e1",
+    "sweep-01/intent-0072.json": "5858823beb670a4e8ffc01c86eb7fa1c53b142d4f11234b0c557dca9715387c6",
+    "sweep-01/intent-0073.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "sweep-01/intent-0074.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "sweep-01/intent-0075.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "sweep-01/intent-0076.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "sweep-01/intent-0077.json": "e0972a4d90355cbd1aaaf59a8289f4908d1840ee4e435401a385f309dcd8d761",
+    "sweep-01/intent-0078.json": "a4c4a1aff924cf19d903cf720be8321a9d3ee4770448d25c675008525ae7c420",
+    "sweep-01/mod-00-0.bin": "4fb8c4c273da3bd45c2154f2ab7f56694ec8e9e1a23d595e7f9d09101f9f5328",
+    "sweep-01/mod-00-0.json": "9a2edc23de6ebbec17dcbf9bb4576163ccc2f90d1c53c7f8d157edee4735293b",
+    "sweep-01/mod-00-1.bin": "4417feafa480c5d0b0ee033d7b41250f79d6608f948f7389f507173813ec25c5",
+    "sweep-01/mod-00-1.json": "577f9a65b974cd7ae90413dab2f5d782d55d4db8d66a20c64c3f6662405fea6a",
+    "sweep-01/mod-00-2.bin": "a5a4113d857c441ae0247be7b5ca11d901bc81d788747e7a453c4ecec61a86b6",
+    "sweep-01/mod-00-2.json": "77233ddda9e00701fbb9c478c0a9a968591b5fb1a54d3097b9418dd8449f67c3",
+    "sweep-01/mod-01-0.bin": "1370ea73213210db6a9d97e2a8713df4e68cfe8e0a011afcae4c72d947c1ba47",
+    "sweep-01/mod-01-0.json": "59f79b5fbcc7de56acb54806e6f2295119af1b3be177b94f24e99cf8a3653b44",
+    "sweep-01/mod-01-1.bin": "57c3fedb7e90ee464729838677f9943bf4f86291ad41608a42b98efe32292507",
+    "sweep-01/mod-01-1.json": "ba9d2cb51f800b27364fcb7bbc6f2e26e40d84b74d32e7c25a915ac61e907b18",
+    "sweep-01/mod-01-2.bin": "09fdf6a998d8fb953c904663667075c10741abb22ba400737d7af6e0c26801ca",
+    "sweep-01/mod-01-2.json": "944d2a176f7f6bf1357245a9d2fbdd170dac49564f8a295006b106d90bb68fae",
+    "sweep-01/mod-02-0.bin": "b124c9a05ed1b448c1790f170d985d574117c7bcd2fe160776916c8c5f6a7d12",
+    "sweep-01/mod-02-0.json": "3e9257516fd663b6435e39889f6c33400fc8d5163227cb422c602e8a37a26b38",
+    "sweep-01/mod-02-1.bin": "f5da496de89ff688577b09ef4c769c31a8d3fe797b585f8e8f0bad7c85d3f8be",
+    "sweep-01/mod-02-1.json": "1b73c1487f4a6847185b4ea171713245d9c936f47ed59a11d3f44f29e26b0d51",
+    "sweep-01/mod-02-2.bin": "072186c1b5107508df795c84fbae450b39340683b18e9cefabb7a14248153a16",
+    "sweep-01/mod-02-2.json": "4147e5d6cfdcf3a17e35d886dd67e8ff4ffece194c8e3effb0a7ba6a24570c25",
+    "sweep-01/mod-03-0-0.bin": "ca9f3e837874d4f0e62f37c8e47a305c3d69752b9c90336a57ce6217ed7dd90f",
+    "sweep-01/mod-03-0-0.json": "3af23544d03fba438f8fdfacfd33b26482dd7bc10e2cf6756f3904ac05553600",
+    "sweep-01/mod-03-0-3.bin": "ca9f3e837874d4f0e62f37c8e47a305c3d69752b9c90336a57ce6217ed7dd90f",
+    "sweep-01/mod-03-0-3.json": "3af23544d03fba438f8fdfacfd33b26482dd7bc10e2cf6756f3904ac05553600",
+    "sweep-01/mod-03-1-1.bin": "01a454aab9505d104e33b4f99898213947caefdcd8ee9923d70dc18e0d665b1f",
+    "sweep-01/mod-03-1-1.json": "b35a85d5071944dd246f5aa18be46239fbb369c4ee5afc27f103ce104b7c28f8",
+    "sweep-01/mod-03-1-4.bin": "01a454aab9505d104e33b4f99898213947caefdcd8ee9923d70dc18e0d665b1f",
+    "sweep-01/mod-03-1-4.json": "b35a85d5071944dd246f5aa18be46239fbb369c4ee5afc27f103ce104b7c28f8",
+    "sweep-01/mod-03-2-2.bin": "6d34841e09d4ff51af21cbe2daff567f7fea23efdc9400355ab78d9164de77a4",
+    "sweep-01/mod-03-2-2.json": "381e57c996025af8b545907b567b2ada4cbf57f1ed3d0d96b3488acc56ff9042",
+    "sweep-01/mod-03-2-5.bin": "a4a8584de940bb0c4ceb80a63aaaa8ff1cc626221b1cb8e5972c9fe2da9cd3f6",
+    "sweep-01/mod-03-2-5.json": "e22870e969756e23d9b36d71193f0a2c18e0f80be9fb2f67170a04ff01b13108",
+    "sweep-01/mod-04-0.bin": "fbe82760edaca6d6014e47795b7d6cf05a6bceafe4b55bf52ede8e02e085dfd6",
+    "sweep-01/mod-04-0.json": "0db48abb5cd2222c1d4fb2a5c1c68f39ac562045afaf088abbdf786eaa50791d",
+    "sweep-01/mod-04-1.bin": "171547b4ec12fca1db7fd0b98f559991fb974c6f33c51a99bb51739635bff6f5",
+    "sweep-01/mod-04-1.json": "0cb6e20e5958e64a04d59b21051d948cb2ad6262bf841ce7f14aaa5696dcba76",
+    "sweep-01/mod-04-2.bin": "7f63ad3f1fa8b7128ec24608562b47037af232a0d3b96f6038d2214efe5f85e4",
+    "sweep-01/mod-04-2.json": "8401a1750568930e6eff41c50d0d18353824a284f16700ca0994bee9a5c80e5d",
+    "sweep-01/mod-05-0.bin": "d42527fa2fb3a2450bad4fc3a9dccb2c083c3889bf2e95ebf42cb79a79877f19",
+    "sweep-01/mod-05-0.json": "db3dca8aa6f80c3fa2fb0372c2c9746d209192e22288fc61054a2ca144a74bca",
+    "sweep-01/mod-05-1.bin": "47967a5310cfb29f38de1485972cd35b05859adf0a3b866f37ece5205eb81675",
+    "sweep-01/mod-05-1.json": "59211d8c954145e7e87cbc316a1228645866d7110f984b6cc9b3fa40bb7d4471",
+    "sweep-01/mod-05-2.bin": "b43bb5b439d831c952214c1fc8e8392c6705208323791e92a869a43d3cfab95d",
+    "sweep-01/mod-05-2.json": "2c0e747b77bf983ad6f4505d81d78ef13d6a097294ba47344089506d79147f46",
+    "sweep-01/mod-06-0.bin": "67bcc4c04142364692108703c33c640aa3c2f56d5f90d735d99f33b1783c2b62",
+    "sweep-01/mod-06-0.json": "19df10a64794b108a65f384b9cb381d3d2521e60835c6949638ef3a690285aa8",
+    "sweep-01/mod-06-1.bin": "0858398e0a8e83108d50e7a19dc54dc32b58bbea4b71b10548eb213ed80795a4",
+    "sweep-01/mod-06-1.json": "2bc4069c5a7f007bbf019217aee0d998d5174e91f1a9f5d34f8f4789735c89dc",
+    "sweep-01/mod-06-2.bin": "a3e4c156b2cb229cf213c4aa8b7687e9b9c9e16ddf64286e6adf7bbb933aacc9",
+    "sweep-01/mod-06-2.json": "b0445aaf0e93680dcf18d6eb100f0568080a7f37f2596d184a91a67c1deacd6b",
+    "sweep-01/mod-07-0.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-07-0.json": "a39fac6377f32788c92d9ce8894fe0f70869f1be528c2b12f76fc3d08e50b76c",
+    "sweep-01/mod-07-1.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-07-1.json": "a39fac6377f32788c92d9ce8894fe0f70869f1be528c2b12f76fc3d08e50b76c",
+    "sweep-01/mod-07-2.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-07-2.json": "a39fac6377f32788c92d9ce8894fe0f70869f1be528c2b12f76fc3d08e50b76c",
+    "sweep-01/mod-08-0.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-08-0.json": "3d5f96d7b702d0fc712e335173d09bcf22862acba9267ea4385c6d08dc9fda21",
+    "sweep-01/mod-08-1.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-08-1.json": "3d5f96d7b702d0fc712e335173d09bcf22862acba9267ea4385c6d08dc9fda21",
+    "sweep-01/mod-08-2.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-08-2.json": "3d5f96d7b702d0fc712e335173d09bcf22862acba9267ea4385c6d08dc9fda21",
+    "sweep-01/mod-12-0.bin": "8ad6a88599ff52be470ff1ddb386e45905d2e5c09955708c0231779774d36670",
+    "sweep-01/mod-12-0.json": "eb5b0d01925c785e105c29448b50ce76cd935726cb72826c452f88bc52d67e81",
+    "sweep-01/mod-12-1.bin": "9a9d74aa2a2a03914cdb5c675c3a6a14257d47d88bbefb910d70dcf7bf343c9d",
+    "sweep-01/mod-12-1.json": "c4a7aee4c9df06b0bfd1b0aeff7247f8429d710f4ec8f52d5e1b56d3cd5b83a8",
+    "sweep-01/mod-12-2.bin": "c44ecaee3c162a3d3aaf7a5895bb40cb7580adf769a7a48200c8beaa3e715e33",
+    "sweep-01/mod-12-2.json": "6e5f7a11deed6cf9890585b43bb40640fffa50856f0c77d970e1cc4213a41f00",
+    "sweep-01/original.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "sweep-01/original.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "sweep-01/restored.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "sweep-01/restored.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "sweep-01/transport.log": "4e691c8cf3cbf94e0a27afac506be44020fe3576099ae775132c16c0aeb0b359",
+    "transitions-01/before-transition-12.bin": "e6e769c7fa9a281421c50f88c4b94f0986b170e5fb6b923dafaa37df2b29138b",
+    "transitions-01/before-transition-12.json": "3661ec3bf7b6163a6e93de76e0b9fe740b30223634901ca1320987da35a73214",
+    "transitions-01/before-transition-7.bin": "a174ebff03139e3f07981427f2e355f2565c67352622324c1454447eeae6cd59",
+    "transitions-01/before-transition-7.json": "927904b8f67035064104c61dd4f24706969b0e4a8014a68cef67b33a23ad4150",
+    "transitions-01/before-transition-8.bin": "18e5d6b0e80effe96a77f670dd2945ffb1eb7e4694e1e86311625fd2fa2f2459",
+    "transitions-01/before-transition-8.json": "b1d9cbaab3e6ec59a3750d6be004305daec0161b5540f51fb009d1be2845f3f4",
+    "transitions-01/before-transition-section.bin": "39381836a70151ddaa0a3a96f2db795136e6aa1aa8ae0fd42abcf8372c46d065",
+    "transitions-01/before-transition-section.json": "23908daa3581b0d672a2aadfffcb44be50a51c527653b1f4772a25fcc23c5c80",
+    "transitions-01/custom-mix-12.bin": "9f272c8d3d59e04e438d732738e56ae93116a5c3da253e35d1bb01d6dc96c812",
+    "transitions-01/custom-mix-12.json": "4f7cd066a7e2311e5451391db5c482fc82acab0a702ba232808ba98cc46dea58",
+    "transitions-01/custom-mix-7.bin": "95ef4e8d19b1fb40132a69d1eb00cdcb21beb2b684c479424fa3bcf3f9948d08",
+    "transitions-01/custom-mix-7.json": "7ee01288c3d3b8d38578237cff18e81afb31d52ccab9d222ce2dc75d941075f4",
+    "transitions-01/custom-mix-8.bin": "fc137e654dadf73ee9d216e4852bc7be4ca6d0665dd003924ff901bd30857dd9",
+    "transitions-01/custom-mix-8.json": "e6573ffd0cf7a259daf727c7c433e23f451f50cf928039cbffdcdcaa26b9bef8",
+    "transitions-01/custom-mix-section.bin": "9f272c8d3d59e04e438d732738e56ae93116a5c3da253e35d1bb01d6dc96c812",
+    "transitions-01/custom-mix-section.json": "4f7cd066a7e2311e5451391db5c482fc82acab0a702ba232808ba98cc46dea58",
+    "transitions-01/intent-0000.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "transitions-01/intent-0001.json": "edb09e6464b39948fc8421f02121f179a548f07a3e3616efe3d3cb10f78c55e1",
+    "transitions-01/intent-0002.json": "19f232b8fe43a54773bd5dc933115bb140d05271f712fc26edd00e73f3853b9a",
+    "transitions-01/intent-0003.json": "7a226c0b926d89b3d3da524dd3d7115298d5b7a69ab436388d88f3d774e9eef3",
+    "transitions-01/intent-0004.json": "5b6304dff53b2fe4d5068d3dcc38bbd616cc044bdb80db42490f3cfb4927c171",
+    "transitions-01/intent-0005.json": "e60aebc8993d4366c3a281d5081301055a83f9c71a1e04f7794b1c602be22021",
+    "transitions-01/intent-0006.json": "5858823beb670a4e8ffc01c86eb7fa1c53b142d4f11234b0c557dca9715387c6",
+    "transitions-01/intent-0007.json": "edb09e6464b39948fc8421f02121f179a548f07a3e3616efe3d3cb10f78c55e1",
+    "transitions-01/intent-0008.json": "63796c2a9613dd32ab630b220ed2f40389abeeff0a077d0965993f0b62c0d119",
+    "transitions-01/intent-0009.json": "dcb1a2210e854d48615a33fb1e56b8b64c9185d6b3077613517c08e762373020",
+    "transitions-01/intent-0010.json": "8325f73ac7d3aca228049a50177d204f912fe094199e4501039f0e2415f8b3b6",
+    "transitions-01/intent-0011.json": "949ace11c1c988bd0104f4a70d24b81cdcb584e44ba9c03076688865d56c3f0c",
+    "transitions-01/intent-0012.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "transitions-01/intent-0013.json": "2cb81a7155ed23d635eff72f8d01e81b4baac764261dc36966a9101c10420134",
+    "transitions-01/intent-0014.json": "5858823beb670a4e8ffc01c86eb7fa1c53b142d4f11234b0c557dca9715387c6",
+    "transitions-01/intent-0015.json": "897f0acb5a004c15b1c2016d5351e4d2cd8b96b8aca8198b986a41072488ac20",
+    "transitions-01/intent-0016.json": "79e109af1e28c19f0fad3435ba7af3016f88953369d45b63496af0c42c8fb31e",
+    "transitions-01/intent-0017.json": "12fec7a9040d636d394be6c8934c63cd3901dd06ff49c7ef33f6d0cd3743457f",
+    "transitions-01/intent-0018.json": "f8194f6b682431a8c9ac05951033d5611204726f6801f44b5c4b4abe27a3a6bf",
+    "transitions-01/original.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "transitions-01/original.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "transitions-01/restored.bin": "c4810ac91bbeb94a47bcddabca212638338e93dacaa7b91033f31d3d9ddec2c8",
+    "transitions-01/restored.json": "7c95ab5ecf4c848308fb5c6e0c00855ee71ee92d218ae6838b9c181c8d46fabd",
+    "transitions-01/return-12.bin": "05874a71cec3beec5119f9a8142a349cb04bcc1b063138cc71cb3eb0e60f1fce",
+    "transitions-01/return-12.json": "1db67e5a619015b3d9706420df60af8011aade355d9c82da8cff4714eb8f0227",
+    "transitions-01/return-7.bin": "755f29dc190c34d5c4c89c81e0f73063209e82ca022379b58a799635c8d60d21",
+    "transitions-01/return-7.json": "92f3aa60c7f6a843c43e8c75f6f0f532354b534026769fbd40e425a48b0b3ba2",
+    "transitions-01/return-8.bin": "236619f52240500b5356e5dd2b21113b41cc032eb2f2350a215d2b5c5b02704f",
+    "transitions-01/return-8.json": "bbe7ad0f7146527e31fc375654467998bcbec9a924f8f6aa93c24a75c5f4357d",
+    "transitions-01/section-off.bin": "9f50c6e2fc78b4d4636a9945f6a90add506d5c4eb81b6cd100e978b94e9268fc",
+    "transitions-01/section-off.json": "e30cd22e6957b78d31215e7fd7618e9c72315286ef8e00ed1963e1184a737be7",
+    "transitions-01/section-on.bin": "766865159931772bc45677e4d2f0a23d0ebb2f842b9c28ba37a0abc2068fca6f",
+    "transitions-01/section-on.json": "ee85355c65a8a43a5c2af014b0ab2b1a2b932ab35551922c52a9455ed86e48c4",
+    "transitions-01/start-chorus.bin": "236619f52240500b5356e5dd2b21113b41cc032eb2f2350a215d2b5c5b02704f",
+    "transitions-01/start-chorus.json": "bbe7ad0f7146527e31fc375654467998bcbec9a924f8f6aa93c24a75c5f4357d",
+    "transitions-01/transition-12.bin": "70572472c457cc259f4cefb96f4392abe0e1faa426191a4c32590293511991ea",
+    "transitions-01/transition-12.json": "51bcc129cd1b4a3e50d435193218e5f028ed4aa19682e34c749066884721dfce",
+    "transitions-01/transition-7.bin": "e999fcb5c18edf16d4eb8c866c65f1838c898eb4118503c08cd2083376978683",
+    "transitions-01/transition-7.json": "1ad156c0a9dc8266850d73e62b628bca7287ce9ea3e590c1ca16eaaf0a277f32",
+    "transitions-01/transition-8.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "transitions-01/transition-8.json": "3d5f96d7b702d0fc712e335173d09bcf22862acba9267ea4385c6d08dc9fda21",
+    "transitions-01/transport.log": "426dbc57f6f3ceb71df66acc1c0b76efa40737ad0ee220befdbb2401b560bf46"
+  },
+  "restoration": {
+    "sweep-01": {
+      "bankExact": true,
+      "physicalStateExact": true,
+      "stableDspExact": true,
+      "dspExact": true,
+      "dynamicDifferences": []
+    },
+    "controls-01": {
+      "bankExact": true,
+      "physicalStateExact": true,
+      "stableDspExact": true,
+      "dspExact": true,
+      "dynamicDifferences": []
+    },
+    "transitions-01": {
+      "bankExact": true,
+      "physicalStateExact": true,
+      "stableDspExact": true,
+      "dspExact": false,
+      "dynamicDifferences": [
+        "0xf6e"
+      ]
+    }
+  },
+  "traffic": {
+    "sweep-01": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 1691,
+        "RX-23": 1691,
+        "TX-22": 79,
+        "RX-00": 79
+      },
+      "writes": [
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "00"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "02"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "05"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "06"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "08"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "0c"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        }
+      ],
+      "intentCount": 79,
+      "snapshotsMatchedToUsb": 35,
+      "flashWrites": 0
+    },
+    "controls-01": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 4611,
+        "RX-23": 4611,
+        "TX-22": 129,
+        "RX-00": 129
+      },
+      "writes": [
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "cdcc4c3e"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "cdcccc3e"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "00000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "cdcccc3e"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "bd370637"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "ff050238"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "de1e8438"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "ff050238"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "00000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99593f"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99d93e"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99593f"
+        },
+        {
+          "region": 4,
+          "address": 1612,
+          "data": "cdcccc3d"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1612,
+          "data": "00000000"
+        },
+        {
+          "region": 4,
+          "address": 1600,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1600,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1616,
+          "data": "0000003f"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1616,
+          "data": "0000803f"
+        },
+        {
+          "region": 4,
+          "address": 1644,
+          "data": "0000003f"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1644,
+          "data": "0000803f"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "cdcc4c3e"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "cdcccc3e"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "00000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1604,
+          "data": "cdcccc3e"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "bd370637"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "ff050238"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "de1e8438"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1608,
+          "data": "ff050238"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "00000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99593f"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99d93e"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99593f"
+        },
+        {
+          "region": 4,
+          "address": 1612,
+          "data": "cdcccc3d"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1612,
+          "data": "00000000"
+        },
+        {
+          "region": 4,
+          "address": 1600,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1600,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1616,
+          "data": "0000003f"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1616,
+          "data": "0000803f"
+        },
+        {
+          "region": 4,
+          "address": 1644,
+          "data": "0000003f"
+        },
+        {
+          "region": 5,
+          "address": 2147483653,
+          "data": "74"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "04"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1644,
+          "data": "0000803f"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        }
+      ],
+      "intentCount": 129,
+      "snapshotsMatchedToUsb": 105,
+      "flashWrites": 0
+    },
+    "transitions-01": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 857,
+        "RX-23": 857,
+        "TX-22": 19,
+        "RX-00": 19
+      },
+      "writes": [
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99d93e"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "0c"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99d93e"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99d93e"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "08"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "03"
+        },
+        {
+          "region": 4,
+          "address": 1672,
+          "data": "9a99d93e"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "01"
+        },
+        {
+          "region": 5,
+          "address": 2147483656,
+          "data": "07"
+        },
+        {
+          "region": 5,
+          "address": 2147483659,
+          "data": "00"
+        },
+        {
+          "region": 4,
+          "address": 1660,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1692,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "region": 4,
+          "address": 1724,
+          "data": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "intentCount": 19,
+      "snapshotsMatchedToUsb": 19,
+      "flashWrites": 0
+    }
+  },
+  "speedTable": [
+    {
+      "mod": 0,
+      "depth": 0.4000000059604645,
+      "step": 6.299999949987978e-05,
+      "estimatedHzAt48000": 3.0239999759942293,
+      "mix": 0.8500000238418579,
+      "feedback": 0.0
+    },
+    {
+      "mod": 1,
+      "depth": 0.4000000059604645,
+      "step": 4.999999873689376e-05,
+      "estimatedHzAt48000": 2.3999999393709004,
+      "mix": 0.8500000238418579,
+      "feedback": 0.0
+    },
+    {
+      "mod": 2,
+      "depth": 0.4000000059604645,
+      "step": 3.9999998989515007e-05,
+      "estimatedHzAt48000": 1.9199999514967203,
+      "mix": 0.8500000238418579,
+      "feedback": 0.0
+    },
+    {
+      "mod": 3,
+      "depth": 0.4000000059604645,
+      "step": 3.099999958067201e-05,
+      "estimatedHzAt48000": 1.4879999798722565,
+      "mix": 0.8500000238418579,
+      "feedback": 0.0
+    },
+    {
+      "mod": 4,
+      "depth": 0.4000000059604645,
+      "step": 2.300000051036477e-05,
+      "estimatedHzAt48000": 1.104000024497509,
+      "mix": 0.8500000238418579,
+      "feedback": 0.0
+    },
+    {
+      "mod": 5,
+      "depth": 0.4000000059604645,
+      "step": 1.4999999621068127e-05,
+      "estimatedHzAt48000": 0.7199999818112701,
+      "mix": 0.8500000238418579,
+      "feedback": 0.0
+    },
+    {
+      "mod": 6,
+      "depth": 0.4000000059604645,
+      "step": 7.999999979801942e-06,
+      "estimatedHzAt48000": 0.3839999990304932,
+      "mix": 0.8500000238418579,
+      "feedback": 0.0
+    }
+  ],
+  "trials": [
+    {
+      "cycle": 0,
+      "control": "depth-half",
+      "offset": "0x644",
+      "value": 0.2,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 0,
+      "control": "depth-zero",
+      "offset": "0x644",
+      "value": 0,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 0,
+      "control": "rate-low",
+      "offset": "0x648",
+      "value": 8e-06,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 0,
+      "control": "rate-high",
+      "offset": "0x648",
+      "value": 6.3e-05,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 0,
+      "control": "mix-zero",
+      "offset": "0x688",
+      "value": 0,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 0,
+      "control": "mix-half",
+      "offset": "0x688",
+      "value": 0.425,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 0,
+      "control": "feedback-small",
+      "offset": "0x64c",
+      "value": 0.1,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 0,
+      "control": "wave-triangle",
+      "offset": "0x640",
+      "value": 1,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 0,
+      "control": "wet-filter-gain",
+      "offset": "0x650",
+      "value": 0.5,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 0,
+      "control": "combined-filter-gain",
+      "offset": "0x66c",
+      "value": 0.5,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 1,
+      "control": "depth-half",
+      "offset": "0x644",
+      "value": 0.2,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 1,
+      "control": "depth-zero",
+      "offset": "0x644",
+      "value": 0,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 1,
+      "control": "rate-low",
+      "offset": "0x648",
+      "value": 8e-06,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 1,
+      "control": "rate-high",
+      "offset": "0x648",
+      "value": 6.3e-05,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": false
+    },
+    {
+      "cycle": 1,
+      "control": "mix-zero",
+      "offset": "0x688",
+      "value": 0,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 1,
+      "control": "mix-half",
+      "offset": "0x688",
+      "value": 0.425,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 1,
+      "control": "feedback-small",
+      "offset": "0x64c",
+      "value": 0.1,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 1,
+      "control": "wave-triangle",
+      "offset": "0x640",
+      "value": 1,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 1,
+      "control": "wet-filter-gain",
+      "offset": "0x650",
+      "value": 0.5,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    },
+    {
+      "cycle": 1,
+      "control": "combined-filter-gain",
+      "offset": "0x66c",
+      "value": 0.5,
+      "isolatedPersistedRestored": true,
+      "survivesDifferentChorusMod": true
+    }
+  ],
+  "mapping": {
+    "matchedToUsb": true,
+    "codeSignatures": {
+      "worker": "4b3f852a0f15934beacea107471de2877f89052d3eaef4652bead312a28369aa",
+      "delay-and-phase": "1eb86dcfd8f7d15dfc4bee9fde2641522a88b315d3ddd26040552b19547cd5fb",
+      "waveforms": "78adc5ec3bc6558618428322d2d5d2394a0e9d3d091a32e297bc01572b0697bb",
+      "preset": "cf811d5442a4ecd134f315d7c89f408efcbf363c926ab029db7a790c48d94484",
+      "initialize": "31fa77b842bbc324aa73a921d1a5986d9f8f06de57b4a898adb49db2c4584bd7",
+      "filter-helper": "465961c91038ea88c1490bc3e4cf0dbf9acc3b550e6f096398d37e25bf685b83"
+    }
+  },
+  "transitions": {
+    "phaserThenChorusResets": true,
+    "off7ThenChorusResets": true,
+    "off8ThenChorusResets": true,
+    "sectionOffOnResets": true
+  }
+}

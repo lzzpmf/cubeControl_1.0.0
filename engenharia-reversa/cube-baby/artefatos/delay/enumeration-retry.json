@@ -1,0 +1,21 @@
+{
+  "format": "cubecontrol-delay-enumeration-retry-v1",
+  "date": "2026-10-01",
+  "series": "delay-modulation",
+  "failure": "Portas Cube Baby nao sao unicas.",
+  "stage": "port enumeration, before opening connection",
+  "failedTransportBytes": 0,
+  "failedTransportSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "writesBeforeFailure": 0,
+  "subsequentReadOnlyEnumeration": {
+    "inputs": [
+      "USB-Midi [1]"
+    ],
+    "outputs": [
+      "Microsoft GS Wavetable Synth",
+      "USB-Midi [0]"
+    ]
+  },
+  "action": "Preserved failed empty capture separately; retried in a new capture folder with the same strict uniqueness check.",
+  "cause": "Not established; no driver or matching-rule changes."
+}

@@ -1,0 +1,10 @@
+{
+  "snapshot": {
+    "rejected": true,
+    "reason": "mapping JSON/binary mismatch"
+  },
+  "usb": {
+    "rejected": true,
+    "reason": "Truncated envelope"
+  }
+}

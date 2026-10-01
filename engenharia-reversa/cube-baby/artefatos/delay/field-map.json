@@ -1,0 +1,277 @@
+{
+  "format": "cubecontrol-delay-field-map-v1",
+  "mapping": "cube-baby-delay-live-8347f8-v1",
+  "region": 4,
+  "baseCpu": "0x8347F8",
+  "byteOrder": "little-endian",
+  "scope": "captured paths; absence of reader is not a whole-firmware proof",
+  "fields": [
+    {
+      "offset": "0x694",
+      "length": 1,
+      "type": "uint8",
+      "unit": "state",
+      "classification": "preserve",
+      "allowedRangeOrValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "writersCpu": [
+        "0x831B00",
+        "0x831D18",
+        "0x832DC6",
+        "0x832DE4",
+        "0x832E6C"
+      ],
+      "readersCpu": [
+        "0x832DB0"
+      ],
+      "reset": "section transitions; stable values 0 and 3"
+    },
+    {
+      "offset": "0x695",
+      "length": 1,
+      "type": "uint8",
+      "unit": "reserved",
+      "classification": "preserve",
+      "allowedRangeOrValues": [
+        0
+      ],
+      "writersCpu": [],
+      "readersCpu": [],
+      "reset": "no individual reader/writer in captured paths"
+    },
+    {
+      "offset": "0x696",
+      "length": 2,
+      "type": "int16",
+      "unit": "internal samples",
+      "classification": "fine control",
+      "allowedRangeOrValues": [
+        2400,
+        16350
+      ],
+      "writersCpu": [
+        "0x831C4E"
+      ],
+      "readersCpu": [
+        "0x832E7A",
+        "0xC13C50"
+      ],
+      "reset": "TIME change and section reload"
+    },
+    {
+      "offset": "0x698",
+      "length": 4,
+      "type": "float32",
+      "unit": "feedback multiplier",
+      "classification": "fine control",
+      "allowedRangeOrValues": [
+        0,
+        0.9921875
+      ],
+      "writersCpu": [
+        "0x831CDA"
+      ],
+      "readersCpu": [
+        "0x832FFC"
+      ],
+      "reset": "feedback change and section reload"
+    },
+    {
+      "offset": "0x69C",
+      "length": 4,
+      "type": "float32",
+      "unit": "fraction of current delay",
+      "classification": "extra control",
+      "allowedRangeOrValues": [
+        0,
+        0.1
+      ],
+      "writersCpu": [
+        "0x831D00"
+      ],
+      "readersCpu": [
+        "0x832E8E",
+        "0x832EBC",
+        "0x832F5E"
+      ],
+      "reset": "section initialization writes 0.1"
+    },
+    {
+      "offset": "0x6A0",
+      "length": 4,
+      "type": "float32",
+      "unit": "phase advance factor / current delay",
+      "classification": "extra control",
+      "allowedRangeOrValues": [
+        0,
+        0.01
+      ],
+      "writersCpu": [
+        "0x831CFA"
+      ],
+      "readersCpu": [
+        "0x832E0A"
+      ],
+      "reset": "section initialization writes 0.01"
+    },
+    {
+      "offset": "0x6A4",
+      "length": 20,
+      "type": "5 float32",
+      "unit": "biquad 1 coefficients",
+      "classification": "candidate; preserve",
+      "allowedRangeOrValues": null,
+      "writersCpu": [
+        "0x831D04",
+        "0x831D08"
+      ],
+      "readersCpu": [
+        "0x80A8C0"
+      ],
+      "reset": "copied on section initialization"
+    },
+    {
+      "offset": "0x6B8",
+      "length": 8,
+      "type": "2 float32",
+      "unit": "unused in captured filter loop",
+      "classification": "preserve",
+      "allowedRangeOrValues": [
+        0
+      ],
+      "writersCpu": [
+        "0x831D08"
+      ],
+      "readersCpu": [],
+      "reset": "copied on section initialization; skipped by 0x80A8E4"
+    },
+    {
+      "offset": "0x6C0",
+      "length": 20,
+      "type": "5 float32",
+      "unit": "biquad 2 coefficients",
+      "classification": "candidate; preserve",
+      "allowedRangeOrValues": null,
+      "writersCpu": [
+        "0x831D08",
+        "0x831D0C"
+      ],
+      "readersCpu": [
+        "0x80A8C0"
+      ],
+      "reset": "copied on section initialization"
+    },
+    {
+      "offset": "0x6D4",
+      "length": 8,
+      "type": "2 float32",
+      "unit": "unused in captured filter loop",
+      "classification": "preserve",
+      "allowedRangeOrValues": [
+        0
+      ],
+      "writersCpu": [
+        "0x831D12"
+      ],
+      "readersCpu": [],
+      "reset": "copied on section initialization; skipped by 0x80A8E4"
+    },
+    {
+      "offset": "0x6DC",
+      "length": 4,
+      "type": "float32",
+      "unit": "mix curve input",
+      "classification": "fine control",
+      "allowedRangeOrValues": [
+        0,
+        0.921875
+      ],
+      "writersCpu": [
+        "0x831CDA"
+      ],
+      "readersCpu": [
+        "0x832E0E"
+      ],
+      "reset": "MIX change and section reload"
+    }
+  ],
+  "externalStates": [
+    {
+      "cpu": "0x80FF84",
+      "length": 2,
+      "type": "uint16",
+      "role": "smoothed time",
+      "reset": "target time on initialization",
+      "range": [
+        2400,
+        16350
+      ]
+    },
+    {
+      "cpu": "0x80FF86",
+      "length": 32768,
+      "type": "int16[16384]",
+      "role": "fixed audio ring",
+      "reset": "zero on initialization"
+    },
+    {
+      "cpu": "0x817F86",
+      "length": 2,
+      "type": "int16",
+      "role": "write index",
+      "reset": "zero on initialization",
+      "range": [
+        0,
+        16383
+      ]
+    },
+    {
+      "cpu": "0x817F88",
+      "length": 32,
+      "type": "float32[8]",
+      "role": "biquad histories",
+      "reset": "zero on initialization"
+    },
+    {
+      "cpu": "0x817FA8",
+      "length": 2,
+      "type": "int16",
+      "role": "previous wet output",
+      "reset": "zero on initialization"
+    },
+    {
+      "cpu": "0x817FAC",
+      "length": 4,
+      "type": "float32",
+      "role": "oscillator phase",
+      "reset": "zero on initialization",
+      "range": [
+        0,
+        1
+      ]
+    },
+    {
+      "cpu": "0x817FB0",
+      "length": 20,
+      "type": "mixed filter state",
+      "role": "input decimator history",
+      "reset": "zero on initialization"
+    },
+    {
+      "cpu": "0x81823C",
+      "capturedLength": 20,
+      "type": "float32 scratch",
+      "role": "decimated input block; historical capture name input-state.bin",
+      "reset": "overwritten by input-filter each block"
+    }
+  ],
+  "externalStateWritesAllowed": false,
+  "pointerFieldsInDelayStructure": [],
+  "audioValidation": "pending"
+}

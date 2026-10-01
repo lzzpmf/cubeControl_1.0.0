@@ -88,7 +88,7 @@ public sealed class MusicalPresetViewModel : Observable
         ChooseChorus = new UiCommand(() => Select(ModulationKind.Chorus));
         ChoosePhaser = new UiCommand(() => Select(ModulationKind.Phaser));
         ModulationDial = new("Ajuste", "Sete posições do efeito selecionado.", 1, 7, () => Modulation.Position, v => { var raw = Modulation.Adjust((int)v); if (raw.HasValue) parameters[8].Value = raw.Value; Refresh(); });
-        ReverbDial = new("Mistura", "Enquanto desligado, prepara o ajuste para a próxima ativação.", 1, 15, () => Reverb.Amount, v => { var raw = Reverb.Adjust((int)v); if (raw.HasValue) parameters[3].Value = raw.Value; Refresh(); });
+        ReverbDial = new("Quantidade", "Enquanto desligado, prepara o ajuste para a próxima ativação.", 1, 15, () => Reverb.Amount, v => { var raw = Reverb.Adjust((int)v); if (raw.HasValue) parameters[3].Value = raw.Value; Refresh(); });
         parameters[8].PropertyChanged += (_, e) => { if (e.PropertyName == nameof(ParameterViewModel.Value)) { Modulation.Load((int)parameters[8].Value); Refresh(); } };
         parameters[3].PropertyChanged += (_, e) => { if (e.PropertyName == nameof(ParameterViewModel.Value)) { Reverb.Load((int)parameters[3].Value); Refresh(); } };
         Modulation.Load((int)parameters[8].Value); Reverb.Load((int)parameters[3].Value); Refresh();

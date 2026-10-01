@@ -12,6 +12,10 @@ Esta pasta reúne a investigação do Cube Baby de guitarra. Os relatórios comb
 | [Investigação dos amps](CUBE_BABY_AMPS.md) | Diário de ensaios, escrita/restauração e protótipos RV01–RV06 |
 | [Tabelas originais](CUBE_BABY_AMPS_FABRICA.md) | Extração dos nove setores, bytes, float32 e hashes |
 | [Controles e escuta](CUBE_BABY_AMPS_CONTROLES_E_ESCUTA.md) | Mapeamento de controles e observações musicais |
+| [Phaser e criador experimental](CUBE_BABY_PHASER.md) | Firmware, controles independentes, ensaios USB sem guitarra e recuperação RAM |
+| [Chorus e criador experimental](CUBE_BABY_CHORUS.md) | Sete controles, prévia RAM, recuperação, arquivos locais e ensaios sem guitarra |
+| [Reverb e criador experimental](CUBE_BABY_REVERB.md) | Cinco ajustes independentes, tabelas, modelo estrutural, prévia RAM e ensaios sem guitarra |
+| [Delay e criador experimental](CUBE_BABY_DELAY.md) | Modulação temporal interna, tempo fino, modelo estrutural, prévia RAM e evidências USB |
 
 ## Artefatos preservados
 

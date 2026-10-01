@@ -209,7 +209,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             e.Cancel = true;
             if (Model.Busy) { await ShowNoticeAsync("Aguarde a operação terminar antes de fechar."); return; }
             if (Model.Dirty && !await Model.Ask("Há ajustes aplicados que não foram salvos. Fechar o editor?")) return;
-            try { await Model.Flush(); await Model.EndPreviewAsync(); }
+            try { await Model.Flush(); await Model.EndDelayPreviewAsync(); await Model.EndReverbPreviewAsync(); await Model.EndChorusPreviewAsync(); await Model.EndPhaserPreviewAsync(); await Model.EndPreviewAsync(); }
             catch (Exception ex)
             {
                 if (!await Model.Ask(ex.Message + "\nFechar mesmo assim? Os backups permanecem no computador.")) return;

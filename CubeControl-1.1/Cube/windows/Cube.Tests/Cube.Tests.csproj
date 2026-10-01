@@ -1,4 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
   <ItemGroup><ProjectReference Include="../Cube.Protocol/Cube.Protocol.csproj" /></ItemGroup>
+  <ItemGroup><None Update="Fixtures/phaser-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><None Update="Fixtures/chorus-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><None Update="Fixtures/reverb-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><None Update="Fixtures/delay-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>

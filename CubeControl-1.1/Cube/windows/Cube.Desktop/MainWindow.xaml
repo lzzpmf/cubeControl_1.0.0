@@ -1,4 +1,5 @@
 <ui:FluentWindow x:Class="Cube.Desktop.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:loc="clr-namespace:Cube.Desktop.Localization" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:local="clr-namespace:Cube.Desktop.Controls"
+ xmlns:views="clr-namespace:Cube.Desktop.Views"
  Icon="{DynamicResource CubeWindowIcon}" Title="CubeControl" Width="1280" Height="720" MinWidth="640" MinHeight="480" Background="{DynamicResource CubeWindowBackground}" Foreground="{DynamicResource CubeText}" FontFamily="{DynamicResource CubeUiFont}" FontSize="14" WindowStartupLocation="CenterScreen" ExtendsContentIntoTitleBar="True" UseLayoutRounding="True">
  <ui:FluentWindow.Resources>
   <!-- Adapted from WPF UI InfoBar (MIT, WPF UI Contributors): expose the action content. -->
@@ -352,6 +353,10 @@
          <TextBlock Text="{loc:Translate Value={Binding Stage.Subtitle}}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/>
          <TextBlock Text="{loc:Translate Value={Binding EffectHint}}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,8,0,20" MaxWidth="620" HorizontalAlignment="Left" Style="{StaticResource BodyText}"/>
          <ItemsControl IsEnabled="{Binding CanEdit}" ItemsSource="{Binding EditorDials}" ItemTemplate="{StaticResource DialTemplate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel></ItemsControl>
+         <views:PhaserEditor><views:PhaserEditor.Style><Style TargetType="views:PhaserEditor"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedStage}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></views:PhaserEditor.Style></views:PhaserEditor>
+         <views:ReverbEditor><views:ReverbEditor.Style><Style TargetType="views:ReverbEditor"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedStage}" Value="4"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></views:ReverbEditor.Style></views:ReverbEditor>
+         <views:DelayEditor><views:DelayEditor.Style><Style TargetType="views:DelayEditor"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedStage}" Value="3"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></views:DelayEditor.Style></views:DelayEditor>
+         <views:ChorusEditor><views:ChorusEditor.Style><Style TargetType="views:ChorusEditor"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedStage}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></views:ChorusEditor.Style></views:ChorusEditor>
          <Grid x:Name="EffectVisualizationBand" Height="144" Margin="0,16,0,0" Background="Transparent" ToolTip="{loc:Translate Text='O desenho acompanha os ajustes e ilustra o efeito; não representa uma medição do áudio.'}">
           <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers>
            <DataTrigger Binding="{Binding IsModulation}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>

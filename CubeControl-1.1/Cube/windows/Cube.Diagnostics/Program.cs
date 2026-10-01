@@ -2,6 +2,30 @@ using Cube.Protocol;
 using Cube.Usb;
 using System.Text.Json;
 
+if (args.Length > 0 && args[0].StartsWith("delay-", StringComparison.Ordinal))
+{
+    await DelayResearch.Run(args);
+    return;
+}
+
+if (args.Length > 0 && args[0].StartsWith("reverb-", StringComparison.Ordinal))
+{
+    await ReverbResearch.Run(args);
+    return;
+}
+
+if (args.Length > 0 && args[0] is "chorus-map" or "chorus-sweep" or "chorus-controls" or "chorus-transitions")
+{
+    await ChorusResearch.Run(args);
+    return;
+}
+
+if (args.Length > 0 && args[0] is "phaser-snapshot" or "phaser-map" or "phaser-sweep" or "phaser-controls")
+{
+    await PhaserResearch.Run(args);
+    return;
+}
+
 var inputs = await WindowsMidiConnection.Inputs();
 var outputs = await WindowsMidiConnection.Outputs();
 Console.WriteLine(JsonSerializer.Serialize(new { inputs, outputs }, new JsonSerializerOptions { WriteIndented = true }));

@@ -27,7 +27,7 @@ Detalhes da conexão ficam no menu de reticências e na área de ajuda. Desconec
 | Reler/reconectar | Obtém o estado do pedal; observe os avisos sobre substituição e backups da edição |
 | Desfazer | Reverte ajustes do histórico de presets; não desfaz gravações de setores de IR/amp |
 
-Para ouvir o preset que está editando, selecione o correspondente no pedal. O monitoramento experimental dos footswitches não é iniciado na aplicação atual. A leitura do banco pode refletir alterações live; leitura de retorno não equivale a comprovação de retenção após desligar.
+Para ouvir o preset que está editando, selecione o correspondente no pedal. As prévias experimentais de chorus e phaser conferem o contexto físico, mas não há acompanhamento geral dos footswitches fora delas. A leitura do banco pode refletir alterações live; leitura de retorno não equivale a comprovação de retenção após desligar.
 
 ## Pedaleira e gabinetes
 
@@ -40,6 +40,22 @@ A cadeia visual contém Amp, Chorus, Phaser, Delay, Reverb e Cabinet. Clicar em 
 - Nomes comerciais e fotos são referências de apresentação. O conteúdo de um slot pode ter sido substituído; veja o [catálogo](ampsEirs.md).
 
 **Associar gabinete** aplica ao preset editado a associação configurada para o amp. **Associação automática** começa desligada e é persistida localmente; quando ligada, tenta aplicar a associação ao amp atual e nas escolhas seguintes. Sem associação válida, preserva o gabinete. A seção IR mantém seu estado ligado/desligado. Salvar A/B/C continua sendo necessário para persistir a seleção no pedal.
+
+## Criador de chorus experimental
+
+No card **Chorus**, abra **Criador de chorus · experimental**. Ative o chorus no preset físico, em modo PRESET, selecione o mesmo A/B/C no aplicativo e use **Ler chorus ativo**. O editor oferece profundidade, velocidade, mistura, realimentação, forma de onda e dois ganhos. A validação sonora permanece pendente; a mistura em 100% mantém a configuração original e não significa somente efeito.
+
+Os ajustes são enviados à RAM e conferidos por leitura. Use **Restaurar chorus** para voltar à referência. Enquanto a prévia estiver ativa, a edição comum dos presets e as prévias de phaser, amp e IR ficam bloqueadas. Desconectar, reler ou fechar normalmente também tenta restaurar. Trocas físicas e recargas externas interrompem a prévia.
+
+Arquivos `.chorus.json` ficam no computador: importar prepara a edição; **Aplicar ajustes** envia à prévia ativa; exportar salva os sete parâmetros. Esses arquivos não são gravados na flash pelo editor. Se uma prévia for interrompida, o aplicativo preserva o backup e pede restauração ao reconectar, sem reaplicar automaticamente. Veja [limites, evidências e recuperação](../../../engenharia-reversa/cube-baby/CUBE_BABY_CHORUS.md).
+
+## Criador de reverb experimental
+
+No card **Reverb**, abra **Criador de reverb · experimental**. Ative reverb e seção reverb/cabinet, desligue a modulação e selecione o mesmo preset físico A/B/C em modo PRESET. Use **Ler reverb ativo** para iniciar a prévia.
+
+O editor separa sinal direto, sinal reverberado, realimentação, retorno das linhas e amortecimento. O controle original **Quantidade** combina realimentação e ganho reverberado. As unidades do criador não representam tempo de cauda ou frequência medidos; a validação sonora ainda está pendente.
+
+Use **Restaurar reverb** antes de voltar à edição comum ou a outras prévias. Arquivos `.reverb.json` ficam no computador: importar prepara os ajustes e **Aplicar ajustes** envia à prévia ativa. Desligar/religar o efeito perde a personalização. Desconexão, releitura e fechamento normais tentam restaurar; interrupções preservam backup para recuperação explícita, sem reaplicar automaticamente. Não há gravação desses controles na flash. Veja [evidências, limites e recuperação](../../../engenharia-reversa/cube-baby/CUBE_BABY_REVERB.md).
 
 ## IRs: biblioteca, prévia e gravação
 
@@ -54,6 +70,16 @@ A biblioteca incluída contém 276 WAVs e funciona offline. Também é possível
 O desenho da onda pode ampliar a visualização sem normalizar o áudio. Os [detalhes de formato e recuperação](cubecontrol-ir-e-fabrica.md) distinguem o bloco RAM do setor flash.
 
 Uma prévia de IR interrompida mantém `pending-ir-preview.json` na pasta de dados. Reconecte o aparelho correspondente e encerre a prévia antes de remover esse arquivo. Uma desconexão durante gravação flash exige conferir o resultado e usar o backup quando necessário.
+
+## Criador de delay experimental
+
+Abra **Delay → Criador de delay · experimental**. Ative a seção delay/modulação, desligue chorus/phaser, selecione no aplicativo o mesmo A/B/C físico e use **Ler delay ativo**. O criador oferece profundidade e velocidade de modulação temporal, tempo em amostras internas e resolução fina de feedback/mistura.
+
+Profundidade e velocidade são percentuais do original. Profundidade zero elimina a oscilação temporal; velocidade zero congela sua fase. A velocidade efetiva depende do tempo. Mistura interna 50 mantém direto e eco integrais; não é uma soma complementar de porcentagens. A conversão do tempo para milissegundos continua sem medição por áudio.
+
+A prévia altera somente RAM e bloqueia edições concorrentes de presets, amps, IRs e outros criadores. **Restaurar delay**, releitura, desconexão e fechamento normal tentam restaurar e conferir a referência. Em falha, preserve `pending-delay-preview.json` e os backups de `DelayRecovery/`; após recuperar, releia ou reconecte antes de iniciar outra prévia.
+
+Arquivos `.delay.json` guardam a edição no computador. Importar não envia ao pedal; **Aplicar ajustes** envia à prévia ativa. Não há salvamento em flash nem prévia física na simulação. A avaliação sonora permanece pendente. Veja o [relatório e as evidências](../../../engenharia-reversa/cube-baby/CUBE_BABY_DELAY.md).
 
 ## Criador de amps e Backing Tracks
 

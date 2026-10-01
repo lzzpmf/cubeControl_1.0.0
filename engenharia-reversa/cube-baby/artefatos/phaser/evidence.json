@@ -1,0 +1,1136 @@
+{
+  "format": "cubecontrol-phaser-evidence-v1",
+  "archiveSha256": "10324773859b09fe949008d22eb6fbc7fd4a673797429500f341fa6f77cda985",
+  "speedTable": [
+    {
+      "mod": 9,
+      "step": 9.999999747378752e-06
+    },
+    {
+      "mod": 10,
+      "step": 1.9999999494757503e-05
+    },
+    {
+      "mod": 11,
+      "step": 2.9999999242136255e-05
+    },
+    {
+      "mod": 12,
+      "step": 4.999999873689376e-05
+    },
+    {
+      "mod": 13,
+      "step": 7.999999797903001e-05
+    },
+    {
+      "mod": 14,
+      "step": 9.999999747378752e-05
+    },
+    {
+      "mod": 15,
+      "step": 0.00013000000035390258
+    }
+  ],
+  "restoration": {
+    "sweep-01": {
+      "bankExact": true,
+      "physicalStateExact": true,
+      "stableDspExact": true,
+      "dynamicDifferences": [
+        "0xF6E"
+      ],
+      "bankHex": "02030600297414000703010001000000040205052c46171e070501010100000001070705346f140c0502010101000000"
+    },
+    "controls-01": {
+      "bankExact": true,
+      "physicalStateExact": true,
+      "stableDspExact": true,
+      "dynamicDifferences": [],
+      "bankHex": "02030600297414000703010001000000040205052c46171e070501010100000001070705346f140c0502010101000000"
+    }
+  },
+  "trials": [
+    {
+      "cycle": 0,
+      "control": "step-low",
+      "values": [
+        9.999999747378752e-06,
+        9.999999747378752e-06,
+        4.999999873689376e-05
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 0,
+      "control": "step-high",
+      "values": [
+        0.00013000000035390258,
+        0.00013000000035390258,
+        4.999999873689376e-05
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 0,
+      "control": "lower",
+      "values": [
+        1000.0,
+        1000.0,
+        300.0
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 0,
+      "control": "upper",
+      "values": [
+        2000.0,
+        2000.0,
+        3000.0
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 0,
+      "control": "level",
+      "values": [
+        0.3199999928474426,
+        0.3199999928474426,
+        0.6399999856948853
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 0,
+      "control": "sections-one",
+      "values": [
+        0,
+        0,
+        2
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 0,
+      "control": "sections-two",
+      "values": [
+        1,
+        1,
+        2
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 1,
+      "control": "step-low",
+      "values": [
+        9.999999747378752e-06,
+        9.999999747378752e-06,
+        4.999999873689376e-05
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 1,
+      "control": "step-high",
+      "values": [
+        0.00013000000035390258,
+        0.00013000000035390258,
+        4.999999873689376e-05
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 1,
+      "control": "lower",
+      "values": [
+        1000.0,
+        1000.0,
+        300.0
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 1,
+      "control": "upper",
+      "values": [
+        2000.0,
+        2000.0,
+        3000.0
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 1,
+      "control": "level",
+      "values": [
+        0.3199999928474426,
+        0.3199999928474426,
+        0.6399999856948853
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 1,
+      "control": "sections-one",
+      "values": [
+        0,
+        0,
+        2
+      ],
+      "isolatedAndRestored": true
+    },
+    {
+      "cycle": 1,
+      "control": "sections-two",
+      "values": [
+        1,
+        1,
+        2
+      ],
+      "isolatedAndRestored": true
+    }
+  ],
+  "traffic": {
+    "baseline-01/transport.log": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 1,
+        "RX-23": 1
+      },
+      "writes": [],
+      "flashWrites": 0
+    },
+    "baseline-02/transport.log": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 153,
+        "RX-23": 153
+      },
+      "writes": [],
+      "flashWrites": 0
+    },
+    "mapping-01/transport.log": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 14,
+        "RX-23": 14
+      },
+      "writes": [],
+      "flashWrites": 0
+    },
+    "mapping-02/transport.log": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 205,
+        "RX-23": 205
+      },
+      "writes": [],
+      "flashWrites": 0
+    },
+    "sweep-01/transport.log": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 2167,
+        "RX-23": 2167,
+        "TX-22": 86,
+        "RX-00": 86
+      },
+      "writes": [
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        }
+      ],
+      "flashWrites": 0
+    },
+    "controls-01/transport.log": {
+      "counts": {
+        "TX-11": 1,
+        "RX-11": 1,
+        "TX-23": 4344,
+        "RX-23": 4344,
+        "TX-22": 51,
+        "RX-00": 51
+      },
+      "writes": [
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x64C",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x64C",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x650",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x650",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x654",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x654",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x644",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x64C",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x64C",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x650",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x650",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x654",
+          "length": 4
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x654",
+          "length": 4
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000005",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x641",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        },
+        {
+          "region": 4,
+          "address": "0x67C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x69C",
+          "length": 32
+        },
+        {
+          "region": 4,
+          "address": "0x6BC",
+          "length": 32
+        },
+        {
+          "region": 5,
+          "address": "0x80000008",
+          "length": 1
+        },
+        {
+          "region": 5,
+          "address": "0x8000000B",
+          "length": 1
+        }
+      ],
+      "flashWrites": 0
+    }
+  },
+  "sha256": {
+    "baseline-01/transport.log": "23ec1889ffc2ee21191f2fe48f89b4c1961a027364261abfeb4e6caaa378b7c5",
+    "baseline-02/bank-0.bin": "1175b60eaab558dedcedef9b9ab96ff67dd77fc8754caaaec1ed87977d9a51af",
+    "baseline-02/bank-1.bin": "1175b60eaab558dedcedef9b9ab96ff67dd77fc8754caaaec1ed87977d9a51af",
+    "baseline-02/bank-2.bin": "1175b60eaab558dedcedef9b9ab96ff67dd77fc8754caaaec1ed87977d9a51af",
+    "baseline-02/dsp-0.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "baseline-02/dsp-1.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "baseline-02/dsp-2.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "baseline-02/report.json": "a75befd91513dae1a9406011dac34f2d27aa6041b554e11aa25af2c396ca7afe",
+    "baseline-02/transport.log": "14ffc82d388a74cb24834ce2d7e9241499ff509b69d833423234b6f6c5fe7b24",
+    "controls-01/0-level-delayed.bin": "97709698613fdcaaba3d0245f37db22e47d7c103a5aeb0c1260be63257daadf4",
+    "controls-01/0-level-delayed.json": "8ae33f06bd7220401bd5f7565615ba9ff807bc7722777584cfd96f3482a5086f",
+    "controls-01/0-level-immediate.bin": "17f000a709f3bb4c97b1e2bf540938e4efa1c717824d9d52063bbd9babe2e4f8",
+    "controls-01/0-level-immediate.json": "232039b11d0217488f9eae26b789357b676bd6d61409f5987765c94402766551",
+    "controls-01/0-level-restored.bin": "37601be59785ab6ca8b6ebc8826d9fb00afc3908037286bf8aa41f55740a317a",
+    "controls-01/0-level-restored.json": "1fc301c4543cb9868838f6a089f901dc3e1b84b1fec2ea3f81a06aa8904952e8",
+    "controls-01/0-lower-delayed.bin": "044f8acffee16584e2f5afffe479b03c6d21a5ec4f127d33b9150bc3d0bcaac8",
+    "controls-01/0-lower-delayed.json": "0119aabb67a44ec64e58e1fb4f27074b289c6524c9d422cd4e1fb06dc903b00b",
+    "controls-01/0-lower-immediate.bin": "b09d99900b0c8443f5b6f3ba90c63ad65830df72190f7c5df798ac9dae37f956",
+    "controls-01/0-lower-immediate.json": "d67f0a0f423919f3958b08ffcfc18a187f4ebdf26aa8201c28f69d996b88c4dd",
+    "controls-01/0-lower-restored.bin": "131baac0976278147d61588993eb71806eba051fd93058a4f5f05cc05d5c4d04",
+    "controls-01/0-lower-restored.json": "27bf7800822135739814d6448979d65a193c3e9304a63a3aa6c75adef3be13f0",
+    "controls-01/0-sections-one-delayed.bin": "65a18a6d544adc3263896c07082dbd5eb45ad6ce16b0c9790628486da35097a9",
+    "controls-01/0-sections-one-delayed.json": "dfe0cdd2a58ce5aa48b5071ab89ae6081dcf5f804617e71d11ffbc7562e769ba",
+    "controls-01/0-sections-one-immediate.bin": "4e0897408e127759ead2d3f5d6a6f4bf31b1828eddd9bc66d400d7555e1dd771",
+    "controls-01/0-sections-one-immediate.json": "16d8d8fe45bbfd4f6377f7fe7632969bd2e182cfed6f23c84e7ca3d28a8b411d",
+    "controls-01/0-sections-one-restored.bin": "246109442d23502f994642aef3969d8621a42b108c5e4658a0dd698f78fe385b",
+    "controls-01/0-sections-one-restored.json": "f1245172d189b00d41a2562f3d8c25c300b067c5a3998480ad4bd0b607d5f78b",
+    "controls-01/0-sections-two-delayed.bin": "101f4534ad7ddb55b6a63bd6bd01b1375859b5bfe528f0be0c9d431dcc9916ed",
+    "controls-01/0-sections-two-delayed.json": "1ee3aa7da9a9e2aae4bc19152bdd9d02c50bdfdfa5e44e7fb0b8b16dc20cb401",
+    "controls-01/0-sections-two-immediate.bin": "43a3c162c80a4db55b5f674bd549add05d9e6d5289f622b4011d4d162206bcf6",
+    "controls-01/0-sections-two-immediate.json": "b43cff0e474c8da5bfd471c60a23dd9393b732912cf48a7bd20c910298013a6a",
+    "controls-01/0-sections-two-restored.bin": "7443a64b72b51cb64506f0aa70d338c249a2c9f8040ec1f6a14c2a3fef492df0",
+    "controls-01/0-sections-two-restored.json": "0a8a269947b6758b7e523248168f7ec9ebba0562c7ed66ee5617b00b26b5edfc",
+    "controls-01/0-step-high-delayed.bin": "347823662cadc6a539bbd251007a32d8d58692968b2511b950d6b63e38b9f804",
+    "controls-01/0-step-high-delayed.json": "dfd669887c5a2d6f6b03b5583b0d278f3ec12a3a881eda07e1152a150980c54d",
+    "controls-01/0-step-high-immediate.bin": "bbc1c41370db41ad1fcd77b253197b65a03b4ff89f2b3a27831318548c7ae96f",
+    "controls-01/0-step-high-immediate.json": "ee136708c403792e5a13874cff53e7e95df245812f56edc12525f3a58ffb79dc",
+    "controls-01/0-step-high-restored.bin": "2c91ee5339b3267a34a5137d8446d1d27136f7d3ba9086dc3d69a17ca6e0f55e",
+    "controls-01/0-step-high-restored.json": "42bb6e9cc43f7d68a758069f8904177c398a0ddb8b97ea13c9011b84db757a6f",
+    "controls-01/0-step-low-delayed.bin": "89fa61e6488e0ce8960857599f772bd755d216e6fbcdd0c8e80607e1531e262c",
+    "controls-01/0-step-low-delayed.json": "429c16548ed91988418ed771d9c2430779cceb5a7b133f1e36ede51026b4de08",
+    "controls-01/0-step-low-immediate.bin": "d612bcc3ecc6d33a1f3bc2a909efca867dfbb98dc7572db4986a18363adb01d0",
+    "controls-01/0-step-low-immediate.json": "d833f4b182b658fd78a86d8617d4eef9bd02395fb52ddda0cf14f2ba6a20273e",
+    "controls-01/0-step-low-restored.bin": "c4b8c023d5a4d23b5daf7fa002d91c7e0c8a14a8bf63227bbfa5b29da9f1c36c",
+    "controls-01/0-step-low-restored.json": "52e9f2016a2cb2ff702c963ef6244dc31455891223ecc03864b0f92da330812f",
+    "controls-01/0-upper-delayed.bin": "b4759ff65e7f09b38c9bbe7379086fb98edc30e7d72dd99ac678ef2e8cc74131",
+    "controls-01/0-upper-delayed.json": "a4335c08652131db6a7f569bf5928b3461b7932b08cb8b2ad3cc4bc91b43fc4e",
+    "controls-01/0-upper-immediate.bin": "a3139413549ffe8092c40ba24c5167da7e3b655c7247df994e4e253efb416ad0",
+    "controls-01/0-upper-immediate.json": "98216025089004e8757bdbe9540d0d68c3b9ff65d006adfb5b02d2e9095ee734",
+    "controls-01/0-upper-restored.bin": "3138316cbdb7573a7efef4a78f678e0dd3515aea9de394c43cdc16b4e437acde",
+    "controls-01/0-upper-restored.json": "cdf006d0568d5f964add7f657f35010e73dc3609887774f32e85a75688a932ff",
+    "controls-01/1-level-delayed.bin": "ea659bccacd27b727cf35ea2e7ea078039bc48ff92e28cc47dd53c0587e2e2ff",
+    "controls-01/1-level-delayed.json": "988c2d158d886c60147a1bb2d6ae3a935b8a45e8bd4e4d324b35aa3ed38f7b32",
+    "controls-01/1-level-immediate.bin": "0e4a498c54bf33aa7f1804ff2c03676ab0639c83852881fa5c9285df507884d8",
+    "controls-01/1-level-immediate.json": "d0281aa1aef0791fb15c2cb0f186dbf53ccba51be3afab70a1cec076dd1fa2d1",
+    "controls-01/1-level-restored.bin": "6ce5413421ed18c10fcb09d308b10a9cc7702bb075fd8bc30a2daa26aa080456",
+    "controls-01/1-level-restored.json": "51c3873a06430713c28dd9b213ff1b270c192bb8d85c1d100ca9172e9d1a53a1",
+    "controls-01/1-lower-delayed.bin": "b72e5543e6249ac9885ac5b892a40a648189c1fc17264afa43eec57d322fd81a",
+    "controls-01/1-lower-delayed.json": "2d5c962818348a0c50a781432a07b8b72f36b86a37125f9d4c2d2cbe6d61e47a",
+    "controls-01/1-lower-immediate.bin": "d1c329161a49d42d179bfdc48d86afc9b13fd742236e940ead10a3a58f762e1a",
+    "controls-01/1-lower-immediate.json": "d32723b2b6b2a959d4ca03ed8c5ad8ab20b4ebfaa1d1629e96de4232dd367bf4",
+    "controls-01/1-lower-restored.bin": "d96eb74030596710aaecf1058c7faf1560443fd66faea1e900328eba4557bf8a",
+    "controls-01/1-lower-restored.json": "2a23056aa915c1640f76581275b19dcd9f564eb38eba99b87dc9268e03621167",
+    "controls-01/1-sections-one-delayed.bin": "d18175234788c3c9403fd200ebb81034d22fc72051862824c4dc8cd9fb529b3c",
+    "controls-01/1-sections-one-delayed.json": "9ea547da204edbd55e73f90bc8480e9c9d9becb4ff8ddb9a6a598ce38e262e8c",
+    "controls-01/1-sections-one-immediate.bin": "c43198f63f18214dafc9df092abb03f5a611a60e0590c695a088024d932be5dc",
+    "controls-01/1-sections-one-immediate.json": "dc501f7ed1d82ed10d0a8302dbb6d912001dce5a8f4cc350cc76be77650b8921",
+    "controls-01/1-sections-one-restored.bin": "19eb818c9349b5fda06607336a3dadd9122e8e7defa67cb4fa13bcbe2d9abcf1",
+    "controls-01/1-sections-one-restored.json": "0736ef6f6c23d17031cb3c0cae1c4e4b99c0b8498140c0449499bf123f51f68e",
+    "controls-01/1-sections-two-delayed.bin": "0f51f35535c20dd895ab67d7cdf6f0c0a26bd5f5ddc67bfa2b3342ce9d9cd580",
+    "controls-01/1-sections-two-delayed.json": "6b153697eb68722ca917bd207512d717c6e5bc6f1aa884cade99af6de5c547f9",
+    "controls-01/1-sections-two-immediate.bin": "cfdfcc1ca7fa0a5d65cc3c6a8eb01174af97597ae58587607d6a7f209ce7899c",
+    "controls-01/1-sections-two-immediate.json": "07168e33ea04e532a3e422ad783e3e3467d24b7e73343c13ce4960a8a2c8a779",
+    "controls-01/1-sections-two-restored.bin": "992cff71185cfeceb69a7d5fa7b2ff7b9c7e582403b4b77fa929e0ec5740332c",
+    "controls-01/1-sections-two-restored.json": "708ba573b5c6ce1baf885a4c67b3180e63d7f09821d0f0e2aa0e57ab73854bc7",
+    "controls-01/1-step-high-delayed.bin": "a48da34da051201e130169b0f184ce6992c4d2cc13f50da33aba6a225eea9f1c",
+    "controls-01/1-step-high-delayed.json": "8edbb52c06c48abb05a3f32622d046e1b2e049a682bc01052703fd5c06b05c6e",
+    "controls-01/1-step-high-immediate.bin": "8787f642733f8781cde7bcd3a23582a61c7ebbf9907cf3bcc46ffec43720a488",
+    "controls-01/1-step-high-immediate.json": "852e2061f86bdf53c06ec3095336a78a89e41481d059ddccc9cd758284b88749",
+    "controls-01/1-step-high-restored.bin": "7c777c2450181f58fe65e69ca65b55add9870fc601febace4bb94c8007989123",
+    "controls-01/1-step-high-restored.json": "044c2e0359403a253a0588870bbc98d9c669fb545978ca2ec1974f1fb15f6afb",
+    "controls-01/1-step-low-delayed.bin": "18ea05422dd328f30cc9707208ef584cba0dd81dce4625568cff1c8332f2f999",
+    "controls-01/1-step-low-delayed.json": "bf79c49720788d4f20e8c9a2c8587a8aa6f7b8af84629696fe1da8a922d77a22",
+    "controls-01/1-step-low-immediate.bin": "6c2b203ecddbda208e395eb1ce6a518316d78788e5fa9f9d5f4e1897ee0875f9",
+    "controls-01/1-step-low-immediate.json": "12a2a83cf3159d232a67e965ba060b7be4797ee749150ffc5fadf67a4fb168aa",
+    "controls-01/1-step-low-restored.bin": "5d8b278df95269304220fbe549bad32f3d2aae7333a6e75cd80d3dc6808d7dc3",
+    "controls-01/1-step-low-restored.json": "69a624e6d56673f3cd6ca837ea530ff00da17b892220166c4720551f764dbac9",
+    "controls-01/1-upper-delayed.bin": "0e09afa4009be286cc1f4ec9c361dc82c932f4f0835ceef18e96eb5a6ed174f2",
+    "controls-01/1-upper-delayed.json": "b89cc91b3d8eced45cad53c246b726da891d62a481bf723387e1d81a0ca85b62",
+    "controls-01/1-upper-immediate.bin": "80057259a2bbff2ccd5504f0f00594d9303314d77a20c509695981f78d1001ef",
+    "controls-01/1-upper-immediate.json": "b6764f135716244723d7d4d2d922a3fb8623d4670924576a7173a6c4525c5502",
+    "controls-01/1-upper-restored.bin": "4160f876dd75ccf3eaa27589702ae1bb79b146946f8c4bc93c23bfa39d516e74",
+    "controls-01/1-upper-restored.json": "d6e0e802a42c3041b51b6226f7494fa31f05d1beb91e14c65fb9f24d6bdefaec",
+    "controls-01/mod-12-0.bin": "8ad6a88599ff52be470ff1ddb386e45905d2e5c09955708c0231779774d36670",
+    "controls-01/mod-12-0.json": "eb5b0d01925c785e105c29448b50ce76cd935726cb72826c452f88bc52d67e81",
+    "controls-01/mod-12-1.bin": "05c93baa6f0a06503344fa15f7a72b231b8eaafbfcf3e346b3b4b9157e80485c",
+    "controls-01/mod-12-1.json": "f2fbf47196f87d1f0b2f4f24c976007b4cf47bcc3f2684f68af3ae058aa33a2d",
+    "controls-01/mod-12-2.bin": "621ed7d747e7cc3032c495fe0612e66e7f010571eb61ed408003ec893f206e85",
+    "controls-01/mod-12-2.json": "997f331d39beeb90fcad0e7376c15b279154a1152eefedf980dd9f84259e99ad",
+    "controls-01/original.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "controls-01/original.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "controls-01/preview-recovery.json": "e953e008d298db0cbd3145b52d713d5313e886d3a40253ef0bc18f2f523898b6",
+    "controls-01/restored.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "controls-01/restored.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "controls-01/transport.log": "23dccca7a6763d12de62ac212f122a4bb6c65bbdba83868dfd5131ec5be2c9b9",
+    "mapping-01/mapping.json": "9c62d4775b18bad1b034dcfd7877af3f233c905d3a6fd4f2e5f0ecb12317b40d",
+    "mapping-01/transport.log": "7787a870b15399153afa4b87b3ff5439a679c72fb630a6281904bf31f8235d0c",
+    "mapping-02/code-before-dsp.bin": "91da48cbe86aedca0debc4f08fa538e9193bfde46960af5c550b2ae1963708f6",
+    "mapping-02/mapping.json": "9c62d4775b18bad1b034dcfd7877af3f233c905d3a6fd4f2e5f0ecb12317b40d",
+    "mapping-02/transport.log": "29158398981d8824f1d309de74df895ce13bebb146f1fadda89da7959343be7f",
+    "sweep-01/mod-00-0.bin": "f2a3a82c02fc298773bb95d3ec44ce637414900cb3de68854f69af6f4e557449",
+    "sweep-01/mod-00-0.json": "6753bcce81f69461c1a2435cf1f4712663b83d15d248ada6326c7127b5140b61",
+    "sweep-01/mod-00-1.bin": "7e18097d40b961f17ed83bdbe1fb2f06959ea4533b00da957616103008bf2bde",
+    "sweep-01/mod-00-1.json": "cc481bce8c0c37900b9f2f58c55d3638bcecf3da538eaeb726e82bed1569852b",
+    "sweep-01/mod-00-2.bin": "7be0d33da32ffd691e371bad9549688a6b16f5ceb7aa011f3f0d8f4040676f7b",
+    "sweep-01/mod-00-2.json": "d0e7c5520109b5712a55350a764daacf64503f82ea2636cf7206a12fa2bddd19",
+    "sweep-01/mod-03-0.bin": "1f7e044a3670cb62f750f2fbc732ec90538fc16a1c539bb14c1bfa3413db44f0",
+    "sweep-01/mod-03-0.json": "b51829f79900c940fb2a7661615c6552dd464d599a0189e2c560a4bd3614bc88",
+    "sweep-01/mod-03-1.bin": "d74f03080c072c3f1de34462abae58df2974271efe1aa540e5f806758837ce4d",
+    "sweep-01/mod-03-1.json": "2dd18d36d2c69eb9e44d315e4e0fb673358dc7beddcea0648f16c274e36a098d",
+    "sweep-01/mod-03-2.bin": "f842b7099c3fb887a23c9bcca72035d2fe1c85bab4b63b7f45776220588018fb",
+    "sweep-01/mod-03-2.json": "02c99c66ed7035e4677c9fc900d4bc0270a31c880308e867b00c25b46a6106d7",
+    "sweep-01/mod-06-0.bin": "47c80aa5543e91256d70a48091986805c8cc5d639cf39c8aae3f11f644cd159d",
+    "sweep-01/mod-06-0.json": "7853f6864337b1f24f2564d281e54a72996a04385f64fe573b81121c90a9110b",
+    "sweep-01/mod-06-1.bin": "f05fa7989aa46f5dc2f8c4cc847cc254c8a7e82293ce151e51c5d53fea8b6fed",
+    "sweep-01/mod-06-1.json": "ba8c4ac9fe335f431e3682fa0b8588cb82b995fc2b58fbe0fd07a442c1b3366a",
+    "sweep-01/mod-06-2.bin": "8eb0867631562afdc41f709cc7ad4322dc00c098abd5b948d4eaeef13e5a04a3",
+    "sweep-01/mod-06-2.json": "5db7fc48246d38dcd9bd4dcd83936e3e524c0b3bfb18ed66e342c3c7eabf9229",
+    "sweep-01/mod-07-0.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-07-0.json": "a39fac6377f32788c92d9ce8894fe0f70869f1be528c2b12f76fc3d08e50b76c",
+    "sweep-01/mod-07-1.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-07-1.json": "a39fac6377f32788c92d9ce8894fe0f70869f1be528c2b12f76fc3d08e50b76c",
+    "sweep-01/mod-07-2.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-07-2.json": "a39fac6377f32788c92d9ce8894fe0f70869f1be528c2b12f76fc3d08e50b76c",
+    "sweep-01/mod-08-0.bin": "e999fcb5c18edf16d4eb8c866c65f1838c898eb4118503c08cd2083376978683",
+    "sweep-01/mod-08-0.json": "ec5a130e9c6e2a5093306e198f8230cd10882059f15b7aed8a83cb3c7d4ebdb0",
+    "sweep-01/mod-08-1.bin": "e999fcb5c18edf16d4eb8c866c65f1838c898eb4118503c08cd2083376978683",
+    "sweep-01/mod-08-1.json": "ec5a130e9c6e2a5093306e198f8230cd10882059f15b7aed8a83cb3c7d4ebdb0",
+    "sweep-01/mod-08-2.bin": "8aa0c26aa45bd9cb8d9e7d1e585fddbda078e04cfd70349c0fe15717efafc2ec",
+    "sweep-01/mod-08-2.json": "3d5f96d7b702d0fc712e335173d09bcf22862acba9267ea4385c6d08dc9fda21",
+    "sweep-01/mod-09-0.bin": "7aa504faf707e6389df260b539128a9f76a977facf602c9d1cad1626dcd5ec5c",
+    "sweep-01/mod-09-0.json": "216b470f4091e9d213a5390262917d993e0e35df2596517d4c77bc9e9dd4710a",
+    "sweep-01/mod-09-1.bin": "f375833b277c20d772696e18f4a5b69e6242c3f752310125244c3ed412779e55",
+    "sweep-01/mod-09-1.json": "d18cface86b03a6750c235658ec8c287d7307f232429178c5ecb5618b8a0bd80",
+    "sweep-01/mod-09-2.bin": "e3339be2307b12422fe9d4e328d96a335ccbc9f985db757e53ad35f8835e7d9d",
+    "sweep-01/mod-09-2.json": "24448831966e20e29b19fe58516d236c5f77e30bc190baa3bcf9525b338b3260",
+    "sweep-01/mod-10-0.bin": "5b8b5c2e500fb2a606308b09b53d4a65dfda282603b740aa5c541b4cc3cd41f7",
+    "sweep-01/mod-10-0.json": "e64aba9d272e7d78c9c8f7c55cf68d67f48ff1044bc3682be9e382e7cabbacac",
+    "sweep-01/mod-10-1.bin": "d75c6eef7ccb95cfb3a942007f2afe85b81952edfa392033938714eabd05fb96",
+    "sweep-01/mod-10-1.json": "a35fa8e0cc4e3f8e183d3b4cb2712194c96f710006575abfd5f688993c361e8a",
+    "sweep-01/mod-10-2.bin": "2f5c2a2ab4ceb65b8d9cb2f289db469e1e3840fabc4f8ad3c39991fb12780257",
+    "sweep-01/mod-10-2.json": "a4a1bd53672de200f3ea48c6dfad0ec0291a65daf414a91e7314c76f06b6baea",
+    "sweep-01/mod-11-0.bin": "9e5ad3300cbac778c70609f9fab6e0f5edccecac9d56599b97a8a55fe3e4fc90",
+    "sweep-01/mod-11-0.json": "c2c7fd65297ad109e6ab8b214f812c646602681853047003e87162cae47281a8",
+    "sweep-01/mod-11-1.bin": "a747742c01fc5cb71819eab3a488117b843c1a1c057ee80028622dc468eb13d0",
+    "sweep-01/mod-11-1.json": "aeaad77f8ffbbe28dad0b764032a27e767e03af7b4b7c99b5b22c999606d2138",
+    "sweep-01/mod-11-2.bin": "3d65ab1eff9cbad03df18a0b3b224031308b546bae6b0fc4fc7de6fd9d222dc7",
+    "sweep-01/mod-11-2.json": "8d5fde3e325734017715930c3b7c53ef0ca0e141e6c2a8590c8585d35cc0d08e",
+    "sweep-01/mod-12-0.bin": "388183b18c37f001b54a8050c48a3281d916feee8c78463ef2ce9d6b31bf1d67",
+    "sweep-01/mod-12-0.json": "87f1db40f804e2d0c9e4276ff5faf31a22194bb6d949eef727f458ea8c98db2d",
+    "sweep-01/mod-12-1.bin": "58c2d248dd77d649928258d0c3bf0b2e5a339849a1a69943112c3f272ddbfb10",
+    "sweep-01/mod-12-1.json": "263b9927ae64b8b919815ab5e11f416746446e679f676a7e8ede15171e67906a",
+    "sweep-01/mod-12-2.bin": "c90813ae079825da1aacb26badca0065eadda9b920e5cfc4749ee33f82514e7e",
+    "sweep-01/mod-12-2.json": "824d201f3f51b118ebe315981cbfd25408d4aa56d699cba7717640fd7e2c321f",
+    "sweep-01/mod-13-0.bin": "7a0fb917557cb95ad473df24e929f145e44cb8e9738afb4aee3c26065174601e",
+    "sweep-01/mod-13-0.json": "a2f25b554a63376c65463f1fe0e89694d52929a61528b2766120e71cafe7a60e",
+    "sweep-01/mod-13-1.bin": "a6f657f7a007f4b913d213442f643d640c4746ec4c3ec8bfe34f8d9c2b003889",
+    "sweep-01/mod-13-1.json": "d27aacee0e3daf0e46c86a5cd6f711f497e9cb5a486d18b27cd47f76e9e46c2d",
+    "sweep-01/mod-13-2.bin": "7c0c624cd9c5991b1a2d382404227cf2be8cf9c253d71b3843acb50566d563f6",
+    "sweep-01/mod-13-2.json": "775b832de982050eb617d46d757b311fcb6e7b0fa032efef4aa7f2fc16adda67",
+    "sweep-01/mod-14-0.bin": "678c985134ec37d7ea187dd562ab238490c693dbce744f33a3ef3822b51a4dc9",
+    "sweep-01/mod-14-0.json": "03925a56578a90a281903c0ab47bc2ee5cbb479a7be633202a30db5e78d0f512",
+    "sweep-01/mod-14-1.bin": "28442080e687bf4e1c22b1ef424b3bf249d96f4b1ec7b8e93b277d4239c699b4",
+    "sweep-01/mod-14-1.json": "74e413c704f30d2da767bd1fa47b7e2586ab9437f402e63e52c1cc2a6bed1a81",
+    "sweep-01/mod-14-2.bin": "c6e24c50f05c7f18250a6810f9bb73c98f8e54280234c91b540fa2aed6b7818b",
+    "sweep-01/mod-14-2.json": "690d0d819354e02c8c275cb7eac3bfc5e5d60b7c4fd40310bbecf3e726b8976f",
+    "sweep-01/mod-15-0.bin": "1f80cca2648eaa0aa5c53d04128e0800cf27e5943a6f4b29a039fafff3185869",
+    "sweep-01/mod-15-0.json": "75d7efdebbee3477ef56883945439d970890c07ecc66876088295bca7c2a5be0",
+    "sweep-01/mod-15-1.bin": "eff36a75d094ae2ceefe070a795408b54db67d94642c98559e28939e0ddc4c46",
+    "sweep-01/mod-15-1.json": "afd557a69ae6152c382f3dc03af1641aa5d726134cb41541776b596a9bc689ce",
+    "sweep-01/mod-15-2.bin": "e24ed7ef999e22d4586bf2997854474dbfd7ae13ce0186600f372ce555b3a59b",
+    "sweep-01/mod-15-2.json": "c9e3a98ae14b4208b08cabca61c27695f65010493995448147aa4d75a6443805",
+    "sweep-01/original.bin": "c4810ac91bbeb94a47bcddabca212638338e93dacaa7b91033f31d3d9ddec2c8",
+    "sweep-01/original.json": "7c95ab5ecf4c848308fb5c6e0c00855ee71ee92d218ae6838b9c181c8d46fabd",
+    "sweep-01/restored.bin": "9f7e8c6b51e81d12a6a9b904eb447c9fe239993d5478963e1030c6cb8513b248",
+    "sweep-01/restored.json": "b0c7c35090fed78967046c511d8cad947f689ff15451fd843c0d57c784430ee6",
+    "sweep-01/transport.log": "5c53c924eea9506d195ea35f820894f2dcf1be9fb6d994551cb3f9d31ccbd43e"
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "format": "cubecontrol-chorus-structural-model-v1",
+  "audioMeasured": false,
+  "assumptions": "Offline structural chorus model, not a recording or bit-exact firmware emulator.\n\nAssumptions: 48 kHz, normalized cosine LFO for selector 0, zero initial phases,\nidentity biquads (or their isolated b0 attenuations), Python float arithmetic.\nSelector 1 uses the triangle equation demonstrated by captured ARM code.\n",
+  "checks": [
+    "ring indices bounded",
+    "finite outputs",
+    "conservative feedback gain bound",
+    "mix zero equals input",
+    "depth zero impulse has taps at 0 and 401 samples"
+  ],
+  "scenarios": {
+    "factory": {
+      "peak": 0.19996672770484328,
+      "rms": 0.09839214032736236,
+      "delayArgumentMin": 400.0000000078799,
+      "delayArgumentMax": 599.5999999980301,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "depth-half": {
+      "peak": 0.19997968065615598,
+      "rms": 0.09423046823986461,
+      "delayArgumentMin": 400.00000000393993,
+      "delayArgumentMax": 499.79999999901503,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "depth-zero": {
+      "peak": 0.11500000000000002,
+      "rms": 0.07639848329737729,
+      "delayArgumentMin": 400.0,
+      "delayArgumentMax": 400.0,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "rate-low": {
+      "peak": 0.1999833911130014,
+      "rms": 0.10877095761574772,
+      "delayArgumentMin": 400.00000012607825,
+      "delayArgumentMax": 574.2449263134247,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "rate-high": {
+      "peak": 0.1999685631318715,
+      "rms": 0.09785892813813685,
+      "delayArgumentMin": 400.00000000196997,
+      "delayArgumentMax": 599.5999983432527,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "mix-zero": {
+      "peak": 0.2,
+      "rms": 0.1414213562373066,
+      "delayArgumentMin": 400.0000000078799,
+      "delayArgumentMax": 599.5999999980301,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "mix-half": {
+      "peak": 0.1999819930771643,
+      "rms": 0.11378802505247791,
+      "delayArgumentMin": 400.0000000078799,
+      "delayArgumentMax": 599.5999999980301,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "feedback-small": {
+      "peak": 0.2085868122597969,
+      "rms": 0.0999819291380851,
+      "delayArgumentMin": 400.0000000078799,
+      "delayArgumentMax": 599.5999999980301,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "triangle": {
+      "peak": 0.1999820395846114,
+      "rms": 0.1050272459061074,
+      "delayArgumentMin": 400.0007983999596,
+      "delayArgumentMax": 599.5996008000195,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "wet-gain": {
+      "peak": 0.1574825756566487,
+      "rms": 0.08515672951611637,
+      "delayArgumentMin": 400.0000000078799,
+      "delayArgumentMax": 599.5999999980301,
+      "effectiveDelayIncludesExtraSample": true
+    },
+    "combined-gain": {
+      "peak": 0.11498315823613305,
+      "rms": 0.05798165674089399,
+      "delayArgumentMin": 400.0000000078799,
+      "delayArgumentMax": 599.5999999980301,
+      "effectiveDelayIncludesExtraSample": true
+    }
+  }
+}

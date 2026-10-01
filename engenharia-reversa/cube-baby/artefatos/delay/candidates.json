@@ -1,0 +1,157 @@
+{
+  "format": "cubecontrol-delay-candidates-v1",
+  "archiveSha256": "37f03f98c0a83d77af1b5c2f66624ce2c636b02824a3f715f606dd0e16ac329a",
+  "candidates": [
+    {
+      "parameter": "TimeSamples",
+      "offset": "0x696",
+      "classification": "finer original control",
+      "exposed": true,
+      "dspUse": "field-map.json readersCpu; disassembly.txt",
+      "range": [
+        2400,
+        16350
+      ],
+      "unit": "internal samples",
+      "rangeBasis": "original time/feedback/mix limits; depth/rate reductions within original values; bounded ring and original filters in model.json",
+      "isolatedTrialCount": 6,
+      "trialNames": [
+        "time-low",
+        "time-fine",
+        "time-high"
+      ],
+      "twoRounds": true,
+      "persists300ms": true,
+      "sameOriginalValuesPreserve": true,
+      "restored": true,
+      "transitions": "evidence.json transitions",
+      "syntheticValidation": "model.json",
+      "audioValidation": "pending"
+    },
+    {
+      "parameter": "Feedback",
+      "offset": "0x698",
+      "classification": "finer original control",
+      "exposed": true,
+      "dspUse": "field-map.json readersCpu; disassembly.txt",
+      "range": [
+        0,
+        0.9921875
+      ],
+      "unit": "feedback multiplier",
+      "rangeBasis": "original time/feedback/mix limits; depth/rate reductions within original values; bounded ring and original filters in model.json",
+      "isolatedTrialCount": 4,
+      "trialNames": [
+        "feedback-zero",
+        "feedback-fine"
+      ],
+      "twoRounds": true,
+      "persists300ms": true,
+      "sameOriginalValuesPreserve": true,
+      "restored": true,
+      "transitions": "evidence.json transitions",
+      "syntheticValidation": "model.json",
+      "audioValidation": "pending"
+    },
+    {
+      "parameter": "Depth",
+      "offset": "0x69C",
+      "classification": "additional control",
+      "exposed": true,
+      "dspUse": "field-map.json readersCpu; disassembly.txt",
+      "range": [
+        0,
+        0.1
+      ],
+      "unit": "fraction of current time",
+      "rangeBasis": "original time/feedback/mix limits; depth/rate reductions within original values; bounded ring and original filters in model.json",
+      "isolatedTrialCount": 4,
+      "trialNames": [
+        "depth-zero",
+        "depth-half"
+      ],
+      "twoRounds": true,
+      "persists300ms": true,
+      "sameOriginalValuesPreserve": true,
+      "restored": true,
+      "transitions": "evidence.json transitions",
+      "syntheticValidation": "model.json",
+      "audioValidation": "pending"
+    },
+    {
+      "parameter": "Rate",
+      "offset": "0x6A0",
+      "classification": "additional control",
+      "exposed": true,
+      "dspUse": "field-map.json readersCpu; disassembly.txt",
+      "range": [
+        0,
+        0.01
+      ],
+      "unit": "phase factor divided by current time",
+      "rangeBasis": "original time/feedback/mix limits; depth/rate reductions within original values; bounded ring and original filters in model.json",
+      "isolatedTrialCount": 4,
+      "trialNames": [
+        "rate-zero",
+        "rate-half"
+      ],
+      "twoRounds": true,
+      "persists300ms": true,
+      "sameOriginalValuesPreserve": true,
+      "restored": true,
+      "transitions": "evidence.json transitions",
+      "syntheticValidation": "model.json",
+      "audioValidation": "pending"
+    },
+    {
+      "parameter": "Mix",
+      "offset": "0x6DC",
+      "classification": "finer original control",
+      "exposed": true,
+      "dspUse": "field-map.json readersCpu; disassembly.txt",
+      "range": [
+        0,
+        0.921875
+      ],
+      "unit": "input to piecewise dry/wet curve",
+      "rangeBasis": "original time/feedback/mix limits; depth/rate reductions within original values; bounded ring and original filters in model.json",
+      "isolatedTrialCount": 4,
+      "trialNames": [
+        "mix-zero",
+        "mix-fine"
+      ],
+      "twoRounds": true,
+      "persists300ms": true,
+      "sameOriginalValuesPreserve": true,
+      "restored": true,
+      "transitions": "evidence.json transitions",
+      "syntheticValidation": "model.json",
+      "audioValidation": "pending"
+    },
+    {
+      "candidate": "repetition filters",
+      "offset": "0x6A4..0x6DB",
+      "classification": "consumed coefficients; preserve original values",
+      "exposed": false,
+      "missing": [
+        "independent bounded coefficient-edit model",
+        "isolated physical writes and restoration for candidate coefficient ranges"
+      ]
+    },
+    {
+      "candidate": "independent dry/wet gains",
+      "classification": "no separate fields found; calculated from Mix",
+      "exposed": false
+    },
+    {
+      "candidate": "stereo/ping-pong/reverse/independent taps",
+      "classification": "no selector demonstrated in captured paths",
+      "exposed": false
+    },
+    {
+      "candidate": "larger ring or arbitrary waveform",
+      "classification": "outside demonstrated parameter edits",
+      "exposed": false
+    }
+  ]
+}
