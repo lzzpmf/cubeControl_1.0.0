@@ -1,0 +1,105 @@
+<UserControl x:Class="Cube.Desktop.Views.AmpEditor"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+ xmlns:loc="clr-namespace:Cube.Desktop.Localization"
+ xmlns:controls="clr-namespace:Cube.Desktop.Controls"
+ Background="{DynamicResource ApplicationBackgroundBrush}" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+ <UserControl.Resources>
+  <Style x:Key="AmpPanel" TargetType="Border">
+   <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}"/>
+   <Setter Property="BorderThickness" Value="1"/>
+   <Setter Property="CornerRadius" Value="8"/>
+   <Setter Property="Padding" Value="16"/>
+   <Setter Property="Margin" Value="0,0,0,12"/>
+  </Style>
+  <DataTemplate x:Key="AmpDial">
+   <StackPanel Width="148" Margin="0,4,12,12" ToolTip="{loc:Translate Value={Binding Detail}}">
+    <TextBlock Text="{loc:Translate Value={Binding Label}}" TextAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" MinHeight="38"/>
+    <controls:Knob Value="{Binding Position,Mode=TwoWay}" Minimum="0" Maximum="1000" FineAdjustment="True" WheelSpeedMultiplier="10" Width="94" Height="94" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" ToolTip="{loc:Translate Text='Arraste ou role para ajustar. Shift permite ajuste fino.'}"/>
+    <TextBlock Text="{Binding Display}" HorizontalAlignment="Center" FontSize="15"/>
+    <ui:Button Click="ResetControlClick" Appearance="Transparent" Width="32" Height="32" MinWidth="32" MinHeight="32" Padding="0" HorizontalAlignment="Center" ToolTip="{loc:Translate Text='Restaurar ajuste inicial'}" AutomationProperties.Name="{loc:Translate Text='Restaurar ajuste inicial'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
+   </StackPanel>
+  </DataTemplate>
+  <DataTemplate x:Key="AmpFader">
+   <StackPanel Width="144" Margin="4,4,4,12" ToolTip="{loc:Translate Value={Binding Detail}}">
+    <TextBlock Text="{loc:Translate Value={Binding Label}}" TextAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" MinHeight="40"/>
+    <controls:Knob Value="{Binding Position,Mode=TwoWay}" Minimum="0" Maximum="1000" FineAdjustment="True" WheelSpeedMultiplier="11.5" IsFader="True" Width="64" Height="164" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" ToolTip="{loc:Translate Text='Arraste ou role para ajustar. Shift permite ajuste fino.'}"/>
+    <TextBlock Text="{Binding Display}" HorizontalAlignment="Center"/>
+    <ui:Button Click="ResetControlClick" Appearance="Transparent" Width="32" Height="32" MinWidth="32" MinHeight="32" Padding="0" HorizontalAlignment="Center" ToolTip="{loc:Translate Text='Restaurar ajuste inicial'}" AutomationProperties.Name="{loc:Translate Text='Restaurar ajuste inicial'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
+   </StackPanel>
+  </DataTemplate>
+  <ItemsPanelTemplate x:Key="AmpWrap"><WrapPanel/></ItemsPanelTemplate>
+  <ItemsPanelTemplate x:Key="AmpEight"><WrapPanel/></ItemsPanelTemplate>
+ </UserControl.Resources>
+ <DockPanel Margin="0,0,0,16">
+  <StackPanel DockPanel.Dock="Top">
+   <TextBlock Text="{loc:Translate Text='Criador de amps'}" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8"/>
+   <ComboBox x:Name="BaseSelector" IsEnabled="{Binding CanEditAmpLocally}" SelectionChanged="BaseSelected" SelectedIndex="-1" HorizontalAlignment="Left" MinWidth="280" Margin="0,0,0,12" AutomationProperties.Name="{loc:Translate Text='Escolha um amp base'}" ToolTip="{loc:Translate Text='Escolha um amp base para ouvir e começar a editar.'}"/>
+   <WrapPanel IsEnabled="{Binding CanEditAmpLocally}">
+    <ui:Button Content="{loc:Translate Text='Importar preset'}" Click="ImportClick" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Carrega um preset do computador e aplica ao som atual.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowDownload24" FontSize="16"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Exportar preset'}" Click="ExportClick" IsEnabled="{Binding Amp.Loaded}" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Salva os ajustes atuais em um preset no computador.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowUpload24" FontSize="16"/></ui:Button.Icon></ui:Button>
+   </WrapPanel>
+   <TextBlock Text="{loc:Translate Value={Binding Amp.Name}}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+   <ListBox x:Name="AmpSections" SelectedIndex="0" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Seções do amp'}">
+    <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
+    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}"><Setter Property="Padding" Value="12,8"/><Setter Property="Margin" Value="0,0,8,4"/></Style></ListBox.ItemContainerStyle>
+    <ListBoxItem Content="{loc:Translate Text='Equalização'}" ToolTip="{loc:Translate Text='Ajuste as frequências do seu timbre.'}"/>
+    <ListBoxItem Content="{loc:Translate Text='Corpo e textura'}" ToolTip="{loc:Translate Text='Explore o corpo e a textura do som.'}"/>
+    <ListBoxItem Content="{loc:Translate Text='Caráter e definição'}" ToolTip="{loc:Translate Text='Ajuste a ressonância e a definição.'}"/>
+    <ListBoxItem Content="{loc:Translate Text='Resposta'}" ToolTip="{loc:Translate Text='Molde a resposta à sua palhetada.'}"/>
+   </ListBox>
+   <ItemsControl ItemsSource="{Binding Amp.MainControls}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}" IsEnabled="{Binding CanAdjustAmp}"/>
+  </StackPanel>
+  <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+   <TextBlock x:Name="AmpFeedback" Text="{loc:Translate Value={Binding AmpPreviewMessage}}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+   <WrapPanel>
+    <ui:Button Content="{loc:Translate Text='Restaurar som anterior'}" Click="RestoreClick" ToolTip="{loc:Translate Text='Volta ao som anterior à edição, sem apagar presets.'}" IsEnabled="{Binding CanUseAmp}" Margin="0,0,8,0"/>
+    <ui:Button Content="{loc:Translate Text='Salvar no pedal'}" Click="WriteClick" ToolTip="{loc:Translate Text='Grava no slot do amp selecionado após confirmação.'}" IsEnabled="{Binding CanUseAmp}" Appearance="Primary"/>
+   </WrapPanel>
+  </StackPanel>
+  <Grid IsEnabled="{Binding CanAdjustAmp}">
+   <TabControl SelectedIndex="{Binding SelectedIndex,ElementName=AmpSections}" Style="{StaticResource HiddenTabs}" IsEnabled="{Binding Amp.Loaded}">
+    <TabItem><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Border Style="{StaticResource AmpPanel}"><StackPanel>
+     <DockPanel Margin="0,12,0,12">
+      <TextBlock Text="{loc:Translate Text='Equalização'}" FontSize="18" FontWeight="SemiBold"/>
+      <ComboBox x:Name="EqPresentation" ToolTip="{loc:Translate Text='Alterne entre gráfico e controles clássicos.'}" SelectedIndex="1" Width="150" HorizontalAlignment="Right" AutomationProperties.Name="{loc:Translate Text='Apresentação do EQ'}">
+       <ComboBoxItem Content="{loc:Translate Text='Clássico'}"/><ComboBoxItem Content="{loc:Translate Text='Moderno'}"/>
+      </ComboBox>
+     </DockPanel>
+     <WrapPanel>
+      <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqPresentation}" Value="1"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
+      <StackPanel Margin="0,0,24,12"><TextBlock Text="EQ A" FontWeight="SemiBold"/><ItemsControl ItemsSource="{Binding Amp.EqAControls}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/></StackPanel>
+      <StackPanel Margin="0,0,0,12"><TextBlock Text="EQ B" FontWeight="SemiBold"/><ItemsControl ItemsSource="{Binding Amp.EqBControls}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/></StackPanel>
+     </WrapPanel>
+     <StackPanel>
+      <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqPresentation}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+      <TextBlock Text="{loc:Translate Text='Ajuste o equilíbrio do som com duas bandas.'}" TextWrapping="Wrap"/>
+      <controls:AmpEqGraph x:Name="EqGraph" ToolTip="{loc:Translate Text='Arraste A ou B para ajustar frequência e intensidade.'}" Model="{Binding Amp}" SelectedFilter="{Binding SelectedIndex,ElementName=EqFilter,Mode=TwoWay}" Height="280" AutomationProperties.Name="{loc:Translate Text='Equalização'}"/>
+      <TextBlock Text="{loc:Translate Text='A: coral · B: azul · combinação: linha clara. Arraste um ponto para ajustar frequência e nível.'}" TextWrapping="Wrap" Margin="0,4,0,8"/>
+      <ComboBox x:Name="EqFilter" ToolTip="{loc:Translate Text='Escolha a banda que deseja ajustar.'}" AutomationProperties.Name="{loc:Translate Text='Banda do equalizador'}" SelectedIndex="0" Width="110" HorizontalAlignment="Left"><ComboBoxItem Content="EQ A"/><ComboBoxItem Content="EQ B"/></ComboBox>
+      <ItemsControl ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}">
+       <ItemsControl.Style><Style TargetType="ItemsControl"><Setter Property="ItemsSource" Value="{Binding Amp.EqAControls}"/><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqFilter}" Value="1"><Setter Property="ItemsSource" Value="{Binding Amp.EqBControls}"/></DataTrigger></Style.Triggers></Style></ItemsControl.Style>
+      </ItemsControl>
+     </StackPanel>
+
+    </StackPanel></Border></ScrollViewer></TabItem>
+    <TabItem><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Border Style="{StaticResource AmpPanel}"><StackPanel>
+     <ItemsControl ItemsSource="{Binding Amp.CoefficientASections}">
+      <ItemsControl.ItemTemplate><DataTemplate><Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Margin="0,0,0,8"><ItemsControl ItemsSource="{Binding}" ItemTemplate="{StaticResource AmpFader}" ItemsPanel="{StaticResource AmpWrap}"/></Border></DataTemplate></ItemsControl.ItemTemplate>
+     </ItemsControl>
+    </StackPanel></Border></ScrollViewer></TabItem>
+    <TabItem><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Border Style="{StaticResource AmpPanel}"><StackPanel>
+     <ItemsControl ItemsSource="{Binding Amp.CoefficientBSections}">
+      <ItemsControl.ItemTemplate><DataTemplate><Border BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Margin="0,0,0,8"><ItemsControl ItemsSource="{Binding}" ItemTemplate="{StaticResource AmpFader}" ItemsPanel="{StaticResource AmpWrap}"/></Border></DataTemplate></ItemsControl.ItemTemplate>
+     </ItemsControl>
+    </StackPanel></Border></ScrollViewer></TabItem>
+    <TabItem><ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><Border Style="{StaticResource AmpPanel}"><StackPanel>
+     <TextBlock Text="{loc:Translate Text='Molde a resposta à intensidade da sua palhetada. Cada controle atua em uma parte da curva, dos sinais mais suaves aos mais fortes.'}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+     <ItemsControl ItemsSource="{Binding Amp.CurveControls}" ItemTemplate="{StaticResource AmpFader}" ItemsPanel="{StaticResource AmpEight}"/>
+    </StackPanel></Border></ScrollViewer></TabItem>
+   </TabControl>
+  </Grid>
+ </DockPanel>
+</UserControl>

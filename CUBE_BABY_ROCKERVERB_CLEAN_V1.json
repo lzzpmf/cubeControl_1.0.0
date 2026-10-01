@@ -1,0 +1,70 @@
+{
+  "name": "Rockerverb Clean — aproximação V1",
+  "status": "applied_in_ram_readback_verified",
+  "applied_body_sha256": "c098faa56015fd495472b478fb8402fd6afbc822dd6a0bbb5b22ed55556d1b57",
+  "bank_unchanged_verified": true,
+  "flash_write_sent": false,
+  "scope": "RAM only; not a flash image or official import format",
+  "reference_audio": {
+    "path": "C:\\Users\\lzzpm\\OneDrive\\Documentos\\REAPER Media\\untitled.mp3",
+    "sha256": "f8b62130b261f649a32bc3398ad43a7aa57b63ab421f521653cb0fc65f4c1e85",
+    "seconds": 41.052517006802724,
+    "sample_rate": 44100,
+    "channels": 2,
+    "peak_dbfs": -1.3219429284601956,
+    "rms_dbfs": -17.456369698189143,
+    "crest_db": 16.134426769728947
+  },
+  "base": {
+    "type": 0,
+    "name": "Power-Zone original",
+    "flash_sha256": "2cef59f28050aa30e5e7b475b5d8e3ac0e0139fbf5fb9f96c363a7c0cc7d308b"
+  },
+  "design_note": "Escolhas iniciais para escuta; não são parâmetros extraídos do amplificador real. Sem comparação com DI e gravação da saída do Cube Baby.",
+  "preserve": [
+    "gain table",
+    "256-point curve",
+    "main coefficient sets A/B",
+    "cabinet and effects",
+    "flash"
+  ],
+  "limitations": [
+    "Q/flags metadata remain unchanged; coefficients only, intended for controlled RAM audition",
+    "No measured acoustic match to reference",
+    "Final EQ stage activation still to be validated by listening"
+  ],
+  "calculated_sample_rate": 48000,
+  "filter_max_pole_radius": [
+    0.9843895623477207,
+    0.8118678715064751
+  ],
+  "patches": [
+    {
+      "name": "Compensação: 2.0 para 3.0 nas oito posições",
+      "selector": 4,
+      "opcode": 34,
+      "address": "0x3c",
+      "length": 32,
+      "expected_original_hex": "0000004000000040000000400000004000000040000000400000004000000040",
+      "data_hex": "0000404000004040000040400000404000004040000040400000404000004040"
+    },
+    {
+      "name": "EQ-A final: 200 Hz, +3 dB, Q 0.7",
+      "selector": 4,
+      "opcode": 34,
+      "address": "0x5f8",
+      "length": 20,
+      "expected_original_hex": "6616a03f67dabbbfa858903e67dabbbf2059083f",
+      "data_hex": "60d1803fd5f2fbbf216f763fd5f2fbbfe111783f"
+    },
+    {
+      "name": "EQ-B final: 2800 Hz, +1.5 dB, Q 0.8",
+      "selector": 4,
+      "opcode": 34,
+      "address": "0x614",
+      "length": 20,
+      "expected_original_hex": "690f7b3f7caa82bfc44e583f7caa82bf2c5e533f",
+      "data_hex": "c01c843f5d43c6bf3583203f5d43c6bfb5bc283f"
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="start"
+    android:orientation="vertical"
+    android:background="@color/background"
+    android:padding="@dimen/padding_default"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.cubeSuite.customControl.BackHeadView
+        android:id="@+id/backHead"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:StartBtnText="@string/back"
+        app:TvBackHeadTitle="@string/selectDrumTitle"/>
+    <com.cubeSuite.customControl.GridRadioGroup
+        android:gravity="center"
+        android:layout_gravity="top"
+        android:id="@+id/btnSelectDrum"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:horizontalSpacing="10dp"
+        app:numColumns="6"
+        app:verticalSpacing="10dp">
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 01 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 02 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 03 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 04 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 05 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 06 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 07 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 08 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 09 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 10 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 11 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 12 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 13 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 14 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 15 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 16 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 17 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 18 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 19 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 20 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 21 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 22 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 23 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 24 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 25 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 26 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 27 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 28 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 29 "
+            style="@style/radioBlockBtn"/>
+        <RadioButton
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_default"
+            android:button="@null"
+            android:text=" 30 "
+            style="@style/radioBlockBtn"/>
+    </com.cubeSuite.customControl.GridRadioGroup>
+</LinearLayout>

@@ -1,0 +1,100 @@
+using System.IO;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Cube.Protocol;
+
+namespace Cube.Desktop.ViewModels;
+
+public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? factoryId = null) : Observable
+{
+    public string Id => id;
+    public int Value => value;
+    public string Name => name;
+    // Model specifications, not an analysis of the recorded IR. Sources: docs/cabinet-characteristics.md.
+    public string Category => kind == "cab" ? factoryId switch
+    {
+        "factory-cab-0" => "2×12 · Traseira aberta · Celestion customizados",
+        "factory-cab-1" => "4×12 · Frente inclinada · Celestion G12-Vintage",
+        "factory-cab-2" => "4×12 · Frente inclinada · Celestion G12T-75",
+        "factory-cab-3" => "2×12 · Frente reta",
+        "factory-cab-4" => "2×12 · Disposição horizontal",
+        "factory-cab-5" => "4×12 · Caixa oversized · Graves encorpados",
+        "factory-cab-6" => "4×12 · Graves firmes · Médios pronunciados",
+        "factory-cab-7" => "4×12 · Celestion Vintage 30",
+        _ => category
+    } : category;
+    public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindFactoryCabinet(factoryId) != null
+        ? "Características do modelo de referência; a captura do IR pode variar." : null;
+    public string Kind => kind;
+    public string Color => Appearance.ThemeService.ModuleColor(color);
+    public void RefreshColor() => Notify(nameof(Color));
+    public string Description => description;
+    public string Alias => alias;
+    public ImageSource? DefaultImage => ReadImage(Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", (factoryId ?? id) switch
+    {
+        "amp-0" => "Koch Powertone.png",
+        "amp-1" => "Friedman BE-100.png",
+        "amp-2" => "Two-Rock Coral.png",
+        "amp-3" => "Dr. Z MAZ 38.png",
+        "amp-4" => "MesaBoogie JP-2C.png",
+        "amp-5" => "Vox AC30.png",
+        "amp-6" => "VHT Pittbull.png",
+        "amp-7" => "Two Rock Coral- variante.png",
+        "amp-8" => "PRS Archon.png",
+        "cab-off" => "DirectBox.png",
+        "chorus" => "chorusCuvave.png",
+        "phaser" => "phaserCuvave.png",
+        "delay" => "delayCuvave.png",
+        "reverb" => "reverbCuvave.png",
+        "factory-cab-0" => "Line 6 Vetta.png",
+        "factory-cab-1" => "Marshall 1960AV.png",
+        "factory-cab-2" => "Marshall 1960A 4×12 com G12T-75.png",
+        "factory-cab-3" => "VHT Deliverance.png",
+        "factory-cab-4" => "Soldano.png",
+        "factory-cab-5" => "Peavey 5150 + Mesa Oversized.png",
+        "factory-cab-6" => "JSX KT77 + Mesa Stiletto AKG C1000.png",
+        "factory-cab-7" => "Diezel V30 SM57 (Soldano HR PowerAmp).png",
+        _ => "not-provided.png"
+    }));
+    // Brief effect explanations; sources in docs/effect-descriptions.md.
+    public string Subtitle => kind switch
+    {
+        "chorus" => "Mistura o som original com uma cópia levemente desafinada, criando corpo e movimento.",
+        "phaser" => "Cria uma varredura de fase que dá ao timbre um movimento ondulante.",
+        "delay" => "Repete o som após um intervalo, criando ecos e padrões rítmicos.",
+        "reverb" => "Simula reflexões sonoras de um ambiente, acrescentando espaço e profundidade.",
+        _ => Category
+    };
+    public string SlotLabel => kind is "chorus" or "phaser" or "delay" or "reverb" ? "" : kind == "cab" && value > 0 ? $"Slot {value}" : category;
+    private ImageSource? image;
+    public ImageSource? Image { get => image; set => Set(ref image, value); }
+    public static ImageSource? ReadImage(string? path)
+    {
+        if (path == null || !File.Exists(path)) return null;
+        try
+        {
+            using var stream = File.OpenRead(path);
+            var bitmap = new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.DecodePixelWidth = 1200; bitmap.StreamSource = stream; bitmap.EndInit(); bitmap.Freeze(); return bitmap;
+        }
+        catch (Exception ex) when (ex is IOException or NotSupportedException or ArgumentException or FormatException) { return null; }
+    }
+}
+
+public sealed class MatchRow : Observable
+{
+    private GearItem? selected;
+    public GearItem Amp { get; }
+    public GearItem[] Choices { get; }
+    public string Warning { get; }
+    public GearItem? Selected { get => selected; set => Set(ref selected, value); }
+    public MatchRow(GearItem amp, GearItem[] cabinets, GearItem? choice, bool stale)
+    {
+        Amp = amp;
+        var none = new GearItem("no-match", 0, "Sem associação", "", "cab", "#A0ADA9");
+        var unavailable = new GearItem("unavailable", -1, "Associação indisponível — manter", "", "cab", "#A0ADA9");
+        Choices = (stale ? new[] { unavailable, none } : new[] { none }).Concat(cabinets.Where(c => c.Value > 0)).ToArray();
+        selected = stale ? unavailable : choice?.Value > 0 ? choice : none;
+        Warning = stale ? "Associação indisponível: conteúdo não encontrado." : "";
+    }
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="@color/black"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:textSize="20sp"
+        android:textColor="@color/white"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SysEx"/>
+    <EditText
+        android:textSize="16sp"
+        android:textColor="@color/white"
+        android:id="@+id/smc_input"
+        android:background="@color/lightColor"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:inputType="number"/>
+    <Button
+        android:id="@+id/smc_sender"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send"/>
+</LinearLayout>

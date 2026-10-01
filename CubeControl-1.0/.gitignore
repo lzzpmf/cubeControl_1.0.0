@@ -1,0 +1,10 @@
+.vs/
+*.user
+*.suo
+*.log
+**/bin/
+**/obj/
+**/artifacts/
+**/.tools/dotnet/
+__pycache__/
+*.pyc

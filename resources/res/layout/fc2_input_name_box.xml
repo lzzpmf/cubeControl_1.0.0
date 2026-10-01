@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="300dp"
+    android:layout_height="wrap_content">
+    <TextView
+        android:textColor="@color/white"
+        android:gravity="center"
+        android:background="@color/dominantHue"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:text="@string/input_name"/>
+    <EditText
+        android:textColor="@color/dominantHue"
+        android:id="@+id/edit_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/input_name_hint"
+        android:inputType="text"/>
+    <Button
+        android:textSize="@dimen/text_16sp"
+        android:id="@+id/save_but"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/sure"
+        style="@style/IRBoxBtn"/>
+</LinearLayout>
