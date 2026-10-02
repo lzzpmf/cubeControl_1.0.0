@@ -144,6 +144,8 @@ public sealed partial class EditorViewModel
     private void RefreshEditor()
     {
         if (Amps.Length == 0 || Cabinets.Length == 0 || Presets == null) return;
+        Notify(nameof(DelayGraphState)); Notify(nameof(ChorusGraphState));
+        Notify(nameof(PhaserGraphState)); Notify(nameof(ReverbGraphState));
         Notify(nameof(GalleryLabel));
         Notify(nameof(ModulationLabel)); Notify(nameof(DelayLabel)); Notify(nameof(ReverbLabel)); Notify(nameof(CabinetLabel)); Notify(nameof(ToneLabel));
         foreach (string name in new[] { nameof(Stage), nameof(IsAmp), nameof(IsModulation), nameof(IsDelay), nameof(IsReverb), nameof(IsCabinet), nameof(HasGallery), nameof(CanOpenGearGallery), nameof(FocusedGear), nameof(SelectedAmp), nameof(SelectedCabinet), nameof(EditorDials), nameof(EffectHint), nameof(MatchDescription), nameof(InventoryStatus) }) Notify(name);

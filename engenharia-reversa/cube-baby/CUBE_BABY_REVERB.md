@@ -10,6 +10,8 @@ Esta pesquisa não tem guitarra, gravação nem avaliação sonora. Código, sna
 
 ## Fontes, perfil e cadeia de processamento
 
+O criador também reconhece o firmware `cubebaby_B_20220706.up`, conferido contra leituras do pedal em 01/10/2026. O perfil B corrige o contexto físico, endereços auxiliares e hashes das rotinas/tabelas, mantendo os offsets dos cinco controles e os valores das tabelas originais. Veja a [análise e evidências do B](CUBE_BABY_PHASER.md#perfil-adicional-firmware-b-de-06072022). A tabela abaixo descreve a captura original; o protocolo seleciona os endereços do B separadamente.
+
 A pesquisa reutiliza a janela de código do aparelho preservada no phaser, os padrões de captura/restauração do chorus e a distinção entre memória e escuta estabelecida nos amps. A imagem oficial de 2022 é apenas uma referência histórica: seu layout não foi transportado por delta. Nesta investigação, os caminhos foram conferidos diretamente no pedal conectado.
 
 O perfil `cube-baby-reverb-live-8347f8-v1` exige as verificações existentes da base RAM e mais doze assinaturas específicas: aplicação de presets, chamador DSP, worker de reverb, difusão, amortecimento, inicialização, helper dos filtros, bloco inicial, três tabelas e filtro de entrada. A identidade textual do modelo não substitui essas verificações e não identifica um número de série único.

@@ -5,4 +5,5 @@
  <ItemGroup><Compile Include="../Cube.Tests/ChorusPreviewConnection.cs" Link="ChorusPreviewConnection.cs"/><None Include="../Cube.Tests/Fixtures/chorus-live-code.json" Link="Fixtures/chorus-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
  <ItemGroup><Compile Include="../Cube.Tests/ReverbTests.cs" Link="ReverbProtocolTests.cs"/><None Include="../Cube.Tests/Fixtures/reverb-live-code.json" Link="Fixtures/reverb-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
  <ItemGroup><Compile Include="../Cube.Tests/DelayTests.cs" Link="DelayProtocolTests.cs"/><None Include="../Cube.Tests/Fixtures/delay-live-code.json" Link="Fixtures/delay-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+ <ItemGroup><Compile Include="../Cube.Tests/EffectsFirmwareBTests.cs" Link="EffectsFirmwareBTests.cs"/><None Include="../Cube.Tests/Fixtures/effects-firmware-b.json" Link="Fixtures/effects-firmware-b.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>

@@ -9,6 +9,7 @@ Este índice organiza toda a documentação Markdown do repositório. A aplicaç
 | Documento | Conteúdo |
 | --- | --- |
 | [Guia de uso](guia-de-uso.md) | Conexão, A/B/C, gravação, importação/exportação, IRs e problemas comuns |
+| [Editores gráficos dos efeitos](editores-graficos-de-efeitos.md) | Gestos, contrato dos 22 parâmetros, escalas, prévia RAM e limitações |
 | [Criador de amps](criador-de-amps.md) | Arquivos de amp, prévia em RAM, controles, flash e limitações |
 | [Criador de phaser experimental](../../../engenharia-reversa/cube-baby/CUBE_BABY_PHASER.md) | Controles internos, prévia RAM, arquivos locais e validação sem guitarra |
 | [Criador de chorus experimental](../../../engenharia-reversa/cube-baby/CUBE_BABY_CHORUS.md) | Sete controles, prévia RAM, arquivos locais, recuperação e evidências USB |

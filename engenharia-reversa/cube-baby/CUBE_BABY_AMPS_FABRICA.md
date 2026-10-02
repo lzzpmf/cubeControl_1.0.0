@@ -16,7 +16,7 @@ Os nomes e categorias abaixo foram transcritos da tabela já documentada do manu
 
 ## Compatibilidade com o criador atual
 
-Os setores originais TYPE 6, 7 e 8 possuem valores de ganho até 100. O validador atual `AmpImage.Validate` limita esses valores a 60 e recusa esses três modelos no criador. As tabelas abaixo preservam os dados originais; não foram reduzidas para contornar essa divergência. Veja a [revisão documental](../../CubeControl-1.1/Cube/docs/revisao-documental.md).
+Os setores originais TYPE 6, 7 e 8 possuem valores de ganho até 100. O validador `AmpImage.Validate` e o controle de ganho aceitam o intervalo de 0 a 100, preservando esses modelos sem reduzir seus valores originais.
 
 ## Como ler os dados
 

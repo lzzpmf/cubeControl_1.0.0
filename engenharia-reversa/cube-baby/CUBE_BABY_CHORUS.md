@@ -12,6 +12,8 @@ O criador experimental está integrado ao card Chorus, com sete controles, prév
 
 ## Fontes e compatibilidade
 
+O criador também reconhece o firmware `cubebaby_B_20220706.up`, conferido contra leituras do pedal em 01/10/2026. Esse perfil tem endereços e hashes próprios para o leitor de banco, contexto, dispatcher, inicialização e helpers; os offsets dos controles de chorus permanecem iguais. Veja a [análise e evidências do B](CUBE_BABY_PHASER.md#perfil-adicional-firmware-b-de-06072022). As tabelas desta pesquisa descrevem a captura original, e o perfil B é selecionado separadamente pelo protocolo.
+
 O ponto de partida foi a [pesquisa do phaser](CUBE_BABY_PHASER.md), que preservou três snapshots por chorus em MOD 0, 3 e 6, e a [pesquisa dos amps](CUBE_BABY_AMPS_CONTROLES_E_ESCUTA.md), que mostrou a importância de distinguir operação matemática, alteração de memória e resultado musical.
 
 O firmware oficial `cubebaby_A_20220706.up` não tem o mesmo layout do aparelho. Por exemplo, `0xC13B04` no arquivo oficial contém outro caminho, enquanto no aparelho é a inicialização dos estados e do buffer de modulação. Não foi usado um deslocamento uniforme para transportar endereços.

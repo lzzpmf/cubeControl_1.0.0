@@ -32,7 +32,7 @@ public sealed partial class CubeSession
             // Idle monitoring checks only context and the modulation block. Full protected
             // DSP comparison remains mandatory immediately before/after every mutation.
             var bank = await ReadInternal(0, 48, CancellationToken.None);
-            var state = await ReadInternal(0xFFFD8202, 2, CancellationToken.None, 4);
+            var state = await ReadInternal(EffectsPhysicalStateOffset, 2, CancellationToken.None, 4);
             var dsp = recovery.OriginalDsp.ToArray();
             (await ReadInternal(0x63C, 0x58, CancellationToken.None, 4)).CopyTo(dsp, 0x63C);
             CheckPhaserContext(recovery, new(bank, dsp, state), recovering: false);

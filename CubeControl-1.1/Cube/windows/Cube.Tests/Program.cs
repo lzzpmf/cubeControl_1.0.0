@@ -3,6 +3,24 @@ using System.Buffers.Binary;
 
 int passed = 0;
 void Check(bool result, string name) { if (!result) throw new Exception(name); Console.WriteLine("PASS " + name); passed++; }
+using (var factory = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Cube.FactoryAmps")!)
+{
+    var amp = new byte[AmpImage.Size];
+    for (int slot = 0; slot < 9; slot++)
+    {
+        factory.ReadExactly(amp);
+        AmpImage.Validate(amp);
+        Check(true, $"factory amp {slot + 1} accepted without altering its data");
+    }
+    foreach (int offset in new[] { 0x0C, 0x2C })
+    {
+        var invalid = amp.ToArray(); AmpImage.Set(invalid, offset, 101);
+        bool rejected = false;
+        try { AmpImage.Validate(invalid); } catch (ArgumentException) { rejected = true; }
+        Check(rejected, "amp values above supported range rejected");
+    }
+}
+if (args.Contains("--effects-firmware-b-only")) { await EffectsFirmwareBTests.Run(Check); Console.WriteLine($"{passed} firmware B checks passed."); return; }
 if (args.Contains("--delay-only")) { await DelayTests.Run(Check); Console.WriteLine($"{passed} delay checks passed."); return; }
 if (args.Contains("--reverb-only")) { await ReverbTests.Run(Check); Console.WriteLine($"{passed} reverb checks passed."); return; }
 if (args.Contains("--chorus-preview-only")) { await ChorusPreviewTests.Run(Check); Console.WriteLine($"{passed} chorus preview checks passed."); return; }

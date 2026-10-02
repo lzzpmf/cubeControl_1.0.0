@@ -23,9 +23,7 @@ public sealed partial class CubeSession
             (0x8359A0, 0x6C, "1b7f8ab5a9f431c89e1fec2060c3b71993b416dc20e8d5526b2169e91b59ea79"),
         })
         {
-            var bytes = await ReadChunks(4, unchecked(address - 0x8347F8u), size, ct);
-            if (!Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).Equals(hash, StringComparison.OrdinalIgnoreCase))
-                throw new IOException($"Assinatura do reverb diverge em {address:X8}.");
+            await VerifyEffectsRange(address, size, hash, "reverb", ct);
         }
         reverbFirmwareVerified = true;
     }
@@ -60,7 +58,7 @@ public sealed partial class CubeSession
                 ("feedback-table", 0xC4881C, 180), ("damping-table", 0xC488D0, 16),
                 ("mix-table", 0xC48D38, 120), ("runtime", 0x8181BC, 0x94),
                 ("input-filter", 0x8359A0, 0x6C), ("input-coefficients", 0x818228, 20)
-            }) result[name] = await ReadChunks(4, unchecked(address - 0x8347F8u), size, ct);
+            }) result[name] = await ReadChunks(4, EffectsAddress(address), size, ct);
             var snapshot = await ReadPhaserCore(ct);
             result["bank"] = snapshot.Bank; result["dsp"] = snapshot.Dsp; result["physical"] = snapshot.PhysicalState;
             return result;

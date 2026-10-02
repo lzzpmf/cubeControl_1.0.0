@@ -39,7 +39,7 @@ public sealed partial class CubeSession
             // Idle monitoring checks only context and the modulation block. Full protected
             // DSP comparison remains mandatory immediately before/after every mutation.
             var bank = await ReadInternal(0, 48, CancellationToken.None);
-            var state = await ReadInternal(0xFFFD8202, 2, CancellationToken.None, 4);
+            var state = await ReadInternal(EffectsPhysicalStateOffset, 2, CancellationToken.None, 4);
             var dsp = recovery.OriginalDsp.ToArray();
             (await ReadInternal(0x63C, 0x58, CancellationToken.None, 4)).CopyTo(dsp, 0x63C);
             CheckChorusContext(recovery, new(bank, dsp, state), recovering: false);
@@ -124,7 +124,7 @@ public sealed partial class CubeSession
             {
                 // Recheck the physical context between field writes, including partial imports/restores.
                 var bank = await ReadInternal(0, 48, ct);
-                var state = await ReadInternal(0xFFFD8202, 2, ct, 4);
+                var state = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4);
                 var current = expected.ToArray();
                 (await ReadInternal(0x63C, 0x58, ct, 4)).CopyTo(current, 0x63C);
                 CheckChorusContext(recovery with { Target = ChorusParameters.Read(expected) }, new(bank, current, state), recovering: false);

@@ -41,6 +41,10 @@ A cadeia visual contém Amp, Chorus, Phaser, Delay, Reverb e Cabinet. Clicar em 
 
 **Associar gabinete** aplica ao preset editado a associação configurada para o amp. **Associação automática** começa desligada e é persistida localmente; quando ligada, tenta aplicar a associação ao amp atual e nas escolhas seguintes. Sem associação válida, preserva o gabinete. A seção IR mantém seu estado ligado/desligado. Salvar A/B/C continua sendo necessário para persistir a seleção no pedal.
 
+## Edição gráfica dos efeitos experimentais
+
+Os criadores de Chorus, Phaser, Delay e Reverb usam alças nas curvas, envelopes e superfícies. Selecione um elemento para ver nome e valor; arraste seu contorno ou pressione Enter para digitar. Tab percorre os elementos, setas ajustam e Escape cancela o arraste atual. O menu contextual oferece formas de onda, seções e congelamento da modulação do Delay. A prévia continua automática na RAM quando ativa; **Aplicar ajustes** não salva no pedal. Veja o [contrato completo dos parâmetros e gestos](editores-graficos-de-efeitos.md).
+
 ## Criador de chorus experimental
 
 No card **Chorus**, abra **Criador de chorus · experimental**. Ative o chorus no preset físico, em modo PRESET, selecione o mesmo A/B/C no aplicativo e use **Ler chorus ativo**. O editor oferece profundidade, velocidade, mistura, realimentação, forma de onda e dois ganhos. A validação sonora permanece pendente; a mistura em 100% mantém a configuração original e não significa somente efeito.

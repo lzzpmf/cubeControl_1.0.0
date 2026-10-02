@@ -10,6 +10,8 @@ Não houve guitarra, gravação ou avaliação sonora. A análise distingue leit
 
 ## Fontes e perfil
 
+O criador também reconhece o firmware `cubebaby_B_20220706.up`, conferido contra leituras do pedal em 01/10/2026. O perfil B corrige o contexto físico, endereços auxiliares e hashes das rotinas/tabelas, mantendo os mesmos offsets dos cinco controles. Veja a [análise e evidências do B](CUBE_BABY_PHASER.md#perfil-adicional-firmware-b-de-06072022). A tabela abaixo descreve a captura original; o protocolo seleciona os endereços do B separadamente, sem aplicar um delta uniforme.
+
 A janela de código preservada no phaser forneceu os primeiros caminhos. A pesquisa do reverb já havia capturado a aplicação de presets e o chamador DSP; a pesquisa do chorus descreveu o mesmo oscilador normalizado e ensinou a distinguir coeficientes de estados dinâmicos. A pesquisa dos amps fundamenta a separação entre memória, operação matemática e escuta.
 
 O perfil `cube-baby-delay-live-8347f8-v1` exige as verificações da base/alias do phaser e oito assinaturas específicas de delay. Nome da porta e identidade textual não substituem assinaturas; a identidade não é um número de série único. O firmware oficial antigo não foi usado para deslocar endereços por um delta.

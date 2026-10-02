@@ -17,6 +17,12 @@ public sealed partial class EditorViewModel
     private bool PhaserBackgroundOperation => phaserSendTask != null || phaserMonitoring;
     private string PendingPhaser => Path.Combine(DataDirectory, "pending-phaser-preview.json");
     public bool PhaserPreviewActive => phaserRecovery != null;
+    public string PhaserGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
+        : phaserStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : PhaserPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : !Current.Musical.PhaserEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
+        : !CanStartPhaser ? "Recurso indisponível durante a operação ou prévia atual."
+        : "Edição local · leia o efeito ativo para iniciar a prévia.";
     public bool CanStartPhaser => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !PhaserPreviewActive
 #if CUBE_SIMULATION
         && false
@@ -91,7 +97,12 @@ public sealed partial class EditorViewModel
 
     private void PhaserEdited()
     {
-        if (!PhaserPreviewActive || phaserStopped) return;
+        if (!PhaserPreviewActive || phaserStopped)
+        {
+            if (!phaserStopped) Phaser.Message = "Edição local alterada · ainda não aplicada nem exportada.";
+            return;
+        }
+        Phaser.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
         phaserPending = true;
         phaserSendTask ??= SendPhaserEdits();
     }
@@ -176,6 +187,12 @@ public sealed partial class EditorViewModel
         if (Busy || !Phaser.Loaded) return;
         var picker = new SaveFileDialog { Filter = "Phaser experimental (*.phaser.json)|*.phaser.json", FileName = "Meu phaser.phaser.json" };
         if (picker.ShowDialog() != true) return;
-        await Execute(async () => await File.WriteAllTextAsync(picker.FileName, PhaserPreset.Export(Phaser.Identity, Phaser.Parameters)));
+        await Execute(async () =>
+        {
+            var exported = Phaser.Parameters;
+            await File.WriteAllTextAsync(picker.FileName, PhaserPreset.Export(Phaser.Identity, exported));
+            if (Phaser.Parameters == exported)
+                Phaser.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
+        });
     }
 }

@@ -19,9 +19,7 @@ public sealed partial class CubeSession
             (0x8359A0, 0x6C, "1b7f8ab5a9f431c89e1fec2060c3b71993b416dc20e8d5526b2169e91b59ea79"),
         })
         {
-            var bytes = await ReadChunks(4, unchecked(address - 0x8347F8u), size, ct);
-            if (!Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).Equals(hash, StringComparison.OrdinalIgnoreCase))
-                throw new IOException($"Assinatura do delay diverge em {address:X8}.");
+            await VerifyEffectsRange(address, size, hash, "delay", ct);
         }
         delayFirmwareVerified = true;
     }
@@ -54,7 +52,7 @@ public sealed partial class CubeSession
                 ("filters", 0xC488E0, 56), ("input-filter", 0x8359A0, 0x6C),
                 ("runtime", 0x817F86, 0x2E), ("current-time", 0x80FF84, 2),
                 ("input-state", 0x81823C, 20)
-            }) result[name] = await ReadChunks(4, unchecked(address - 0x8347F8u), size, ct);
+            }) result[name] = await ReadChunks(4, EffectsAddress(address), size, ct);
             var snapshot = await ReadPhaserCore(ct);
             result["bank"] = snapshot.Bank; result["dsp"] = snapshot.Dsp; result["physical"] = snapshot.PhysicalState;
             return result;
@@ -193,8 +191,8 @@ public sealed partial class CubeSession
                         for (int repeat = 0; repeat < 10; repeat++)
                         {
                             var started = DateTimeOffset.UtcNow;
-                            var time = await ReadInternal(unchecked(0x80FF84u - 0x8347F8u), 2, ct, 4);
-                            var state = await ReadInternal(unchecked(0x817F86u - 0x8347F8u), 0x2E, ct, 4);
+                            var time = await ReadInternal(EffectsAddress(0x80FF84), 2, ct, 4);
+                            var state = await ReadInternal(EffectsAddress(0x817F86), 0x2E, ct, 4);
                             await observe!($"runtime-{name}-{repeat}", new(started, DateTimeOffset.UtcNow, time, state));
                             if (System.Buffers.Binary.BinaryPrimitives.ReadInt16LittleEndian(time) != start.TimeSamples)
                                 throw new IOException("Tempo interno não convergiu ao solicitado.");

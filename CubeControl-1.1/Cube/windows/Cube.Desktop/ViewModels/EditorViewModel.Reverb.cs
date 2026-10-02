@@ -18,6 +18,12 @@ public sealed partial class EditorViewModel
     private bool ReverbBackgroundOperation => reverbSendTask != null || reverbMonitoring;
     private string PendingReverb => Path.Combine(DataDirectory, "pending-reverb-preview.json");
     public bool ReverbPreviewActive => reverbRecovery != null;
+    public string ReverbGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
+        : reverbStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : ReverbPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : !Current.Musical.ReverbEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
+        : !CanStartReverb ? "Recurso indisponível durante a operação ou prévia atual."
+        : "Edição local · leia o efeito ativo para iniciar a prévia.";
     public bool CanStartReverb => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !ReverbPreviewActive && !File.Exists(PendingReverb)
 #if CUBE_SIMULATION
         && false
@@ -105,7 +111,12 @@ public sealed partial class EditorViewModel
 
     private void ReverbEdited()
     {
-        if (!ReverbPreviewActive || reverbStopped) return;
+        if (!ReverbPreviewActive || reverbStopped)
+        {
+            if (!reverbStopped) Reverb.Message = "Edição local alterada · ainda não aplicada nem exportada.";
+            return;
+        }
+        Reverb.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
         reverbPending = true;
         reverbSendTask ??= SendReverbEdits();
     }
@@ -192,6 +203,12 @@ public sealed partial class EditorViewModel
         if (Busy || !Reverb.Loaded) return;
         var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Reverb experimental (*.reverb.json)") + "|*.reverb.json", FileName = Localization.LanguageService.T("Meu reverb.reverb.json") };
         if (picker.ShowDialog() != true) return;
-        await Execute(async () => await File.WriteAllTextAsync(picker.FileName, ReverbPreset.Export(Reverb.Identity, Reverb.Parameters)));
+        await Execute(async () =>
+        {
+            var exported = Reverb.Parameters;
+            await File.WriteAllTextAsync(picker.FileName, ReverbPreset.Export(Reverb.Identity, exported));
+            if (Reverb.Parameters == exported)
+                Reverb.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
+        });
     }
 }

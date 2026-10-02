@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Buffers.Binary;
 
 namespace Cube.Protocol;
@@ -22,7 +21,7 @@ public sealed partial class CubeSession
                 ("preset", 0x831AC0, 0x49C), ("initial-filters", 0xC487AC, 56),
                 ("mod-table", 0xC487E4, 56), ("waveforms", 0x833540, 0x54),
                 ("initialize", 0xC13B04, 0x100), ("filter-helper", 0x80A91E, 0x80)
-            }) result[name] = await ReadChunks(4, unchecked(address - 0x8347F8u), size, ct);
+            }) result[name] = await ReadChunks(4, EffectsAddress(address), size, ct);
             return result;
         }
         finally { gate.Release(); }
@@ -42,13 +41,11 @@ public sealed partial class CubeSession
             (0x80A91E, 0x2A, "465961c91038ea88c1490bc3e4cf0dbf9acc3b550e6f096398d37e25bf685b83")
         })
         {
-            var bytes = await ReadChunks(4, unchecked(address - 0x8347F8u), size, ct);
-            if (!Convert.ToHexString(SHA256.HashData(bytes)).Equals(hash, StringComparison.OrdinalIgnoreCase))
-                throw new IOException($"Assinatura do chorus diverge em {address:X8}.");
+            await VerifyEffectsRange(address, size, hash, "chorus", ct);
         }
-        if (!(await ReadInternal(unchecked(0x80C388u - 0x8347F8u), 4, ct, 4)).SequenceEqual(Convert.FromHexString("B5268300")) ||
-            !(await ReadInternal(unchecked(0x80C3DCu - 0x8347F8u), 12, ct, 4)).SequenceEqual(Convert.FromHexString("633583004135830061358300")))
-            throw new IOException("Dispatcher/osciladores do chorus incompatíveis.");
+        if (!(await ReadInternal(EffectsAddress(0x80C388), 4, ct, 4)).SequenceEqual(Convert.FromHexString("B5268300")) ||
+            !(await ReadInternal(EffectsAddress(0x80C3DC), 12, ct, 4)).SequenceEqual(Convert.FromHexString("633583004135830061358300")))
+            throw new NotSupportedException("Dispatcher/osciladores do chorus incompatíveis com o perfil verificado. A edição normal de presets continua disponível.");
         chorusFirmwareVerified = true;
     }
 
@@ -75,7 +72,7 @@ public sealed partial class CubeSession
             async Task Context()
             {
                 if (!(await ReadInternal(0, 48, ct)).SequenceEqual(expected) ||
-                    !(await ReadInternal(0xFFFD8202, 2, ct, 4)).SequenceEqual(original.PhysicalState))
+                    !(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4)).SequenceEqual(original.PhysicalState))
                     throw new IOException("Contexto externo mudou; backup preservado.");
             }
             async Task Live(int offset, int value)

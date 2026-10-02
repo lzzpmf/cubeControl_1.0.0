@@ -62,7 +62,7 @@ internal static class ChorusPreviewTests
         await reconnected.RestoreChorusPreview(durable);
         check(ChorusParameters.StableEquals(fake.Dsp, original), "chorus recovery from serialized partial transaction");
         fake.BadSignature = true; using var incompatible = new CubeSession(fake); await incompatible.Identify(); writes = fake.Writes; rejected = false;
-        try { await incompatible.BeginChorusPreview(0, Keep); } catch (IOException) { rejected = true; }
+        try { await incompatible.BeginChorusPreview(0, Keep); } catch (NotSupportedException) { rejected = true; }
         check(rejected && fake.Writes == writes, "chorus incompatible firmware rejects preview");
         fake.BadSignature = false; fake.Dsp[0x678] = 1;
         using var filters = new CubeSession(fake); await filters.Identify(); rejected = false;

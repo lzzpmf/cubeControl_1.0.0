@@ -87,6 +87,8 @@ dotnet run --project .\CubeControl-1.1\Cube\windows\Cube.Desktop.Tests -c Releas
 
 `Cube.Tests` exercita codecs, perfil, sessão, fila e operações com conexão falsa. `Cube.Desktop.Tests` usa WPF e transporte simulado; alguns modos abrem janelas e produzem capturas locais. Escolha um modo por execução:
 
+O modo `--effects-firmware-b-only` está disponível nos dois projetos e testa os quatro criadores com o perfil de `cubebaby_B_20220706.up`. A [análise do firmware B](../../../engenharia-reversa/cube-baby/CUBE_BABY_PHASER.md#perfil-adicional-firmware-b-de-06072022) preserva a correspondência entre o arquivo, as leituras USB e os endereços usados pelo protocolo.
+
 | Área | Argumentos disponíveis |
 | --- | --- |
 | Layout e zoom | `--responsive-only`, `--zoom-only`, `--zoom-compact-only`, `--zoom-dialogs-only`, `--density-only`, `--volume-only` |

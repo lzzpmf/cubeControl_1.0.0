@@ -68,8 +68,9 @@ internal static class PhaserTests
         await incompatible.Identify();
         writes = fake.Writes;
         bool unsupported = false;
-        try { await incompatible.BeginPhaserPreview(0, Keep); } catch (IOException) { unsupported = true; }
+        try { await incompatible.BeginPhaserPreview(0, Keep); } catch (NotSupportedException) { unsupported = true; }
         check(unsupported && writes == fake.Writes, "phaser incompatible firmware never written");
+        check(!incompatible.IsFaulted && (await incompatible.ReadBank()).SequenceEqual(fake.Bank), "unsupported creator leaves normal preset reads available");
         fake.BadSignature = false;
         fake.BadReadHeader = true;
         using var inconsistent = new CubeSession(fake) { Timeout = TimeSpan.FromMilliseconds(80) };
@@ -94,6 +95,7 @@ internal sealed class PhaserConnection : IMidiConnection
     {
         code = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "phaser-live-code.json")))!
             .ToDictionary(p => uint.Parse(p.Key), p => Convert.FromHexString(p.Value));
+        code.TryAdd(0xFFFFD958, new byte[12]); // Unknown B reader on this legacy fixture.
         Bank[8] = 12; Bank[11] = 1;
         Dsp[0x63C] = 3; Dsp[0x63D] = 2; Dsp[0x640] = 1;
         BinaryPrimitives.WriteSingleLittleEndian(Dsp.AsSpan(0x648), 5000);

@@ -78,7 +78,7 @@ internal static class ReverbTests
         try { await reconnect.RestoreReverbPreview(saved!); } catch (IOException) { failed = true; }
         check(failed && fake.Writes == writes, "external bank edit blocks recovery"); fake.Bank[4] = 0;
         fake.BadSignature = true; using var bad = new CubeSession(fake); await bad.Identify(); writes = fake.Writes; failed = false;
-        try { await bad.BeginReverbPreview(0, Save); } catch (IOException) { failed = true; }
+        try { await bad.BeginReverbPreview(0, Save); } catch (NotSupportedException) { failed = true; }
         check(failed && fake.Writes == writes, "incompatible firmware never written"); fake.BadSignature = false;
         fake.BadReadHeader = true; using var header = new CubeSession(fake) { Timeout = TimeSpan.FromMilliseconds(80) }; await header.Identify(); failed = false;
         try { await header.ReadReverbResearch(); } catch (TimeoutException) { failed = true; }

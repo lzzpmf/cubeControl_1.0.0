@@ -31,7 +31,7 @@ public sealed partial class CubeSession
             // Idle monitoring checks only context and the reverb block. Full protected
             // DSP comparison remains mandatory immediately before/after every mutation.
             var bank = await ReadInternal(0, 48, CancellationToken.None);
-            var state = await ReadInternal(0xFFFD8202, 2, CancellationToken.None, 4);
+            var state = await ReadInternal(EffectsPhysicalStateOffset, 2, CancellationToken.None, 4);
             var dsp = recovery.OriginalDsp.ToArray();
             (await ReadChunks(4, 0x6E0, 0x84, CancellationToken.None)).CopyTo(dsp, 0x6E0);
             CheckReverbContext(recovery, new(bank, dsp, state), recovering: false);
@@ -102,7 +102,7 @@ public sealed partial class CubeSession
         {
             if (expected.AsSpan(offset, length).SequenceEqual(after.AsSpan(offset, length))) continue;
             if (!(await ReadInternal(0, 48, ct)).SequenceEqual(before.Bank) ||
-                !(await ReadInternal(0xFFFD8202, 2, ct, 4)).SequenceEqual(before.PhysicalState) ||
+                !(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4)).SequenceEqual(before.PhysicalState) ||
                 !(await ReadChunks(4, 0x6E0, 0x84, ct)).AsSpan().SequenceEqual(expected.AsSpan(0x6E0, 0x84)))
                 throw new IOException("Contexto mudou entre escritas; prévia interrompida e backup preservado.");
             await AmpAck(CubePacket.Write(4, (uint)offset, after.AsSpan(offset, length)), ct);

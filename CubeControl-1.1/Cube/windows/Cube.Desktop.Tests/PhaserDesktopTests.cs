@@ -14,6 +14,19 @@ internal static class PhaserDesktopTests
         Cube.Desktop.Appearance.ThemeService.Instance.Preview(Cube.Desktop.Appearance.ThemeMode.Dark);
         int passed = 0;
         void Check(bool condition, string name) { if (!condition) throw new Exception(name); passed++; Console.WriteLine("PASS " + name); }
+        using (var factory = typeof(AmpViewModel).Assembly.GetManifestResourceStream("Cube.FactoryAmps")!)
+        {
+            var bytes = new byte[AmpImage.Size];
+            for (int slot = 0; slot < 9; slot++)
+            {
+                factory.ReadExactly(bytes);
+                var amp = new AmpViewModel(); amp.LoadSlot(bytes, slot);
+                Check(amp.Build().SequenceEqual(bytes), $"factory amp {slot + 1} loads and builds unchanged");
+                amp.MainControls[0].Position = 1000;
+                AmpImage.Validate(amp.Build());
+                Check(true, $"factory amp {slot + 1} gain control maximum stays valid");
+            }
+        }
         string directory = Path.Combine(Path.GetTempPath(), "cube-phaser-test-" + Guid.NewGuid().ToString("N"));
         var fake = new PhaserConnection();
         var session = new CubeSession(fake);
@@ -66,6 +79,14 @@ internal static class PhaserDesktopTests
             "idle monitoring stops on physical context change and keeps recovery");
         fake.State[0] = 0;
         await reopened.EndPhaserPreviewAsync();
+        await reopened.DisconnectAsync();
+        fake.BadSignature = true;
+        var unsupported = new CubeSession(fake); await unsupported.Identify(); await reopened.AttachSession(unsupported);
+        writes = fake.Writes;
+        await reopened.ReadPhaserAsync();
+        Check(reopened.CanEdit && reopened.CanOperate && !reopened.PhaserPreviewActive && fake.Writes == writes,
+            "unsupported effect firmware leaves normal editor usable without writes");
+        Check(!reopened.Status.Contains("Releia ou reconecte"), "unsupported firmware does not suggest reconnecting");
         Console.WriteLine($"{passed} phaser desktop checks passed. Render: {render}");
     }
 }

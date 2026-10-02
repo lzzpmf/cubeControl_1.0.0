@@ -18,6 +18,12 @@ public sealed partial class EditorViewModel
     private bool DelayBackgroundOperation => delaySendTask != null || delayMonitoring;
     private string PendingDelay => Path.Combine(DataDirectory, "pending-delay-preview.json");
     public bool DelayPreviewActive => delayRecovery != null;
+    public string DelayGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
+        : delayStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : DelayPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : !Current.Musical.DelayEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
+        : !CanStartDelay ? "Recurso indisponível durante a operação ou prévia atual."
+        : "Edição local · leia o efeito ativo para iniciar a prévia.";
     public bool CanStartDelay => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !DelayPreviewActive && !File.Exists(PendingDelay)
 #if CUBE_SIMULATION
         && false
@@ -110,7 +116,12 @@ public sealed partial class EditorViewModel
 
     private void DelayEdited()
     {
-        if (!DelayPreviewActive || delayStopped) return;
+        if (!DelayPreviewActive || delayStopped)
+        {
+            if (!delayStopped) Delay.Message = "Edição local alterada · ainda não aplicada nem exportada.";
+            return;
+        }
+        Delay.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
         delayPending = true;
         delaySendTask ??= SendDelayEdits();
     }
@@ -197,6 +208,12 @@ public sealed partial class EditorViewModel
         if (Busy || !Delay.Loaded) return;
         var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Delay experimental (*.delay.json)") + "|*.delay.json", FileName = Localization.LanguageService.T("Meu delay.delay.json") };
         if (picker.ShowDialog() != true) return;
-        await Execute(async () => await File.WriteAllTextAsync(picker.FileName, DelayPreset.Export(Delay.Identity, Delay.Parameters)));
+        await Execute(async () =>
+        {
+            var exported = Delay.Parameters;
+            await File.WriteAllTextAsync(picker.FileName, DelayPreset.Export(Delay.Identity, exported));
+            if (Delay.Parameters == exported)
+                Delay.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
+        });
     }
 }

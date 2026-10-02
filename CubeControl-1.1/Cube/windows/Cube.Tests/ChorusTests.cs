@@ -37,7 +37,7 @@ internal static class ChorusTests
         await badSession.Identify();
         bool rejected = false;
         try { await badSession.RunChorusResearch(true, (_, _) => Task.CompletedTask, (_, _, _, _) => Task.CompletedTask); }
-        catch (IOException) { rejected = true; }
+        catch (NotSupportedException) { rejected = true; }
         check(rejected && incompatible.Writes == 0, "chorus rejects incompatible worker without writes");
         using var ackOnly = new ChorusConnection { IgnoreControl = true };
         using var ackSession = new CubeSession(ackOnly);

@@ -18,6 +18,12 @@ public sealed partial class EditorViewModel
     private bool ChorusBackgroundOperation => chorusSendTask != null || chorusMonitoring;
     private string PendingChorus => Path.Combine(DataDirectory, "pending-chorus-preview.json");
     public bool ChorusPreviewActive => chorusRecovery != null;
+    public string ChorusGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
+        : chorusStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : ChorusPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : !Current.Musical.ChorusEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
+        : !CanStartChorus ? "Recurso indisponível durante a operação ou prévia atual."
+        : "Edição local · leia o efeito ativo para iniciar a prévia.";
     public bool CanStartChorus => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !ChorusPreviewActive && !File.Exists(PendingChorus)
 #if CUBE_SIMULATION
         && false
@@ -105,7 +111,12 @@ public sealed partial class EditorViewModel
 
     private void ChorusEdited()
     {
-        if (!ChorusPreviewActive || chorusStopped) return;
+        if (!ChorusPreviewActive || chorusStopped)
+        {
+            if (!chorusStopped) Chorus.Message = "Edição local alterada · ainda não aplicada nem exportada.";
+            return;
+        }
+        Chorus.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
         chorusPending = true;
         chorusSendTask ??= SendChorusEdits();
     }
@@ -192,6 +203,12 @@ public sealed partial class EditorViewModel
         if (Busy || !Chorus.Loaded) return;
         var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Chorus experimental (*.chorus.json)") + "|*.chorus.json", FileName = Localization.LanguageService.T("Meu chorus.chorus.json") };
         if (picker.ShowDialog() != true) return;
-        await Execute(async () => await File.WriteAllTextAsync(picker.FileName, ChorusPreset.Export(Chorus.Identity, Chorus.Parameters)));
+        await Execute(async () =>
+        {
+            var exported = Chorus.Parameters;
+            await File.WriteAllTextAsync(picker.FileName, ChorusPreset.Export(Chorus.Identity, exported));
+            if (Chorus.Parameters == exported)
+                Chorus.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
+        });
     }
 }

@@ -2,31 +2,23 @@
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+ xmlns:graph="clr-namespace:Cube.Desktop.Controls"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization">
  <Expander Header="{loc:Translate Text='Criador de reverb · experimental'}" Margin="0,16,0,0">
-  <StackPanel Margin="0,12,0,0" MaxWidth="560" HorizontalAlignment="Left">
+  <StackPanel Margin="0,12,0,0" MaxWidth="900" HorizontalAlignment="Stretch">
    <TextBlock Text="{loc:Translate Text='Controles internos em prévia temporária. Validação sonora pendente.'}" TextWrapping="Wrap" Margin="0,0,0,12"/>
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Ler reverb ativo'}" Click="ReadClick" IsEnabled="{Binding CanStartReverb}" Margin="0,0,8,8"/>
-    <ui:Button Content="{loc:Translate Text='Restaurar reverb'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreReverb}" Margin="0,0,8,8"/>
+    <ui:Button Content="{loc:Translate Text='Ler reverb ativo'}" Click="ReadClick" IsEnabled="{Binding CanStartReverb}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowDownload24"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Restaurar reverb'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreReverb}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowUndo24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Text="{loc:Translate Text='Ative o reverb e desligue a modulação antes de ler. Os ganhos direto e reverberado são independentes.'}" TextWrapping="Wrap" Margin="0,0,0,8"/>
-   <StackPanel IsEnabled="{Binding CanEditReverb}">
-    <TextBlock Text="{loc:Translate Text='Sinal direto (%)'}" Margin="0,10,0,0"/>
-    <DockPanel><TextBlock DockPanel.Dock="Right" Width="65" Text="{Binding Reverb.Dry,StringFormat={}{0:0}}"/><Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Reverb.Dry,Mode=TwoWay}" MinWidth="260" AutomationProperties.Name="{loc:Translate Text='Sinal direto (%)'}"/></DockPanel>
-    <TextBlock Text="{loc:Translate Text='Sinal reverberado (%)'}" Margin="0,10,0,0"/>
-    <DockPanel><TextBlock DockPanel.Dock="Right" Width="65" Text="{Binding Reverb.Wet,StringFormat={}{0:0}}"/><Slider Minimum="0" Maximum="90" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Reverb.Wet,Mode=TwoWay}" MinWidth="260" AutomationProperties.Name="{loc:Translate Text='Sinal reverberado (%)'}"/></DockPanel>
-    <TextBlock Text="{loc:Translate Text='Realimentação (1–15, sem unidade de tempo)'}" Margin="0,10,0,0"/>
-    <DockPanel><TextBlock DockPanel.Dock="Right" Width="65" Text="{Binding Reverb.Decay,StringFormat={}{0:0}}"/><Slider Minimum="1" Maximum="15" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Reverb.Decay,Mode=TwoWay}" MinWidth="260" AutomationProperties.Name="{loc:Translate Text='Realimentação (1–15, sem unidade de tempo)'}"/></DockPanel>
-    <TextBlock Text="{loc:Translate Text='Retorno das linhas (% do original)'}" Margin="0,10,0,0"/>
-    <DockPanel><TextBlock DockPanel.Dock="Right" Width="65" Text="{Binding Reverb.ReturnLevel,StringFormat={}{0:0}}"/><Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Reverb.ReturnLevel,Mode=TwoWay}" MinWidth="260" AutomationProperties.Name="{loc:Translate Text='Retorno das linhas (% do original)'}"/></DockPanel>
-    <TextBlock Text="{loc:Translate Text='Amortecimento (0–10; 10 = original)'}" Margin="0,10,0,0"/>
-    <DockPanel><TextBlock DockPanel.Dock="Right" Width="65" Text="{Binding Reverb.Damping,StringFormat={}{0:0}}"/><Slider Minimum="0" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Reverb.Damping,Mode=TwoWay}" MinWidth="260" AutomationProperties.Name="{loc:Translate Text='Amortecimento (0–10; 10 = original)'}"/></DockPanel>
-   </StackPanel>
+   <TextBlock Text="{loc:Translate Value={Binding ReverbGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+   <graph:EffectGraphEditor EffectKind="Reverb" DataContext="{Binding Reverb}" IsEnabled="{Binding DataContext.CanEditReverb,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+
    <WrapPanel Margin="0,12,0,0" IsEnabled="{Binding CanUseReverbFiles}">
-    <ui:Button Content="{loc:Translate Text='Importar reverb'}" Click="ImportClick" Margin="0,0,8,8"/>
-    <ui:Button Content="{loc:Translate Text='Exportar reverb'}" Click="ExportClick" IsEnabled="{Binding Reverb.Loaded}" Margin="0,0,8,8"/>
-    <ui:Button Content="{loc:Translate Text='Aplicar ajustes'}" Click="ApplyClick" IsEnabled="{Binding CanApplyReverb}" Margin="0,0,8,8"/>
+    <ui:Button Content="{loc:Translate Text='Importar reverb'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="FolderOpen24"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Exportar reverb'}" Click="ExportClick" IsEnabled="{Binding Reverb.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Aplicar ajustes'}" Click="ApplyClick" IsEnabled="{Binding CanApplyReverb}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Checkmark24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Text="{loc:Translate Value={Binding Reverb.Message}}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>

@@ -19,6 +19,7 @@ internal sealed class ChorusPreviewConnection : IMidiConnection
     {
         code = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "chorus-live-code.json")))!
             .ToDictionary(p => uint.Parse(p.Key), p => Convert.FromHexString(p.Value));
+        code.TryAdd(0xFFFFD958, new byte[12]);
         Bank[8] = 3; Bank[11] = 1;
         Dsp[0x63C] = 3; Dsp[0x63D] = 5; Dsp[0x640] = 0;
         SetParameters(ChorusParameters.Default);

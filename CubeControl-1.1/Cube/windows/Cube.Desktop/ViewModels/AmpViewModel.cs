@@ -123,8 +123,8 @@ public sealed class AmpViewModel : Observable
         CoefficientsA = Rows(0x50, 50); CoefficientsB = Rows(0x51C, 50);
         GainFactor = CompensationFactor = "1"; ChangeEqA = ChangeEqB = false;
         MainControls = [
-            new("Ganho", "Ajuste a intensidade do ganho do seu amp.", "Botão Metálico de Controle Texturizado.png", 0, Math.Min(100, 60 / Math.Max(.001, Gain.Max(r => r.Number()))), 1, "×", v => { GainFactor = Invariant(v); UpdateEffective(Gain, v); Edited?.Invoke(); }),
-            new("Volume", "Equilibre o volume ao ajustar seu timbre.", "Botão Vintage de Metal Dourado.png", 0, Math.Min(8, 100 / Math.Max(.001, Compensation.Max(r => r.Number()))), 1, "×", v => { CompensationFactor = Invariant(v); UpdateEffective(Compensation, v); Edited?.Invoke(); })];
+            new("Ganho", "Ajuste a intensidade do ganho do seu amp.", "Botão Metálico de Controle Texturizado.png", 0, Math.Min(100, AmpImage.MaximumGain / Math.Max(.001, Gain.Max(r => r.Number()))), 1, "×", v => { GainFactor = Invariant(v); UpdateEffective(Gain, v); Edited?.Invoke(); }),
+            new("Volume", "Equilibre o volume ao ajustar seu timbre.", "Botão Vintage de Metal Dourado.png", 0, Math.Min(8, AmpImage.MaximumCompensation / Math.Max(.001, Compensation.Max(r => r.Number()))), 1, "×", v => { CompensationFactor = Invariant(v); UpdateEffective(Compensation, v); Edited?.Invoke(); })];
         EqAControls = EqControls(bytes, 0x5E8, true);
         EqBControls = EqControls(bytes, 0x604, false);
         CurveControls = GroupControls(Curve, 16, true, "Fader Retrô preto com faixa creme.png", "Fader Vintage de Estilo Retrô.png");

@@ -125,6 +125,8 @@ public sealed partial class EditorViewModel : Observable, IDisposable
 
     private void Refresh()
     {
+        Notify(nameof(DelayGraphState)); Notify(nameof(ChorusGraphState));
+        Notify(nameof(PhaserGraphState)); Notify(nameof(ReverbGraphState));
         Notify(nameof(DelayPreviewActive)); Notify(nameof(CanStartDelay)); Notify(nameof(CanRestoreDelay));
         Notify(nameof(CanEditDelay)); Notify(nameof(CanUseDelayFiles)); Notify(nameof(CanApplyDelay));
         Notify(nameof(ReverbPreviewActive)); Notify(nameof(CanStartReverb)); Notify(nameof(CanRestoreReverb));

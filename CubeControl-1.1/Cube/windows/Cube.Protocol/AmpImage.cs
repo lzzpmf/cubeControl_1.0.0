@@ -5,6 +5,7 @@ namespace Cube.Protocol;
 public static class AmpImage
 {
     public const int Size = 4096, BodyOffset = 0x0C, BodyLength = 0x620;
+    public const float MaximumGain = 100, MaximumCompensation = 100;
     public static void Validate(byte[] data)
     {
         if (data.Length != Size || data[0] != 1 || data[1] != 7 || data.AsSpan(2, 10).IndexOfAnyExcept((byte)0) >= 0)
@@ -13,8 +14,8 @@ public static class AmpImage
             for (int i = 0; i < count; i++)
                 if (!float.IsFinite(Get(data, offset + i * 4))) throw new ArgumentException("O amp contém valores não finitos.");
         for (int i = 0; i < 8; i++)
-            if (Get(data, 0x0C + i * 4) is < 0 or > 60 || Get(data, 0x2C + i * 4) is < 0 or > 100)
-                throw new ArgumentException("Ganho deve estar entre 0 e 60; compensação entre 0 e 100.");
+            if (Get(data, 0x0C + i * 4) is < 0 or > MaximumGain || Get(data, 0x2C + i * 4) is < 0 or > MaximumCompensation)
+                throw new ArgumentException("Ganho e compensação devem estar entre 0 e 100.");
         for (int i = 0; i < 256; i++)
             if (Get(data, 0x11C + i * 4) is < 0 or > 1) throw new ArgumentException("A curva deve estar entre 0 e 1.");
         foreach (int offset in new[] { 0x5E8, 0x604 })

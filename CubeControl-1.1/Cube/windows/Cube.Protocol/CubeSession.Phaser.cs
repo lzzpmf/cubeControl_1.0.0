@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-
 namespace Cube.Protocol;
 
 public sealed record PhaserResearchSnapshot(byte[] Bank, byte[] Dsp, byte[] PhysicalState);
@@ -106,7 +104,7 @@ public sealed partial class CubeSession
         try
         {
             var bank = await ReadInternal(0, 48, ct);
-            var state = await ReadInternal(0xFFFD8202, 2, ct, 4);
+            var state = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4);
             var bytes = await ReadChunks(4, 0x63C, 0xA4, ct);
             if (!bank.SequenceEqual(original.Bank) || !state.SequenceEqual(original.PhysicalState) || bytes[0] != 0 || bytes[0x58] != 0)
                 throw new IOException("Restauração dos blocos inativos exige banco original e efeitos desligados.");
@@ -155,8 +153,8 @@ public sealed partial class CubeSession
         finally { gate.Release(); }
     }
 
-    // Live code differs from the 20220706 download. This profile is pinned to
-    // five code ranges captured on 2026-10-01, with DSP base 0x8347F8.
+    // The captured live profile and the B update have separate pinned code ranges,
+    // sharing the DSP parameter layout at 0x8347F8.
     // These are bounded research reads, not an arbitrary memory API.
     public async Task<PhaserResearchSnapshot> ReadPhaserResearch(CancellationToken ct = default)
     {
@@ -170,13 +168,13 @@ public sealed partial class CubeSession
             RequireIdentity();
             await VerifyPhaserFirmware(ct);
             var bank = await ReadInternal(0, 48, ct);
-            var alias = await ReadInternal(0xFFFD827C, 48, ct, 4);
+            var alias = await ReadInternal(EffectsBankAliasOffset, 48, ct, 4);
             if (!bank.SequenceEqual(alias)) throw new IOException("Alias do banco diverge; mapeamento não confirmado.");
-            var state = await ReadInternal(0xFFFD8202, 2, ct, 4);
+            var state = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4);
             var dsp = await ReadChunks(4, 0, 0xF70, ct);
             if (!(await ReadInternal(0, 48, ct)).SequenceEqual(bank))
                 throw new IOException("Banco mudou durante a captura.");
-            if (!(await ReadInternal(0xFFFD8202, 2, ct, 4)).SequenceEqual(state))
+            if (!(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4)).SequenceEqual(state))
                 throw new IOException("Estado físico mudou durante a captura.");
             return new(bank, dsp, state);
     }
@@ -184,6 +182,16 @@ public sealed partial class CubeSession
     private async Task VerifyPhaserFirmware(CancellationToken ct)
     {
         if (phaserFirmwareVerified) return;
+        var reader = await ReadInternal(unchecked(0x832108u - 0x8347F8u), 12, ct, 4);
+        if (HashMatches(reader, "e3b09baf62e6fc2895eceaaef0db5acfe035b53a171f3e00b52af442f1dbd965"))
+            effectsFirmwareB = false;
+        else
+        {
+            var bReader = await ReadInternal(unchecked(0x832150u - 0x8347F8u), 12, ct, 4);
+            if (!HashMatches(bReader, FirmwareBSignatures[0].Hash))
+                throw new NotSupportedException("Os criadores experimentais de efeitos não são compatíveis com o firmware deste pedal. A edição normal de presets continua disponível. Reconectar não altera essa compatibilidade.");
+            effectsFirmwareB = true;
+        }
         foreach (var (address, length, hash) in new (uint, int, string)[]
         {
             (0x832108, 12, "e3b09baf62e6fc2895eceaaef0db5acfe035b53a171f3e00b52af442f1dbd965"),
@@ -193,13 +201,11 @@ public sealed partial class CubeSession
             (0x8327C4, 0x88, "a9754bb9e6b31fb02270fb1ee1977d3b8118b193c51977afc12457c1018793ef")
         })
         {
-            uint offset = unchecked(address - 0x8347F8u);
-            var actual = await ReadChunks(4, offset, length, ct);
-            if (!Convert.ToHexString(SHA256.HashData(actual)).Equals(hash, StringComparison.OrdinalIgnoreCase))
-                throw new IOException($"Assinatura do phaser diverge em {address:X8}.");
+            await VerifyEffectsRange(address, length, hash, "efeitos", ct);
         }
-        var entry = await ReadInternal(unchecked(0x80C37Cu - 0x8347F8u), 4, ct, 4);
-        if (!entry.SequenceEqual(Convert.FromHexString("9D238300"))) throw new IOException("Dispatcher do phaser incompatível.");
+        var entry = await ReadInternal(EffectsAddress(0x80C37C), 4, ct, 4);
+        if (!entry.SequenceEqual(Convert.FromHexString("9D238300"))) throw new NotSupportedException("Os criadores experimentais de efeitos não são compatíveis com o dispatcher deste firmware. A edição normal de presets continua disponível.");
         phaserFirmwareVerified = true;
+        EffectsFirmware = effectsFirmwareB ? "cubebaby_B_20220706" : "cube-baby-live-20261001";
     }
 }

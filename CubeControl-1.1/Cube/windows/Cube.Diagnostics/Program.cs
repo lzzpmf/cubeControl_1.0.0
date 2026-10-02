@@ -2,6 +2,42 @@ using Cube.Protocol;
 using Cube.Usb;
 using System.Text.Json;
 
+if (args.Length > 0 && args[0] == "effects-firmware-b")
+{
+    if (args.Length != 2) throw new ArgumentException("Uso: effects-firmware-b PASTA-NOVA");
+    if (System.Diagnostics.Process.GetProcessesByName("CubeControl").Length != 0 ||
+        System.Diagnostics.Process.GetProcessesByName("CubeSuite").Length != 0)
+        throw new InvalidOperationException("Feche CubeControl e CubeSuite antes da captura somente de leitura.");
+    string folder = Path.GetFullPath(args[1]);
+    if (Directory.Exists(folder)) throw new IOException("Use uma pasta nova para preservar as evidências.");
+    Directory.CreateDirectory(folder);
+    bool IsCube(string name) => System.Text.RegularExpressions.Regex.IsMatch(name, @"^USB-Midi(?: \[\d+\])?$",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+    var input = (await WindowsMidiConnection.Inputs()).Single(p => IsCube(p.Name));
+    var output = (await WindowsMidiConnection.Outputs()).Single(p => IsCube(p.Name));
+    using var connection = await WindowsMidiConnection.Open(input.Id, output.Id);
+    using var firmwareSession = new CubeSession(connection);
+    using var log = new StreamWriter(Path.Combine(folder, "transport.log")) { AutoFlush = true };
+    firmwareSession.Log += line => log.WriteLine($"{DateTimeOffset.UtcNow:O} {line}");
+    await firmwareSession.Identify();
+    var evidence = await firmwareSession.ReadEffectsFirmwareBEvidence();
+    foreach (var (name, bytes) in evidence) await File.WriteAllBytesAsync(Path.Combine(folder, name + ".bin"), bytes);
+    if (!evidence["bank"].SequenceEqual(evidence["bank-alias"])) throw new IOException("Alias do banco B divergiu.");
+    string profile = await firmwareSession.VerifyEffectsFirmware();
+    var final = await firmwareSession.ReadPhaserResearch();
+    if (!final.Bank.SequenceEqual(evidence["bank"]) || !final.PhysicalState.SequenceEqual(evidence["physical"]))
+        throw new IOException("Contexto mudou durante a verificação.");
+    await File.WriteAllBytesAsync(Path.Combine(folder, "dsp.bin"), final.Dsp);
+    await File.WriteAllTextAsync(Path.Combine(folder, "verified.json"), JsonSerializer.Serialize(new
+    {
+        profile, identity = firmwareSession.IdentityHex, physical = Convert.ToHexString(final.PhysicalState),
+        bank = Convert.ToHexString(final.Bank), writes = 0,
+        hashes = evidence.ToDictionary(p => p.Key, p => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(p.Value)))
+    }, new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine($"Firmware {profile}: phaser, chorus, delay e reverb verificados; banco/estado preservados; nenhuma escrita.");
+    return;
+}
+
 if (args.Length > 0 && args[0].StartsWith("delay-", StringComparison.Ordinal))
 {
     await DelayResearch.Run(args);

@@ -43,7 +43,7 @@ Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](
 | Botões | Reutilizar `CubeButtonStyle` e templates WPF UI; texto indica a ação |
 | Seletores de equipamento | Imagem abre galeria; destaque preliminar, aplicar/clique duplo confirma, cancelamento não aplica |
 | Knobs da Pedaleira | Valor por tooltip/automação, sem restabelecer campos numéricos permanentes das versões antigas |
-| Controles do criador | Faders/knobs, valores formatados e ajuste fino com Shift; respeitar faixas individuais |
+| Controles do criador de amps | Faders/knobs, valores formatados e ajuste fino com Shift; respeitar faixas individuais |
 | Microfone de IR | Aplica ao concluir o gesto; 0–100 não significa centímetros |
 | Gráfico dos EQs | Representa os coeficientes do filtro, sem alegar medição acústica |
 | Galeria e associações | Identidades estáveis; gabinete reconhecido pelo conteúdo, não pelo slot |
@@ -79,3 +79,7 @@ Testes WPF simulados não comprovam uso físico por toque, leitura por Narrator,
 [Estilos](../windows/Cube.Desktop/App.xaml), [janela](../windows/Cube.Desktop/MainWindow.xaml), [tema](../windows/Cube.Desktop/Appearance/ThemeService.cs), [densidade](../windows/Cube.Desktop/Appearance/UiDensity.cs), [zoom](../windows/Cube.Desktop/Appearance/ZoomService.cs) e [editor de amps](../windows/Cube.Desktop/Views/AmpEditor.xaml) são as fontes da implementação.
 
 Registre novas decisões neste guia e mantenha histórico separado. Não altere protocolo, dependências ou semântica de persistência como consequência implícita de uma mudança visual. O antigo relatório `wpf-ui-audit.md` citado no histórico não está incluído nesta árvore; não é uma verificação reproduzida nesta revisão.
+
+## Criadores gráficos de efeitos
+
+Chorus, Phaser, Delay e Reverb usam manipulação direta de contornos, sem sliders, faders ou knobs internos. Os comandos usam botões e ícones WPF UI; os detalhes numéricos aparecem junto ao elemento selecionado. Alvos de 36 DIPs, foco visível e UI Automation compartilham as propriedades do modelo. Desenhos são ilustrativos e não animados; não representam medições. Os controles normais dos pedais permanecem separados. Consulte [mapeamentos e limitações](editores-graficos-de-efeitos.md).

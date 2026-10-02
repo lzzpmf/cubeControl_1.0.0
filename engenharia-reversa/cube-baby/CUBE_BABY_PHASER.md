@@ -38,6 +38,16 @@ A base atual foi deduzida por chamadas para código ROM e corroborada por litera
 
 O perfil implementado, `cube-baby-live-20261001-8347f8-v1`, confere hashes completos de cinco trechos: leitor do banco (12 bytes), worker (260), inicialização (70), seleção/aplicação de presets (440) e dispatcher (136), além da entrada do dispatcher. O nome USB ou a identidade textual não habilitam escrita por si só. O arquivo oficial antigo não foi habilitado como segundo perfil sem testes físicos.
 
+## Perfil adicional: firmware B de 06/07/2022
+
+Em 01/10/2026 foi analisado o arquivo fornecido pelo usuário, `cubebaby_B_20220706.up`, de 504.600 bytes, SHA-256 `9184852bdebfa1d939ad21a250a579104ec1e3de17f072edbd8311015daad216`. O arquivo corresponde aos 27 trechos de código/tabelas e às três regiões de dispatcher/osciladores lidas do pedal conectado. A verificação preservou banco e estado físico e não enviou escritas. Evidências: [manifesto](artefatos/firmware-b/verification.json), [captura USB e binários](artefatos/firmware-b/read-only-verification.zip), [desmontagem](artefatos/firmware-b/disassembly.txt).
+
+O leitor do banco fica em `0x832150`, não `0x832108`. O banco CPU é `0x80CA68` (alias RAM 04 `0xFFFD8270`); seleção/modo estão em `0x80C9EE` (RAM 04 `0xFFFD81F6`). A base DSP continua `0x8347F8`, e os offsets editáveis dos quatro efeitos permanecem iguais. O dispatcher usa a tabela `0x80C378`, com entrada de phaser em `0x80C380`; worker de phaser continua `0x83239C`. A inicialização do phaser passou para `0x831DCC` e a seleção/aplicação de presets para `0x831FA4`.
+
+O aplicativo reconhece os dois perfis separadamente e verifica os hashes completos correspondentes antes de permitir uma prévia. As rotinas auxiliares e tabelas de chorus, delay e reverb também usam seus endereços e hashes do B. Os identificadores dos arquivos de presets/recuperação continuam representando o layout de parâmetros existente; não são uma identificação da versão comercial do firmware. Firmware desconhecido ou assinatura divergente interrompe o criador com `NotSupportedException`, sem bloquear a edição normal nem recomendar uma reconexão como solução de compatibilidade.
+
+O [extrator](../../scripts/effects-firmware-b.py) fixa o hash do arquivo B e reproduz a fixture usada nos testes. `Cube.Diagnostics effects-firmware-b PASTA-NOVA` faz somente leituras delimitadas, preserva os dados e verifica os quatro perfis. Os testes `--effects-firmware-b-only`, nos projetos de protocolo e desktop, cobrem aplicação, monitoramento, restauração, banco/contexto e rejeição de código/tabelas adulterados. A verificação física desta revisão foi somente de leitura; aplicação/restauração foram exercitadas com transporte simulado. Não houve avaliação sonora nem atualização de firmware.
+
 ## Caminho de MOD até o DSP
 
 No arquivo oficial, `0x831E9C` aplica o preset e `0x832180` inicializa o phaser. No aparelho, os caminhos correspondentes passam por `0x831AC0` e `0x831D84`. A seção do preset no offset `0x0B` habilita tanto delay quanto modulação. MOD 7/8 desliga a modulação; 0–6 configura chorus; 9–15 seleciona phaser.
