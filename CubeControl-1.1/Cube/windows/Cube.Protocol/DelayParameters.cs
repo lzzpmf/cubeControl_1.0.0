@@ -16,7 +16,7 @@ public sealed record DelayParameters(int TimeSamples, float Feedback, float Dept
         if (TimeSamples is < 2400 or > 16350 || !float.IsFinite(Feedback) || Feedback is < 0 or > 0.9921875f ||
             !float.IsFinite(Depth) || Depth is < 0 or > 0.1f || !float.IsFinite(Rate) || Rate is < 0 or > 0.01f ||
             !float.IsFinite(Mix) || Mix is < 0 or > 0.921875f)
-            throw new ArgumentOutOfRangeException(nameof(DelayParameters), "Parâmetros fora dos limites experimentais do delay.");
+            throw new ArgumentOutOfRangeException(nameof(DelayParameters), "Parâmetros fora dos limites do delay.");
     }
     public static DelayParameters Read(byte[] dsp)
     {
@@ -49,9 +49,9 @@ public sealed record DelayParameters(int TimeSamples, float Feedback, float Dept
         CubeBabyProfile.ValidateBank(bank);
         if (bank[physical[0] * 16 + 11] != 1 || dsp[0x694] != 3)
             throw new FormatException("Ative a seção delay/modulação no preset físico antes de ler.");
-        if (dsp[0x63C] != 0) throw new FormatException("Desligue chorus/phaser para esta prévia experimental de delay.");
+        if (dsp[0x63C] != 0) throw new FormatException("Desligue chorus/phaser para esta edição em RAM de delay.");
         if (dsp[0x695] != 0 || !dsp.AsSpan(0x6A4, 56).SequenceEqual(Filters))
-            throw new FormatException("Estrutura de delay desconhecida; prévia bloqueada.");
+            throw new FormatException("Estrutura de delay desconhecida; edição em RAM bloqueada.");
         Read(dsp);
     }
 }

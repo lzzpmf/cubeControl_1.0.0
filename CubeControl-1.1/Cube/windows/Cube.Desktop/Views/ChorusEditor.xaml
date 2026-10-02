@@ -4,23 +4,18 @@
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
  xmlns:graph="clr-namespace:Cube.Desktop.Controls"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization">
- <Expander Header="{loc:Translate Text='Criador de chorus · experimental'}" Margin="0,16,0,0">
-  <StackPanel Margin="0,12,0,0" MaxWidth="900" HorizontalAlignment="Stretch">
-   <TextBlock Text="{loc:Translate Text='Controles internos em prévia temporária. Validação sonora pendente.'}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+  <StackPanel Margin="0" MaxWidth="900" HorizontalAlignment="Stretch">
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Ler chorus ativo'}" Click="ReadClick" IsEnabled="{Binding CanStartChorus}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowDownload24"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Restaurar chorus'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreChorus}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowUndo24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Text="{loc:Translate Text='Chorus e Phaser compartilham um bloco. Ative o efeito escolhido no preset físico antes de ler.'}" TextWrapping="Wrap" Margin="0,0,0,8"/>
    <TextBlock Text="{loc:Translate Value={Binding ChorusGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
-   <graph:EffectGraphEditor EffectKind="Chorus" DataContext="{Binding Chorus}" IsEnabled="{Binding DataContext.CanEditChorus,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+   <graph:EffectGraphEditor EffectKind="Chorus" Accent="{DynamicResource AccentTextFillColorPrimaryBrush}" DataContext="{Binding Chorus}" IsEnabled="{Binding DataContext.CanEditChorus,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
    <WrapPanel Margin="0,12,0,0" IsEnabled="{Binding CanUseChorusFiles}">
     <ui:Button Content="{loc:Translate Text='Importar chorus'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="FolderOpen24"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Exportar chorus'}" Click="ExportClick" IsEnabled="{Binding Chorus.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Aplicar ajustes'}" Click="ApplyClick" IsEnabled="{Binding CanApplyChorus}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Checkmark24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Text="{loc:Translate Value={Binding Chorus.Message}}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>
- </Expander>
 </UserControl>

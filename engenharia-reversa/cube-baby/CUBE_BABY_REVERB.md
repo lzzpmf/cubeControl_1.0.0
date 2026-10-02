@@ -1,10 +1,12 @@
 # Cube Baby — reverb e controles independentes
 
+Estado atual (02/10/2026): o editor de Reverb está funcional conforme validação informada pelo usuário. As observações de ausência de guitarra/escuta e os roteiros abaixo registram o contexto histórico da investigação. Os mapeamentos e as limitações de persistência permanecem os mesmos.
+
 [Índice](README.md) · [Phaser](CUBE_BABY_PHASER.md) · [Chorus](CUBE_BABY_CHORUS.md) · Investigação de 01/10/2026
 
 ## Resultado e alcance
 
-O controle original 0–15 não modifica apenas mistura: ele combina seis coeficientes de realimentação e o ganho do ramo reverberado. Foram identificados também ganho direto, nível de retorno das seis linhas e coeficientes de amortecimento independentes. O editor experimental separa essas cinco famílias de ajuste.
+O controle original 0–15 não modifica apenas mistura: ele combina seis coeficientes de realimentação e o ganho do ramo reverberado. Foram identificados também ganho direto, nível de retorno das seis linhas e coeficientes de amortecimento independentes. O editor separa essas cinco famílias de ajuste.
 
 Esta pesquisa não tem guitarra, gravação nem avaliação sonora. Código, snapshots USB e ensaios de RAM sustentam o mapeamento; o modelo matemático produz sinais sintéticos. Nenhum deles certifica qualidade musical, ausência de estalos, headroom ou comportamento acústico prolongado. O controle original passou a chamar-se **Quantidade**, em vez de **Mistura**.
 
@@ -90,7 +92,7 @@ As séries concluídas preservaram **191 snapshots e 229 escritas**: tabela 53/9
 
 ## Editor e recuperação
 
-Na Pedaleira, abra **Reverb → Criador de reverb · experimental**. Ative reverb e seção reverb/cabinet, desligue a modulação, selecione no aplicativo o mesmo preset físico e use **Ler reverb ativo**. A interface oferece sinal direto, sinal reverberado, realimentação, retorno das linhas e amortecimento.
+Na Pedaleira, abra **Reverb → Criador de reverb**. Ative reverb e seção reverb/cabinet, desligue a modulação, selecione no aplicativo o mesmo preset físico e use **Ler reverb ativo**. A interface oferece sinal direto, sinal reverberado, realimentação, retorno das linhas e amortecimento.
 
 As escritas são serializadas, ajustes rápidos são reunidos e outras prévias/edições de preset ficam bloqueadas. Antes/depois de alterações, o editor confere o DSP protegido, banco e preset físico; o monitor ocioso verifica contexto e reverb. Recarga externa interrompe a prévia, sem reaplicar silenciosamente os controles.
 
@@ -119,4 +121,4 @@ O modelo reconstrói decimação, pré-atraso, seis linhas Q15, realimentação 
 
 Para novas séries físicas, use os comandos `reverb-map`, `reverb-sweep`, `reverb-controls` e `reverb-transitions` de `Cube.Diagnostics`, seguidos de uma pasta nova. Somente `reverb-map` é exclusivamente de leitura. As demais séries exigem o contexto inicial descrito acima e alteram RAM temporariamente.
 
-Com guitarra, comparar cada ajuste isolado ao original, igualar volume, observar ataques/notas sustentadas, caudas, silêncio após excitação, estalos e mudanças rápidas. Só depois avaliar combinações, exposição de filtros/comprimentos e execução prolongada. Essas avaliações continuam pendentes.
+Com guitarra, comparar cada ajuste isolado ao original, igualar volume, observar ataques/notas sustentadas, caudas, silêncio após excitação, estalos e mudanças rápidas. Só depois avaliar combinações, exposição de filtros/comprimentos e execução prolongada. Na rodada histórica descrita, essas avaliações não foram executadas.

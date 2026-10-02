@@ -4,23 +4,18 @@
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
  xmlns:graph="clr-namespace:Cube.Desktop.Controls"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization">
- <Expander Header="{loc:Translate Text='Criador de delay · experimental'}" Margin="0,16,0,0">
-  <StackPanel Margin="0,12,0,0" MaxWidth="900" HorizontalAlignment="Stretch">
-   <TextBlock Text="{loc:Translate Text='Controles internos em prévia temporária. Validação sonora pendente.'}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+  <StackPanel Margin="0" MaxWidth="900" HorizontalAlignment="Stretch">
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Ler delay ativo'}" Click="ReadClick" IsEnabled="{Binding CanStartDelay}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowDownload24"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Restaurar delay'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreDelay}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowUndo24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
-   <TextBlock Text="{loc:Translate Text='Ative a seção delay/modulação e desligue chorus/phaser antes de ler. Velocidade relativa ao original, dependente do tempo; zero congela a fase.'}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+   <TextBlock Text="{loc:Translate Text='Ative a seção delay/modulação e desligue chorus/phaser antes de ler.'}" TextWrapping="Wrap" Margin="0,0,0,8"/>
    <TextBlock Text="{loc:Translate Value={Binding DelayGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
-   <graph:EffectGraphEditor EffectKind="Delay" DataContext="{Binding Delay}" IsEnabled="{Binding DataContext.CanEditDelay,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+   <graph:EffectGraphEditor EffectKind="Delay" Accent="{DynamicResource AccentTextFillColorPrimaryBrush}" DataContext="{Binding Delay}" IsEnabled="{Binding DataContext.CanEditDelay,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
    <WrapPanel Margin="0,12,0,0" IsEnabled="{Binding CanUseDelayFiles}">
     <ui:Button Content="{loc:Translate Text='Importar delay'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="FolderOpen24"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Exportar delay'}" Click="ExportClick" IsEnabled="{Binding Delay.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Aplicar ajustes'}" Click="ApplyClick" IsEnabled="{Binding CanApplyDelay}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Checkmark24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Text="{loc:Translate Value={Binding Delay.Message}}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>
- </Expander>
 </UserControl>

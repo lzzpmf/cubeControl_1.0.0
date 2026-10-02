@@ -78,6 +78,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         IrLibrary.SelectionChanged += SelectLibraryIr;
         InitializeVisual();
         Amp.Edited += AmpEdited;
+        Amp.PropertyChanged += AmpPresentationChanged;
         Phaser.Edited += PhaserEdited;
         Chorus.Edited += ChorusEdited;
         Reverb.Edited += ReverbEdited;
@@ -136,6 +137,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Notify(nameof(PhaserPreviewActive)); Notify(nameof(CanStartPhaser)); Notify(nameof(CanRestorePhaser));
         Notify(nameof(CanEditPhaser)); Notify(nameof(CanUsePhaserFiles));
         Notify(nameof(CanUseAmp)); Notify(nameof(CanAdjustAmp)); Notify(nameof(CanOpenGearGallery)); Notify(nameof(CanEditAmpLocally)); Notify(nameof(AmpPreviewActive));
+        RefreshAmpAvailability();
         Notify(nameof(CanChooseIr));
         Notify(nameof(Connected)); Notify(nameof(CanConnect)); Notify(nameof(CanEdit)); Notify(nameof(CanOperate)); Notify(nameof(HasBank)); Notify(nameof(Dirty));
         Notify(nameof(CanMatch)); RefreshEditor();
@@ -513,5 +515,5 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         return await dialog.ShowDialogAsync() == Wpf.Ui.Controls.MessageBoxResult.Primary;
     };
     public async Task Flush() { if (queue != null) await queue.Flush(); }
-    public void Dispose() { delayMonitorStop?.Cancel(); Delay.Edited -= DelayEdited; reverbMonitorStop?.Cancel(); Reverb.Edited -= ReverbEdited; chorusMonitorStop?.Cancel(); Chorus.Edited -= ChorusEdited; phaserMonitorStop?.Cancel(); Phaser.Edited -= PhaserEdited; Amp.Edited -= AmpEdited; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
+    public void Dispose() { delayMonitorStop?.Cancel(); Delay.Edited -= DelayEdited; reverbMonitorStop?.Cancel(); Reverb.Edited -= ReverbEdited; chorusMonitorStop?.Cancel(); Chorus.Edited -= ChorusEdited; phaserMonitorStop?.Cancel(); Phaser.Edited -= PhaserEdited; Amp.Edited -= AmpEdited; Amp.PropertyChanged -= AmpPresentationChanged; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
 }

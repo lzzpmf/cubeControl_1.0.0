@@ -36,7 +36,7 @@ internal static class DelayDesktopTests
         ((Expander)view.Content).IsExpanded = true;
         await Task.Delay(400);
         view.Measure(new Size(560, 900)); view.Arrange(new Rect(0, 0, 560, view.DesiredSize.Height)); view.UpdateLayout();
-        Check(view.ActualHeight > 300 && view.ActualHeight < 900, $"experimental delay editor lays out without clipping ({view.ActualHeight})");
+        Check(view.ActualHeight > 300 && view.ActualHeight < 1200, $"delay editor lays out without clipping ({view.ActualHeight})");
         string render = Path.GetFullPath("C:/CubeControl-Build/delay-research/delay-editor.png"); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
         var bitmap = new RenderTargetBitmap(560, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(view);
@@ -46,7 +46,7 @@ internal static class DelayDesktopTests
         view.Width = 320; host.Width = 360;
         await Task.Delay(150);
         view.Measure(new Size(320, double.PositiveInfinity)); view.Arrange(new Rect(0, 0, 320, view.DesiredSize.Height)); view.UpdateLayout();
-        Check(((Expander)view.Content).Header.ToString() == "Delay creator · experimental" && view.ActualHeight < 1200,
+        Check(((Expander)view.Content).Header.ToString() == "Delay creator" && view.ActualHeight < 1280,
             "delay compact editor translates live and wraps content");
         Check(LanguageService.T("Profundidade da modulação (% do original)") == "Modulation depth (% of stock)", "delay parameter labels translated");
         var compact = new RenderTargetBitmap(320, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);

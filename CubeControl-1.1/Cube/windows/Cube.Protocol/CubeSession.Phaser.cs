@@ -166,15 +166,15 @@ public sealed partial class CubeSession
     private async Task<PhaserResearchSnapshot> ReadPhaserCore(CancellationToken ct)
     {
             RequireIdentity();
-            await VerifyPhaserFirmware(ct);
-            var bank = await ReadInternal(0, 48, ct);
-            var alias = await ReadInternal(EffectsBankAliasOffset, 48, ct, 4);
+            await VerifyPhaserFirmware(ct).ConfigureAwait(false);
+            var bank = await ReadInternal(0, 48, ct).ConfigureAwait(false);
+            var alias = await ReadInternal(EffectsBankAliasOffset, 48, ct, 4).ConfigureAwait(false);
             if (!bank.SequenceEqual(alias)) throw new IOException("Alias do banco diverge; mapeamento não confirmado.");
-            var state = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4);
-            var dsp = await ReadChunks(4, 0, 0xF70, ct);
-            if (!(await ReadInternal(0, 48, ct)).SequenceEqual(bank))
+            var state = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4).ConfigureAwait(false);
+            var dsp = await ReadChunks(4, 0, 0xF70, ct).ConfigureAwait(false);
+            if (!(await ReadInternal(0, 48, ct).ConfigureAwait(false)).SequenceEqual(bank))
                 throw new IOException("Banco mudou durante a captura.");
-            if (!(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4)).SequenceEqual(state))
+            if (!(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4).ConfigureAwait(false)).SequenceEqual(state))
                 throw new IOException("Estado físico mudou durante a captura.");
             return new(bank, dsp, state);
     }
@@ -189,7 +189,7 @@ public sealed partial class CubeSession
         {
             var bReader = await ReadInternal(unchecked(0x832150u - 0x8347F8u), 12, ct, 4);
             if (!HashMatches(bReader, FirmwareBSignatures[0].Hash))
-                throw new NotSupportedException("Os criadores experimentais de efeitos não são compatíveis com o firmware deste pedal. A edição normal de presets continua disponível. Reconectar não altera essa compatibilidade.");
+                throw new NotSupportedException("Os criadores de efeitos não são compatíveis com o firmware deste pedal. A edição normal de presets continua disponível. Reconectar não altera essa compatibilidade.");
             effectsFirmwareB = true;
         }
         foreach (var (address, length, hash) in new (uint, int, string)[]
@@ -204,7 +204,7 @@ public sealed partial class CubeSession
             await VerifyEffectsRange(address, length, hash, "efeitos", ct);
         }
         var entry = await ReadInternal(EffectsAddress(0x80C37C), 4, ct, 4);
-        if (!entry.SequenceEqual(Convert.FromHexString("9D238300"))) throw new NotSupportedException("Os criadores experimentais de efeitos não são compatíveis com o dispatcher deste firmware. A edição normal de presets continua disponível.");
+        if (!entry.SequenceEqual(Convert.FromHexString("9D238300"))) throw new NotSupportedException("Os criadores de efeitos não são compatíveis com o dispatcher deste firmware. A edição normal de presets continua disponível.");
         phaserFirmwareVerified = true;
         EffectsFirmware = effectsFirmwareB ? "cubebaby_B_20220706" : "cube-baby-live-20261001";
     }

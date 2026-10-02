@@ -19,11 +19,11 @@ public sealed partial class EditorViewModel
     private string PendingChorus => Path.Combine(DataDirectory, "pending-chorus-preview.json");
     public bool ChorusPreviewActive => chorusRecovery != null;
     public string ChorusGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
-        : chorusStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
-        : ChorusPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : chorusStopped ? "Edição em RAM interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : ChorusPreviewActive ? "Edição automática em RAM · não salva no pedal."
         : !Current.Musical.ChorusEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
-        : !CanStartChorus ? "Recurso indisponível durante a operação ou prévia atual."
-        : "Edição local · leia o efeito ativo para iniciar a prévia.";
+        : !CanStartChorus ? "Recurso indisponível durante a operação ou edição em RAM atual."
+        : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartChorus => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !ChorusPreviewActive && !File.Exists(PendingChorus)
 #if CUBE_SIMULATION
         && false
@@ -63,13 +63,13 @@ public sealed partial class EditorViewModel
         catch
         {
             chorusRecoveryInvalid = true; chorusStopped = true;
-            Chorus.Message = "Backup de chorus inválido. Prévia bloqueada; o arquivo original foi preservado.";
+            Chorus.Message = "Backup de chorus inválido. Edição em RAM bloqueada; o arquivo original foi preservado.";
             Refresh();
             throw;
         }
         Chorus.Load(chorusRecovery.Identity, chorusRecovery.Target);
         chorusStopped = true;
-        Chorus.Message = "Prévia interrompida. Conecte o mesmo pedal e use Restaurar chorus. Nenhum ajuste será reaplicado automaticamente.";
+        Chorus.Message = "Edição em RAM interrompida. Conecte o mesmo pedal e use Restaurar chorus. Nenhum ajuste será reaplicado automaticamente.";
         Refresh();
     }
 
@@ -84,7 +84,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingChorus, Path.Combine(directory, $"chorus-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Chorus.Load(session.IdentityHex, chorusRecovery!.Target);
             chorusStopped = false;
-            Chorus.Message = "Prévia experimental iniciada. Ajustes alteram somente a RAM; escuta ainda não validada.";
+            Chorus.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (ChorusPreviewActive && !chorusStopped)
         {
@@ -135,12 +135,12 @@ public sealed partial class EditorViewModel
                     {
                         if (session == null || chorusRecovery == null) throw new IOException("Reconecte para restaurar o chorus.");
                         await session.ApplyChorusPreview(chorusRecovery, Chorus.Parameters, KeepChorusRecovery);
-                        Chorus.Message = "Ajustes conferidos na RAM · validação sonora pendente.";
+                        Chorus.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
                     {
                         chorusStopped = true; chorusPending = false;
-                        Chorus.Message = "Prévia interrompida. Restauração não confirmada; backup preservado. Use Restaurar chorus.";
+                        Chorus.Message = "Edição em RAM interrompida. Restauração não confirmada; backup preservado. Use Restaurar chorus.";
                         throw;
                     }
                 }
@@ -181,9 +181,11 @@ public sealed partial class EditorViewModel
     public async Task ImportChorusAsync()
     {
         if (Busy) return;
-        var picker = new OpenFileDialog { Filter = Localization.LanguageService.T("Chorus experimental (*.chorus.json)") + "|*.chorus.json" };
+        var picker = new OpenFileDialog { Filter = Localization.LanguageService.T("Chorus (*.chorus.json)") + "|*.chorus.json" };
         if (picker.ShowDialog() != true) return;
-        await Execute(() => LoadChorusFileAsync(picker.FileName));
+        bool loaded = false;
+        await Execute(async () => { await LoadChorusFileAsync(picker.FileName); loaded = true; });
+        if (loaded) ApplyChorusEdits();
     }
 
     internal async Task LoadChorusFileAsync(string path)
@@ -193,7 +195,7 @@ public sealed partial class EditorViewModel
         if (chorusRecovery != null && preset.Identity != chorusRecovery.Identity)
             throw new FormatException("O arquivo pertence a outra identidade de pedal.");
         Chorus.Load(preset.Identity, preset.Parameters);
-        Chorus.Message = "Arquivo carregado no computador. Use Aplicar ajustes para enviá-lo à prévia ativa.";
+        Chorus.Message = "Arquivo carregado no computador.";
     }
 
     public void ApplyChorusEdits() { if (!Busy && ChorusPreviewActive && !chorusStopped) ChorusEdited(); }
@@ -201,7 +203,7 @@ public sealed partial class EditorViewModel
     public async Task ExportChorusAsync()
     {
         if (Busy || !Chorus.Loaded) return;
-        var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Chorus experimental (*.chorus.json)") + "|*.chorus.json", FileName = Localization.LanguageService.T("Meu chorus.chorus.json") };
+        var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Chorus (*.chorus.json)") + "|*.chorus.json", FileName = Localization.LanguageService.T("Meu chorus.chorus.json") };
         if (picker.ShowDialog() != true) return;
         await Execute(async () =>
         {

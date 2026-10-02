@@ -19,11 +19,11 @@ public sealed partial class EditorViewModel
     private string PendingDelay => Path.Combine(DataDirectory, "pending-delay-preview.json");
     public bool DelayPreviewActive => delayRecovery != null;
     public string DelayGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
-        : delayStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
-        : DelayPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : delayStopped ? "Edição em RAM interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : DelayPreviewActive ? "Edição automática em RAM · não salva no pedal."
         : !Current.Musical.DelayEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
-        : !CanStartDelay ? "Recurso indisponível durante a operação ou prévia atual."
-        : "Edição local · leia o efeito ativo para iniciar a prévia.";
+        : !CanStartDelay ? "Recurso indisponível durante a operação ou edição em RAM atual."
+        : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartDelay => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !DelayPreviewActive && !File.Exists(PendingDelay)
 #if CUBE_SIMULATION
         && false
@@ -68,13 +68,13 @@ public sealed partial class EditorViewModel
         catch
         {
             delayRecoveryInvalid = true; delayStopped = true;
-            Delay.Message = "Backup de delay inválido. Prévia bloqueada; o arquivo original foi preservado.";
+            Delay.Message = "Backup de delay inválido. Edição em RAM bloqueada; o arquivo original foi preservado.";
             Refresh();
             throw;
         }
         Delay.Load(delayRecovery.Identity, delayRecovery.Target);
         delayStopped = true;
-        Delay.Message = "Prévia interrompida. Conecte o mesmo pedal e use Restaurar delay. Nenhum ajuste será reaplicado automaticamente.";
+        Delay.Message = "Edição em RAM interrompida. Conecte o mesmo pedal e use Restaurar delay. Nenhum ajuste será reaplicado automaticamente.";
         Refresh();
     }
 
@@ -89,7 +89,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingDelay, Path.Combine(directory, $"delay-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Delay.Load(session.IdentityHex, delayRecovery!.Target);
             delayStopped = false;
-            Delay.Message = "Prévia experimental iniciada. Ajustes alteram somente a RAM; escuta ainda não validada.";
+            Delay.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (DelayPreviewActive && !delayStopped)
         {
@@ -140,12 +140,12 @@ public sealed partial class EditorViewModel
                     {
                         if (session == null || delayRecovery == null) throw new IOException("Reconecte para restaurar o delay.");
                         await session.ApplyDelayPreview(delayRecovery, Delay.Parameters, KeepDelayRecovery);
-                        Delay.Message = "Ajustes conferidos na RAM · validação sonora pendente.";
+                        Delay.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
                     {
                         delayStopped = true; delayPending = false;
-                        Delay.Message = "Prévia interrompida. Restauração não confirmada; backup preservado. Use Restaurar delay.";
+                        Delay.Message = "Edição em RAM interrompida. Restauração não confirmada; backup preservado. Use Restaurar delay.";
                         throw;
                     }
                 }
@@ -186,9 +186,11 @@ public sealed partial class EditorViewModel
     public async Task ImportDelayAsync()
     {
         if (Busy) return;
-        var picker = new OpenFileDialog { Filter = Localization.LanguageService.T("Delay experimental (*.delay.json)") + "|*.delay.json" };
+        var picker = new OpenFileDialog { Filter = Localization.LanguageService.T("Delay (*.delay.json)") + "|*.delay.json" };
         if (picker.ShowDialog() != true) return;
-        await Execute(() => LoadDelayFileAsync(picker.FileName));
+        bool loaded = false;
+        await Execute(async () => { await LoadDelayFileAsync(picker.FileName); loaded = true; });
+        if (loaded) ApplyDelayEdits();
     }
 
     internal async Task LoadDelayFileAsync(string path)
@@ -198,7 +200,7 @@ public sealed partial class EditorViewModel
         if (delayRecovery != null && preset.Identity != delayRecovery.Identity)
             throw new FormatException("O arquivo pertence a outra identidade de pedal.");
         Delay.Load(preset.Identity, preset.Parameters);
-        Delay.Message = "Arquivo carregado no computador. Use Aplicar ajustes para enviá-lo à prévia ativa.";
+        Delay.Message = "Arquivo carregado no computador.";
     }
 
     public void ApplyDelayEdits() { if (!Busy && DelayPreviewActive && !delayStopped) DelayEdited(); }
@@ -206,7 +208,7 @@ public sealed partial class EditorViewModel
     public async Task ExportDelayAsync()
     {
         if (Busy || !Delay.Loaded) return;
-        var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Delay experimental (*.delay.json)") + "|*.delay.json", FileName = Localization.LanguageService.T("Meu delay.delay.json") };
+        var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Delay (*.delay.json)") + "|*.delay.json", FileName = Localization.LanguageService.T("Meu delay.delay.json") };
         if (picker.ShowDialog() != true) return;
         await Execute(async () =>
         {

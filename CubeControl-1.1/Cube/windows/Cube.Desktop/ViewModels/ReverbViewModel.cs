@@ -6,7 +6,7 @@ public sealed class ReverbViewModel : Observable
 {
     private bool loading, loaded;
     private double dry = 100, wet = 55, decay = 8, returnLevel = 100, damping = 10;
-    private string identity = "", message = "Experimental · validação sonora pendente. Ative o reverb e desligue a modulação antes de ler.";
+    private string identity = "", message = "Ative o reverb e desligue a modulação antes de ler.";
     public event Action? Edited;
     public bool Loaded { get => loaded; private set => Set(ref loaded, value); }
     public string Identity => identity;

@@ -1,79 +1,137 @@
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Cube.Desktop.Localization;
+using Cube.Desktop.ViewModels;
 
 namespace Cube.Desktop.Controls;
 
 public sealed class BackingWaveform : FrameworkElement
 {
-    public static readonly DependencyProperty PeaksProperty = DependencyProperty.Register(nameof(Peaks), typeof(float[]), typeof(BackingWaveform), new FrameworkPropertyMetadata(Array.Empty<float>(), FrameworkPropertyMetadataOptions.AffectsRender));
-    public static readonly DependencyProperty DurationProperty = DependencyProperty.Register(nameof(Duration), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
-    public static readonly DependencyProperty PositionProperty = Register(nameof(Position));
-    public static readonly DependencyProperty RangeStartProperty = Register(nameof(RangeStart));
-    public static readonly DependencyProperty RangeEndProperty = Register(nameof(RangeEnd));
-    private static DependencyProperty Register(string name) => DependencyProperty.Register(name, typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+    public static readonly DependencyProperty PeaksProperty = DependencyProperty.Register(nameof(Peaks), typeof(float[]), typeof(BackingWaveform), new FrameworkPropertyMetadata(Array.Empty<float>(), FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
+    public static readonly DependencyProperty DurationProperty = DependencyProperty.Register(nameof(Duration), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
+    public static readonly DependencyProperty PositionProperty = Register(nameof(Position), 0);
+    public static readonly DependencyProperty RangeStartProperty = Register(nameof(RangeStart), double.NaN);
+    public static readonly DependencyProperty RangeEndProperty = Register(nameof(RangeEnd), double.NaN);
+    public static readonly DependencyProperty IsLoopingProperty = DependencyProperty.Register(nameof(IsLooping), typeof(bool), typeof(BackingWaveform), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+    private static DependencyProperty Register(string name, double value) => DependencyProperty.Register(name, typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(value, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+    private static void GeometryChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) => ((BackingWaveform)sender).geometry = null;
     public float[] Peaks { get => (float[])GetValue(PeaksProperty); set => SetValue(PeaksProperty, value); }
     public double Duration { get => (double)GetValue(DurationProperty); set => SetValue(DurationProperty, value); }
     public double Position { get => (double)GetValue(PositionProperty); set => SetCurrentValue(PositionProperty, value); }
     public double RangeStart { get => (double)GetValue(RangeStartProperty); set => SetCurrentValue(RangeStartProperty, value); }
     public double RangeEnd { get => (double)GetValue(RangeEndProperty); set => SetCurrentValue(RangeEndProperty, value); }
+    public bool IsLooping { get => (bool)GetValue(IsLoopingProperty); set => SetValue(IsLoopingProperty, value); }
+    private StreamGeometry? geometry;
+    private Size geometrySize;
     private int drag;
+    private double preview, hover = double.NaN;
+    private Brush ResourceBrush(string name, Brush fallback) => TryFindResource(name) as Brush ?? fallback;
     private double X(double seconds) => 12 + Math.Clamp(seconds / Math.Max(.001, Duration), 0, 1) * Math.Max(1, ActualWidth - 24);
-    private Brush Brush(string name, Brush fallback) => TryFindResource(name) as Brush ?? fallback;
-    public BackingWaveform() { Focusable = true; Cursor = Cursors.Hand; MinHeight = 150; }
+    private double Time(double x) => Math.Clamp((x - 12) / Math.Max(1, ActualWidth - 24), 0, 1) * Duration;
+    public BackingWaveform()
+    {
+        Focusable = true; Cursor = Cursors.Hand; MinHeight = 150;
+        MouseLeave += (_, _) => { hover = double.NaN; InvalidateVisual(); };
+    }
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
-        var foreground = Brush("CubeText", Brushes.White);
-        var accent = Brush("CubeAccent", Brushes.Coral);
-        var grid = Brush("CubeBorder", Brushes.Gray);
-        dc.DrawRoundedRectangle(Brush("CubeInset", Brushes.Black), null, new Rect(RenderSize), 8, 8);
-        double center = (ActualHeight + 20) / 2, height = Math.Max(1, ActualHeight / 2 - 32);
-        void Text(string text, double x, double y) => dc.DrawText(new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), 11, foreground, VisualTreeHelper.GetDpi(this).PixelsPerDip), new Point(x, y));
-        if (Duration <= 0) return;
-        dc.PushOpacity(.12);
-        dc.DrawRectangle(accent, null, new Rect(X(RangeStart), 24, Math.Max(0, X(RangeEnd) - X(RangeStart)), Math.Max(0, ActualHeight - 30)));
-        dc.Pop();
-        for (int i = 0; i <= 4; i++)
+        if (ActualWidth < 26 || ActualHeight < 40) return;
+        var foreground = ResourceBrush("CubeText", Brushes.White);
+        var accent = ResourceBrush("CubeAccent", Brushes.Coral);
+        var neutral = ResourceBrush("Muted", Brushes.Gray);
+        var border = ResourceBrush("CubeBorder", Brushes.Gray);
+        dc.DrawRoundedRectangle(ResourceBrush("CubeInset", Brushes.Black), null, new Rect(RenderSize), 8, 8);
+        void Text(string text, double x, double y, Brush? brush = null)
         {
-            double t = Duration * i / 4, x = X(t);
-            dc.DrawLine(new Pen(grid, 1), new(x, 24), new(x, ActualHeight - 8));
-            Text(TimeSpan.FromSeconds(t).ToString(@"mm\:ss"), Math.Min(x, Math.Max(0, ActualWidth - 42)), 4);
+            var formatted = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), 11, brush ?? foreground, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            dc.DrawText(formatted, new Point(Math.Clamp(x, 2, Math.Max(2, ActualWidth - formatted.Width - 2)), y));
         }
-        dc.DrawLine(new Pen(grid, 1), new(12, center), new(ActualWidth - 12, center));
-        int bars = Math.Max(1, (int)(ActualWidth - 24) / 2);
-        for (int i = 0; i < bars && Peaks.Length > 0; i++)
+        if (Duration <= 0) { Text(LanguageService.T("Carregue uma faixa MP3/WAV"), 16, ActualHeight / 2); return; }
+        double a = drag == 1 ? preview : RangeStart, b = drag == 2 ? preview : RangeEnd;
+        if (double.IsFinite(a) && double.IsFinite(b) && b > a)
         {
-            int first = i * Peaks.Length / bars, last = Math.Min(Peaks.Length, Math.Max(first + 1, (i + 1) * Peaks.Length / bars));
-            float peak = 0; for (int j = first; j < last; j++) peak = Math.Max(peak, Peaks[j]);
-            double x = 12 + i * (ActualWidth - 24) / bars, y = Math.Max(.5, peak * height);
-            dc.DrawLine(new Pen(accent, 1.4), new(x, center - y), new(x, center + y));
+            dc.PushOpacity(IsLooping ? .16 : .06); dc.DrawRectangle(accent, null, new Rect(X(a), 25, Math.Max(0, X(b) - X(a)), ActualHeight - 30)); dc.Pop();
         }
-        foreach (var (time, label) in new[] { (RangeStart, "A"), (RangeEnd, "B") })
+        double desired = Duration / Math.Max(1, (ActualWidth - 24) / 80);
+        double magnitude = Math.Pow(10, Math.Floor(Math.Log10(Math.Max(.1, desired))));
+        double tick = new[] { 1d, 2, 5, 10 }.First(v => v * magnitude >= desired) * magnitude;
+        for (double t = 0; t < Duration; t += tick)
         {
-            double x = X(time);
-            dc.DrawLine(new Pen(accent, 2), new(x, 24), new(x, ActualHeight - 5));
-            dc.DrawRoundedRectangle(accent, null, new Rect(x - 5, 24, 10, 14), 2, 2);
-            Text(label, Math.Clamp(x + 7, 0, Math.Max(0, ActualWidth - 14)), 26);
+            double x = X(t);
+            if (t > 0 && X(Duration) - x < 80) break;
+            dc.DrawLine(new Pen(border, 1), new(x, 24), new(x, ActualHeight - 8)); Text(BackingTracksViewModel.FormatTime(t, tick < 1), x, 4);
         }
-        dc.DrawLine(new Pen(foreground, 2), new(X(Position), 22), new(X(Position), ActualHeight - 5));
+        Text(BackingTracksViewModel.FormatTime(Duration), ActualWidth - 52, 4);
+        if (geometry == null || geometrySize != RenderSize)
+        {
+            geometry = new StreamGeometry(); geometrySize = RenderSize;
+            using (var drawing = geometry.Open())
+            {
+                int bars = Math.Max(1, (int)(ActualWidth - 24) / 2); double center = (ActualHeight + 20) / 2, height = ActualHeight / 2 - 32;
+                for (int i = 0; i < bars && Peaks.Length > 0; i++)
+                {
+                    int first = i * Peaks.Length / bars, last = Math.Min(Peaks.Length, Math.Max(first + 1, (i + 1) * Peaks.Length / bars));
+                    float peak = 0; for (int j = first; j < last; j++) peak = Math.Max(peak, Peaks[j]);
+                    double x = 12 + i * (ActualWidth - 24) / bars, y = Math.Max(.5, Math.Min(1, peak) * height);
+                    drawing.BeginFigure(new(x, center - y), false, false); drawing.LineTo(new(x, center + y), true, false);
+                }
+            }
+            geometry.Freeze();
+        }
+        dc.DrawGeometry(null, new Pen(neutral, 1.4), geometry);
+        double playhead = X(drag == 3 ? preview : Position);
+        dc.PushClip(new RectangleGeometry(new Rect(0, 24, playhead, ActualHeight - 24)));
+        dc.DrawGeometry(null, new Pen(accent, 1.4), geometry); dc.Pop();
+        foreach (var (time, label) in new[] { (a, "A"), (b, "B") })
+        {
+            if (!double.IsFinite(time)) continue;
+            double x = X(time); dc.DrawLine(new Pen(accent, 1.5), new(x, 25), new(x, ActualHeight - 5));
+            dc.DrawRoundedRectangle(ResourceBrush("CubeInset", Brushes.Black), new Pen(accent, 1), new Rect(x - 10, 25, 20, 20), 3, 3); Text(label, x - 4, 28);
+        }
+        dc.DrawLine(new Pen(ResourceBrush("CubeInset", Brushes.Black), 5), new(playhead, 24), new(playhead, ActualHeight - 5));
+        dc.DrawLine(new Pen(accent, 2), new(playhead, 24), new(playhead, ActualHeight - 5));
+        if (double.IsFinite(hover)) Text(BackingTracksViewModel.FormatTime(drag != 0 ? preview : hover, true), X(hover) + 8, ActualHeight - 19);
+        if (IsKeyboardFocused) dc.DrawRoundedRectangle(null, new Pen(accent, 1), new Rect(1, 1, ActualWidth - 2, ActualHeight - 2), 8, 8);
     }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         if (Duration <= 0 || !IsEnabled) return;
         var at = e.GetPosition(this);
-        drag = Math.Abs(at.X - X(RangeStart)) < 10 ? 1 : Math.Abs(at.X - X(RangeEnd)) < 10 ? 2 : 3;
-        Focus(); CaptureMouse(); Move(at); e.Handled = true;
+        drag = double.IsFinite(RangeStart) && Math.Abs(at.X - X(RangeStart)) < 12 ? 1 : double.IsFinite(RangeEnd) && Math.Abs(at.X - X(RangeEnd)) < 12 ? 2 : 3;
+        Focus(); CaptureMouse(); Preview(at.X); e.Handled = true;
     }
-    private void Move(Point at)
+    private void Preview(double x)
     {
-        double time = Math.Clamp((at.X - 12) / Math.Max(1, ActualWidth - 24), 0, 1) * Duration;
-        if (drag == 1) RangeStart = Math.Min(time, Math.Max(0, RangeEnd - .1));
-        else if (drag == 2) RangeEnd = Math.Max(time, Math.Min(Duration, RangeStart + .1));
-        else if (drag == 3) Position = time;
+        preview = Time(x);
+        if (drag == 1) preview = Math.Clamp(preview, 0, Math.Max(0, (double.IsFinite(RangeEnd) ? RangeEnd : Duration) - .1));
+        if (drag == 2) preview = Math.Clamp(preview, Math.Min(Duration, (double.IsFinite(RangeStart) ? RangeStart : 0) + .1), Duration);
+        InvalidateVisual();
     }
-    protected override void OnMouseMove(MouseEventArgs e) { if (IsMouseCaptured) Move(e.GetPosition(this)); }
-    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e) { if (IsMouseCaptured) { Move(e.GetPosition(this)); ReleaseMouseCapture(); } drag = 0; e.Handled = true; }
-    protected override void OnLostMouseCapture(MouseEventArgs e) { drag = 0; base.OnLostMouseCapture(e); }
+    protected override void OnMouseMove(MouseEventArgs e) { hover = Time(e.GetPosition(this).X); if (IsMouseCaptured) Preview(e.GetPosition(this).X); else InvalidateVisual(); }
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+    {
+        if (!IsMouseCaptured) return;
+        Preview(e.GetPosition(this).X);
+        if (drag == 1) RangeStart = preview; else if (drag == 2) RangeEnd = preview; else if (drag == 3) Position = preview;
+        drag = 0; ReleaseMouseCapture(); InvalidateVisual(); e.Handled = true;
+    }
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape && IsMouseCaptured) { drag = 0; ReleaseMouseCapture(); InvalidateVisual(); e.Handled = true; }
+        base.OnKeyDown(e);
+    }
+    protected override void OnLostMouseCapture(MouseEventArgs e) { drag = 0; InvalidateVisual(); base.OnLostMouseCapture(e); }
+    protected override void OnMouseRightButtonUp(MouseButtonEventArgs e)
+    {
+        if (DataContext is not BackingTracksViewModel model) return;
+        var menu = new ContextMenu();
+        menu.Items.Add(new MenuItem { Header = LanguageService.T("Limpar A"), Command = model.ClearStart });
+        menu.Items.Add(new MenuItem { Header = LanguageService.T("Limpar B"), Command = model.ClearEnd });
+        menu.Items.Add(new MenuItem { Header = LanguageService.T("Limpar A/B"), Command = model.ResetRange });
+        menu.PlacementTarget = this; menu.IsOpen = true; e.Handled = true;
+    }
 }

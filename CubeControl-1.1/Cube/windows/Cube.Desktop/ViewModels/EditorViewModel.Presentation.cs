@@ -30,7 +30,7 @@ public sealed partial class EditorViewModel
     private void NotifyFailure(string message) => NotifyUser("Não foi possível concluir", message, Wpf.Ui.Controls.ControlAppearance.Danger);
 
     public string ConnectionSummary => Connected ? "Conectado por USB" : "Sem conexão USB";
-    public string EditAvailability => Busy ? "Operação em andamento. Aguarde para editar."
+    public string EditAvailability => ShowBusyPanel ? "Operação em andamento. Aguarde para editar."
         : blocked ? "Edição suspensa. Releia os presets ou reconecte."
         : !Connected ? "Conecte o aparelho para editar e ouvir os ajustes."
         : Ir.PreviewActive ? "Encerre a prévia de IR para editar os presets." : "";

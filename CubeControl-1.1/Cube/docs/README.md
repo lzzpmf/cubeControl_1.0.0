@@ -11,10 +11,10 @@ Este índice organiza toda a documentação Markdown do repositório. A aplicaç
 | [Guia de uso](guia-de-uso.md) | Conexão, A/B/C, gravação, importação/exportação, IRs e problemas comuns |
 | [Editores gráficos dos efeitos](editores-graficos-de-efeitos.md) | Gestos, contrato dos 22 parâmetros, escalas, prévia RAM e limitações |
 | [Criador de amps](criador-de-amps.md) | Arquivos de amp, prévia em RAM, controles, flash e limitações |
-| [Criador de phaser experimental](../../../engenharia-reversa/cube-baby/CUBE_BABY_PHASER.md) | Controles internos, prévia RAM, arquivos locais e validação sem guitarra |
-| [Criador de chorus experimental](../../../engenharia-reversa/cube-baby/CUBE_BABY_CHORUS.md) | Sete controles, prévia RAM, arquivos locais, recuperação e evidências USB |
-| [Criador de reverb experimental](../../../engenharia-reversa/cube-baby/CUBE_BABY_REVERB.md) | Cinco ajustes independentes, prévia RAM, recuperação, modelo e evidências USB |
-| [Criador de delay experimental](../../../engenharia-reversa/cube-baby/CUBE_BABY_DELAY.md) | Profundidade/velocidade de modulação, controles finos, prévia RAM e recuperação |
+| [Criador de phaser](../../../engenharia-reversa/cube-baby/CUBE_BABY_PHASER.md) | Controles internos, prévia RAM, arquivos locais e validação sem guitarra |
+| [Criador de chorus](../../../engenharia-reversa/cube-baby/CUBE_BABY_CHORUS.md) | Sete controles, prévia RAM, arquivos locais, recuperação e evidências USB |
+| [Criador de reverb](../../../engenharia-reversa/cube-baby/CUBE_BABY_REVERB.md) | Cinco ajustes independentes, prévia RAM, recuperação, modelo e evidências USB |
+| [Criador de delay](../../../engenharia-reversa/cube-baby/CUBE_BABY_DELAY.md) | Profundidade/velocidade de modulação, controles finos, prévia RAM e recuperação |
 | [Backing Tracks](backing-tracks.md) | MP3/WAV, saídas de áudio, trechos, sequência e exportação |
 | [Simulação](simulacao-temporaria.md) | Preparação, memória virtual e recursos não simulados |
 | [Privacidade](POLITICA-DE-PRIVACIDADE.md) | Responsável, contato, dados locais e exclusão |

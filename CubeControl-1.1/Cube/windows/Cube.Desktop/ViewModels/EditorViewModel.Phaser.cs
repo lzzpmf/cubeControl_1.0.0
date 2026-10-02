@@ -18,11 +18,11 @@ public sealed partial class EditorViewModel
     private string PendingPhaser => Path.Combine(DataDirectory, "pending-phaser-preview.json");
     public bool PhaserPreviewActive => phaserRecovery != null;
     public string PhaserGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
-        : phaserStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
-        : PhaserPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : phaserStopped ? "Edição em RAM interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : PhaserPreviewActive ? "Edição automática em RAM · não salva no pedal."
         : !Current.Musical.PhaserEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
-        : !CanStartPhaser ? "Recurso indisponível durante a operação ou prévia atual."
-        : "Edição local · leia o efeito ativo para iniciar a prévia.";
+        : !CanStartPhaser ? "Recurso indisponível durante a operação ou edição em RAM atual."
+        : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartPhaser => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !PhaserPreviewActive
 #if CUBE_SIMULATION
         && false
@@ -55,7 +55,7 @@ public sealed partial class EditorViewModel
         phaserRecovery.Validate();
         Phaser.Load(phaserRecovery.Identity, phaserRecovery.Target);
         phaserStopped = true;
-        Phaser.Message = "Prévia interrompida. Conecte o mesmo pedal e use Restaurar phaser. Nenhum ajuste será reaplicado automaticamente.";
+        Phaser.Message = "Edição em RAM interrompida. Conecte o mesmo pedal e use Restaurar phaser. Nenhum ajuste será reaplicado automaticamente.";
         Refresh();
     }
 
@@ -70,7 +70,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingPhaser, Path.Combine(directory, $"phaser-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Phaser.Load(session.IdentityHex, phaserRecovery!.Target);
             phaserStopped = false;
-            Phaser.Message = "Prévia experimental iniciada. Ajustes alteram somente a RAM; escuta ainda não validada.";
+            Phaser.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (PhaserPreviewActive && !phaserStopped)
         {
@@ -121,12 +121,12 @@ public sealed partial class EditorViewModel
                     {
                         if (session == null || phaserRecovery == null) throw new IOException("Reconecte para restaurar o phaser.");
                         await session.ApplyPhaserPreview(phaserRecovery, Phaser.Parameters, KeepPhaserRecovery);
-                        Phaser.Message = "Ajustes conferidos na RAM · validação sonora pendente.";
+                        Phaser.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
                     {
                         phaserStopped = true; phaserPending = false;
-                        Phaser.Message = "Prévia interrompida. Restauração não confirmada; backup preservado. Use Restaurar phaser.";
+                        Phaser.Message = "Edição em RAM interrompida. Restauração não confirmada; backup preservado. Use Restaurar phaser.";
                         throw;
                     }
                 }
@@ -167,8 +167,9 @@ public sealed partial class EditorViewModel
     public async Task ImportPhaserAsync()
     {
         if (Busy) return;
-        var picker = new OpenFileDialog { Filter = "Phaser experimental (*.phaser.json)|*.phaser.json" };
+        var picker = new OpenFileDialog { Filter = "Phaser (*.phaser.json)|*.phaser.json" };
         if (picker.ShowDialog() != true) return;
+        bool loaded = false;
         await Execute(async () =>
         {
             if (new FileInfo(picker.FileName).Length > 16384) throw new FormatException("Arquivo de phaser excessivamente grande.");
@@ -176,8 +177,10 @@ public sealed partial class EditorViewModel
             if (phaserRecovery != null && preset.Identity != phaserRecovery.Identity)
                 throw new FormatException("O arquivo pertence a outra identidade de pedal.");
             Phaser.Load(preset.Identity, preset.Parameters);
-            Phaser.Message = "Arquivo carregado no computador. Use Aplicar ajustes para enviá-lo à prévia ativa.";
+            loaded = true;
+            Phaser.Message = "Arquivo carregado no computador.";
         });
+        if (loaded) ApplyPhaserEdits();
     }
 
     public void ApplyPhaserEdits() { if (!Busy && PhaserPreviewActive && !phaserStopped) PhaserEdited(); }
@@ -185,7 +188,7 @@ public sealed partial class EditorViewModel
     public async Task ExportPhaserAsync()
     {
         if (Busy || !Phaser.Loaded) return;
-        var picker = new SaveFileDialog { Filter = "Phaser experimental (*.phaser.json)|*.phaser.json", FileName = "Meu phaser.phaser.json" };
+        var picker = new SaveFileDialog { Filter = "Phaser (*.phaser.json)|*.phaser.json", FileName = "Meu phaser.phaser.json" };
         if (picker.ShowDialog() != true) return;
         await Execute(async () =>
         {

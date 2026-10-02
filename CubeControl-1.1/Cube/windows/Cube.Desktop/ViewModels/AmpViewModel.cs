@@ -30,7 +30,14 @@ public sealed class AmpControl(string label, string detail, string asset, double
     public int Decimals { get; init; } = 2;
     public Action? RestoreAction { get; set; }
     public double Number => number;
-    public string EditText => number.ToString("0." + new string('#', Math.Max(3, Decimals)), CultureInfo.CurrentCulture);
+    public string EditText => number.ToString("G17", CultureInfo.CurrentCulture);
+    public bool IsModified => Math.Abs(number - referenceNumber) >= 1e-10;
+    public string ModificationState => IsModified ? "Alterado" : "Referência carregada";
+    public string RangeText => $"{minimum:0.###}{unit} – {maximum:0.###}{unit}";
+    public string ReferenceText => $"{referenceNumber:0.##}{unit}";
+    public string IndexRange { get; init; } = "";
+    public string Caption { get; init; } = "";
+    public bool CanRestoreIndividually => RestoreAction == null;
     public string Label { get; } = label;
     public string Detail { get; } = detail;
     public string Asset { get; } = Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", asset);
@@ -45,7 +52,7 @@ public sealed class AmpControl(string label, string detail, string asset, double
             SetNumber(next);
         }
     }
-    public string Display => number.ToString(Decimals == 3 ? "0.000" : "0.##", CultureInfo.CurrentCulture) + unit;
+    public string Display => number.ToString(unit == " dB" ? "+0.##;-0.##;0" : Decimals == 3 ? "0.000" : "0.##", CultureInfo.CurrentCulture) + unit;
     public bool SetNumber(double value)
     {
         if (!double.IsFinite(value) || value < minimum || value > maximum) return false;
@@ -53,13 +60,25 @@ public sealed class AmpControl(string label, string detail, string asset, double
         number = value; NotifyValues(); changed(number); return true;
     }
     public bool TryEdit(string text) => double.TryParse(text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double value) && SetNumber(value);
-    private void NotifyValues() { Notify(nameof(Position)); Notify(nameof(Display)); Notify(nameof(EditText)); Notify(nameof(Number)); }
+    private void NotifyValues() { Notify(nameof(Position)); Notify(nameof(Display)); Notify(nameof(EditText)); Notify(nameof(Number)); Notify(nameof(IsModified)); Notify(nameof(ModificationState)); }
     public void Reset(double value) { number = Math.Clamp(value, minimum, maximum); NotifyValues(); }
     public void Restore() { if (RestoreAction != null) RestoreAction(); else SetNumber(referenceNumber); }
 }
 
 public sealed class AmpViewModel : Observable
 {
+    public AmpViewModel() => Edited += RefreshPresentation;
+    private void RefreshPresentation() { Notify(nameof(HasLocalChanges)); Notify(nameof(LocalState)); }
+    public bool HasLocalChanges
+    {
+        get
+        {
+            if (image == null) return false;
+            try { return !Build().AsSpan().SequenceEqual(image); }
+            catch (ArgumentException) { return true; }
+        }
+    }
+    public string LocalState => !Loaded ? "Nenhum amp carregado" : HasLocalChanges ? "Modificado localmente" : "Sem alterações locais";
     private bool updatingGroups;
     public AmpControl[] MainControls { get; private set; } = [];
     public AmpControl[] EqAControls { get; private set; } = [];
@@ -74,7 +93,8 @@ public sealed class AmpViewModel : Observable
     private int slot;
     private string name = "Nenhum amp carregado";
     public string[] Slots { get; } = EquipmentCatalog.Amps.Select((amp, i) => $"{i + 1} · {amp.Name}").ToArray();
-    public int Slot { get => slot; set => Set(ref slot, value); }
+    public int Slot { get => slot; set { if (Set(ref slot, value)) Notify(nameof(Destination)); } }
+    public string Destination => $"{Slot + 1} · {EquipmentCatalog.Amps[Slot].Name}";
     public string Name { get => name; private set => Set(ref name, value); }
     public bool Loaded => image != null;
     public AmpValue[] Gain { get; private set; } = [];
@@ -124,7 +144,7 @@ public sealed class AmpViewModel : Observable
         GainFactor = CompensationFactor = "1"; ChangeEqA = ChangeEqB = false;
         MainControls = [
             new("Ganho", "Ajuste a intensidade do ganho do seu amp.", "Botão Metálico de Controle Texturizado.png", 0, Math.Min(100, AmpImage.MaximumGain / Math.Max(.001, Gain.Max(r => r.Number()))), 1, "×", v => { GainFactor = Invariant(v); UpdateEffective(Gain, v); Edited?.Invoke(); }),
-            new("Volume", "Equilibre o volume ao ajustar seu timbre.", "Botão Vintage de Metal Dourado.png", 0, Math.Min(8, AmpImage.MaximumCompensation / Math.Max(.001, Compensation.Max(r => r.Number()))), 1, "×", v => { CompensationFactor = Invariant(v); UpdateEffective(Compensation, v); Edited?.Invoke(); })];
+            new("Volume", "Equilibre o volume ao ajustar seu timbre.", "Botão Vintage de Metal Dourado.png", 0, Math.Min(8, AmpImage.MaximumCompensation / Math.Max(.001, Compensation.Max(r => r.Number()))), 1, "×", v => { CompensationFactor = Invariant(v); UpdateEffective(Compensation, v); Edited?.Invoke(); }) { Caption = "Compensação do modelo" }];
         EqAControls = EqControls(bytes, 0x5E8, true);
         EqBControls = EqControls(bytes, 0x604, false);
         CurveControls = GroupControls(Curve, 16, true, "Fader Retrô preto com faixa creme.png", "Fader Vintage de Estilo Retrô.png");
@@ -135,6 +155,7 @@ public sealed class AmpViewModel : Observable
         Notify(nameof(CoefficientASections)); Notify(nameof(CoefficientBSections));
         foreach (string property in new[] { nameof(MainControls), nameof(EqAControls), nameof(EqBControls), nameof(CurveControls), nameof(CoefficientAControls), nameof(CoefficientBControls) }) Notify(property);
         foreach (string property in new[] { nameof(Loaded), nameof(Gain), nameof(Compensation), nameof(Curve), nameof(CoefficientsA), nameof(CoefficientsB), nameof(GainFactor), nameof(CompensationFactor), nameof(ChangeEqA), nameof(ChangeEqB) }) Notify(property);
+        RefreshPresentation();
     }
     private static string Invariant(double value) => value.ToString("G17", CultureInfo.InvariantCulture);
     private static void UpdateEffective(AmpValue[] rows, double factor)
@@ -194,12 +215,12 @@ public sealed class AmpViewModel : Observable
                 : ["Caráter de captação", "Ressonância de médios", "Ressonância de médio-agudos", "Corpo grave 1", "Corpo grave 2", "Corpo grave 3", "Definição 1", "Definição 2"];
             bool capped = (prefix == "A" && (group is 1 or 3)) || (prefix == "B" && group <= 2);
             double maximum = curve ? 200 : capped ? 100 : 110;
-            string detail = curve ? "Molde a resposta à intensidade do sinal. 100% mantém o ajuste inicial."
+            string detail = curve ? "Cada controle ajusta 16 valores da tabela. 100% mantém a referência carregada."
                 : "Explore a mudança no timbre. 100% mantém o ajuste inicial; use Shift para ajustar com precisão.";
             if (prefix == "B" && group == 0) detail += " Explore diferentes cores de captação.";
             if (prefix == "B" && (group is 1 or 2)) detail += " Ajuste aos poucos para encontrar a ressonância desejada.";
             AmpControl? control = null;
-            control = new(curve ? $"{group + 1:00}" : names[group], detail, alternate != null && group % 2 != 0 ? alternate : asset, curve ? 0 : 90, maximum, 100, "%", percent =>
+            control = new(curve ? $"Trecho {group + 1:00}" : names[group], detail, alternate != null && group % 2 != 0 ? alternate : asset, curve ? 0 : 90, maximum, 100, "%", percent =>
             {
                 updatingGroups = true;
                 try
@@ -215,7 +236,7 @@ public sealed class AmpViewModel : Observable
                 }
                 finally { updatingGroups = false; }
                 Edited?.Invoke();
-            }) { Code = curve ? "" : $"{prefix}{group + 1:00}", Decimals = prefix == "B" && (group is 1 or 2) ? 3 : 2 };
+            }) { Code = curve ? "" : $"{prefix}{group + 1:00}", IndexRange = $"{start}–{end - 1}", Decimals = prefix == "B" && (group is 1 or 2) ? 3 : 2 };
             for (int i = start; i < end; i++)
                 rows[i].Edited += () =>
                 {

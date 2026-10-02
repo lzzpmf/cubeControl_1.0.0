@@ -19,11 +19,11 @@ public sealed partial class EditorViewModel
     private string PendingReverb => Path.Combine(DataDirectory, "pending-reverb-preview.json");
     public bool ReverbPreviewActive => reverbRecovery != null;
     public string ReverbGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
-        : reverbStopped ? "Prévia interrompida · restaure o efeito; consulte a mensagem abaixo."
-        : ReverbPreviewActive ? "Prévia automática em RAM · não salva no pedal."
+        : reverbStopped ? "Edição em RAM interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : ReverbPreviewActive ? "Edição automática em RAM · não salva no pedal."
         : !Current.Musical.ReverbEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
-        : !CanStartReverb ? "Recurso indisponível durante a operação ou prévia atual."
-        : "Edição local · leia o efeito ativo para iniciar a prévia.";
+        : !CanStartReverb ? "Recurso indisponível durante a operação ou edição em RAM atual."
+        : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartReverb => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !ReverbPreviewActive && !File.Exists(PendingReverb)
 #if CUBE_SIMULATION
         && false
@@ -63,13 +63,13 @@ public sealed partial class EditorViewModel
         catch
         {
             reverbRecoveryInvalid = true; reverbStopped = true;
-            Reverb.Message = "Backup de reverb inválido. Prévia bloqueada; o arquivo original foi preservado.";
+            Reverb.Message = "Backup de reverb inválido. Edição em RAM bloqueada; o arquivo original foi preservado.";
             Refresh();
             throw;
         }
         Reverb.Load(reverbRecovery.Identity, reverbRecovery.Target);
         reverbStopped = true;
-        Reverb.Message = "Prévia interrompida. Conecte o mesmo pedal e use Restaurar reverb. Nenhum ajuste será reaplicado automaticamente.";
+        Reverb.Message = "Edição em RAM interrompida. Conecte o mesmo pedal e use Restaurar reverb. Nenhum ajuste será reaplicado automaticamente.";
         Refresh();
     }
 
@@ -84,7 +84,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingReverb, Path.Combine(directory, $"reverb-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Reverb.Load(session.IdentityHex, reverbRecovery!.Target);
             reverbStopped = false;
-            Reverb.Message = "Prévia experimental iniciada. Ajustes alteram somente a RAM; escuta ainda não validada.";
+            Reverb.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (ReverbPreviewActive && !reverbStopped)
         {
@@ -135,12 +135,12 @@ public sealed partial class EditorViewModel
                     {
                         if (session == null || reverbRecovery == null) throw new IOException("Reconecte para restaurar o reverb.");
                         await session.ApplyReverbPreview(reverbRecovery, Reverb.Parameters, KeepReverbRecovery);
-                        Reverb.Message = "Ajustes conferidos na RAM · validação sonora pendente.";
+                        Reverb.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
                     {
                         reverbStopped = true; reverbPending = false;
-                        Reverb.Message = "Prévia interrompida. Restauração não confirmada; backup preservado. Use Restaurar reverb.";
+                        Reverb.Message = "Edição em RAM interrompida. Restauração não confirmada; backup preservado. Use Restaurar reverb.";
                         throw;
                     }
                 }
@@ -181,9 +181,11 @@ public sealed partial class EditorViewModel
     public async Task ImportReverbAsync()
     {
         if (Busy) return;
-        var picker = new OpenFileDialog { Filter = Localization.LanguageService.T("Reverb experimental (*.reverb.json)") + "|*.reverb.json" };
+        var picker = new OpenFileDialog { Filter = Localization.LanguageService.T("Reverb (*.reverb.json)") + "|*.reverb.json" };
         if (picker.ShowDialog() != true) return;
-        await Execute(() => LoadReverbFileAsync(picker.FileName));
+        bool loaded = false;
+        await Execute(async () => { await LoadReverbFileAsync(picker.FileName); loaded = true; });
+        if (loaded) ApplyReverbEdits();
     }
 
     internal async Task LoadReverbFileAsync(string path)
@@ -193,7 +195,7 @@ public sealed partial class EditorViewModel
         if (reverbRecovery != null && preset.Identity != reverbRecovery.Identity)
             throw new FormatException("O arquivo pertence a outra identidade de pedal.");
         Reverb.Load(preset.Identity, preset.Parameters);
-        Reverb.Message = "Arquivo carregado no computador. Use Aplicar ajustes para enviá-lo à prévia ativa.";
+        Reverb.Message = "Arquivo carregado no computador.";
     }
 
     public void ApplyReverbEdits() { if (!Busy && ReverbPreviewActive && !reverbStopped) ReverbEdited(); }
@@ -201,7 +203,7 @@ public sealed partial class EditorViewModel
     public async Task ExportReverbAsync()
     {
         if (Busy || !Reverb.Loaded) return;
-        var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Reverb experimental (*.reverb.json)") + "|*.reverb.json", FileName = Localization.LanguageService.T("Meu reverb.reverb.json") };
+        var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Reverb (*.reverb.json)") + "|*.reverb.json", FileName = Localization.LanguageService.T("Meu reverb.reverb.json") };
         if (picker.ShowDialog() != true) return;
         await Execute(async () =>
         {

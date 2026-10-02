@@ -15,7 +15,7 @@ public sealed record ChorusParameters(float Depth, float Step, float Mix, float 
         static bool Within(float value, float min, float max) => float.IsFinite(value) && value >= min && value <= max;
         if (!Within(Depth, 0, 0.4f) || !Within(Step, 0.000008f, 0.000063f) || !Within(Mix, 0, 0.85f) ||
             !Within(Feedback, 0, 0.1f) || Waveform is < 0 or > 1 || !Within(WetGain, 0.5f, 1) || !Within(CombinedGain, 0.5f, 1))
-            throw new ArgumentOutOfRangeException(nameof(ChorusParameters), "Parâmetros fora dos limites experimentais do chorus.");
+            throw new ArgumentOutOfRangeException(nameof(ChorusParameters), "Parâmetros fora dos limites do chorus.");
     }
     public static ChorusParameters Read(byte[] dsp)
     {
@@ -48,7 +48,7 @@ public sealed record ChorusParameters(float Depth, float Step, float Mix, float 
         // Only b0 is editable. Nonzero recursive coefficients would invalidate the feedback bound.
         foreach (int start in new[] { 0x654, 0x670 })
             if (Enumerable.Range(start, 16).Any(i => dsp[i] != 0))
-                throw new FormatException("Filtros do chorus incompatíveis com a prévia experimental.");
+                throw new FormatException("Filtros do chorus incompatíveis com a edição em RAM.");
     }
 }
 

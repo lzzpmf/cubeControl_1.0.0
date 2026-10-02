@@ -1,5 +1,7 @@
 # Cube Baby chorus e controles internos
 
+Estado atual (02/10/2026): o editor de Chorus está funcional conforme validação informada pelo usuário. As observações de ausência de guitarra/escuta e os roteiros abaixo registram o contexto histórico da investigação. Os mapeamentos e as limitações de persistência permanecem os mesmos.
+
 [Índice](README.md) · [Phaser](CUBE_BABY_PHASER.md) · Investigação de 01/10/2026
 
 ## Resultado e alcance
@@ -8,7 +10,7 @@ O chorus tem parâmetros internos independentes de MOD: profundidade, incremento
 
 Não houve guitarra, captura de áudio ou avaliação musical. Leituras USB demonstram alteração, permanência e restauração de memória; não demonstram som correto, ausência de estalos, headroom ou estabilidade acústica prolongada. O modelo offline descrito abaixo é uma reconstrução estrutural, não uma gravação nem uma emulação bit a bit.
 
-O criador experimental está integrado ao card Chorus, com sete controles, prévia em RAM, restauração e arquivos locais `.chorus.json`. A investigação e a implementação não definem persistência em flash.
+O criador está integrado ao card Chorus, com sete controles, prévia em RAM, restauração e arquivos locais `.chorus.json`. A investigação e a implementação não definem persistência em flash.
 
 ## Fontes e compatibilidade
 
@@ -181,9 +183,9 @@ dotnet run --project CubeControl-1.1/Cube/windows/Cube.Diagnostics -- chorus-tra
 
 `chorus-map` somente lê. Os outros comandos alteram RAM, exigem PRESET e seção delay/modulação inicialmente desligada, verificam o firmware e guardam referência e intenções. Não gravam/apagam flash.
 
-## Criador experimental na aplicação
+## Criador na aplicação
 
-Na Pedaleira, selecione **Chorus** e abra **Criador de chorus · experimental**. Ative o chorus no preset físico em modo PRESET, selecione o mesmo A/B/C no aplicativo e use **Ler chorus ativo**. A leitura confere o firmware, o contexto e os coeficientes dos filtros antes de preservar a referência e habilitar os ajustes.
+Na Pedaleira, selecione **Chorus** e abra **Criador de chorus**. Ative o chorus no preset físico em modo PRESET, selecione o mesmo A/B/C no aplicativo e use **Ler chorus ativo**. A leitura confere o firmware, o contexto e os coeficientes dos filtros antes de preservar a referência e habilitar os ajustes.
 
 | Controle | Faixa do editor | Conversão |
 | --- | --- | --- |
@@ -212,7 +214,7 @@ dotnet run --project CubeControl-1.1/Cube/windows/Cube.Tests -- --chorus-preview
 dotnet run --project CubeControl-1.1/Cube/windows/Cube.Desktop.Tests -- --chorus-only
 ```
 
-## Validação sonora posterior
+## Roteiro histórico de validação sonora
 
 Realimentação e forma de onda exigem escuta antes de ampliar as faixas musicais. Os dois biquads oferecem um caminho concreto para controles tonais, mas o editor expõe somente os ganhos escalares investigados.
 

@@ -43,14 +43,14 @@ Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](
 | Botões | Reutilizar `CubeButtonStyle` e templates WPF UI; texto indica a ação |
 | Seletores de equipamento | Imagem abre galeria; destaque preliminar, aplicar/clique duplo confirma, cancelamento não aplica |
 | Knobs da Pedaleira | Valor por tooltip/automação, sem restabelecer campos numéricos permanentes das versões antigas |
-| Controles do criador de amps | Faders/knobs, valores formatados e ajuste fino com Shift; respeitar faixas individuais |
+| Controles do criador de amps | Faders/knobs, edição numérica por Enter, referência visível e ajuste fino com Shift; respeitar faixas individuais |
 | Microfone de IR | Aplica ao concluir o gesto; 0–100 não significa centímetros |
 | Gráfico dos EQs | Representa os coeficientes do filtro, sem alegar medição acústica |
 | Galeria e associações | Identidades estáveis; gabinete reconhecido pelo conteúdo, não pelo slot |
 | Notificações | Snackbar para resultado breve; erro ou orientação importante permanece consultável no editor |
 | Confirmações | Manter destino, consequência e backup definidos pelo fluxo; arquivo/slot não pode ficar ambíguo |
 
-O criador possui limites específicos em cinco grupos de coeficientes e uma limitação no carregamento de três amps originais; veja [Criador de amps](criador-de-amps.md). Não converta os nomes musicais dos grupos em bandas de frequência comprovadas.
+O criador possui limites específicos em cinco grupos de coeficientes; o limite atual de ganho interno é 100 e aceita os nove amps originais; veja [Criador de amps](criador-de-amps.md). Não converta os nomes musicais dos grupos em bandas de frequência comprovadas. Os códigos A/B preservam a rastreabilidade; os 16 trechos não são uma curva de palhetada comprovada. A EQ distingue A/B por cor, letra e traço, com reset da banda. Estados locais, prévia RAM e gravação verificada ficam separados. A página usa recursos locais e uma única rolagem por modo de layout.
 
 ## Progresso e mensagens
 

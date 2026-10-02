@@ -4,23 +4,18 @@
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
  xmlns:graph="clr-namespace:Cube.Desktop.Controls"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization">
- <Expander Header="{loc:Translate Text='Criador de phaser · experimental'}" Margin="0,16,0,0">
-  <StackPanel Margin="0,12,0,0" MaxWidth="900" HorizontalAlignment="Stretch">
-   <TextBlock Text="{loc:Translate Text='Controles internos em prévia temporária. Validação sonora pendente.'}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+  <StackPanel Margin="0" MaxWidth="900" HorizontalAlignment="Stretch">
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Ler phaser ativo'}" Click="ReadClick" IsEnabled="{Binding CanStartPhaser}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowDownload24"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Restaurar phaser'}" Click="RestoreClick" IsEnabled="{Binding CanRestorePhaser}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowUndo24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Text="{loc:Translate Text='Chorus e Phaser compartilham um bloco. Ative o efeito escolhido no preset físico antes de ler.'}" TextWrapping="Wrap" Margin="0,0,0,8"/>
    <TextBlock Text="{loc:Translate Value={Binding PhaserGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
-   <graph:EffectGraphEditor EffectKind="Phaser" DataContext="{Binding Phaser}" IsEnabled="{Binding DataContext.CanEditPhaser,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+   <graph:EffectGraphEditor EffectKind="Phaser" Accent="{DynamicResource AccentTextFillColorPrimaryBrush}" DataContext="{Binding Phaser}" IsEnabled="{Binding DataContext.CanEditPhaser,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
    <WrapPanel Margin="0,12,0,0" IsEnabled="{Binding CanUsePhaserFiles}">
     <ui:Button Content="{loc:Translate Text='Importar phaser'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="FolderOpen24"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Exportar phaser'}" Click="ExportClick" IsEnabled="{Binding Phaser.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Aplicar ajustes'}" Click="ApplyClick" IsEnabled="{Binding CanRestorePhaser}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Checkmark24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Text="{loc:Translate Value={Binding Phaser.Message}}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </StackPanel>
- </Expander>
 </UserControl>

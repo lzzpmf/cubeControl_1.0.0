@@ -6,7 +6,7 @@ public sealed class DelayViewModel : Observable
 {
     private bool loading, loaded;
     private double timeSamples = 9600, feedback = 25, depth = 100, rate = 100, mix = 25;
-    private string identity = "", message = "Experimental · validação sonora pendente. Ative a seção delay/modulação e desligue chorus/phaser antes de ler.";
+    private string identity = "", message = "Ative a seção delay/modulação e desligue chorus/phaser antes de ler.";
     public event Action? Edited;
     public bool Loaded { get => loaded; private set => Set(ref loaded, value); }
     public string Identity => identity;

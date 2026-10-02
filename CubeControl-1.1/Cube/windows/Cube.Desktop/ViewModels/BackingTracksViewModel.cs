@@ -2,50 +2,65 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Cube.Desktop.Localization;
+using Cube.Desktop.Services;
 using Microsoft.Win32;
+using NAudio.CoreAudioApi;
 using Windows.Devices.Enumeration;
-using Windows.Media.Core;
 using Windows.Media.Devices;
-using Windows.Media.Playback;
-using Windows.Media.MediaProperties;
-using Windows.Media.Transcoding;
-using Windows.Storage;
-using Windows.Storage.Streams;
 using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
 
 namespace Cube.Desktop.ViewModels;
 
-public sealed record BackingTrack(string Source)
+public sealed class BackingTrack(string source) : Observable
 {
+    public string Source { get; } = source;
     public string Title => Path.GetFileNameWithoutExtension(Source);
-    public double Length { get; set; }
-    public double Start { get; set; }
-    public double End { get; set; }
+    private double length;
+    private string state = File.Exists(source) ? "Pronta" : "Arquivo ausente";
+    public double Length { get => length; set { if (Set(ref length, value)) Notify(nameof(LengthLabel)); } }
+    public string LengthLabel => Length > 0 ? BackingTracksViewModel.FormatTime(Length) : "—";
+    public string State { get => state; set => Set(ref state, value); }
+    public double? Start { get; set; }
+    public double? End { get; set; }
+    public double Speed { get; set; } = 100;
+    public double Pitch { get; set; }
+    public long FileSize { get; set; }
+    public long LastWriteTicks { get; set; }
     public float[] Peaks { get; set; } = [];
-
+    public long LastUsed { get; set; }
 }
+public sealed record BackingOutput(string Id, string Name);
 
 public sealed class BackingTracksViewModel : Observable, IDisposable
 {
-    private sealed record Settings(int Version, string[] Sources, string? SelectedSource, string? OutputId, double Volume, bool IsMuted);
-    private readonly string settingsPath;
+    private sealed record TrackSettings(string Source, double? A, double? B, double Speed, double Pitch, long Size, long Modified);
+    private sealed record Settings(int Version, string[]? Sources, string? SelectedSource, string? OutputId, double Volume, bool IsMuted, bool ContinueSequence = false, TrackSettings[]? Tracks = null);
+    private readonly string settingsPath, diagnosticPath;
     private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
+    private readonly BackingAudioEngine engine = new();
     private readonly DispatcherTimer positionTimer = new() { Interval = TimeSpan.FromMilliseconds(40) };
     private readonly DispatcherTimer saveTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly DispatcherTimer parameterTimer = new() { Interval = TimeSpan.FromMilliseconds(150) };
+    private readonly CancellationTokenSource lifetime = new();
+    private readonly HashSet<Task> backgroundWork = [];
     private DeviceWatcher? watcher;
-    private MediaPlayer? player;
+    private CancellationTokenSource? waveformCancellation, exportCancellation;
     private BackingTrack? selectedTrack;
-    private DeviceInformation? selectedOutput;
+    private BackingOutput? selectedOutput;
     private string? preferredOutputId;
-    private string status = "Adicione uma faixa e escolha a saída de áudio.";
+    private string status = "", analysisStatus = "";
     private double volume = 30, position, duration;
-    private bool muted, loading, playing, canSeek, disposed, restoring, refreshing, settingsDirty;
-    private int playbackGeneration;
+    private bool muted, looping, exporting, refreshing, restoring, settingsDirty, disposed, continueSequence, hasError, pageVisible, opening, parameterGesture;
+    private int selectionGeneration;
+    private long cacheUse;
+    private BackingPlaybackState state = BackingPlaybackState.Empty;
     public ObservableCollection<BackingTrack> Tracks { get; } = [];
-    public ObservableCollection<DeviceInformation> Outputs { get; } = [];
+    public ObservableCollection<BackingOutput> Outputs { get; } = [];
+    public Func<Task<bool?>>? ChooseExportMode { get; set; }
     public ICommand AddFiles { get; }
     public ICommand RemoveTrack { get; }
     public ICommand PlayPause { get; }
@@ -61,501 +76,347 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
     public ICommand MarkStart { get; }
     public ICommand MarkEnd { get; }
     public ICommand ResetRange { get; }
+    public ICommand ClearStart { get; }
+    public ICommand ClearEnd { get; }
+    public ICommand ResetSpeed { get; }
+    public ICommand ResetPitch { get; }
     public ICommand ExportRange { get; }
-    private CancellationTokenSource? waveformCancellation;
-    private bool looping, advancing, exporting;
-    private double speed = 100;
-    public bool IsPlaying => playing;
-    public bool HasActivePlayback => player != null && !loading;
-    private bool rateChangePending, resumeAfterRateChange;
-    private void ApplyPendingRate()
-    {
-        if (!rateChangePending || player == null || player.PlaybackSession.PlaybackState != MediaPlaybackState.Paused) return;
-        rateChangePending = false;
-        try { player.PlaybackSession.PlaybackRate = Speed / 100; }
-        catch
-        {
-            speed = player.PlaybackSession.PlaybackRate * 100;
-            Notify(nameof(Speed));
-            throw;
-        }
-        finally { if (resumeAfterRateChange) player.Play(); }
-    }
-    public SymbolRegular PlayIcon => playing ? SymbolRegular.Pause24 : SymbolRegular.Play24;
-    public bool IsLooping { get => looping; set => Set(ref looping, value); }
-    public double Speed
-    {
-        get => speed;
-        set
-        {
-            if (!double.IsFinite(value) || !Set(ref speed, Math.Clamp(value, 50, 150)) || player == null || loading) return;
-            Run(() =>
-            {
-                if (playing)
-                {
-                    rateChangePending = true; resumeAfterRateChange = true;
-                    player.Pause(); ApplyPendingRate();
-                }
-                else player.PlaybackSession.PlaybackRate = speed / 100;
-            });
-        }
-    }
+    public ICommand CancelExport { get; }
+    public ICommand ShowFile { get; }
+    public ICommand LocateFile { get; }
+    public BackingPlaybackState State { get => state; private set { Set(ref state, value); RefreshPresentation(); } }
+    public bool IsPlaying => State == BackingPlaybackState.Playing;
+    public bool IsLoading => opening || State == BackingPlaybackState.Loading;
+    public bool HasActivePlayback => engine.Snapshot.Source == SelectedTrack?.Source && State is BackingPlaybackState.Playing or BackingPlaybackState.Paused or BackingPlaybackState.Ended;
+    public bool PageVisible { get => pageVisible; set { if (Set(ref pageVisible, value)) Notify(nameof(ShowMiniPlayer)); } }
+    public bool ShowMiniPlayer => !PageVisible && (HasActivePlayback || HasError && SelectedTrack != null);
+    public bool HasTracks => Tracks.Count > 0;
+    public bool HasRange => SelectedTrack?.Start is double a && SelectedTrack.End is double b && b - a >= .1 - 1e-9;
+    public bool CanSeek => SelectedTrack != null && Duration > 0;
+    public bool CanLoop => HasRange && Duration >= .1;
+    public bool IsExporting { get => exporting; private set => Set(ref exporting, value); }
+    public bool HasError { get => hasError; private set { Set(ref hasError, value); Notify(nameof(ShowMiniPlayer)); Notify(nameof(StatusSeverity)); } }
+    public Wpf.Ui.Controls.InfoBarSeverity StatusSeverity => HasError ? Wpf.Ui.Controls.InfoBarSeverity.Error : Wpf.Ui.Controls.InfoBarSeverity.Informational;
+    public bool HasModifiedSpeed => Speed != 100;
+    public bool HasModifiedPitch => Pitch != 0;
+    public bool HasStatus => Status.Length > 0;
+    public string Status { get => status; private set { Set(ref status, value); Notify(nameof(HasStatus)); } }
+    public string AnalysisStatus { get => analysisStatus; private set => Set(ref analysisStatus, value); }
+    public string OutputName => SelectedOutput?.Name ?? "Escolha a saída de áudio";
+    public string OutputState => SelectedOutput == null ? "Indisponível" : engine.Snapshot.OutputId == SelectedOutput.Id && HasActivePlayback ? "Em uso" : "Selecionada";
+    public string PlayLabel => IsPlaying ? "Pausar" : "Reproduzir";
+    public SymbolRegular PlayIcon => IsPlaying ? SymbolRegular.Pause24 : SymbolRegular.Play24;
+    public SymbolRegular MuteIcon => IsMuted ? SymbolRegular.SpeakerMute24 : SymbolRegular.Speaker224;
+    public string MuteLabel => IsMuted ? "Restaurar som" : "Silenciar";
     public float[] Peaks => SelectedTrack?.Peaks ?? [];
-    public double RangeStart
+    public string ExportLabel => HasRange ? "Exportar A → B" : "Exportar faixa WAV";
+    public double Duration { get => duration; private set { Set(ref duration, value); Notify(nameof(CanSeek)); Notify(nameof(CanLoop)); Notify(nameof(TimeLabel)); } }
+    public string TimeLabel => $"{FormatTime(Position)} / {FormatTime(Duration)}";
+    public string RangeLabel => $"A {(double.IsNaN(RangeStart) ? "—" : FormatTime(RangeStart, true))}   B {(double.IsNaN(RangeEnd) ? "—" : FormatTime(RangeEnd, true))}" + (HasRange ? $"   {RangeEnd - RangeStart:0.0} s" : "");
+    public static string FormatTime(double seconds, bool precise = false)
     {
-        get => SelectedTrack?.Start ?? 0;
-        set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Start = Math.Clamp(value, 0, Math.Max(0, RangeEnd - .1)); RangeChanged(); }
+        var time = TimeSpan.FromSeconds(double.IsFinite(seconds) ? Math.Max(0, precise ? Math.Round(seconds, 1) : seconds) : 0);
+        return time.ToString(time.TotalHours >= 1 ? (precise ? @"hh\:mm\:ss\.f" : @"hh\:mm\:ss") : (precise ? @"mm\:ss\.f" : @"mm\:ss"));
     }
-    public double RangeEnd
-    {
-        get => SelectedTrack?.End ?? 0;
-        set { if (SelectedTrack == null || Duration < .1 || !double.IsFinite(value)) return; SelectedTrack.End = Math.Clamp(value, RangeStart + .1, Duration); RangeChanged(); }
-    }
-    public string RangeLabel => $"A {TimeSpan.FromSeconds(RangeStart):mm\\:ss} — B {TimeSpan.FromSeconds(RangeEnd):mm\\:ss}";
-    private void RangeChanged()
-    {
-        Notify(nameof(RangeStart)); Notify(nameof(RangeEnd)); Notify(nameof(RangeLabel));
-        if (Position < RangeStart || Position > RangeEnd) Position = RangeStart;
-        CommandManager.InvalidateRequerySuggested();
-    }
-
-
     public BackingTracksViewModel(string dataDirectory)
     {
-        settingsPath = Path.Combine(dataDirectory, "backing-tracks-v1.json");
-        AddFiles = new UiCommand(() => Run(AddFilesCore));
+        settingsPath = Path.Combine(dataDirectory, "backing-tracks-v1.json"); diagnosticPath = Path.Combine(dataDirectory, "backing-audio.log");
+        AddFiles = new UiCommand(() => Run(() => { var dialog = new OpenFileDialog { Multiselect = true, Filter = LanguageService.T("Áudio MP3 ou WAV") + "|*.mp3;*.wav" }; if (dialog.ShowDialog() == true) AddPaths(dialog.FileNames); }));
         RemoveTrack = new UiCommand(RemoveSelected, () => SelectedTrack != null);
-        PlayPause = new UiCommand(async () => await TogglePlayback(), () => !loading && SelectedTrack != null && SelectedOutput != null);
-        Stop = new UiCommand(() => { StopPlayback(); Status = "Reprodução parada."; }, () => player != null || loading);
-        RefreshOutputs = new UiCommand(async () => await RefreshDevices(), () => !refreshing);
+        PlayPause = new UiCommand(() => Start(TogglePlayback()), () => !IsLoading && SelectedTrack != null && SelectedOutput != null);
+        Stop = new UiCommand(() => Start(StopPlayback()), () => SelectedTrack != null);
+        RefreshOutputs = new UiCommand(() => Start(RefreshDevices()), () => !refreshing);
         BluetoothSettings = new UiCommand(() => Run(() => Process.Start(new ProcessStartInfo("ms-settings:bluetooth") { UseShellExecute = true })));
-        positionTimer.Tick += (_, _) => Run(UpdatePosition);
-        saveTimer.Tick += (_, _) => { saveTimer.Stop(); Save(); };
         MoveUp = new UiCommand(() => MoveSelected(-1), () => SelectedTrack != null && Tracks.IndexOf(SelectedTrack) > 0);
         MoveDown = new UiCommand(() => MoveSelected(1), () => SelectedTrack != null && Tracks.IndexOf(SelectedTrack) < Tracks.Count - 1);
-        Previous = new UiCommand(async () => await SelectAdjacent(-1), () => SelectedTrack != null && Tracks.IndexOf(SelectedTrack) > 0);
-        Next = new UiCommand(async () => await SelectAdjacent(1), () => SelectedTrack != null && Tracks.IndexOf(SelectedTrack) < Tracks.Count - 1);
-        SkipBack = new UiCommand(() => Position -= 5, () => CanSeek);
-        SkipForward = new UiCommand(() => Position += 5, () => CanSeek);
-        MarkStart = new UiCommand(() => RangeStart = Position, () => CanSeek);
-        MarkEnd = new UiCommand(() => RangeEnd = Position, () => CanSeek);
-        ResetRange = new UiCommand(() => { if (SelectedTrack != null) { SelectedTrack.Start = 0; SelectedTrack.End = Duration; RangeChanged(); } }, () => Duration > 0);
-        ExportRange = new UiCommand(async () => await ExportSelection(), () => SelectedTrack != null && RangeEnd > RangeStart && !exporting);
-        Restore();
-        _ = LoadWaveform();
+        Previous = new UiCommand(() => Start(SelectAdjacent(-1)), () => SelectedTrack != null && Tracks.IndexOf(SelectedTrack) > 0);
+        Next = new UiCommand(() => Start(SelectAdjacent(1)), () => SelectedTrack != null && Tracks.IndexOf(SelectedTrack) < Tracks.Count - 1);
+        SkipBack = new UiCommand(() => Position -= 5, () => CanSeek); SkipForward = new UiCommand(() => Position += 5, () => CanSeek);
+        MarkStart = new UiCommand(() => RangeStart = Position, () => CanSeek && Duration >= .1);
+        MarkEnd = new UiCommand(() => RangeEnd = Position, () => CanSeek && Duration >= .1);
+        ResetRange = new UiCommand(() => ClearRange(true, true), () => SelectedTrack?.Start != null || SelectedTrack?.End != null);
+        ClearStart = new UiCommand(() => ClearRange(true, false)); ClearEnd = new UiCommand(() => ClearRange(false, true));
+        ResetSpeed = new UiCommand(() => Speed = 100, () => SelectedTrack != null); ResetPitch = new UiCommand(() => Pitch = 0, () => SelectedTrack != null);
+        ExportRange = new UiCommand(() => Start(ExportSelection()), () => SelectedTrack != null && Duration > 0 && !exporting);
+        CancelExport = new UiCommand(() => exportCancellation?.Cancel(), () => IsExporting);
+        ShowFile = new UiCommand(() => Run(() => { if (SelectedTrack != null) Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + SelectedTrack.Source + "\"") { UseShellExecute = true }); }), () => SelectedTrack != null);
+        LocateFile = new UiCommand(LocateSelected, () => SelectedTrack != null);
+        positionTimer.Tick += (_, _) => UpdatePosition(); saveTimer.Tick += (_, _) => { saveTimer.Stop(); Save(); };
+        parameterTimer.Tick += (_, _) => { parameterTimer.Stop(); if (!parameterGesture) Start(ApplyParameters()); };
+        engine.Changed += EngineChanged; Tracks.CollectionChanged += (_, _) => Notify(nameof(HasTracks));
+        Restore(); Start(LoadWaveform());
     }
-
     public BackingTrack? SelectedTrack
     {
         get => selectedTrack;
         set
         {
-            if (!Set(ref selectedTrack, value)) return;
-            StopPlayback(); Notify(nameof(Peaks)); RangeChanged();
-            Status = "Pronto para reproduzir."; Changed(); _ = LoadWaveform();
+            if (selectedTrack == value) return;
+            if (selectedTrack != null) selectedTrack.State = File.Exists(selectedTrack.Source) ? "Pronta" : "Arquivo ausente";
+            selectedTrack = value; selectionGeneration++; opening = false; looping = false;
+            parameterTimer.Stop(); positionTimer.Stop(); Start(engine.Clear()); position = 0;
+            Duration = value?.Length ?? 0; State = value == null ? BackingPlaybackState.Empty : BackingPlaybackState.Ready;
+            Notify(); Notify(nameof(Peaks)); Notify(nameof(Position)); Notify(nameof(Speed)); Notify(nameof(Pitch)); Notify(nameof(HasModifiedSpeed)); Notify(nameof(HasModifiedPitch)); RangeChanged(false);
+            Status = ""; HasError = false; Changed(); Start(LoadWaveform());
         }
     }
-    public DeviceInformation? SelectedOutput
+    public BackingOutput? SelectedOutput
     {
         get => selectedOutput;
         set
         {
             if (!Set(ref selectedOutput, value)) return;
-            StopPlayback();
+            UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
+            if (HasActivePlayback) State = BackingPlaybackState.Paused;
             if (!restoring) { preferredOutputId = value?.Id; Changed(); }
-            Notify(nameof(OutputName));
+            Notify(nameof(OutputName)); Notify(nameof(OutputState)); CommandManager.InvalidateRequerySuggested();
         }
     }
-    public string OutputName => SelectedOutput?.Name ?? "Escolha a saída de áudio.";
-    public string Status { get => status; private set => Set(ref status, value); }
-    public double Volume
+    public bool ContinueSequence { get => continueSequence; set { if (Set(ref continueSequence, value)) Changed(); } }
+    public bool IsLooping { get => looping; set { if (value && !CanLoop) return; if (Set(ref looping, value)) { if (value && (Position < RangeStart || Position >= RangeEnd)) position = RangeStart; Start(ApplyParameters()); Notify(nameof(Position)); } } }
+    public double Speed { get => SelectedTrack?.Speed ?? 100; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Speed = Math.Clamp(Math.Round(value), 50, 150); Notify(); Notify(nameof(HasModifiedSpeed)); ScheduleParameters(); Changed(); } }
+    public double Pitch { get => SelectedTrack?.Pitch ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Pitch = Math.Clamp(Math.Round(value), -6, 6); Notify(); Notify(nameof(HasModifiedPitch)); ScheduleParameters(); Changed(); } }
+    public double Volume { get => volume; set { if (double.IsFinite(value) && Set(ref volume, Math.Clamp(value, 0, 100))) { Start(engine.SetVolume(volume / 100, IsMuted)); Changed(); } } }
+    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
+    public double RangeStart
     {
-        get => volume;
-        set { if (double.IsFinite(value) && Set(ref volume, Math.Clamp(value, 0, 100))) { if (player != null) player.Volume = volume / 100; Changed(); } }
+        get => SelectedTrack?.Start ?? double.NaN;
+        set
+        {
+            if (SelectedTrack == null || !double.IsFinite(value) || Duration < .1) return;
+            value = Math.Clamp(value, 0, Duration - .1);
+            if (SelectedTrack.End is double b && b - value < .1 - 1e-9) { Status = "A deve ficar antes de B, com pelo menos 0,1 s."; return; }
+            SelectedTrack.Start = value; RangeChanged();
+        }
     }
-    public bool IsMuted
+    public double RangeEnd
     {
-        get => muted;
-        set { if (Set(ref muted, value)) { if (player != null) player.IsMuted = value; Changed(); } }
+        get => SelectedTrack?.End ?? double.NaN;
+        set
+        {
+            if (SelectedTrack == null || !double.IsFinite(value) || Duration < .1) return;
+            value = Math.Clamp(value, .1, Duration);
+            if (SelectedTrack.Start is double a && value - a < .1 - 1e-9) { Status = "B deve ficar depois de A, com pelo menos 0,1 s."; return; }
+            SelectedTrack.End = value; RangeChanged();
+        }
     }
-    public string PlayLabel => playing ? "Pausar" : "Reproduzir";
-    public double Duration { get => duration; private set => Set(ref duration, value); }
-    public bool CanSeek { get => canSeek; private set => Set(ref canSeek, value); }
+    private void ClearRange(bool a, bool b) { if (SelectedTrack == null) return; if (a) SelectedTrack.Start = null; if (b) SelectedTrack.End = null; looping = false; RangeChanged(); }
+    private void RangeChanged(bool persist = true)
+    {
+        foreach (string name in new[] { nameof(RangeStart), nameof(RangeEnd), nameof(RangeLabel), nameof(HasRange), nameof(CanLoop), nameof(IsLooping), nameof(ExportLabel) }) Notify(name);
+        if (persist) { Changed(); Start(ApplyParameters()); } CommandManager.InvalidateRequerySuggested();
+    }
     public double Position
     {
         get => position;
         set
         {
             if (!CanSeek || !double.IsFinite(value)) return;
-            position = Math.Clamp(value, RangeStart, RangeEnd > RangeStart ? RangeEnd : Duration);
-            Run(() => { if (player != null) player.PlaybackSession.Position = TimeSpan.FromSeconds(position); });
-            Notify(nameof(Position)); Notify(nameof(TimeLabel));
+            position = IsLooping && HasRange ? Math.Clamp(value, RangeStart, RangeEnd) : Math.Clamp(value, 0, Duration);
+            if (engine.Snapshot.Source == SelectedTrack?.Source && engine.Snapshot.OutputId != null) Start(engine.Seek(position));
+            Notify(); Notify(nameof(TimeLabel));
         }
     }
-    public string TimeLabel => $"{TimeSpan.FromSeconds(position):hh\\:mm\\:ss} / {TimeSpan.FromSeconds(duration):hh\\:mm\\:ss}";
-
-    public async Task Initialize()
+    public void BeginParameterGesture() { parameterGesture = true; parameterTimer.Stop(); }
+    public void EndParameterGesture() { parameterGesture = false; parameterTimer.Stop(); Start(ApplyParameters()); }
+    private void ScheduleParameters() { parameterTimer.Stop(); if (!parameterGesture) parameterTimer.Start(); }
+    private Task ApplyParameters() => engine.Snapshot.Source == SelectedTrack?.Source ? engine.Configure(Speed / 100, Pitch, IsLooping && HasRange, HasRange ? RangeStart : 0, HasRange ? RangeEnd : Duration) : Task.CompletedTask;
+    private void RefreshPresentation()
     {
-        try
-        {
-            watcher = DeviceInformation.CreateWatcher(MediaDevice.GetAudioRenderSelector());
-            watcher.Added += DeviceAdded;
-            watcher.Removed += DeviceRemoved;
-            watcher.Updated += DeviceUpdated;
-            watcher.Start();
-            await RefreshDevices();
-        }
-        catch (Exception ex) { Status = "Não foi possível listar as saídas de áudio. " + ex.Message; }
-    }
-
-    private void Dispatch(Action action)
-    {
-        if (disposed || dispatcher.HasShutdownStarted) return;
-        _ = dispatcher.BeginInvoke(new Action(() => { if (!disposed) Run(action); }));
-    }
-    private void DeviceAdded(DeviceWatcher sender, DeviceInformation args) => Dispatch(() =>
-    {
-        if (!args.IsEnabled || Outputs.Any(d => d.Id == args.Id)) return;
-        Outputs.Add(args);
-        if (args.Id == preferredOutputId && SelectedOutput == null)
-        {
-            restoring = true; SelectedOutput = args; restoring = false;
-            Status = "Saída disponível. Pressione Reproduzir para iniciar.";
-        }
-    });
-    private void DeviceRemoved(DeviceWatcher sender, DeviceInformationUpdate args) => Dispatch(() => RemoveOutput(args.Id));
-    private void DeviceUpdated(DeviceWatcher sender, DeviceInformationUpdate args) => Dispatch(() =>
-    {
-        var device = Outputs.FirstOrDefault(d => d.Id == args.Id);
-        device?.Update(args);
-        if (device is { IsEnabled: false }) RemoveOutput(args.Id);
-        else _ = RefreshDevices();
-    });
-    private void RemoveOutput(string id)
-    {
-        if (SelectedOutput?.Id == id)
-        {
-            restoring = true; SelectedOutput = null; restoring = false;
-            Status = "Saída desconectada. Reconecte o dispositivo e pressione Reproduzir.";
-        }
-        var item = Outputs.FirstOrDefault(d => d.Id == id);
-        if (item != null) Outputs.Remove(item);
+        foreach (string name in new[] { nameof(IsPlaying), nameof(IsLoading), nameof(HasActivePlayback), nameof(ShowMiniPlayer), nameof(PlayLabel), nameof(PlayIcon), nameof(OutputState) }) Notify(name);
         CommandManager.InvalidateRequerySuggested();
     }
-    private async Task RefreshDevices()
+    private void Dispatch(Action action) { if (!disposed && !dispatcher.HasShutdownStarted) _ = dispatcher.BeginInvoke(new Action(() => { if (!disposed) Run(action); })); }
+    private void EngineChanged(BackingPlaybackSnapshot snapshot) => Dispatch(() =>
     {
-        if (disposed || refreshing) return;
-        refreshing = true;
-        CommandManager.InvalidateRequerySuggested();
+        if (snapshot.Source != SelectedTrack?.Source || snapshot.Source == null || snapshot.Generation != engine.Snapshot.Generation) return;
+        State = snapshot.State;
+        if (snapshot.Duration > 0) { Duration = snapshot.Duration; SelectedTrack!.Length = Duration; }
+        position = snapshot.Position; Notify(nameof(Position)); Notify(nameof(TimeLabel));
+        SelectedTrack!.State = snapshot.State switch { BackingPlaybackState.Playing => "Tocando", BackingPlaybackState.Paused => "Pausada", BackingPlaybackState.Loading => "Carregando", BackingPlaybackState.Error => "Erro", BackingPlaybackState.Ended => "Finalizada", _ => "Pronta" };
+        if (snapshot.State == BackingPlaybackState.Playing) { positionTimer.Start(); Status = ""; HasError = false; } else positionTimer.Stop();
+        if (snapshot.Error != null) Error("Não foi possível reproduzir. Verifique o arquivo e a saída de áudio.", snapshot.Error);
+        if (snapshot.State == BackingPlaybackState.Ended && ContinueSequence && !IsLooping) Start(AdvanceAtEnd());
+    });
+    private void UpdatePosition()
+    {
+        var snapshot = engine.Snapshot;
+        if (snapshot.Source != SelectedTrack?.Source || snapshot.State is not (BackingPlaybackState.Playing or BackingPlaybackState.Paused or BackingPlaybackState.Ended)) return;
+        position = snapshot.Position; Notify(nameof(Position)); Notify(nameof(TimeLabel));
+    }
+    private async Task TogglePlayback()
+    {
+        if (disposed || opening || SelectedTrack is not { } track || SelectedOutput is not { } output) return;
+        if (IsPlaying) { await engine.Pause(); return; }
+        int version = selectionGeneration; opening = true; RefreshPresentation();
         try
         {
-            var devices = await DeviceInformation.FindAllAsync(MediaDevice.GetAudioRenderSelector()).AsTask().WaitAsync(TimeSpan.FromSeconds(8));
-            if (disposed) return;
-            var enabled = devices.Where(d => d.IsEnabled).ToArray();
-            foreach (var old in Outputs.ToArray()) if (!enabled.Any(d => d.Id == old.Id)) RemoveOutput(old.Id);
-            foreach (var device in enabled) if (!Outputs.Any(d => d.Id == device.Id)) Outputs.Add(device);
-            if (SelectedOutput == null && preferredOutputId != null)
-            {
-                restoring = true; SelectedOutput = Outputs.FirstOrDefault(d => d.Id == preferredOutputId); restoring = false;
-            }
-            if (Outputs.Count == 0) Status = "Nenhuma saída disponível. Conecte o Cube Baby nas configurações Bluetooth.";
+            if (engine.Snapshot.Source != track.Source || engine.Snapshot.OutputId != output.Id || State == BackingPlaybackState.Error)
+                await engine.Open(track.Source, output.Id, Position, Speed / 100, Pitch, IsLooping && HasRange, HasRange ? RangeStart : 0, HasRange ? RangeEnd : Duration, Volume / 100, IsMuted);
+            if (!disposed && version == selectionGeneration && output == SelectedOutput) await engine.Play();
         }
-        catch (Exception ex) { Status = "Não foi possível listar as saídas de áudio. " + ex.Message; }
-        finally { refreshing = false; CommandManager.InvalidateRequerySuggested(); }
+        finally { if (version == selectionGeneration) { opening = false; RefreshPresentation(); } }
     }
-
-    private void AddFilesCore()
-    {
-        var dialog = new OpenFileDialog { Multiselect = true, Filter = LanguageService.T("Áudio MP3 ou WAV") + "|*.mp3;*.wav" };
-        if (dialog.ShowDialog() != true) return;
-        AddPaths(dialog.FileNames);
-    }
-    public void AddPaths(IEnumerable<string> paths)
-    {
-        foreach (string source in paths)
-        {
-            if (!Path.IsPathFullyQualified(source) || !File.Exists(source) || Path.GetExtension(source).ToLowerInvariant() is not (".mp3" or ".wav")) continue;
-            if (Tracks.Any(t => string.Equals(t.Source, source, StringComparison.OrdinalIgnoreCase))) continue;
-            if (Tracks.Count >= 3) { Status = "A sequência aceita até três arquivos. Remova uma faixa para adicionar outra."; break; }
-            Tracks.Add(new(source));
-        }
-        SelectedTrack ??= Tracks.FirstOrDefault(); Changed();
-    }
-    public void MoveTrack(BackingTrack track, int index)
-    {
-        int old = Tracks.IndexOf(track);
-        if (old < 0 || index < 0 || index >= Tracks.Count) return;
-        Tracks.Move(old, index); Changed();
-    }
-    private void MoveSelected(int step) { if (SelectedTrack != null) MoveTrack(SelectedTrack, Tracks.IndexOf(SelectedTrack) + step); }
+    public void PlaySelected() { if (!IsPlaying) Start(TogglePlayback()); }
+    private async Task StopPlayback() { await engine.Stop(); position = IsLooping && HasRange ? RangeStart : 0; Notify(nameof(Position)); Notify(nameof(TimeLabel)); }
     private async Task SelectAdjacent(int step)
     {
         int index = SelectedTrack == null ? -1 : Tracks.IndexOf(SelectedTrack) + step;
         if (index < 0 || index >= Tracks.Count) return;
-        bool resume = playing;
-        SelectedTrack = Tracks[index];
-        if (resume) await TogglePlayback();
+        bool resume = IsPlaying; SelectedTrack = Tracks[index]; if (resume) await TogglePlayback();
     }
-    private async Task FinishTrack()
+    private async Task AdvanceAtEnd() { int index = SelectedTrack == null ? -1 : Tracks.IndexOf(SelectedTrack) + 1; if (index <= 0 || index >= Tracks.Count) return; SelectedTrack = Tracks[index]; await TogglePlayback(); }
+    public async Task Initialize()
     {
-        if (advancing || player == null) return;
-        if (IsLooping) { Position = RangeStart; player.Play(); return; }
-        advancing = true;
+        try { watcher = DeviceInformation.CreateWatcher(MediaDevice.GetAudioRenderSelector()); watcher.Added += DeviceChanged; watcher.Removed += DeviceChanged; watcher.Updated += DeviceChanged; watcher.Start(); await RefreshDevices(); }
+        catch (Exception ex) { Error("Não foi possível listar as saídas de áudio. Tente atualizar saídas.", ex); }
+    }
+    private void DeviceChanged(DeviceWatcher sender, DeviceInformation args) => Dispatch(() => Start(RefreshDevices()));
+    private void DeviceChanged(DeviceWatcher sender, DeviceInformationUpdate args) => Dispatch(() => Start(RefreshDevices()));
+    private async Task RefreshDevices()
+    {
+        if (disposed || refreshing) return; refreshing = true;
         try
         {
-            int next = SelectedTrack == null ? Tracks.Count : Tracks.IndexOf(SelectedTrack) + 1;
-            if (next < Tracks.Count) { SelectedTrack = Tracks[next]; await TogglePlayback(); }
-            else { StopPlayback(); Status = "Sequência concluída."; }
+            var devices = await Task.Run(() => { using var enumerator = new MMDeviceEnumerator(); return enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active).Select(device => { using (device) return new BackingOutput(device.ID, device.FriendlyName); }).ToArray(); });
+            if (disposed) return;
+            foreach (var old in Outputs.ToArray()) if (!devices.Any(d => d.Id == old.Id))
+            {
+                if (SelectedOutput == old) { restoring = true; SelectedOutput = null; restoring = false; Status = "Saída desconectada. Reconecte o dispositivo e pressione Reproduzir."; HasError = true; } Outputs.Remove(old);
+            }
+            foreach (var device in devices) if (!Outputs.Any(d => d.Id == device.Id)) Outputs.Add(device);
+            if (SelectedOutput == null && preferredOutputId != null) { restoring = true; SelectedOutput = Outputs.FirstOrDefault(d => string.Equals(d.Id, preferredOutputId, StringComparison.OrdinalIgnoreCase)); restoring = false; }
+            if (Outputs.Count == 0) Status = "Nenhuma saída disponível. Conecte uma saída de áudio e atualize a lista.";
         }
-        finally { advancing = false; }
+        catch (Exception ex) { Error("Não foi possível listar as saídas de áudio. Tente atualizar saídas.", ex); }
+        finally { refreshing = false; CommandManager.InvalidateRequerySuggested(); }
     }
+    public void AddPaths(IEnumerable<string> paths)
+    {
+        int rejected = 0;
+        foreach (string path in paths)
+        {
+            if (!Path.IsPathFullyQualified(path) || !File.Exists(path) || Path.GetExtension(path).ToLowerInvariant() is not (".mp3" or ".wav")) { rejected++; continue; }
+            string source = Path.GetFullPath(path); if (Tracks.Any(t => string.Equals(t.Source, source, StringComparison.OrdinalIgnoreCase))) continue; Tracks.Add(new(source));
+        }
+        SelectedTrack ??= Tracks.FirstOrDefault(); Changed();
+        if (rejected > 0) Status = string.Format(LanguageService.T("{0} arquivo(s) não adicionado(s). Use arquivos MP3/WAV locais e acessíveis."), rejected);
+    }
+    public void MoveTrack(BackingTrack track, int index) { int old = Tracks.IndexOf(track); if (old < 0 || index < 0 || index >= Tracks.Count) return; Tracks.Move(old, index); Changed(); }
+    private void MoveSelected(int step) { if (SelectedTrack != null) MoveTrack(SelectedTrack, Tracks.IndexOf(SelectedTrack) + step); }
+    private void RemoveSelected() { if (SelectedTrack is not { } track) return; int index = Tracks.IndexOf(track); SelectedTrack = null; Tracks.Remove(track); SelectedTrack = Tracks.Count > 0 ? Tracks[Math.Min(index, Tracks.Count - 1)] : null; Changed(); }
+    private void LocateSelected() => Run(() =>
+    {
+        if (SelectedTrack is not { } track) return;
+        var dialog = new OpenFileDialog { Filter = "MP3/WAV|*.mp3;*.wav" }; if (dialog.ShowDialog() != true) return;
+        if (Tracks.Any(t => t != track && string.Equals(t.Source, dialog.FileName, StringComparison.OrdinalIgnoreCase))) { Status = "Este arquivo já está na playlist."; return; }
+        int index = Tracks.IndexOf(track); var replacement = new BackingTrack(Path.GetFullPath(dialog.FileName)); Tracks[index] = replacement; SelectedTrack = replacement; Changed();
+    });
     private async Task LoadWaveform()
     {
-        waveformCancellation?.Cancel(); waveformCancellation?.Dispose();
-        var cancellation = waveformCancellation = new CancellationTokenSource();
-        var track = SelectedTrack;
-        if (track == null) return;
+        waveformCancellation?.Cancel();
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token); waveformCancellation = cancellation;
+        var track = SelectedTrack; if (track == null) { AnalysisStatus = ""; waveformCancellation = null; return; }
         try
         {
+            var file = new FileInfo(track.Source);
+            if (!file.Exists) { track.State = "Arquivo ausente"; AnalysisStatus = "Arquivo ausente. Use Localizar novamente no menu da faixa."; return; }
+            if (track.FileSize != file.Length || track.LastWriteTicks != file.LastWriteTimeUtc.Ticks)
+            {
+                if (track.LastWriteTicks != 0) { track.Start = track.End = null; looping = false; RangeChanged(); }
+                track.Peaks = []; track.FileSize = file.Length; track.LastWriteTicks = file.LastWriteTimeUtc.Ticks; Changed();
+            }
             if (track.Peaks.Length == 0)
             {
-                Status = "Desenhando a forma de onda…";
-                var result = await BackingAudio.Analyze(track.Source, cancellation.Token);
-                if (cancellation.IsCancellationRequested || disposed || SelectedTrack != track) return;
+                AnalysisStatus = "Analisando waveform…";
+                var work = BackingAudioProcessing.Analyze(track.Source, cancellation.Token); backgroundWork.Add(work);
+                (double Duration, float[] Peaks) result;
+                try { result = await work; } finally { backgroundWork.Remove(work); }
+                if (disposed || cancellation.IsCancellationRequested || SelectedTrack != track) return;
                 track.Length = result.Duration; track.Peaks = result.Peaks;
-                if (track.End <= 0) track.End = track.Length;
             }
-            Duration = track.Length; CanSeek = Duration > 0;
-            Notify(nameof(Peaks)); RangeChanged(); Notify(nameof(TimeLabel));
-            Status = "Arraste os marcadores A/B para escolher um trecho.";
+            track.LastUsed = ++cacheUse; long total = Tracks.Sum(t => (long)t.Peaks.Length * sizeof(float));
+            foreach (var old in Tracks.Where(t => t != track).OrderBy(t => t.LastUsed)) { if (total <= 32 * 1024 * 1024) break; total -= (long)old.Peaks.Length * sizeof(float); old.Peaks = []; }
+            Duration = track.Length;
+            if (track.Start is double a && (a < 0 || a >= Duration)) track.Start = null;
+            if (track.End is double b && (b > Duration || b <= 0)) track.End = null;
+            Notify(nameof(Peaks)); RangeChanged(false); AnalysisStatus = "";
         }
         catch (OperationCanceledException) { }
-        catch (Exception) { if (!disposed && SelectedTrack == track && !cancellation.IsCancellationRequested) Status = "Forma de onda indisponível para este arquivo. A reprodução continua disponível."; }
+        catch (Exception ex) { Log(ex); if (!disposed && SelectedTrack == track && !cancellation.IsCancellationRequested) AnalysisStatus = "Waveform indisponível. Você ainda pode tentar reproduzir o arquivo."; }
+        finally { if (waveformCancellation == cancellation) waveformCancellation = null; }
     }
     private async Task ExportSelection()
     {
         if (SelectedTrack is not { } track || exporting) return;
-        var dialog = new SaveFileDialog { Filter = "WAV|*.wav", FileName = track.Title + "-trecho.wav" };
-        if (dialog.ShowDialog() != true) return;
-        if (Tracks.Any(t => string.Equals(Path.GetFullPath(dialog.FileName), Path.GetFullPath(t.Source), StringComparison.OrdinalIgnoreCase))) { Status = "Escolha outro nome para preservar o áudio original."; return; }
-        double start = RangeStart, end = RangeEnd;
-        exporting = true; CommandManager.InvalidateRequerySuggested();
-        try { await BackingAudio.Export(track.Source, dialog.FileName, start, end); Status = "Trecho exportado. O áudio original foi preservado."; }
-        catch (Exception) { Status = "Não foi possível exportar o trecho."; }
-        finally { exporting = false; CommandManager.InvalidateRequerySuggested(); }
-    }
-    private void RemoveSelected()
-    {
-        if (SelectedTrack is not { } track) return;
-        SelectedTrack = null; Tracks.Remove(track); SelectedTrack = Tracks.FirstOrDefault(); Changed();
-    }
-
-    private async Task TogglePlayback()
-    {
-        if (disposed || loading || SelectedTrack == null || SelectedOutput == null) return;
-        int generation = playbackGeneration;
+        double a = HasRange ? RangeStart : 0, b = HasRange ? RangeEnd : Duration, rate = Speed / 100, pitch = Pitch;
+        bool? mode = ChooseExportMode == null ? false : await ChooseExportMode(); if (mode == null || disposed) return;
+        string suffix = mode.Value ? $"-trecho-{rate * 100:0}pct-{pitch:+0;-0;0}st" : "-trecho";
+        var dialog = new SaveFileDialog { Filter = "WAV PCM 16-bit|*.wav", FileName = track.Title + suffix + ".wav" }; if (dialog.ShowDialog() != true) return;
+        if (Tracks.Any(t => string.Equals(Path.GetFullPath(dialog.FileName), t.Source, StringComparison.OrdinalIgnoreCase)) || string.Equals(Path.GetFullPath(dialog.FileName), track.Source, StringComparison.OrdinalIgnoreCase)) { Status = "Escolha outro nome para preservar o áudio original."; return; }
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token); exportCancellation = cancellation;
+        IsExporting = true; Status = "Exportando WAV…"; CommandManager.InvalidateRequerySuggested();
         try
         {
-            if (player != null)
-            {
-                if (playing) { resumeAfterRateChange = false; player.Pause(); SetPlaying(false); Status = "Reprodução pausada."; }
-                else { resumeAfterRateChange = true; if (rateChangePending) ApplyPendingRate(); else player.Play(); SetPlaying(true); Status = "Reproduzindo backing track."; }
-                return;
-            }
-            generation = ++playbackGeneration;
-            loading = true; Status = "Abrindo backing track…"; CommandManager.InvalidateRequerySuggested();
-            string source = SelectedTrack.Source;
-            string outputId = SelectedOutput.Id;
-            var outputs = await DeviceInformation.FindAllAsync(MediaDevice.GetAudioRenderSelector()).AsTask().WaitAsync(TimeSpan.FromSeconds(8));
-            if (disposed || generation != playbackGeneration) return;
-            var output = outputs.FirstOrDefault(d => d.Id == outputId && d.IsEnabled);
-            if (output == null) { RemoveOutput(outputId); return; }
-            if (!File.Exists(source)) throw new FileNotFoundException(LanguageService.T("Arquivo de áudio não encontrado."), source);
-            var file = await StorageFile.GetFileFromPathAsync(source);
-            if (disposed || generation != playbackGeneration) return;
-            var media = MediaSource.CreateFromStorageFile(file);
-            MediaPlayer next;
-            try
-            {
-                next = new MediaPlayer(); player = next;
-                next.AutoPlay = false; next.AudioDevice = output; next.Volume = Volume / 100; next.IsMuted = IsMuted;
-            }
-            catch { media.Dispose(); throw; }
-            next.PlaybackSession.PlaybackStateChanged += (session, _) => Dispatch(() =>
-            {
-                if (player != next) return;
-                ApplyPendingRate();
-            });
-            next.MediaOpened += (sender, _) => Dispatch(() =>
-            {
-                if (player != sender) return;
-                loading = false;
-                Duration = Math.Max(0, sender.PlaybackSession.NaturalDuration.TotalSeconds);
-                if (SelectedTrack != null) { SelectedTrack.Length = Duration; SelectedTrack.End = SelectedTrack.End <= 0 ? Duration : Math.Min(SelectedTrack.End, Duration); if (SelectedTrack.Start >= SelectedTrack.End) SelectedTrack.Start = 0; }
-                sender.PlaybackSession.PlaybackRate = Speed / 100;
-                sender.PlaybackSession.Position = TimeSpan.FromSeconds(Math.Clamp(position, RangeStart, RangeEnd));
-                UpdatePosition(); RangeChanged(); sender.Play(); SetPlaying(true); Status = "Reproduzindo backing track.";
-            });
-            next.MediaEnded += (sender, _) => Dispatch(() => { if (player == sender) _ = FinishTrack(); });
-            next.MediaFailed += (sender, _) => Dispatch(() =>
-            {
-                if (player != sender) return;
-                StopPlayback(); Status = "Não foi possível reproduzir. Verifique a saída e o arquivo de áudio.";
-            });
-            try { next.Source = media; }
-            catch { media.Dispose(); throw; }
-            positionTimer.Start();
+            var work = BackingAudioProcessing.Export(track.Source, dialog.FileName, a, b, rate, pitch, mode.Value, cancellation.Token); backgroundWork.Add(work);
+            try { await work; } finally { backgroundWork.Remove(work); }
+            if (!disposed) Status = "WAV exportado. O áudio original foi preservado.";
         }
-        catch (Exception ex)
-        {
-            if (!disposed && generation == playbackGeneration) { StopPlayback(); Status = "Não foi possível reproduzir. " + ex.Message; }
-        }
-        finally { if (generation == playbackGeneration && player == null) loading = false; CommandManager.InvalidateRequerySuggested(); }
+        catch (OperationCanceledException) { if (!disposed) Status = "Exportação cancelada."; }
+        catch (Exception ex) { if (!disposed) Error("Não foi possível exportar. Verifique o destino e tente novamente.", ex); }
+        finally { exportCancellation = null; IsExporting = false; CommandManager.InvalidateRequerySuggested(); }
     }
-    private void SetPlaying(bool value) { playing = value; Notify(nameof(PlayLabel)); Notify(nameof(PlayIcon)); Notify(nameof(IsPlaying)); Notify(nameof(HasActivePlayback)); CommandManager.InvalidateRequerySuggested(); }
-    private void UpdatePosition()
-    {
-        if (player == null) return;
-        var session = player.PlaybackSession;
-        Duration = Math.Max(0, session.NaturalDuration.TotalSeconds);
-        CanSeek = session.CanSeek && Duration > 0;
-        position = Math.Max(0, session.Position.TotalSeconds);
-        if (playing && RangeEnd > RangeStart && position >= RangeEnd) _ = FinishTrack();
-        Notify(nameof(Position)); Notify(nameof(TimeLabel));
-    }
-    private void StopPlayback()
-    {
-        playbackGeneration++;
-        rateChangePending = resumeAfterRateChange = false;
-        positionTimer.Stop();
-        var previous = player; player = null;
-        if (previous != null) { var source = previous.Source as MediaSource; previous.Dispose(); source?.Dispose(); }
-        loading = false; SetPlaying(false); position = RangeStart; Duration = SelectedTrack?.Length ?? 0; CanSeek = Duration > 0;
-        Notify(nameof(Position)); Notify(nameof(TimeLabel));
-    }
-    private void Run(Action action)
-    {
-        try { action(); }
-        catch (Exception ex) { Status = "Operação de áudio não concluída. " + ex.Message; }
-    }
-    private void Changed()
-    {
-        CommandManager.InvalidateRequerySuggested();
-        if (restoring || disposed) return;
-        settingsDirty = true;
-        saveTimer.Stop(); saveTimer.Start();
-    }
+    private void Changed() { CommandManager.InvalidateRequerySuggested(); if (restoring || disposed) return; settingsDirty = true; saveTimer.Stop(); saveTimer.Start(); }
     private void Restore()
     {
         restoring = true;
         try
         {
             if (!File.Exists(settingsPath)) return;
-            var settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath));
-            if (settings?.Version != 1 || settings.Sources == null) return;
-            foreach (var source in settings.Sources.Where(s => !string.IsNullOrWhiteSpace(s) && Path.IsPathFullyQualified(s) && (Path.GetExtension(s).ToLowerInvariant() is ".mp3" or ".wav")).Distinct().Take(3))
-                Tracks.Add(new(source));
-            selectedTrack = Tracks.FirstOrDefault(t => t.Source == settings.SelectedSource) ?? Tracks.FirstOrDefault();
-            preferredOutputId = settings.OutputId;
-            volume = double.IsFinite(settings.Volume) ? Math.Clamp(settings.Volume, 0, 100) : 30;
-            muted = settings.IsMuted;
+            var settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath)); if (settings == null || settings.Version is not (1 or 2)) return;
+            IEnumerable<TrackSettings> tracks = settings.Version == 1 ? (settings.Sources ?? []).Select(s => new TrackSettings(s, null, null, 100, 0, 0, 0)) : settings.Tracks ?? [];
+            foreach (var saved in tracks)
+            {
+                if (string.IsNullOrWhiteSpace(saved.Source) || !Path.IsPathFullyQualified(saved.Source) || Path.GetExtension(saved.Source).ToLowerInvariant() is not (".mp3" or ".wav")) continue;
+                string source = Path.GetFullPath(saved.Source); if (Tracks.Any(t => string.Equals(t.Source, source, StringComparison.OrdinalIgnoreCase))) continue;
+                Tracks.Add(new(source) { Start = saved.A is double a && double.IsFinite(a) && a >= 0 ? a : null, End = saved.B is double b && double.IsFinite(b) && b > 0 ? b : null, Speed = double.IsFinite(saved.Speed) ? Math.Clamp(saved.Speed, 50, 150) : 100, Pitch = double.IsFinite(saved.Pitch) ? Math.Clamp(saved.Pitch, -6, 6) : 0, FileSize = saved.Size, LastWriteTicks = saved.Modified });
+            }
+            selectedTrack = Tracks.FirstOrDefault(t => string.Equals(t.Source, settings.SelectedSource, StringComparison.OrdinalIgnoreCase)) ?? Tracks.FirstOrDefault(); preferredOutputId = settings.OutputId;
+            if (preferredOutputId != null) { var match = Regex.Match(preferredOutputId, @"\{0\.[^}]+\}\.\{[^}]+\}"); if (match.Success) preferredOutputId = match.Value; }
+            volume = double.IsFinite(settings.Volume) ? Math.Clamp(settings.Volume, 0, 100) : 30; muted = settings.IsMuted; continueSequence = settings.ContinueSequence;
+            state = selectedTrack == null ? BackingPlaybackState.Empty : BackingPlaybackState.Ready;
         }
-        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or ArgumentException)
-        { Status = "Não foi possível restaurar a lista de backing tracks."; }
+        catch (Exception ex) { Error("Não foi possível restaurar a playlist.", ex); }
         finally { restoring = false; }
     }
     private void Save()
     {
-        if (!settingsDirty) return;
+        if (!settingsDirty) return; string temporary = settingsPath + ".tmp";
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(settingsPath)!);
-            File.WriteAllText(settingsPath, JsonSerializer.Serialize(new Settings(1, Tracks.Select(t => t.Source).ToArray(), SelectedTrack?.Source, preferredOutputId, Volume, IsMuted)));
-            settingsDirty = false;
+            var tracks = Tracks.Select(t => new TrackSettings(t.Source, t.Start, t.End, t.Speed, t.Pitch, t.FileSize, t.LastWriteTicks)).ToArray();
+            File.WriteAllText(temporary, JsonSerializer.Serialize(new Settings(2, null, SelectedTrack?.Source, preferredOutputId, Volume, IsMuted, ContinueSequence, tracks)));
+            File.Move(temporary, settingsPath, true); settingsDirty = false;
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        { Status = "Não foi possível salvar a lista de backing tracks. " + ex.Message; }
+        catch (Exception ex) { Error("Não foi possível salvar a playlist.", ex); }
+        finally { try { if (File.Exists(temporary)) File.Delete(temporary); } catch (IOException) { } }
     }
+    private void Log(Exception ex)
+    {
+        try { Directory.CreateDirectory(Path.GetDirectoryName(diagnosticPath)!); if (File.Exists(diagnosticPath) && new FileInfo(diagnosticPath).Length > 256 * 1024) File.WriteAllText(diagnosticPath, ""); File.AppendAllText(diagnosticPath, $"{DateTimeOffset.Now:O} {ex}\n"); } catch (Exception logError) when (logError is IOException or UnauthorizedAccessException) { }
+    }
+    private void Error(string message, Exception ex) { Log(ex); Status = message; HasError = true; }
+    private void Run(Action action) { try { action(); } catch (Exception ex) { Error("Operação não concluída. Tente novamente.", ex); } }
+    private async void Start(Task operation) { try { await operation; } catch (OperationCanceledException) { } catch (Exception ex) { if (!disposed) Error("Operação de áudio não concluída. Verifique o arquivo e a saída.", ex); } }
     public void Dispose()
     {
         if (disposed) return;
-        disposed = true; waveformCancellation?.Cancel(); waveformCancellation?.Dispose(); saveTimer.Stop(); StopPlayback(); Save();
-        if (watcher != null)
-        {
-            watcher.Added -= DeviceAdded; watcher.Removed -= DeviceRemoved; watcher.Updated -= DeviceUpdated;
-            if (watcher.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted) watcher.Stop();
-        }
-    }
-}
-
-internal static class BackingAudio
-{
-    public static async Task<(double Duration, float[] Peaks)> Analyze(string path, CancellationToken cancellation)
-    {
-        var file = await StorageFile.GetFileFromPathAsync(path).AsTask(cancellation);
-        using var input = await file.OpenReadAsync().AsTask(cancellation);
-        using var output = new InMemoryRandomAccessStream();
-        var profile = MediaEncodingProfile.CreateWav(AudioEncodingQuality.Low);
-        profile.Audio = AudioEncodingProperties.CreatePcm(8000, 1, 16);
-        var prepared = await new MediaTranscoder().PrepareStreamTranscodeAsync(input, output, profile).AsTask(cancellation);
-        if (!prepared.CanTranscode) throw new IOException("Audio decoder unavailable.");
-        await prepared.TranscodeAsync().AsTask(cancellation);
-        output.Seek(0);
-        using var stream = output.AsStreamForRead();
-        return await Task.Run(() => ReadPeaks(stream, cancellation), cancellation);
-    }
-    private static (double Duration, float[] Peaks) ReadPeaks(Stream stream, CancellationToken cancellation)
-    {
-        using var reader = new BinaryReader(stream, System.Text.Encoding.ASCII, true);
-        if (new string(reader.ReadChars(4)) != "RIFF") throw new IOException("Invalid waveform.");
-        reader.ReadUInt32();
-        if (new string(reader.ReadChars(4)) != "WAVE") throw new IOException("Invalid waveform.");
-        uint rate = 0; ushort align = 0;
-        while (stream.Position + 8 <= stream.Length)
-        {
-            string id = new(reader.ReadChars(4)); uint size = reader.ReadUInt32(); long next = Math.Min(stream.Length, stream.Position + size + (size & 1));
-            if (id == "fmt " && size >= 16)
-            {
-                ushort format = reader.ReadUInt16(), channels = reader.ReadUInt16(); rate = reader.ReadUInt32(); reader.ReadUInt32(); align = reader.ReadUInt16(); ushort bits = reader.ReadUInt16();
-                if (format == 0xFFFE && size >= 40)
-                {
-                    reader.ReadUInt16(); reader.ReadUInt16(); reader.ReadUInt32();
-                    format = (ushort)reader.ReadUInt32();
-                }
-                if (format != 1 || channels != 1 || bits != 16 || align != 2) throw new IOException("Unsupported waveform format.");
-            }
-            else if (id == "data" && rate > 0 && align > 0)
-            {
-                long count = Math.Min(size, stream.Length - stream.Position) / align;
-                var peaks = new float[1800];
-                for (long i = 0; i < count; i++)
-                {
-                    if ((i & 8191) == 0) cancellation.ThrowIfCancellationRequested();
-                    int bin = (int)(i * peaks.Length / Math.Max(1, count));
-                    peaks[bin] = Math.Max(peaks[bin], Math.Abs(reader.ReadInt16() / 32768f));
-                }
-                return ((double)count / rate, peaks);
-            }
-            stream.Position = next;
-        }
-        throw new IOException("Empty waveform.");
-    }
-    public static async Task Export(string source, string destination, double start, double end)
-    {
-        var file = await StorageFile.GetFileFromPathAsync(source);
-        using var input = await file.OpenReadAsync();
-        using var output = new InMemoryRandomAccessStream();
-        var profile = MediaEncodingProfile.CreateWav(AudioEncodingQuality.High);
-        var original = await MediaEncodingProfile.CreateFromFileAsync(file);
-        if (original.Audio != null)
-            profile.Audio = AudioEncodingProperties.CreatePcm(original.Audio.SampleRate, original.Audio.ChannelCount, 16);
-        var transcoder = new MediaTranscoder { TrimStartTime = TimeSpan.FromSeconds(start), TrimStopTime = TimeSpan.FromSeconds(end) };
-        var prepared = await transcoder.PrepareStreamTranscodeAsync(input, output, profile);
-        if (!prepared.CanTranscode) throw new IOException("Audio export unavailable.");
-        await prepared.TranscodeAsync();
-        output.Seek(0);
-        using var stream = output.AsStreamForRead();
-        await using var target = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
-        await stream.CopyToAsync(target);
+        disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); saveTimer.Stop(); parameterTimer.Stop();
+        engine.Changed -= EngineChanged; engine.Dispose();
+        try { Task.WhenAll(backgroundWork.ToArray()).GetAwaiter().GetResult(); } catch (Exception ex) { if (ex is not OperationCanceledException) Log(ex); }
+        Save();
+        if (watcher != null) { watcher.Added -= DeviceChanged; watcher.Removed -= DeviceChanged; watcher.Updated -= DeviceChanged; if (watcher.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted) watcher.Stop(); }
+        lifetime.Dispose();
     }
 }

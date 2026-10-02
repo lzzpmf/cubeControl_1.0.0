@@ -7,7 +7,7 @@ public sealed class ChorusViewModel : Observable
     private bool loading, loaded;
     private double depth = 100, speed = 1.488, mix = 100, feedback, wetGain = 100, combinedGain = 100;
     private int waveform;
-    private string identity = "", message = "Experimental · validação sonora pendente. Ative o chorus no preset físico antes de ler.";
+    private string identity = "", message = "Ative o chorus no preset físico antes de ler.";
     public event Action? Edited;
     public bool Loaded { get => loaded; private set => Set(ref loaded, value); }
     public string Identity => identity;

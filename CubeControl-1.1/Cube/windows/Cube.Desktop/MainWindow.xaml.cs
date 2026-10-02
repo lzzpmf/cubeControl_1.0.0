@@ -104,6 +104,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         Model = model;
         BackingTracks = new BackingTracksViewModel(Model.DataDirectory);
+        BackingTracks.ChooseExportMode = ChooseBackingExportMode;
         Appearance.UiDensity.Initialize();
         InitializeComponent(); DataContext = Model;
         InitializeZoom();
@@ -353,6 +354,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void UpdateSaveAppearance()
     {
         Navigation.SelectedIndex = Tabs.SelectedIndex;
+        BackingTracks.PageVisible = Tabs.SelectedIndex == 3;
         MoveFooterToPage();
     }
     private void MoveFooterToPage()
@@ -492,7 +494,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         // A single scrolling owner: natural content height in compact mode, a
         // constrained page viewport in desktop mode. Never force a workspace height.
         Workspace.Height = double.NaN;
-        if (AmpEditorHost != null) AmpEditorHost.Height = compact ? Math.Max(420, ClientArea.ActualHeight - HeaderGrid.ActualHeight - 80) : double.NaN;
+        if (AmpEditorHost?.Content is Views.AmpEditor ampEditor) ampEditor.IsCompactLayout = compact;
         foreach (var scroll in new[] { EditorScroll, IrScroll, HelpScroll, BackingTracksScroll })
             scroll.VerticalScrollBarVisibility = compact ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
         FocusedArt.MaxHeight = ClientArea.ActualHeight < 764 ? 160 : 240;
@@ -623,26 +625,188 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     }
     private void BackingTracksDragOver(object sender, DragEventArgs e)
     {
-        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : e.Data.GetDataPresent(typeof(BackingTrack)) ? DragDropEffects.Move : DragDropEffects.None;
+        bool files = e.Data.GetData(DataFormats.FileDrop) is string[] paths && paths.Any(p => System.IO.Path.GetExtension(p).ToLowerInvariant() is ".mp3" or ".wav");
+        e.Effects = files ? DragDropEffects.Copy : e.Data.GetDataPresent(typeof(BackingTrack)) ? DragDropEffects.Move : DragDropEffects.None;
+        BackingDropOverlay.Visibility = files ? Visibility.Visible : Visibility.Collapsed;
+        ClearBackingDropTarget();
+        if (!files && e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem target)
+        {
+            backingDropTarget = target;
+            target.BorderBrush = (Brush)FindResource("CubeAccent");
+            target.BorderThickness = e.GetPosition(target).Y < target.ActualHeight / 2 ? new Thickness(0, 2, 0, 0) : new Thickness(0, 0, 0, 2);
+        }
         e.Handled = true;
     }
     private void BackingTracksDrop(object sender, DragEventArgs e)
     {
+        BackingDropOverlay.Visibility = Visibility.Collapsed;
+        ClearBackingDropTarget();
         if (e.Data.GetData(DataFormats.FileDrop) is string[] files) BackingTracks.AddPaths(files);
         else if (e.Data.GetData(typeof(BackingTrack)) is BackingTrack track)
         {
             int index = BackingTracks.Tracks.Count - 1;
             if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem item && item.DataContext is BackingTrack target)
+            {
                 index = BackingTracks.Tracks.IndexOf(target);
+                if (e.GetPosition(item).Y >= item.ActualHeight / 2) index++;
+                if (BackingTracks.Tracks.IndexOf(track) < index) index--;
+                index = Math.Clamp(index, 0, BackingTracks.Tracks.Count - 1);
+            }
             BackingTracks.MoveTrack(track, index);
         }
         e.Handled = true;
     }
+    private ListBoxItem? backingDropTarget;
+    private void ClearBackingDropTarget()
+    {
+        backingDropTarget?.ClearValue(Control.BorderThicknessProperty);
+        backingDropTarget?.ClearValue(Control.BorderBrushProperty);
+        backingDropTarget = null;
+    }
+    private void BackingDragLeave(object sender, DragEventArgs e)
+    {
+        if (!BackingPage.IsMouseOver) { BackingDropOverlay.Visibility = Visibility.Collapsed; ClearBackingDropTarget(); }
+    }
+    private void BackingPageSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (BackingPlaylistPanel == null) return;
+        bool wide = e.NewSize.Width >= 1040;
+        BackingListColumn.Width = new GridLength(wide ? 280 : 0);
+        Grid.SetColumn(BackingPlaylistPanel, wide ? 0 : 1); Grid.SetRow(BackingPlaylistPanel, wide ? 0 : 1);
+        BackingPlaylistPanel.Margin = wide ? new Thickness(0, 0, 20, 0) : new Thickness(0, 16, 0, 0);
+        BackingTrackList.Height = wide ? 360 : 240;
+    }
+    private void BackingReturnClick(object sender, MouseButtonEventArgs e) { Navigation.SelectedIndex = Tabs.SelectedIndex = 3; BackingTracks.PageVisible = true; e.Handled = true; }
+    private void BackingTrackDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem) { BackingTracks.PlaySelected(); e.Handled = true; }
+    }
+    private void BackingParameterStart(object sender, MouseButtonEventArgs e) => BackingTracks.BeginParameterGesture();
+    private void BackingParameterEnd(object sender, MouseEventArgs e) => BackingTracks.EndParameterGesture();
+    private void BackingSpeedMenu(object sender, MouseButtonEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = (UIElement)sender };
+        foreach (int speed in new[] { 50, 75, 90, 100 }) { var item = new MenuItem { Header = speed + "%" }; item.Click += (_, _) => BackingTracks.Speed = speed; menu.Items.Add(item); }
+        menu.IsOpen = true; e.Handled = true;
+    }
+    private void BackingTrackContext(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source || ItemsControl.ContainerFromElement(BackingTrackList, source) is not ListBoxItem { DataContext: BackingTrack track } item) return;
+        BackingTracks.SelectedTrack = track;
+        var menu = new ContextMenu { PlacementTarget = item };
+        void Add(string title, ICommand command) => menu.Items.Add(new MenuItem { Header = LanguageService.T(title), Command = command });
+        var play = new MenuItem { Header = LanguageService.T("Reproduzir") }; play.Click += (_, _) => BackingTracks.PlaySelected(); menu.Items.Add(play);
+        Add("Remover da lista", BackingTracks.RemoveTrack); Add("Mover faixa para cima", BackingTracks.MoveUp); Add("Mover faixa para baixo", BackingTracks.MoveDown);
+        Add("Mostrar no Explorer", BackingTracks.ShowFile); Add("Localizar novamente", BackingTracks.LocateFile);
+        var details = new MenuItem { Header = LanguageService.T("Informações") }; details.Click += async (_, _) =>
+        {
+            string message;
+            try { message = await Task.Run(() => { using var decoder = new Services.BackingDecoder(track.Source); return $"{track.Title}\n{System.IO.Path.GetExtension(track.Source).TrimStart('.').ToUpperInvariant()} · {decoder.Format.SampleRate} Hz · {decoder.Format.Channels} ch\n{BackingTracksViewModel.FormatTime(decoder.Duration)}\n{track.Source}"; }); }
+            catch { message = LanguageService.T("Não foi possível ler o arquivo. Use Localizar novamente."); }
+            await new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T("Informações"), Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, MaxWidth = 520 }, CloseButtonText = LanguageService.T("Fechar") }.ShowLocalizedAsync();
+        };
+        menu.Items.Add(details); menu.IsOpen = true; e.Handled = true;
+    }
+    private async Task<bool?> ChooseBackingExportMode()
+    {
+        var choice = new CheckBox { Content = LanguageService.T("Aplicar velocidade e tom (sem volume/mute)"), IsChecked = false, Margin = new Thickness(0, 8, 0, 8) };
+        var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T(BackingTracks.ExportLabel), Content = choice, PrimaryButtonText = LanguageService.T("Exportar"), CloseButtonText = LanguageService.T("Cancelar") };
+        return await dialog.ShowLocalizedAsync() == Wpf.Ui.Controls.ContentDialogResult.Primary ? choice.IsChecked == true : null;
+    }
+    private void BackingKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Handled || Tabs.SelectedIndex != 3) return;
+        for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null && node != BackingPage; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
+            if (node is System.Windows.Controls.Primitives.TextBoxBase or System.Windows.Controls.Primitives.ButtonBase or ComboBox or Slider or MenuItem) return;
+        var modifiers = Keyboard.Modifiers;
+        ICommand? command = null;
+        if (BackingTrackList.IsKeyboardFocusWithin)
+        {
+            if (e.Key == Key.Delete && modifiers == ModifierKeys.None) command = BackingTracks.RemoveTrack;
+            else if (e.Key == Key.Enter && modifiers == ModifierKeys.None) { BackingTracks.PlaySelected(); e.Handled = true; return; }
+            else if (e.Key == Key.Up && modifiers == ModifierKeys.Alt) command = BackingTracks.MoveUp;
+            else if (e.Key == Key.Down && modifiers == ModifierKeys.Alt) command = BackingTracks.MoveDown;
+            else return;
+        }
+        else if (modifiers is ModifierKeys.None or ModifierKeys.Shift)
+        {
+            if (e.Key is Key.Left or Key.Right) { BackingTracks.Position += (e.Key == Key.Left ? -1 : 1) * (modifiers == ModifierKeys.Shift ? 10 : 5); e.Handled = true; return; }
+            if (modifiers != ModifierKeys.None) return;
+            command = e.Key switch { Key.Space => BackingTracks.PlayPause, Key.A => BackingTracks.MarkStart, Key.B => BackingTracks.MarkEnd, _ => null };
+            if (e.Key == Key.Home) { BackingTracks.Position = BackingTracks.IsLooping ? BackingTracks.RangeStart : 0; e.Handled = true; }
+            if (e.Key == Key.L) { BackingTracks.IsLooping = !BackingTracks.IsLooping; e.Handled = true; }
+        }
+        if (command?.CanExecute(null) == true) { command.Execute(null); e.Handled = true; }
+    }
+    private readonly Dictionary<int, Wpf.Ui.Controls.FluentWindow> advancedEffectWindows = new();
+
+    private async void AdvancedEffectClick(object sender, RoutedEventArgs e)
+    {
+        int stage = Model.SelectedStage;
+        if (stage is < 1 or > 4) return;
+        if (advancedEffectWindows.TryGetValue(stage, out var existing))
+        {
+            if (existing.WindowState == WindowState.Minimized) existing.WindowState = WindowState.Normal;
+            existing.Activate();
+        }
+        else
+        {
+            UserControl editor = stage switch
+            {
+                1 => new Views.ChorusEditor(),
+                2 => new Views.PhaserEditor(),
+                3 => new Views.DelayEditor(),
+                _ => new Views.ReverbEditor()
+            };
+            string effect = stage switch { 1 => "Chorus", 2 => "Phaser", 3 => "Delay", _ => "Reverb" };
+            var window = new Wpf.Ui.Controls.FluentWindow
+            {
+                Owner = this, Title = $"{LanguageService.T("Opções avançadas")} ? {effect}",
+                Width = Math.Min(900, SystemParameters.WorkArea.Width),
+                Height = Math.Min(780, SystemParameters.WorkArea.Height),
+                MinWidth = 420, MinHeight = 360, DataContext = Model,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ExtendsContentIntoTitleBar = true, UseLayoutRounding = true
+            };
+            window.SetResourceReference(BackgroundProperty, "CubeCanvas");
+            window.SetResourceReference(ForegroundProperty, "CubeText");
+            window.SetResourceReference(FontFamilyProperty, "CubeUiFont");
+            window.SetResourceReference(IconProperty, "CubeWindowIcon");
+            var layout = new DockPanel();
+            var title = new Wpf.Ui.Controls.TitleBar { Title = window.Title };
+            DockPanel.SetDock(title, Dock.Top);
+            layout.Children.Add(title);
+            var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(24, 0, 24, 0) };
+            error.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding(nameof(EditorViewModel.ErrorMessage)));
+            error.SetResourceReference(TextBlock.ForegroundProperty, "CubeWarning");
+            DockPanel.SetDock(error, Dock.Top);
+            layout.Children.Add(error);
+            layout.Children.Add(new ScrollViewer
+            {
+                Content = editor, Margin = new Thickness(24),
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            });
+            window.Content = layout;
+            advancedEffectWindows.Add(stage, window);
+            window.Closed += (_, _) => advancedEffectWindows.Remove(stage);
+            window.Show();
+        }
+        switch (stage)
+        {
+            case 1: await Model.ReadChorusAsync(); break;
+            case 2: await Model.ReadPhaserAsync(); break;
+            case 3: await Model.ReadDelayAsync(); break;
+            case 4: await Model.ReadReverbAsync(); break;
+        }
+    }
+
     private void CreateAmpClick(object sender, RoutedEventArgs e)
     {
         if (Model.Busy) return;
         if (AmpEditorHost.Content is not Views.AmpEditor)
             AmpEditorHost.Content = new Views.AmpEditor(Model);
+        UpdateWorkspaceLayout();
         Navigation.SelectedIndex = 4;
         Dispatcher.BeginInvoke(new Action(() => ((Views.AmpEditor)AmpEditorHost.Content).ChooseBase()));
     }

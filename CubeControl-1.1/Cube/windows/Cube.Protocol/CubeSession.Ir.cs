@@ -13,7 +13,7 @@ public sealed partial class CubeSession
         for (int offset = 0; offset < length; offset += 113)
         {
             int count = Math.Min(113, length - offset);
-            (await ReadInternal(address + (uint)offset, count, ct, region)).CopyTo(result, offset);
+            (await ReadInternal(address + (uint)offset, count, ct, region).ConfigureAwait(false)).CopyTo(result, offset);
             progress?.Report(new("Lendo", offset + count, length));
         }
         return result;

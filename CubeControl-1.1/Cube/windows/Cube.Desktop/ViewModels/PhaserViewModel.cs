@@ -6,7 +6,7 @@ public sealed class PhaserViewModel : Observable
 {
     private bool loading, loaded;
     private double speed = 0.48, lower = 300, upper = 3000, level = 100, sections = 3;
-    private string identity = "", message = "Experimental · validação sonora pendente. Ative o phaser no preset físico antes de ler.";
+    private string identity = "", message = "Ative o phaser no preset físico antes de ler.";
     public event Action? Edited;
     public bool Loaded { get => loaded; private set => Set(ref loaded, value); }
     public string Identity => identity;

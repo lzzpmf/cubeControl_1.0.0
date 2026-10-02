@@ -3,16 +3,76 @@ using Cube.Protocol;
 using System.Windows;
 using Cube.Desktop.Localization;
 using Cube.Desktop.ViewModels;
+using System.Windows.Input;
+using Cube.Desktop.Appearance;
 
 namespace Cube.Desktop.Views;
 
 public partial class AmpEditor : UserControl
 {
     private readonly EditorViewModel model;
+    public static readonly DependencyProperty IsCompactLayoutProperty = DependencyProperty.Register(nameof(IsCompactLayout), typeof(bool), typeof(AmpEditor), new PropertyMetadata(false));
+    public bool IsCompactLayout { get => (bool)GetValue(IsCompactLayoutProperty); set => SetValue(IsCompactLayoutProperty, value); }
+    private readonly Dictionary<string, object> ampBrushes = new();
     public AmpEditor(EditorViewModel model)
     {
         this.model = model; InitializeComponent(); DataContext = model;
         BaseSelector.ItemsSource = EquipmentCatalog.Amps.Select(a => a.Name).ToArray();
+        foreach (string key in new[] { "AmpAccent", "AmpBandA", "AmpBandB" }) ampBrushes[key] = Resources[key];
+        Loaded += (_, _) => { ThemeService.Instance.Changed += UpdateColors; UpdateColors(); UpdateLayoutMode(); };
+        Unloaded += (_, _) => ThemeService.Instance.Changed -= UpdateColors;
+        SizeChanged += (_, _) => UpdateLayoutMode();
+    }
+    private void UpdateColors()
+    {
+        foreach (var entry in ampBrushes)
+            Resources[entry.Key] = ThemeService.Instance.IsHighContrast ? SystemColors.WindowTextBrush : entry.Value;
+    }
+    private void UpdateLayoutMode()
+    {
+        bool headerWide = ActualWidth >= 800, eqWide = ActualWidth >= 960;
+        AmpHeader.ColumnDefinitions[1].Width = headerWide ? GridLength.Auto : new GridLength(0);
+        Grid.SetColumn(GlobalControls, headerWide ? 1 : 0); Grid.SetRow(GlobalControls, headerWide ? 0 : 1);
+        ModernEq.ColumnDefinitions[1].Width = new GridLength(eqWide ? 240 : 0);
+        Grid.SetColumn(EqControlsPanel, eqWide ? 1 : 0); Grid.SetRow(EqControlsPanel, eqWide ? 0 : 1);
+        EqControlsPanel.Margin = eqWide ? new Thickness(12, 0, 0, 0) : new Thickness(0, 8, 0, 0);
+        double width = Math.Max(152, Math.Floor((ActualWidth - 24) / 152) * 152);
+        AFirstGroup.Width = Math.Min(760, width); ASecondGroup.Width = Math.Min(456, width);
+        BFirstGroup.Width = BSecondGroup.Width = Math.Min(456, width); BThirdGroup.Width = Math.Min(304, width);
+    }
+    private void EditValueClick(object sender, RoutedEventArgs e)
+    {
+        if (!model.CanAdjustAmp || sender is not FrameworkElement { DataContext: AmpControl control, Parent: Grid grid } button) return;
+        var editor = grid.Children.OfType<TextBox>().Single();
+        editor.Text = control.EditText; editor.Tag = editor.Text;
+        button.Visibility = Visibility.Collapsed; editor.Visibility = Visibility.Visible;
+        editor.Focus(); editor.SelectAll();
+    }
+    private static void CloseValueEditor(TextBox editor)
+    {
+        if (editor.Parent is not Grid grid) return;
+        editor.Visibility = Visibility.Collapsed;
+        grid.Children.OfType<Wpf.Ui.Controls.Button>().Single().Visibility = Visibility.Visible;
+        if (grid.Parent is StackPanel panel) ((TextBlock)panel.Children[1]).Visibility = Visibility.Collapsed;
+    }
+    private void ValueEditorKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox { DataContext: AmpControl control } editor || e.Key is not (Key.Enter or Key.Escape)) return;
+        e.Handled = true;
+        if (e.Key == Key.Enter && model.CanAdjustAmp && editor.Text != editor.Tag as string && !control.TryEdit(editor.Text))
+        {
+            if (editor.Parent is Grid { Parent: StackPanel panel }) ((TextBlock)panel.Children[1]).Visibility = Visibility.Visible;
+            return;
+        }
+        CloseValueEditor(editor);
+        if (editor.Parent is Grid grid) grid.Children.OfType<Wpf.Ui.Controls.Button>().Single().Focus();
+    }
+    private void ValueEditorLostFocus(object sender, KeyboardFocusChangedEventArgs e) { if (sender is TextBox editor) CloseValueEditor(editor); }
+    private void ResetBandClick(object sender, RoutedEventArgs e)
+    {
+        if (!model.CanAdjustAmp || sender is not FrameworkElement button) return;
+        var controls = Convert.ToInt32(button.Tag) == 0 ? model.Amp.EqAControls : model.Amp.EqBControls;
+        if (controls.Length == 3) controls[0].Restore();
     }
     private int selectedBase = -1;
     private bool selectingBase;
@@ -43,34 +103,24 @@ public partial class AmpEditor : UserControl
             else
             {
                 BaseSelector.SelectedIndex = selectedBase;
-                AmpFeedback.SetCurrentValue(TextBlock.TextProperty, LanguageService.T("Não foi possível carregar o amp. Os ajustes anteriores foram mantidos."));
             }
         }
         finally { selectingBase = false; }
-    }
-    private void ShowResult(bool? success, string done, string failed)
-    {
-        if (success.HasValue) AmpFeedback.SetCurrentValue(TextBlock.TextProperty, LanguageService.T(success.Value ? done : failed));
     }
     private async void ImportClick(object sender, RoutedEventArgs e)
     {
         var imported = await model.ImportAmpAsync();
         if (imported == true) await ApplyControls();
-        else ShowResult(imported, "Preset importado.", "Não foi possível importar esse amp.");
     }
-    private async void ExportClick(object sender, RoutedEventArgs e) => ShowResult(await model.ExportAmpAsync(), "Seu amp foi exportado.", "Não foi possível exportar seu amp.");
-    private async Task ApplyControls()
-    {
-        bool applied = await model.PreviewAmpAsync();
-        AmpFeedback.SetCurrentValue(TextBlock.TextProperty, LanguageService.T(applied ? "Seu timbre está pronto para ouvir." : "Não foi possível ouvir no pedal. Seus ajustes continuam no computador."));
-    }
+    private async void ExportClick(object sender, RoutedEventArgs e) => await model.ExportAmpAsync();
+    private async Task ApplyControls() => await model.PreviewAmpAsync();
     private void ResetControlClick(object sender, RoutedEventArgs e)
     {
         if (!model.CanAdjustAmp || sender is not FrameworkElement { DataContext: AmpControl control }) return;
         control.Restore();
     }
-    private async void RestoreClick(object sender, RoutedEventArgs e) => ShowResult(await model.RestoreAmpAsync(), "O som anterior foi restaurado.", "Não foi possível restaurar o som anterior.");
-    private async void WriteClick(object sender, RoutedEventArgs e) => ShowResult(await model.WriteAmpAsync(async message =>
+    private async void RestoreClick(object sender, RoutedEventArgs e) => await model.RestoreAmpAsync();
+    private async void WriteClick(object sender, RoutedEventArgs e) => await model.WriteAmpAsync(async message =>
     {
         var dialog = new Wpf.Ui.Controls.MessageBox
         {
@@ -78,5 +128,5 @@ public partial class AmpEditor : UserControl
             PrimaryButtonText = LanguageService.T("Confirmar"), CloseButtonText = LanguageService.T("Cancelar")
         };
         return await dialog.ShowDialogAsync() == Wpf.Ui.Controls.MessageBoxResult.Primary;
-    }), "Amp salvo. Troque de amp no pedal e volte para ouvir o som salvo.", "Não foi possível salvar seu amp no pedal.");
+    });
 }

@@ -27,7 +27,7 @@ Detalhes da conexão ficam no menu de reticências e na área de ajuda. Desconec
 | Reler/reconectar | Obtém o estado do pedal; observe os avisos sobre substituição e backups da edição |
 | Desfazer | Reverte ajustes do histórico de presets; não desfaz gravações de setores de IR/amp |
 
-Para ouvir o preset que está editando, selecione o correspondente no pedal. As prévias experimentais de chorus e phaser conferem o contexto físico, mas não há acompanhamento geral dos footswitches fora delas. A leitura do banco pode refletir alterações live; leitura de retorno não equivale a comprovação de retenção após desligar.
+Para ouvir o preset que está editando, selecione o correspondente no pedal. As sessões de edição em RAM de chorus e phaser conferem o contexto físico, mas não há acompanhamento geral dos footswitches fora delas. A leitura do banco pode refletir alterações live; leitura de retorno não equivale a comprovação de retenção após desligar.
 
 ## Pedaleira e gabinetes
 
@@ -41,25 +41,27 @@ A cadeia visual contém Amp, Chorus, Phaser, Delay, Reverb e Cabinet. Clicar em 
 
 **Associar gabinete** aplica ao preset editado a associação configurada para o amp. **Associação automática** começa desligada e é persistida localmente; quando ligada, tenta aplicar a associação ao amp atual e nas escolhas seguintes. Sem associação válida, preserva o gabinete. A seção IR mantém seu estado ligado/desligado. Salvar A/B/C continua sendo necessário para persistir a seleção no pedal.
 
-## Edição gráfica dos efeitos experimentais
+## Edição gráfica dos efeitos
 
-Os criadores de Chorus, Phaser, Delay e Reverb usam alças nas curvas, envelopes e superfícies. Selecione um elemento para ver nome e valor; arraste seu contorno ou pressione Enter para digitar. Tab percorre os elementos, setas ajustam e Escape cancela o arraste atual. O menu contextual oferece formas de onda, seções e congelamento da modulação do Delay. A prévia continua automática na RAM quando ativa; **Aplicar ajustes** não salva no pedal. Veja o [contrato completo dos parâmetros e gestos](editores-graficos-de-efeitos.md).
+Chorus, Phaser, Delay e Reverb estão funcionais, conforme validação informada pelo usuário. Os desenhos ilustram o comportamento dos controles; não são medições de áudio.
 
-## Criador de chorus experimental
+Os criadores de Chorus, Phaser, Delay e Reverb usam alças nas curvas, envelopes e superfícies. Selecione um elemento para ver nome, valor, unidade e significado na faixa acima do desenho; arraste seu contorno ou pressione Enter para digitar. Tab percorre os elementos, setas ajustam e Escape cancela o arraste atual. A mesma faixa oferece as formas Original/Triangular, as seções do Phaser e Congelar/Retomar do Delay, sem cobrir o gráfico. A aplicação continua automática na RAM durante a edição ativa; **Aplicar ajustes** não salva no pedal. Veja o [contrato completo dos parâmetros e gestos](editores-graficos-de-efeitos.md).
 
-No card **Chorus**, abra **Criador de chorus · experimental**. Ative o chorus no preset físico, em modo PRESET, selecione o mesmo A/B/C no aplicativo e use **Ler chorus ativo**. O editor oferece profundidade, velocidade, mistura, realimentação, forma de onda e dois ganhos. A validação sonora permanece pendente; a mistura em 100% mantém a configuração original e não significa somente efeito.
+## Criador de chorus
 
-Os ajustes são enviados à RAM e conferidos por leitura. Use **Restaurar chorus** para voltar à referência. Enquanto a prévia estiver ativa, a edição comum dos presets e as prévias de phaser, amp e IR ficam bloqueadas. Desconectar, reler ou fechar normalmente também tenta restaurar. Trocas físicas e recargas externas interrompem a prévia.
+No card **Chorus**, abra **Criador de chorus**. Ative o chorus no preset físico, em modo PRESET, selecione o mesmo A/B/C no aplicativo e use **Ler chorus ativo**. O editor oferece profundidade, velocidade, mistura, realimentação, forma de onda e dois ganhos. A mistura em 100% mantém a configuração original e não significa somente efeito.
 
-Arquivos `.chorus.json` ficam no computador: importar prepara a edição; **Aplicar ajustes** envia à prévia ativa; exportar salva os sete parâmetros. Esses arquivos não são gravados na flash pelo editor. Se uma prévia for interrompida, o aplicativo preserva o backup e pede restauração ao reconectar, sem reaplicar automaticamente. Veja [limites, evidências e recuperação](../../../engenharia-reversa/cube-baby/CUBE_BABY_CHORUS.md).
+Os ajustes são enviados à RAM e conferidos por leitura. Use **Restaurar chorus** para voltar à referência. Enquanto a edição em RAM estiver ativa, a edição comum dos presets e as prévias de phaser, amp e IR ficam bloqueadas. Desconectar, reler ou fechar normalmente também tenta restaurar. Trocas físicas e recargas externas interrompem a edição em RAM.
 
-## Criador de reverb experimental
+Arquivos `.chorus.json` ficam no computador: importar prepara a edição; **Aplicar ajustes** envia à edição ativa em RAM; exportar salva os sete parâmetros. Esses arquivos não são gravados na flash pelo editor. Se uma sessão de edição em RAM for interrompida, o aplicativo preserva o backup e pede restauração ao reconectar, sem reaplicar automaticamente. Veja [limites, evidências e recuperação](../../../engenharia-reversa/cube-baby/CUBE_BABY_CHORUS.md).
 
-No card **Reverb**, abra **Criador de reverb · experimental**. Ative reverb e seção reverb/cabinet, desligue a modulação e selecione o mesmo preset físico A/B/C em modo PRESET. Use **Ler reverb ativo** para iniciar a prévia.
+## Criador de reverb
 
-O editor separa sinal direto, sinal reverberado, realimentação, retorno das linhas e amortecimento. O controle original **Quantidade** combina realimentação e ganho reverberado. As unidades do criador não representam tempo de cauda ou frequência medidos; a validação sonora ainda está pendente.
+No card **Reverb**, abra **Criador de reverb**. Ative reverb e seção reverb/cabinet, desligue a modulação e selecione o mesmo preset físico A/B/C em modo PRESET. Use **Ler reverb ativo** para iniciar a edição em RAM.
 
-Use **Restaurar reverb** antes de voltar à edição comum ou a outras prévias. Arquivos `.reverb.json` ficam no computador: importar prepara os ajustes e **Aplicar ajustes** envia à prévia ativa. Desligar/religar o efeito perde a personalização. Desconexão, releitura e fechamento normais tentam restaurar; interrupções preservam backup para recuperação explícita, sem reaplicar automaticamente. Não há gravação desses controles na flash. Veja [evidências, limites e recuperação](../../../engenharia-reversa/cube-baby/CUBE_BABY_REVERB.md).
+O editor separa sinal direto, sinal reverberado, realimentação, retorno das linhas e amortecimento. O controle original **Quantidade** combina realimentação e ganho reverberado. As unidades do criador não representam tempo de cauda ou frequência medidos.
+
+Use **Restaurar reverb** antes de voltar à edição comum ou a outras prévias. Arquivos `.reverb.json` ficam no computador: importar prepara os ajustes e **Aplicar ajustes** envia à edição ativa em RAM. Desligar/religar o efeito perde a personalização. Desconexão, releitura e fechamento normais tentam restaurar; interrupções preservam backup para recuperação explícita, sem reaplicar automaticamente. Não há gravação desses controles na flash. Veja [evidências, limites e recuperação](../../../engenharia-reversa/cube-baby/CUBE_BABY_REVERB.md).
 
 ## IRs: biblioteca, prévia e gravação
 
@@ -75,19 +77,19 @@ O desenho da onda pode ampliar a visualização sem normalizar o áudio. Os [det
 
 Uma prévia de IR interrompida mantém `pending-ir-preview.json` na pasta de dados. Reconecte o aparelho correspondente e encerre a prévia antes de remover esse arquivo. Uma desconexão durante gravação flash exige conferir o resultado e usar o backup quando necessário.
 
-## Criador de delay experimental
+## Criador de delay
 
-Abra **Delay → Criador de delay · experimental**. Ative a seção delay/modulação, desligue chorus/phaser, selecione no aplicativo o mesmo A/B/C físico e use **Ler delay ativo**. O criador oferece profundidade e velocidade de modulação temporal, tempo em amostras internas e resolução fina de feedback/mistura.
+Abra **Delay → Criador de delay**. Ative a seção delay/modulação, desligue chorus/phaser, selecione no aplicativo o mesmo A/B/C físico e use **Ler delay ativo**. O criador oferece profundidade e velocidade de modulação temporal, tempo em amostras internas e resolução fina de feedback/mistura.
 
 Profundidade e velocidade são percentuais do original. Profundidade zero elimina a oscilação temporal; velocidade zero congela sua fase. A velocidade efetiva depende do tempo. Mistura interna 50 mantém direto e eco integrais; não é uma soma complementar de porcentagens. A conversão do tempo para milissegundos continua sem medição por áudio.
 
-A prévia altera somente RAM e bloqueia edições concorrentes de presets, amps, IRs e outros criadores. **Restaurar delay**, releitura, desconexão e fechamento normal tentam restaurar e conferir a referência. Em falha, preserve `pending-delay-preview.json` e os backups de `DelayRecovery/`; após recuperar, releia ou reconecte antes de iniciar outra prévia.
+A edição em RAM altera somente RAM e bloqueia edições concorrentes de presets, amps, IRs e outros criadores. **Restaurar delay**, releitura, desconexão e fechamento normal tentam restaurar e conferir a referência. Em falha, preserve `pending-delay-preview.json` e os backups de `DelayRecovery/`; após recuperar, releia ou reconecte antes de iniciar outra edição em RAM.
 
-Arquivos `.delay.json` guardam a edição no computador. Importar não envia ao pedal; **Aplicar ajustes** envia à prévia ativa. Não há salvamento em flash nem prévia física na simulação. A avaliação sonora permanece pendente. Veja o [relatório e as evidências](../../../engenharia-reversa/cube-baby/CUBE_BABY_DELAY.md).
+Arquivos `.delay.json` guardam a edição no computador. Importar não envia ao pedal; **Aplicar ajustes** envia à edição ativa em RAM. Não há salvamento em flash nem prévia física na simulação. Veja o [relatório e as evidências](../../../engenharia-reversa/cube-baby/CUBE_BABY_DELAY.md).
 
 ## Criador de amps e Backing Tracks
 
-O [Criador de amps](criador-de-amps.md) edita um setor de modelo de amp, separado dos presets A/B/C e dos IRs. Carregar/importar pela interface pode iniciar uma prévia em RAM. Há limitações conhecidas no carregamento de três modelos originais.
+O [Criador de amps](criador-de-amps.md) edita um setor de modelo de amp, separado dos presets A/B/C e dos IRs. Carregar/importar pela interface pode iniciar uma prévia em RAM. Os nove modelos originais são aceitos pelo limite atual de ganho 100. Ganho/Volume são globais; os valores podem ser digitados com Enter e os resets de EQ restauram a banda inteira. Resposta mantém 16 ajustes por trechos da tabela, sem pressupor uma curva de palhetada. O estado local, a prévia em RAM e a gravação no slot têm indicações separadas. Restaurar o som anterior mantém a edição local.
 
 [Backing Tracks](backing-tracks.md) reproduz até três arquivos MP3/WAV pelo áudio do Windows, com seleção de saída, trechos A/B e exportação WAV. Sua reprodução independe da conexão USB de edição.
 
@@ -107,7 +109,7 @@ Backups, imagens, associações e preferências ficam em `%LOCALAPPDATA%\CubeCon
 | Edição bloqueada durante prévia | Encerre/restaure a prévia correspondente antes de voltar à edição de presets |
 | IR aparece sem nome/foto de fábrica | Identificação depende do conteúdo reconhecido, não apenas do número do slot |
 | Recurso de fábrica indisponível | É necessária a versão original do CubeSuite reconhecida pelos hashes do carregador |
-| Amp original recusado por ganho fora da faixa | Limitação atual do validador nos TYPEs 6, 7 e 8; veja [Criador de amps](criador-de-amps.md) |
+| Amp recusado ao importar | Confirme o setor `.bin` de 4096 bytes e a validação descrita no [Criador de amps](criador-de-amps.md); o limite atual de ganho é 100 |
 | Inicializador não encontra o script/executável | Preserve a estrutura do checkout, confirme o SDK .NET 10 e verifique o erro de build no [guia Windows](../windows/README.md) |
 
 A ajuda física do pedal está no [manual PDF incluído](../windows/Cube.Desktop/Assets/Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf). O estado atual do dispositivo não pode ser deduzido de capturas históricas.

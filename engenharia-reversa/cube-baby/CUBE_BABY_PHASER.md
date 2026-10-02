@@ -1,10 +1,12 @@
 # Cube Baby — phaser e controles internos
 
+Estado atual (02/10/2026): o editor de Phaser está funcional conforme validação informada pelo usuário. As observações de ausência de guitarra/escuta e os roteiros abaixo registram o contexto histórico da investigação. Os mapeamentos e as limitações de persistência permanecem os mesmos.
+
 [Índice](README.md) · [Amps](CUBE_BABY_AMPS.md) · Investigação de 01/10/2026
 
 ## Resultado
 
-**Foram encontrados e testados controles independentes de MOD:** limites inferior/superior da varredura, nível de saída e número de seções de filtro. A velocidade também pode ser ajustada continuamente dentro dos valores observados. O criador experimental está integrado à tela do phaser, com prévia RAM e arquivos locais `.phaser.json`.
+**Foram encontrados e testados controles independentes de MOD:** limites inferior/superior da varredura, nível de saída e número de seções de filtro. A velocidade também pode ser ajustada continuamente dentro dos valores observados. O criador está integrado à tela do phaser, com prévia RAM e arquivos locais `.phaser.json`.
 
 Não houve guitarra, captura de áudio ou avaliação sonora. Os resultados confirmam caminhos de código, alteração isolada, permanência e restauração de memória. Não confirmam qualidade musical, ausência de transientes ou limites acústicos seguros em qualquer combinação.
 
@@ -101,9 +103,9 @@ Na primeira série, o comparador integral acusou diferença somente em `0xF6E`, 
 
 Foram registrados 86 comandos de escrita na série MOD e 51 na série de controles. Todos foram `0x22` em RAM 04 ou parâmetros live 05; o arquivo de evidências valida os destinos e confirma ausência de escrita/apagamento em flash. ACK não foi usado como confirmação suficiente.
 
-## Criador experimental e recuperação
+## Criador e recuperação
 
-Na Pedaleira, selecione Phaser e abra **Criador de phaser · experimental**. Ative o phaser e a seção delay/modulação no preset físico, selecione o mesmo A/B/C na aplicação e use **Ler phaser ativo**. Esta ação verifica o perfil e guarda a referência antes de habilitar a prévia.
+Na Pedaleira, selecione Phaser e abra **Criador de phaser**. Ative o phaser e a seção delay/modulação no preset físico, selecione o mesmo A/B/C na aplicação e use **Ler phaser ativo**. Esta ação verifica o perfil e guarda a referência antes de habilitar a prévia.
 
 - Velocidade: limites observados 0,48–6,24 Hz estimados, ajuste contínuo.
 - Extremos: 300–3000 Hz estimados, inferior ≤ superior. Esses limites restringem a varredura ao intervalo original; não são uma medição de resposta acústica.
@@ -149,8 +151,8 @@ Validação automatizada: 18 verificações de protocolo/arquivo/recuperação e
 
 A suíte geral de protocolo para em `ExtendedTests.cs`, teste `one transaction and minimum 100 ms interval`. Isso já diverge da implementação em HEAD: `LiveEditQueue` serializa, mas não impõe espera de 100 ms. Não foi modificado o comportamento dessa fila para fazer um teste antigo passar. Os testes específicos do phaser passam independentemente dessa falha.
 
-## Roteiro de escuta posterior
+## Roteiro histórico de escuta
 
-Com guitarra disponível, comparar original e uma alteração por vez, incluindo ataques fracos/fortes e notas sustentadas. Conferir velocidade percebida, largura/posição da varredura, volume e efeito das seções; testar os extremos e combinações somente após os controles isolados. Observar estalos ao mudar seções, transientes, saturação e estabilidade em execução prolongada. Repetir restauração e mudanças de preset/algoritmo. Somente depois revisar faixas musicais, rótulos e a condição experimental.
+Com guitarra disponível, comparar original e uma alteração por vez, incluindo ataques fracos/fortes e notas sustentadas. Conferir velocidade percebida, largura/posição da varredura, volume e efeito das seções; testar os extremos e combinações somente após os controles isolados. Observar estalos ao mudar seções, transientes, saturação e estabilidade em execução prolongada. Repetir restauração e mudanças de preset/algoritmo. Esse era o roteiro de revisão de faixas e rótulos na investigação original.
 
 Ainda não foram validados waveform alternativo, campo 5000, feedback, mix independente, armazenamento de phaser na flash, outros firmwares ou persistência dos ajustes após desligamento. Nenhum desses recursos é anunciado pelo criador.

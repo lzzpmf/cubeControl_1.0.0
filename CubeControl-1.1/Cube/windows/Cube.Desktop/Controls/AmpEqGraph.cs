@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Automation;
 using Cube.Desktop.Localization;
 using Cube.Desktop.ViewModels;
 
@@ -17,15 +18,20 @@ public sealed class AmpEqGraph : FrameworkElement
         new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
     public AmpViewModel? Model { get => (AmpViewModel?)GetValue(ModelProperty); set => SetValue(ModelProperty, value); }
     public int SelectedFilter { get => (int)GetValue(SelectedFilterProperty); set => SetCurrentValue(SelectedFilterProperty, Math.Clamp(value, 0, 1)); }
+    public static readonly DependencyProperty BandABrushProperty = DependencyProperty.Register(nameof(BandABrush), typeof(Brush), typeof(AmpEqGraph), new FrameworkPropertyMetadata(Brushes.Coral, FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly DependencyProperty BandBBrushProperty = DependencyProperty.Register(nameof(BandBBrush), typeof(Brush), typeof(AmpEqGraph), new FrameworkPropertyMetadata(Brushes.LightBlue, FrameworkPropertyMetadataOptions.AffectsRender));
+    private static readonly DependencyProperty ThemeRevisionProperty = DependencyProperty.Register("ThemeRevision", typeof(int), typeof(AmpEqGraph), new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender));
+    public Brush BandABrush { get => (Brush)GetValue(BandABrushProperty); set => SetValue(BandABrushProperty, value); }
+    public Brush BandBBrush { get => (Brush)GetValue(BandBBrushProperty); set => SetValue(BandBBrushProperty, value); }
     public event RoutedEventHandler? EditCommitted;
     private bool dragging, changed, subscribed;
     private Point previous;
-    private static readonly Brush A = new SolidColorBrush(Color.FromRgb(255, 162, 147));
-    private static readonly Brush B = new SolidColorBrush(Color.FromRgb(115, 198, 222));
+    private int hovered = -1;
     private Rect Plot => new(48, 16, Math.Max(1, ActualWidth - 68), Math.Max(1, ActualHeight - 50));
     public AmpEqGraph()
     {
         MinHeight = 260; Focusable = true;
+        SetResourceReference(ThemeRevisionProperty, "CubeThemeRevision");
         Loaded += (_, _) => Subscribe();
         Unloaded += (_, _) => { Unsubscribe(); dragging = false; if (IsMouseCaptured) ReleaseMouseCapture(); };
     }
@@ -51,7 +57,7 @@ public sealed class AmpEqGraph : FrameworkElement
     private double X(double hz) => Plot.Left + Math.Log(hz / 20) / Math.Log(1000) * Plot.Width;
     private double Y(double db) => Plot.Top + (24 - db) / 48 * Plot.Height;
     private void Text(DrawingContext dc, string text, Point at, Brush brush) => dc.DrawText(
-        new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), 11, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip), at);
+        new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 11, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip), at);
     private static double Response(double[] c, double hz)
     {
         var z = Complex.FromPolarCoordinates(1, -2 * Math.PI * hz / 48000);
@@ -89,17 +95,28 @@ public sealed class AmpEqGraph : FrameworkElement
                     var point = new Point(X(hz), Y(Math.Clamp(db, -120, 120)));
                     if (i == 0) path.BeginFigure(point, false, false); else path.LineTo(point, true, false);
                 }
-            dc.DrawGeometry(null, new Pen(brush, filter == 2 ? 2 : 1), geometry);
+            var pen = new Pen(brush, filter == 2 ? 2 : filter == SelectedFilter ? 2.5 : 1.25);
+            if (filter == 1) pen.DashStyle = DashStyles.Dash;
+            dc.DrawGeometry(null, pen, geometry);
         }
-        Curve(A, 0); Curve(B, 1); Curve(foreground, 2);
+        Curve(BandABrush, 0); Curve(BandBBrush, 1); Curve(foreground, 2);
         dc.Pop();
         for (int i = 0; i < 2; i++)
         {
             var controls = i == 0 ? model.EqAControls : model.EqBControls;
             if (controls.Length != 3) continue;
             var point = new Point(X(controls[0].Number), Y(controls[1].Number));
-            dc.DrawEllipse(i == 0 ? A : B, new Pen(foreground, i == SelectedFilter ? 2 : 0), point, 8, 8);
-            Text(dc, i == 0 ? "A" : "B", new(point.X + 10, point.Y - 16), foreground);
+            Brush brush = i == 0 ? BandABrush : BandBBrush;
+            if (i == SelectedFilter && (dragging || hovered == i || IsKeyboardFocused))
+            {
+                var guide = new Pen(grid, 1) { DashStyle = DashStyles.Dot };
+                dc.DrawLine(guide, new(point.X, Plot.Top), new(point.X, Plot.Bottom));
+                dc.DrawLine(guide, new(Plot.Left, point.Y), new(Plot.Right, point.Y));
+            }
+            dc.DrawEllipse(brush, new Pen(foreground, i == SelectedFilter ? 2 : 0), point, i == hovered ? 10 : 8, i == hovered ? 10 : 8);
+            Text(dc, i == 0 ? "A" : "B", new(Math.Min(point.X + 10, Plot.Right - 10), point.Y - 16), foreground);
+            if (i == SelectedFilter)
+                AutomationProperties.SetHelpText(this, $"EQ {(i == 0 ? "A" : "B")}: {controls[0].Display}; {controls[1].Display}; Q {controls[2].Display}");
         }
     }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -127,7 +144,26 @@ public sealed class AmpEqGraph : FrameworkElement
         changed |= Math.Abs(hz - controls[0].Number) > 1e-10 || Math.Abs(db - controls[1].Number) > 1e-10;
         controls[0].SetNumber(hz); controls[1].SetNumber(db); previous = at;
     }
-    protected override void OnMouseMove(MouseEventArgs e) { if (dragging) Move(e.GetPosition(this)); }
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        if (dragging) { Move(e.GetPosition(this)); return; }
+        int next = -1;
+        if (Model is { Loaded: true } model && IsEnabled)
+        {
+            Point at = e.GetPosition(this); double best = 20;
+            for (int i = 0; i < 2; i++)
+            {
+                var controls = i == 0 ? model.EqAControls : model.EqBControls;
+                double distance = (at - new Point(X(controls[0].Number), Y(controls[1].Number))).Length;
+                if (distance < best) { best = distance; next = i; }
+            }
+        }
+        Cursor = next >= 0 ? Cursors.SizeAll : Cursors.Arrow;
+        if (hovered != next) { hovered = next; InvalidateVisual(); }
+    }
+    protected override void OnMouseLeave(MouseEventArgs e) { base.OnMouseLeave(e); hovered = -1; if (!dragging) Cursor = Cursors.Arrow; InvalidateVisual(); }
+    protected override void OnGotKeyboardFocus(KeyboardFocusChangedEventArgs e) { base.OnGotKeyboardFocus(e); InvalidateVisual(); }
+    protected override void OnLostKeyboardFocus(KeyboardFocusChangedEventArgs e) { base.OnLostKeyboardFocus(e); InvalidateVisual(); }
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         if (!dragging) return;

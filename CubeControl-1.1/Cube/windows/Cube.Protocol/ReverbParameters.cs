@@ -16,7 +16,7 @@ public sealed record ReverbParameters(float Dry, float Wet, int Decay, int Retur
     {
         if (!float.IsFinite(Dry) || Dry is < 0 or > 1 || !float.IsFinite(Wet) || Wet is < 0 or > 0.9f ||
             Decay is < 1 or > 15 || ReturnLevel is < 0 or > 80 || Damping is < 0 or > 10)
-            throw new ArgumentOutOfRangeException(nameof(ReverbParameters), "Parâmetros fora dos limites experimentais do reverb.");
+            throw new ArgumentOutOfRangeException(nameof(ReverbParameters), "Parâmetros fora dos limites do reverb.");
     }
     internal static byte[] DampingBytes(int step) => Enumerable.Range(0, 6).Select(i => (byte)((40 + 2 * i) * step / 10)).ToArray();
     public static ReverbParameters Read(byte[] dsp)
@@ -53,10 +53,10 @@ public sealed record ReverbParameters(float Dry, float Wet, int Decay, int Retur
         if (bank[slot * 16 + 3] == 0 || bank[slot * 16 + 10] != 1 || dsp[0x6E0] != 3)
             throw new FormatException("Ative o reverb e a seção reverb/cabinet no preset físico antes de ler.");
         // Modulation must be off: its dynamic masks are algorithm-dependent and not part of this profile.
-        if (dsp[0x63C] != 0) throw new FormatException("Desligue a modulação para esta prévia experimental de reverb.");
+        if (dsp[0x63C] != 0) throw new FormatException("Desligue a modulação para esta edição em RAM de reverb.");
         for (int i = 1; i < 0x84; i++)
             if (!IsControlOffset(0x6E0 + i) && i != 2 && dsp[0x6E0 + i] != DefaultBlock[i])
-                throw new FormatException("Estrutura de reverb desconhecida; prévia bloqueada.");
+                throw new FormatException("Estrutura de reverb desconhecida; edição em RAM bloqueada.");
         if (dsp[0x6E2] != bank[slot * 16 + 3] * 8) throw new FormatException("Tabela de reverb divergiu.");
         Read(dsp);
     }

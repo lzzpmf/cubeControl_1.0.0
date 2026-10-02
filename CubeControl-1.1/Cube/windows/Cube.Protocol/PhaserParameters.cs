@@ -14,7 +14,7 @@ public sealed record PhaserParameters(float Step, float Lower, float Upper, floa
         if (!float.IsFinite(Step) || Step is < 0.00001f or > 0.00013f ||
             !float.IsFinite(Lower) || !float.IsFinite(Upper) || Lower < 300 || Upper > 3000 || Lower > Upper ||
             !float.IsFinite(Level) || Level is < 0 or > 0.64f || Sections is < 1 or > 3)
-            throw new ArgumentOutOfRangeException(nameof(PhaserParameters), "Parâmetros fora dos limites experimentais do phaser.");
+            throw new ArgumentOutOfRangeException(nameof(PhaserParameters), "Parâmetros fora dos limites do phaser.");
     }
     public static PhaserParameters Read(byte[] dsp)
     {

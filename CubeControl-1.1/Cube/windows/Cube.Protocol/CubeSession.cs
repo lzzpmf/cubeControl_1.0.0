@@ -58,7 +58,7 @@ public sealed partial class CubeSession : IDisposable
             byte[] bytes = UsbSysEx.Encode(packet);
             Log?.Invoke("TX " + Convert.ToHexString(bytes));
             connection.Send(bytes);
-            return await waiter.Task.WaitAsync(Timeout, ct);
+            return await waiter.Task.WaitAsync(Timeout, ct).ConfigureAwait(false);
         }
         catch { faulted = true; throw; } // No transaction ID: never let a late reply satisfy a later request.
         finally { lock (sync) { pending = null; match = null; } }
@@ -90,7 +90,7 @@ public sealed partial class CubeSession : IDisposable
         var response = await Exchange(CubePacket.Read(region, address, length), p =>
             p.Command == 0x23 && p.Payload.Length == length + 8 && p.Payload[0] == region &&
             BinaryPrimitives.ReadUInt32LittleEndian(p.Payload.AsSpan(1)) == address &&
-            CubePacket.Read24(p.Payload.AsSpan(5)) == length, ct);
+            CubePacket.Read24(p.Payload.AsSpan(5)) == length, ct).ConfigureAwait(false);
         return response.Payload[8..];
     }
 

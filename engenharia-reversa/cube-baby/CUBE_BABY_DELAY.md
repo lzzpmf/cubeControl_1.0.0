@@ -1,10 +1,12 @@
 # Cube Baby — delay e controles internos
 
+Estado atual (02/10/2026): o editor de Delay está funcional conforme validação informada pelo usuário. As observações de ausência de guitarra/escuta e os roteiros abaixo registram o contexto histórico da investigação. Os mapeamentos e as limitações de persistência permanecem os mesmos.
+
 [Índice](README.md) · [Phaser](CUBE_BABY_PHASER.md) · [Chorus](CUBE_BABY_CHORUS.md) · [Reverb](CUBE_BABY_REVERB.md) · Investigação de 01/10/2026
 
 ## Resultado e alcance
 
-O firmware contém **profundidade e velocidade de modulação temporal independentes** de TIME, feedback e MIX. Os três controles originais também possuem uma representação interna mais fina: tempo em amostras e feedback/mistura float32. As cinco famílias passaram pelos ensaios de escrita isolada, permanência e restauração no pedal conectado e estão disponíveis no criador experimental. O verificador cruzou 1.011 snapshots e 534 escritas com o tráfego USB original.
+O firmware contém **profundidade e velocidade de modulação temporal independentes** de TIME, feedback e MIX. Os três controles originais também possuem uma representação interna mais fina: tempo em amostras e feedback/mistura float32. As cinco famílias passaram pelos ensaios de escrita isolada, permanência e restauração no pedal conectado e estão disponíveis no criador. O verificador cruzou 1.011 snapshots e 534 escritas com o tráfego USB original.
 
 Não houve guitarra, gravação ou avaliação sonora. A análise distingue leitura de código, alteração física de RAM e sinais sintéticos. Esses resultados não certificam qualidade musical, estalos, headroom ou execução acústica prolongada.
 
@@ -47,7 +49,7 @@ Offsets relativos à RAM 04; inteiros e floats little-endian.
 | `0x695` | byte, zero | Reservado, preservar |
 | `0x696` | int16, `2400 + 450 × TIME` | Tempo solicitado; resolução de uma amostra, faixa 2400–16350 |
 | `0x698` | float32, `feedback / 128` | Realimentação; faixa 0–127/128 |
-| `0x69C` | float32, 0,1 | Profundidade interna; faixa experimental 0–0,1 |
+| `0x69C` | float32, 0,1 | Profundidade interna; faixa 0–0,1 |
 | `0x6A0` | float32, 0,01 | Avanço de fase dividido pelo tempo atual; faixa 0–0,01 |
 | `0x6A4–0x6DB` | dois blocos de sete floats | Cinco coeficientes e dois floats ignorados por bloco; preservar |
 | `0x6DC` | float32, `MIX / 128` | Curva de mistura; faixa 0–118/128 |
@@ -151,9 +153,9 @@ Na série externa, o tempo suavizado foi 9600 em todas as leituras e o índice d
 
 Uma tentativa de iniciar a série de modulação falhou na enumeração MIDI, antes de abrir a conexão; seu log USB ficou vazio. Uma nova enumeração encontrou as portas únicas e a série foi repetida em pasta nova, conservando a tentativa anterior. Não foi necessário mudar o driver ou relaxar a verificação de portas; a causa transitória não foi estabelecida. Ver [registro](artefatos/delay/enumeration-retry.json).
 
-## Criador experimental e recuperação
+## Criador e recuperação
 
-Abra **Delay → Criador de delay · experimental**, habilite a seção delay/modulação, desligue chorus/phaser e selecione no aplicativo o mesmo preset físico. **Ler delay ativo** confere perfil/contexto e preserva a referência. Os controles normais continuam disponíveis fora da prévia.
+Abra **Delay → Criador de delay**, habilite a seção delay/modulação, desligue chorus/phaser e selecione no aplicativo o mesmo preset físico. **Ler delay ativo** confere perfil/contexto e preserva a referência. Os controles normais continuam disponíveis fora da prévia.
 
 As escritas são serializadas e ajustes rápidos são reunidos. Edições de preset e prévias de amp, IR, phaser, chorus e reverb ficam bloqueadas durante a prévia de delay. O monitor verifica contexto e controles; recarga externa interrompe a prévia sem reaplicar automaticamente.
 

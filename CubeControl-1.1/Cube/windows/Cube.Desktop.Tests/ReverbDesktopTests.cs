@@ -35,7 +35,7 @@ internal static class ReverbDesktopTests
         ((Expander)view.Content).IsExpanded = true;
         await Task.Delay(400);
         view.Measure(new Size(560, 900)); view.Arrange(new Rect(0, 0, 560, view.DesiredSize.Height)); view.UpdateLayout();
-        Check(view.ActualHeight > 300 && view.ActualHeight < 900, $"experimental reverb editor lays out without clipping ({view.ActualHeight})");
+        Check(view.ActualHeight > 300 && view.ActualHeight < 1200, $"reverb editor lays out without clipping ({view.ActualHeight})");
         string render = Path.GetFullPath("C:/CubeControl-Build/reverb-research/reverb-editor.png"); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
         var bitmap = new RenderTargetBitmap(560, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(view);

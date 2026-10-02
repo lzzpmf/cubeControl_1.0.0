@@ -196,6 +196,7 @@ public sealed class ThemeService
         resources["Muted"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("TextFillColorSecondaryBrush");
         resources["CubeDisabledText"] = IsHighContrast ? SystemColors.GrayTextBrush : Brush("TextFillColorDisabledBrush");
         resources["CubeWarning"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("SystemFillColorCautionBrush");
+        Set("CubePhaserGraph", "#FA6904", "#AF4903", SystemColors.WindowTextBrush);
         Set("CubePurple", "#B4A4D6", "#67508F", SystemColors.WindowTextBrush);
         Set("CubeKnobBase", "#202020", "#DCE3E8", SystemColors.WindowBrush);
         Set("CubeKnobTop", "#555555", "#FFFFFF", SystemColors.WindowBrush);

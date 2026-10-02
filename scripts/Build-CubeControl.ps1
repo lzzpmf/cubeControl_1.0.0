@@ -126,7 +126,7 @@ try {
     & dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falha na compilacao. O pacote anterior foi preservado.' }
     Assert-SameHashes $sources (Get-SourceHashes)
-    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll') {
+    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll', 'CubeBackingDsp.dll', 'NAudio.Core.dll', 'NAudio.Wasapi.dll') {
         if (-not (Test-Path -LiteralPath (Join-Path $staging $required) -PathType Leaf)) {
             throw "Arquivo obrigatorio ausente do pacote: $required"
         }

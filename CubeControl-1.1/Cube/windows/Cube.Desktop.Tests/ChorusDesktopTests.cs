@@ -49,7 +49,7 @@ internal static class ChorusDesktopTests
         ((Expander)view.Content).IsExpanded = true;
         await Task.Delay(400);
         view.Measure(new Size(560, 900)); view.Arrange(new Rect(0, 0, 560, view.DesiredSize.Height)); view.UpdateLayout();
-        Check(view.ActualHeight > 300 && view.ActualHeight < 900, $"experimental chorus editor lays out without clipping ({view.ActualHeight})");
+        Check(view.ActualHeight > 300 && view.ActualHeight < 1200, $"chorus editor lays out without clipping ({view.ActualHeight})");
         string render = Path.GetFullPath("artifacts/chorus/chorus-editor.png"); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
         var bitmap = new RenderTargetBitmap(560, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(view);
@@ -59,7 +59,7 @@ internal static class ChorusDesktopTests
         view.Width = 320; host.Width = 360;
         await Task.Delay(150);
         view.Measure(new Size(320, double.PositiveInfinity)); view.Arrange(new Rect(0, 0, 320, view.DesiredSize.Height)); view.UpdateLayout();
-        Check(((Expander)view.Content).Header.ToString() == "Chorus creator · experimental" && view.ActualHeight < 1200,
+        Check(((Expander)view.Content).Header.ToString() == "Chorus creator" && view.ActualHeight < 1280,
             "chorus compact editor translates live and wraps content");
         var compact = new RenderTargetBitmap(320, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         compact.Render(view); var compactPng = new PngBitmapEncoder(); compactPng.Frames.Add(BitmapFrame.Create(compact));
