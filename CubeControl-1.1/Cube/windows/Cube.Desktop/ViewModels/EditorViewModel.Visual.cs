@@ -86,13 +86,14 @@ public sealed partial class EditorViewModel
     public ICommand RefreshInventory { get; private set; } = null!;
     public ICommand ChangeImage { get; private set; } = null!;
     public ICommand ResetImage { get; private set; } = null!;
-    public void BeginGesture(object token) => gesture = token;
+    private object? gestureToken;
+    public void BeginGesture(object token) { if (!ReferenceEquals(gestureToken, token)) { gestureToken = token; gesture = new object(); } }
     public void RefreshThemeColors()
     {
         foreach (var item in Stages) item.RefreshColor();
         foreach (var item in Amps.Concat(Cabinets).Concat(Effects)) item.RefreshColor();
     }
-    public void EndGesture(object token) { if (ReferenceEquals(gesture, token)) gesture = null; }
+    public void EndGesture(object token) { if (ReferenceEquals(gestureToken, token)) { gestureToken = null; gesture = null; } }
 
     private void EditSwitch(Action edit)
     {
@@ -184,10 +185,39 @@ public sealed partial class EditorViewModel
     private void UpdateCabinet(int slot, byte[] bytes)
     {
         string hash = CabinetInventory.Hash(bytes);
+        if (inventory.Slots.FirstOrDefault(c => c.Slot == slot) is { } previous && previous.Hash != hash) soundContentRevision++;
         if (!preferences.IrNames.ContainsKey(hash) && File.Exists(MetadataPath(bytes)))
         { preferences.IrNames[hash] = File.ReadAllText(MetadataPath(bytes)); SavePreferences(); }
-        preferences.IrNames.TryGetValue(hash, out var name); inventory.Update(slot, bytes, name); RebuildCabinets();
+        preferences.IrNames.TryGetValue(hash, out var name);
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            string clean = name.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) ? Path.GetFileNameWithoutExtension(name) : name;
+            if (!resolvedIrNames.TryGetValue(hash, out var resolved))
+            {
+                var matches = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var entry in IrLibrary.Entries.Where(e => e.Name.Equals(clean, StringComparison.OrdinalIgnoreCase)))
+                {
+                    try
+                    {
+                        var audio = IrAudio.Decode(File.ReadAllBytes(entry.FullPath));
+                        for (int distance = 0; distance < 100; distance++)
+                            if (audio.Sector(distance).AsSpan().SequenceEqual(bytes))
+                            { matches.Add(IrViewModel.DisplayName(entry.FullPath, entry.Collection)); break; }
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException) { }
+                }
+                resolved = matches.Count == 1 ? matches.Single() : clean;
+                resolvedIrNames[hash] = resolved;
+            }
+            if (name != resolved)
+            {
+                name = resolved; preferences.IrNames[hash] = name; SavePreferences();
+                if (File.Exists(MetadataPath(bytes))) File.WriteAllText(MetadataPath(bytes), name);
+            }
+        }
+        inventory.Update(slot, bytes, name); RebuildCabinets();
     }
+    private readonly Dictionary<string, string> resolvedIrNames = [];
     private void RebuildCabinets()
     {
         var items = new List<GearItem> { WithImage(new("cab-off", 0, "Sem cabinet", "Desligado", "cab", "#C5B77F")) };
@@ -198,7 +228,14 @@ public sealed partial class EditorViewModel
             items.Add(WithImage(new(cab?.Hash ?? $"unverified-{i}", i + 1, cab?.Name ?? $"IR personalizado — slot {i + 1}", cab?.Category ?? "Não verificado", "cab", "#C5B77F",
                 reference?.Description ?? "Conteúdo sem referência de equipamento identificada. Nome e imagem personalizados são metadados locais.", reference?.Alias ?? "", cab?.FactoryId)));
         }
-        Cabinets = items.ToArray(); Notify(nameof(Cabinets)); Notify(nameof(CanMatch)); RefreshEditor();
+        Cabinets = items.ToArray();
+        Ir.UpdateSlots(Enumerable.Range(0, 8).Select(i =>
+        {
+            var cab = inventory.Slots.FirstOrDefault(c => c.Slot == i);
+            string name = cab != null && (cab.FactoryId != null || preferences.IrNames.ContainsKey(cab.Hash)) ? cab.Name : "IR não identificado";
+            return $"Slot {i + 1} — {name}";
+        }));
+        Notify(nameof(Cabinets)); Notify(nameof(CanMatch)); RefreshEditor();
     }
     public void ChooseGear(GearItem item)
     {
@@ -226,7 +263,8 @@ public sealed partial class EditorViewModel
         var changes = new List<(ParameterKey Key, int Value)>();
         if (amp.HasValue) changes.Add((new(slot, 0), ampValue));
         if (cabinet != null) changes.Add((new(slot, 9), cabinet.Slot + 1));
-        var group = new object(); var versions = new Dictionary<ParameterKey, long>(); var intent = new PendingMatch(); pendingMatches[slot] = intent;
+        var group = new object(); bankOperationGroup = group; var versions = new Dictionary<ParameterKey, long>(); var intent = new PendingMatch(); pendingMatches[slot] = intent;
+        bankOperationDescription = $"Preset {(char)('A' + slot)} · {Amps[ampValue].Name}" + (cabinet == null ? "" : " · " + cabinet.Name);
         foreach (var change in changes)
         {
             int index = change.Key.Slot * 16 + change.Key.Offset;
@@ -278,7 +316,8 @@ public sealed partial class EditorViewModel
             Presets[change.Key.Slot].Parameters[change.Key.Offset].Load(change.Value);
             queue!.Enqueue(change.Key, change.Value);
         }
-        await queue!.Flush(); Status = "Ajuste desfeito. Salvar continua sendo uma ação separada."; Refresh();
+        await queue!.Flush(); Status = "Ajuste desfeito. Salvar continua sendo uma ação separada.";
+        bankOperationGroup = new object(); RecordBankOperation(Status); Refresh();
     }
     public MatchRow[] CreateMatchRows() => Amps.Select(amp =>
     {

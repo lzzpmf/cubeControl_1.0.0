@@ -4,7 +4,7 @@
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization"
  xmlns:controls="clr-namespace:Cube.Desktop.Controls"
- Background="{DynamicResource ApplicationBackgroundBrush}" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+ Background="Transparent" Foreground="{DynamicResource CubeText}">
  <UserControl.Resources>
   <SolidColorBrush x:Key="AmpAccent" Color="#8DB9AC"/>
   <SolidColorBrush x:Key="AmpBandA" Color="#FFA293"/>
@@ -123,10 +123,11 @@
   <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
    <TextBlock Text="{loc:Translate Value={Binding AmpSavedMessage}}" Foreground="{DynamicResource AmpAccent}"/>
    <WrapPanel Margin="0,0,0,8"><TextBlock Text="{loc:Translate Text='Destino ao salvar:'}" Margin="0,0,8,0" Foreground="{DynamicResource Muted}"/><TextBlock Text="{Binding Amp.Destination}" TextWrapping="Wrap"/></WrapPanel>
+   <ui:InfoBar Template="{DynamicResource ActionInfoBarTemplate}" IsOpen="{Binding AmpPreviewActive}" IsClosable="False" Severity="Warning" Message="{loc:Translate Text='Prévia de AMP ativa na RAM. Nenhum slot foi gravado.'}" Margin="0,0,0,8"><ui:Button Content="{loc:Translate Text='Encerrar prévia'}" Command="{Binding EndAmpPreview}" Appearance="Transparent" Margin="0"/></ui:InfoBar>
    <TextBlock x:Name="AmpFeedback" Text="{loc:Translate Value={Binding AmpPreviewMessage}}" TextWrapping="Wrap" Margin="0,0,0,6"/>
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Restaurar som anterior'}" Click="RestoreClick" ToolTip="{loc:Translate Text='Volta ao som anterior à edição, sem apagar presets.'}" IsEnabled="{Binding CanRestoreAmp}" Margin="0,0,8,8"/>
-    <ui:Button Content="{loc:Translate Text='Salvar no pedal'}" Click="WriteClick" ToolTip="{loc:Translate Text='Grava no slot do amp selecionado após confirmação.'}" IsEnabled="{Binding CanSaveAmp}" Appearance="Primary" Margin="0,0,0,8"/>
+    <ui:Button Content="{loc:Translate Text='Encerrar prévia'}" Click="RestoreClick" ToolTip="{loc:Translate Text='Volta ao som anterior à edição, sem apagar presets.'}" IsEnabled="{Binding CanRestoreAmp}" Appearance="Primary" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="SpeakerMute24" FontSize="16"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Salvar no pedal'}" Click="WriteClick" ToolTip="{loc:Translate Text='Grava no slot do amp selecionado após confirmação.'}" IsEnabled="{Binding CanSaveAmp}" Appearance="Primary" Margin="0,0,0,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24" FontSize="16"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
   </StackPanel>
   <Grid IsEnabled="{Binding CanAdjustAmp}">

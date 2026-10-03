@@ -170,7 +170,9 @@ internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
         using var source = new BackingDecoder(path);
         int channels = source.Format.Channels, rate = source.Format.SampleRate;
         // A single envelope is capped as well as the aggregate cache.
-        int bins = (int)Math.Clamp(Math.Ceiling(source.Duration * 100), 1, 8 * 1024 * 1024);
+        double duration = source.Duration;
+        double totalFrames = Math.Max(1, duration * rate);
+        int bins = (int)Math.Clamp(Math.Ceiling(duration * 100), 1, 8 * 1024 * 1024);
         var peaks = new float[bins]; var block = new float[4096 * channels];
         long frame = 0;
         int read;
@@ -181,7 +183,7 @@ internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
             {
                 float peak = 0;
                 for (int c = 0; c < channels; c++) peak = Math.Max(peak, Math.Abs(block[i + c]));
-                int bin = (int)Math.Min(bins - 1, frame * bins / Math.Max(1, source.Duration * rate));
+                int bin = (int)Math.Min(bins - 1, frame * bins / totalFrames);
                 peaks[bin] = Math.Max(peaks[bin], float.IsFinite(peak) ? peak : 0);
             }
         }

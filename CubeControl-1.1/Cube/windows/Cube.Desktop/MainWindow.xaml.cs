@@ -107,6 +107,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         BackingTracks.ChooseExportMode = ChooseBackingExportMode;
         Appearance.UiDensity.Initialize();
         InitializeComponent(); DataContext = Model;
+        Model.ConfirmIrWrite = ConfirmIrWriteAsync;
         InitializeZoom();
         MoveFooterToPage();
         Workspace.RequestBringIntoView += (_, e) =>
@@ -210,7 +211,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             e.Cancel = true;
             if (Model.Busy) { await ShowNoticeAsync("Aguarde a operação terminar antes de fechar."); return; }
             if (Model.Dirty && !await Model.Ask("Há ajustes aplicados que não foram salvos. Fechar o editor?")) return;
-            try { await Model.Flush(); await Model.EndDelayPreviewAsync(); await Model.EndReverbPreviewAsync(); await Model.EndChorusPreviewAsync(); await Model.EndPhaserPreviewAsync(); await Model.EndPreviewAsync(); }
+            if (Enumerable.Range(1, 4).Any(Model.AdvancedPreviewHasChanges) && !await Model.Ask("Os ajustes dos efeitos estão apenas na RAM. Encerrar as prévias e restaurar os parâmetros anteriores antes de fechar?")) return;
+            try
+            {
+                await Model.Flush(); await Model.EndDelayPreviewAsync(); await Model.EndReverbPreviewAsync(); await Model.EndChorusPreviewAsync(); await Model.EndPhaserPreviewAsync();
+                if (await Model.RestoreAmpAsync() == false) throw new IOException(Model.AmpPreviewMessage);
+                await Model.EndPreviewAsync();
+            }
             catch (Exception ex)
             {
                 if (!await Model.Ask(ex.Message + "\nFechar mesmo assim? Os backups permanecem no computador.")) return;
@@ -219,6 +226,41 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         };
     }
     private bool noticeOpen;
+    private async void OperationDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left || sender is not FrameworkElement { DataContext: EditorViewModel.OperationHistoryItem item }) return;
+        e.Handled = true;
+        await Model.RestoreOperationAsync(item);
+    }
+    private async Task<(bool Confirmed, string? ImagePath)> ConfirmIrWriteAsync(string message)
+    {
+        var content = new StackPanel { MaxWidth = 560 };
+        content.Children.Add(new TextBlock { Text = LanguageService.T(message), TextWrapping = TextWrapping.Wrap });
+        content.Children.Add(new TextBlock { Text = LanguageService.T("Imagem do gabinete (opcional)"), Margin = new Thickness(0, 16, 0, 8) });
+        var images = new ComboBox { HorizontalContentAlignment = HorizontalAlignment.Stretch, MaxDropDownHeight = 320 };
+        images.Items.Add(new ComboBoxItem { Content = LanguageService.T("Manter imagem atual ou padrão"), Tag = null });
+        string directory = Path.Combine(AppContext.BaseDirectory, "Assets", "imagens", "Gabinetes");
+        if (Directory.Exists(directory))
+            foreach (string path in Directory.EnumerateFiles(directory, "*.png").OrderBy(Path.GetFileName))
+            {
+                var row = new StackPanel { Orientation = Orientation.Horizontal };
+                var bitmap = new BitmapImage();
+                bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad; bitmap.DecodePixelWidth = 120;
+                bitmap.UriSource = new Uri(path); bitmap.EndInit(); bitmap.Freeze();
+                row.Children.Add(new Image { Source = bitmap, Width = 72, Height = 48, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 12, 0) });
+                row.Children.Add(new TextBlock { Text = Path.GetFileNameWithoutExtension(path), MaxWidth = 360, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center });
+                images.Items.Add(new ComboBoxItem { Content = row, Tag = path });
+            }
+        images.SelectedIndex = 0;
+        content.Children.Add(images);
+        var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost)
+        {
+            Title = LanguageService.T("Gravar IR"), Content = content, DialogMaxWidth = 640,
+            PrimaryButtonText = LanguageService.T("Gravar IR"), CloseButtonText = LanguageService.T("Cancelar")
+        };
+        bool confirmed = await dialog.ShowLocalizedAsync() == Wpf.Ui.Controls.ContentDialogResult.Primary;
+        return (confirmed, confirmed ? (images.SelectedItem as ComboBoxItem)?.Tag as string : null);
+    }
     internal async Task ShowNoticeAsync(string message)
     {
         if (noticeOpen) return;
@@ -354,13 +396,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void UpdateSaveAppearance()
     {
         Navigation.SelectedIndex = Tabs.SelectedIndex;
-        BackingTracks.PageVisible = Tabs.SelectedIndex == 3;
+        BackingTracks.PageVisible = Tabs.SelectedIndex == 2;
         MoveFooterToPage();
     }
     private void MoveFooterToPage()
     {
         if (FooterActions == null || Tabs == null) return;
-        var page = Tabs.SelectedIndex switch { 1 => IrScroll, 2 => HelpScroll, 3 => BackingTracksScroll, 4 => null, _ => EditorScroll };
+        var page = Tabs.SelectedIndex switch { 1 => IrScroll, 2 => BackingTracksScroll, 3 => null, 4 => HelpScroll, _ => EditorScroll };
         if (page?.Content is not StackPanel content || FooterActions.Parent == content) return;
         if (FooterActions.Parent is Panel parent) parent.Children.Remove(FooterActions);
         content.Children.Add(FooterActions);
@@ -676,7 +718,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         BackingPlaylistPanel.Margin = wide ? new Thickness(0, 0, 20, 0) : new Thickness(0, 16, 0, 0);
         BackingTrackList.Height = wide ? 360 : 240;
     }
-    private void BackingReturnClick(object sender, MouseButtonEventArgs e) { Navigation.SelectedIndex = Tabs.SelectedIndex = 3; BackingTracks.PageVisible = true; e.Handled = true; }
+    private void BackingReturnClick(object sender, MouseButtonEventArgs e) { Navigation.SelectedIndex = Tabs.SelectedIndex = 2; BackingTracks.PageVisible = true; e.Handled = true; }
     private void BackingTrackDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem) { BackingTracks.PlaySelected(); e.Handled = true; }
@@ -715,7 +757,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     }
     private void BackingKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Handled || Tabs.SelectedIndex != 3) return;
+        if (e.Handled || Tabs.SelectedIndex != 2) return;
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null && node != BackingPage; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
             if (node is System.Windows.Controls.Primitives.TextBoxBase or System.Windows.Controls.Primitives.ButtonBase or ComboBox or Slider or MenuItem) return;
         var modifiers = Keyboard.Modifiers;
@@ -761,10 +803,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             string effect = stage switch { 1 => "Chorus", 2 => "Phaser", 3 => "Delay", _ => "Reverb" };
             var window = new Wpf.Ui.Controls.FluentWindow
             {
-                Owner = this, Title = $"{LanguageService.T("Opções avançadas")} ? {effect}",
+                Owner = this, Title = $"{LanguageService.T("Opções avançadas")} — {effect}",
                 Width = Math.Min(900, SystemParameters.WorkArea.Width),
                 Height = Math.Min(780, SystemParameters.WorkArea.Height),
-                MinWidth = 420, MinHeight = 360, DataContext = Model,
+                MinWidth = Math.Min(560, SystemParameters.WorkArea.Width), MinHeight = Math.Min(560, SystemParameters.WorkArea.Height), DataContext = Model,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ExtendsContentIntoTitleBar = true, UseLayoutRounding = true
             };
@@ -781,15 +823,39 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             error.SetResourceReference(TextBlock.ForegroundProperty, "CubeWarning");
             DockPanel.SetDock(error, Dock.Top);
             layout.Children.Add(error);
-            layout.Children.Add(new ScrollViewer
-            {
-                Content = editor, Margin = new Thickness(24),
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
-            });
+            editor.Margin = new Thickness(16);
+            layout.Children.Add(editor);
             window.Content = layout;
+            window.AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler((_, _) => Model.BeginGesture(editor)), true);
+            window.AddHandler(Mouse.MouseUpEvent, new MouseButtonEventHandler((_, _) => Model.EndGesture(editor)), true);
             advancedEffectWindows.Add(stage, window);
-            window.Closed += (_, _) => advancedEffectWindows.Remove(stage);
+            window.Closed += (_, _) => { Model.EndGesture(editor); advancedEffectWindows.Remove(stage); };
+            bool restored = false, closingPreview = false;
+            window.Closing += async (_, args) =>
+            {
+                if (closing || restored) return;
+                if (!Model.HasAdvancedPreview(stage)) { args.Cancel = Model.Busy; return; }
+                args.Cancel = true;
+                if (closingPreview) return;
+                closingPreview = true;
+                try
+                {
+                    if (Model.AdvancedPreviewHasChanges(stage))
+                    {
+                        var dialog = new Wpf.Ui.Controls.MessageBox
+                        {
+                            Owner = window, Title = LanguageService.T("Alterações não salvas"),
+                            Content = LanguageService.T("Os ajustes estão apenas na RAM e não foram salvos no pedal. Ao encerrar a prévia, os parâmetros anteriores serão restaurados."),
+                            PrimaryButtonText = LanguageService.T("Encerrar prévia e restaurar"), CloseButtonText = LanguageService.T("Voltar à edição")
+                        };
+                        if (await dialog.ShowDialogAsync() != Wpf.Ui.Controls.MessageBoxResult.Primary) return;
+                    }
+                    window.IsEnabled = false;
+                    restored = await Model.CloseAdvancedPreviewAsync(stage);
+                    if (restored) window.Close();
+                }
+                finally { window.IsEnabled = true; closingPreview = false; }
+            };
             window.Show();
         }
         switch (stage)
@@ -807,13 +873,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (AmpEditorHost.Content is not Views.AmpEditor)
             AmpEditorHost.Content = new Views.AmpEditor(Model);
         UpdateWorkspaceLayout();
-        Navigation.SelectedIndex = 4;
+        Navigation.SelectedIndex = 3;
         Dispatcher.BeginInvoke(new Action(() => ((Views.AmpEditor)AmpEditorHost.Content).ChooseBase()));
-    }
-    private void PedalboardActionsSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (sender is System.Windows.Controls.Primitives.UniformGrid grid)
-            grid.Columns = grid.ActualWidth >= 1000 ? 4 : grid.ActualWidth >= 520 ? 2 : 1;
     }
 
     private async void MatchSettingsClick(object sender, RoutedEventArgs e)

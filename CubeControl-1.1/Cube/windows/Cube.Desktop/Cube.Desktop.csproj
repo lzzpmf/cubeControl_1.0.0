@@ -35,6 +35,7 @@
     <None Update="Localization/*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Localization/README.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Assets/Equipment/*.png" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Update="Assets/imagens/Gabinetes/*.png;Assets/imagens/Dispositivos/SINCO-CubeBaby.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../README.md" Link="LEIA-ME.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

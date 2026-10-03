@@ -95,6 +95,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         ChooseWav = Command(ChooseWavAsync, () => !Busy);
         PreviewIr = Command(PreviewAsync, () => CanOperate && Ir.Audio != null);
         EndPreview = Command(EndPreviewAsync, () => Connected && !Busy && originalRam != null);
+        EndAmpPreview = new UiCommand(async () => await RestoreAmpAsync(), () => CanRestoreAmp);
         WriteIr = new UiCommand(async () => await ConfirmWriteIrAsync(), () => CanOperate && Ir.Audio != null && !confirmingIrWrite);
         ReadSlot = Command(ReadSlotAsync, () => CanOperate);
         Ir.PropertyChanged += (_, _) => RefreshPresentation();
@@ -105,23 +106,36 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
 
     private UiCommand Command(Func<Task> action, Func<bool> can) => new(async () => await Execute(action), can);
+    private Task? previewCheckTask;
+    private async Task CheckPreviewInBackground(Func<Task> check)
+    {
+        previewCheckTask = check();
+        try { await previewCheckTask; }
+        finally { previewCheckTask = null; }
+    }
     public async Task Execute(Func<Task> action)
     {
         if (Busy) return;
+        string previousStatus = Status;
+        long previousOperation = operationVersion;
         irSelectionGeneration++;
         transferGeneration++;
         if (!blocked) ErrorMessage = "";
         BusyDetail = "Aguarde a conclusão da operação.";
         InventoryReadCount = 0; ReadingInventory = false;
         Busy = true;
-        try { if (queue != null && !blocked) await queue.Flush(); await action(); }
+        try { if (previewCheckTask != null) await previewCheckTask; if (queue != null && !blocked) await queue.Flush(); await action(); }
         catch (Exception ex)
         {
             Status = ex.Message; ErrorMessage = ex.Message; AddLog("ERRO " + ex.Message);
             if (session != null && (session.IsFaulted || ex is InvalidOperationException or IOException)) Fault(ex);
             else if (!automaticConnectionAttempt) NotifyFailure(ex.Message);
         }
-        finally { Ir.TransferActive = false; ReadingInventory = false; Busy = false; }
+        finally
+        {
+            Ir.TransferActive = false; ReadingInventory = false; Busy = false;
+            if (operationVersion == previousOperation && Status != previousStatus) RecordOperation(Status);
+        }
     }
 
     private void Refresh()
@@ -246,6 +260,8 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     {
         if (!CanEdit || edited == null) return;
         history.Record(key, edited[key.Slot * 16 + key.Offset], gesture);
+        bankOperationGroup = gesture ?? new object();
+        bankOperationDescription = $"Preset {(char)('A' + key.Slot)} · {Presets[key.Slot].Parameters[key.Offset].Name}: {value}";
         edited[key.Slot * 16 + key.Offset] = (byte)value;
         revisions[key] = ++revision;
         Presets[key.Slot].State = "Enviando…"; queue!.Enqueue(key, value); Refresh();
@@ -258,10 +274,12 @@ public sealed partial class EditorViewModel : Observable, IDisposable
             bool dirty = !edited.AsSpan(i * 16, 16).SequenceEqual(baseline!.AsSpan(i * 16, 16));
             Presets[i].State = pending ? "Enviando…" : dirty ? "Aplicado ao aparelho · não gravado" : "Sem alterações locais";
         }
+        if (!Busy) RecordBankOperation(bankOperationDescription);
         Refresh();
     }
     private void Fault(Exception ex)
     {
+        RecordOperation("Falha: " + ex.Message);
         if (DelayPreviewActive)
         {
             delayStopped = true; delayPending = false;
@@ -342,6 +360,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         string details = string.Join("\n", Enumerable.Range(0, 3).Select(i => $"{(char)('A' + i)}: {CubeBabyProfile.Parameters[0].Options![imported[i * 16]]}; volume {imported[i * 16 + 5]}"));
         if (!await Ask($"Prévia de {Path.GetFileName(dlg.FileName)}\n\n{details}\n\nCarregar estes parâmetros no pedal? O salvamento permanece separado.")) return;
         await SetBankLive(imported);
+        bankOperationGroup = new object(); RecordBankOperation("Banco importado e aplicado na RAM.");
         Status = "Banco importado e aplicado. Use Gravar A/B/C para salvar no aparelho.";
         NotifyUser("Gravação pendente", Status, Wpf.Ui.Controls.ControlAppearance.Caution);
     }
@@ -399,9 +418,24 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         if (ramIdentity != session!.IdentityHex) throw new InvalidOperationException("O snapshot de prévia pertence a outra identidade de aparelho.");
         Ir.PreviewActive = true; // Set before mutation so interrupted transfers retain recovery state.
         Ir.PreviewConfirmed = false;
-        await session!.ApplyIrRam(new(1, Ir.Audio!.LivePayload(Ir.Distance)), Progress());
+        var audio = Ir.Audio!;
+        string sourcePath = Ir.SourcePath, collection = Ir.SourceCollection;
+        int distance = Ir.Distance;
+        var bankContext = confirmed?.ToArray();
+        object group = OperationGroup("IR");
+        await session!.ApplyIrRam(new(1, audio.LivePayload(distance)), Progress());
         Ir.PreviewConfirmed = true;
         Ir.State = "Prévia confirmada em RAM. Nenhum slot substituído."; Status = Ir.State; Refresh();
+        RecordOperation("Prévia de IR: " + Ir.File, async () =>
+        {
+            bool done = false;
+            await Execute(async () =>
+            {
+                IrLibrary.ClearSelection(); Ir.Load(sourcePath, audio, collection.Length == 0 ? null : collection); Ir.Distance = distance;
+                await PreviewAsync(); done = true;
+            });
+            return done;
+        }, () => CanOperate && bankContext != null && confirmed?.SequenceEqual(bankContext) == true, group);
     }
     public async Task EndPreviewAsync()
     {
@@ -436,6 +470,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Completed(Status);
     }
     private bool confirmingIrWrite;
+    public Func<string, Task<(bool Confirmed, string? ImagePath)>>? ConfirmIrWrite { get; set; }
     private async Task ConfirmWriteIrAsync()
     {
         if (!CanOperate || Ir.Audio == null || confirmingIrWrite) return;
@@ -446,13 +481,15 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         string file = Ir.File;
         try
         {
-            if (!await Ask($"Gravar {file} no slot {slot + 1}?\n\nDistância: {distance}%\nO conteúdo atual será substituído.\nUm backup será criado antes da gravação.")) return;
-            await Execute(() => WriteIrAsync(slot, audio, distance, file));
+            string message = $"Gravar {file}?\nDestino: {Ir.Slots[slot]}\n\nDistância: {distance}%\nO conteúdo atual será substituído.\nUm backup será criado antes da gravação.";
+            var choice = ConfirmIrWrite != null ? await ConfirmIrWrite(message) : (Confirmed: await Ask(message), ImagePath: (string?)null);
+            if (!choice.Confirmed || !CanOperate) return;
+            await Execute(() => WriteIrAsync(slot, audio, distance, file, choice.ImagePath));
         }
         catch (Exception ex) { Status = ErrorMessage = ex.Message; }
         finally { confirmingIrWrite = false; Refresh(); }
     }
-    private async Task WriteIrAsync(int slot, IrAudio audio, int distance, string file)
+    private async Task WriteIrAsync(int slot, IrAudio audio, int distance, string file, string? imagePath)
     {
         BusyDetail = "Criando backup do slot de IR…";
         var data = audio.Sector(distance);
@@ -461,7 +498,22 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         BusyDetail = "Gravando e verificando IR…";
         await session.ReplaceIr(slot, current, data, async bytes => { await BackupIr(slot, bytes); }, Progress());
         Directory.CreateDirectory(Path.GetDirectoryName(MetadataPath(data))!); await File.WriteAllTextAsync(MetadataPath(data), file);
-        preferences.IrNames[CabinetInventory.Hash(data)] = file; SavePreferences(); UpdateCabinet(slot, data);
+        string hash = CabinetInventory.Hash(data);
+        preferences.IrNames[hash] = file;
+        resolvedIrNames[hash] = file;
+        if (imagePath != null)
+        {
+            try
+            {
+                string imageName = hash + ".png";
+                Directory.CreateDirectory(Path.Combine(DataDirectory, "Images"));
+                File.Copy(imagePath, Path.Combine(DataDirectory, "Images", imageName), true);
+                preferences.Images[hash] = imageName;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            { ErrorMessage = "IR gravado, mas não foi possível salvar a imagem: " + ex.Message; NotifyFailure(ErrorMessage); }
+        }
+        SavePreferences(); UpdateCabinet(slot, data);
         Ir.SlotInfo = "Nome local confirmado pelo conteúdo: " + file;
         Status = Ir.State = $"IR gravado e verificado no slot {slot + 1}. Selecione outro cabinet e volte a este slot para recarregá-lo.";
         Completed("IR gravado e verificado.");
@@ -515,5 +567,34 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         return await dialog.ShowDialogAsync() == Wpf.Ui.Controls.MessageBoxResult.Primary;
     };
     public async Task Flush() { if (queue != null) await queue.Flush(); }
+    public bool HasAdvancedPreview(int stage) => stage switch
+    { 1 => ChorusPreviewActive, 2 => PhaserPreviewActive, 3 => DelayPreviewActive, 4 => ReverbPreviewActive, _ => false };
+    public bool AdvancedPreviewHasChanges(int stage) => stage switch
+    {
+        1 => chorusRecovery != null && Chorus.Parameters != ChorusParameters.Read(chorusRecovery.OriginalDsp),
+        2 => phaserRecovery != null && Phaser.Parameters != PhaserParameters.Read(phaserRecovery.OriginalDsp),
+        3 => delayRecovery != null && Delay.Parameters != DelayParameters.Read(delayRecovery.OriginalDsp),
+        4 => reverbRecovery != null && Reverb.Parameters != ReverbParameters.Read(reverbRecovery.OriginalDsp),
+        _ => false
+    };
+    public async Task<bool> CloseAdvancedPreviewAsync(int stage)
+    {
+        Task? sending = stage switch { 1 => chorusSendTask, 2 => phaserSendTask, 3 => delaySendTask, 4 => reverbSendTask, _ => null };
+        if (sending != null) await sending;
+        if (Busy) { ErrorMessage = "Aguarde a operação terminar antes de fechar."; return false; }
+        bool restored = false;
+        await Execute(async () =>
+        {
+            switch (stage)
+            {
+                case 1: await EndChorusPreviewAsync(); break;
+                case 2: await EndPhaserPreviewAsync(); break;
+                case 3: await EndDelayPreviewAsync(); break;
+                case 4: await EndReverbPreviewAsync(); break;
+            }
+            restored = true;
+        });
+        return restored;
+    }
     public void Dispose() { delayMonitorStop?.Cancel(); Delay.Edited -= DelayEdited; reverbMonitorStop?.Cancel(); Reverb.Edited -= ReverbEdited; chorusMonitorStop?.Cancel(); Chorus.Edited -= ChorusEdited; phaserMonitorStop?.Cancel(); Phaser.Edited -= PhaserEdited; Amp.Edited -= AmpEdited; Amp.PropertyChanged -= AmpPresentationChanged; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
 }

@@ -10,6 +10,7 @@ public sealed partial class EditorViewModel
     public ChorusViewModel Chorus { get; } = new();
     private ChorusRecovery? chorusRecovery;
     private Task? chorusSendTask;
+    private object? chorusHistoryGroup;
     private Task? chorusMonitorTask;
     private CancellationTokenSource? chorusMonitorStop;
     private bool chorusPending, chorusStopped;
@@ -84,6 +85,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingChorus, Path.Combine(directory, $"chorus-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Chorus.Load(session.IdentityHex, chorusRecovery!.Target);
             chorusStopped = false;
+            RecordOperation("Prévia de chorus iniciada na RAM.");
             Chorus.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (ChorusPreviewActive && !chorusStopped)
@@ -102,11 +104,12 @@ public sealed partial class EditorViewModel
                 await Task.Delay(2000, stop);
                 if (Busy || chorusSendTask != null || session == null || chorusRecovery == null) continue;
                 chorusMonitoring = true;
-                try { await Execute(async () => await session.CheckChorusPreview(chorusRecovery)); }
+                try { await CheckPreviewInBackground(() => session.CheckChorusPreview(chorusRecovery)); }
                 finally { chorusMonitoring = false; RefreshPresentation(); }
             }
         }
         catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception ex) { Fault(ex); }
     }
 
     private void ChorusEdited()
@@ -117,6 +120,7 @@ public sealed partial class EditorViewModel
             return;
         }
         Chorus.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
+        chorusHistoryGroup = OperationGroup("Chorus");
         chorusPending = true;
         chorusSendTask ??= SendChorusEdits();
     }
@@ -134,7 +138,16 @@ public sealed partial class EditorViewModel
                     try
                     {
                         if (session == null || chorusRecovery == null) throw new IOException("Reconecte para restaurar o chorus.");
-                        await session.ApplyChorusPreview(chorusRecovery, Chorus.Parameters, KeepChorusRecovery);
+                        var parameters = Chorus.Parameters;
+                        var context = chorusRecovery.OriginalDsp;
+                        object? group = chorusHistoryGroup;
+                        await session.ApplyChorusPreview(chorusRecovery, parameters, KeepChorusRecovery);
+                        RecordOperation("Prévia de chorus ajustada na RAM.", async () =>
+                        {
+                            Chorus.Load(Chorus.Identity, parameters); ChorusEdited();
+                            if (chorusSendTask != null) await chorusSendTask;
+                            return !chorusStopped && chorusRecovery?.Target == parameters;
+                        }, () => Connected && !Busy && !chorusStopped && ReferenceEquals(chorusRecovery?.OriginalDsp, context), group);
                         Chorus.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
@@ -167,6 +180,7 @@ public sealed partial class EditorViewModel
             File.Delete(PendingChorus);
             chorusRecovery = null; chorusStopped = false;
             Chorus.Message = "Chorus original restaurado e conferido. Edição local disponível.";
+            RecordOperation("Prévia de chorus encerrada; parâmetros anteriores restaurados.");
         }
         catch { Chorus.Message = "Restauração não confirmada. O backup do chorus continua preservado."; throw; }
         finally { Refresh(); }
@@ -209,6 +223,7 @@ public sealed partial class EditorViewModel
         {
             var exported = Chorus.Parameters;
             await File.WriteAllTextAsync(picker.FileName, ChorusPreset.Export(Chorus.Identity, exported));
+            RecordOperation("Ajustes de chorus exportados para arquivo.");
             if (Chorus.Parameters == exported)
                 Chorus.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
         });

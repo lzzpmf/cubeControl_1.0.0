@@ -10,6 +10,7 @@ public sealed partial class EditorViewModel
     public PhaserViewModel Phaser { get; } = new();
     private PhaserRecovery? phaserRecovery;
     private Task? phaserSendTask;
+    private object? phaserHistoryGroup;
     private Task? phaserMonitorTask;
     private CancellationTokenSource? phaserMonitorStop;
     private bool phaserPending, phaserStopped;
@@ -70,6 +71,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingPhaser, Path.Combine(directory, $"phaser-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Phaser.Load(session.IdentityHex, phaserRecovery!.Target);
             phaserStopped = false;
+            RecordOperation("Prévia de phaser iniciada na RAM.");
             Phaser.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (PhaserPreviewActive && !phaserStopped)
@@ -88,11 +90,12 @@ public sealed partial class EditorViewModel
                 await Task.Delay(2000, stop);
                 if (Busy || phaserSendTask != null || session == null || phaserRecovery == null) continue;
                 phaserMonitoring = true;
-                try { await Execute(async () => await session.CheckPhaserPreview(phaserRecovery)); }
+                try { await CheckPreviewInBackground(() => session.CheckPhaserPreview(phaserRecovery)); }
                 finally { phaserMonitoring = false; RefreshPresentation(); }
             }
         }
         catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception ex) { Fault(ex); }
     }
 
     private void PhaserEdited()
@@ -103,6 +106,7 @@ public sealed partial class EditorViewModel
             return;
         }
         Phaser.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
+        phaserHistoryGroup = OperationGroup("Phaser");
         phaserPending = true;
         phaserSendTask ??= SendPhaserEdits();
     }
@@ -120,7 +124,16 @@ public sealed partial class EditorViewModel
                     try
                     {
                         if (session == null || phaserRecovery == null) throw new IOException("Reconecte para restaurar o phaser.");
-                        await session.ApplyPhaserPreview(phaserRecovery, Phaser.Parameters, KeepPhaserRecovery);
+                        var parameters = Phaser.Parameters;
+                        var context = phaserRecovery.OriginalDsp;
+                        object? group = phaserHistoryGroup;
+                        await session.ApplyPhaserPreview(phaserRecovery, parameters, KeepPhaserRecovery);
+                        RecordOperation("Prévia de phaser ajustada na RAM.", async () =>
+                        {
+                            Phaser.Load(Phaser.Identity, parameters); PhaserEdited();
+                            if (phaserSendTask != null) await phaserSendTask;
+                            return !phaserStopped && phaserRecovery?.Target == parameters;
+                        }, () => Connected && !Busy && !phaserStopped && ReferenceEquals(phaserRecovery?.OriginalDsp, context), group);
                         Phaser.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
@@ -153,6 +166,7 @@ public sealed partial class EditorViewModel
             File.Delete(PendingPhaser);
             phaserRecovery = null; phaserStopped = false;
             Phaser.Message = "Phaser original restaurado e conferido. Edição local disponível.";
+            RecordOperation("Prévia de phaser encerrada; parâmetros anteriores restaurados.");
         }
         catch { Phaser.Message = "Restauração não confirmada. O backup do phaser continua preservado."; throw; }
         finally { Refresh(); }
@@ -194,6 +208,7 @@ public sealed partial class EditorViewModel
         {
             var exported = Phaser.Parameters;
             await File.WriteAllTextAsync(picker.FileName, PhaserPreset.Export(Phaser.Identity, exported));
+            RecordOperation("Ajustes de phaser exportados para arquivo.");
             if (Phaser.Parameters == exported)
                 Phaser.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
         });

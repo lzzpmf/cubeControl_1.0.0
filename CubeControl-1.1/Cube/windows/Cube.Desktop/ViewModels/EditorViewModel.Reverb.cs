@@ -10,6 +10,7 @@ public sealed partial class EditorViewModel
     public ReverbViewModel Reverb { get; } = new();
     private ReverbRecovery? reverbRecovery;
     private Task? reverbSendTask;
+    private object? reverbHistoryGroup;
     private Task? reverbMonitorTask;
     private CancellationTokenSource? reverbMonitorStop;
     private bool reverbPending, reverbStopped;
@@ -84,6 +85,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingReverb, Path.Combine(directory, $"reverb-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Reverb.Load(session.IdentityHex, reverbRecovery!.Target);
             reverbStopped = false;
+            RecordOperation("Prévia de reverb iniciada na RAM.");
             Reverb.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (ReverbPreviewActive && !reverbStopped)
@@ -102,11 +104,12 @@ public sealed partial class EditorViewModel
                 await Task.Delay(2000, stop);
                 if (Busy || reverbSendTask != null || session == null || reverbRecovery == null) continue;
                 reverbMonitoring = true;
-                try { await Execute(async () => await session.CheckReverbPreview(reverbRecovery)); }
+                try { await CheckPreviewInBackground(() => session.CheckReverbPreview(reverbRecovery)); }
                 finally { reverbMonitoring = false; RefreshPresentation(); }
             }
         }
         catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception ex) { Fault(ex); }
     }
 
     private void ReverbEdited()
@@ -117,6 +120,7 @@ public sealed partial class EditorViewModel
             return;
         }
         Reverb.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
+        reverbHistoryGroup = OperationGroup("Reverb");
         reverbPending = true;
         reverbSendTask ??= SendReverbEdits();
     }
@@ -134,7 +138,16 @@ public sealed partial class EditorViewModel
                     try
                     {
                         if (session == null || reverbRecovery == null) throw new IOException("Reconecte para restaurar o reverb.");
-                        await session.ApplyReverbPreview(reverbRecovery, Reverb.Parameters, KeepReverbRecovery);
+                        var parameters = Reverb.Parameters;
+                        var context = reverbRecovery.OriginalDsp;
+                        object? group = reverbHistoryGroup;
+                        await session.ApplyReverbPreview(reverbRecovery, parameters, KeepReverbRecovery);
+                        RecordOperation("Prévia de reverb ajustada na RAM.", async () =>
+                        {
+                            Reverb.Load(Reverb.Identity, parameters); ReverbEdited();
+                            if (reverbSendTask != null) await reverbSendTask;
+                            return !reverbStopped && reverbRecovery?.Target == parameters;
+                        }, () => Connected && !Busy && !reverbStopped && ReferenceEquals(reverbRecovery?.OriginalDsp, context), group);
                         Reverb.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
@@ -167,6 +180,7 @@ public sealed partial class EditorViewModel
             File.Delete(PendingReverb);
             reverbRecovery = null; reverbStopped = false;
             Reverb.Message = "Reverb original restaurado e conferido. Edição local disponível.";
+            RecordOperation("Prévia de reverb encerrada; parâmetros anteriores restaurados.");
         }
         catch { Reverb.Message = "Restauração não confirmada. O backup do reverb continua preservado."; throw; }
         finally { Refresh(); }
@@ -209,6 +223,7 @@ public sealed partial class EditorViewModel
         {
             var exported = Reverb.Parameters;
             await File.WriteAllTextAsync(picker.FileName, ReverbPreset.Export(Reverb.Identity, exported));
+            RecordOperation("Ajustes de reverb exportados para arquivo.");
             if (Reverb.Parameters == exported)
                 Reverb.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
         });

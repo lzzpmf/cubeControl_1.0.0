@@ -17,6 +17,9 @@ public partial class AmpEditor : UserControl
     public AmpEditor(EditorViewModel model)
     {
         this.model = model; InitializeComponent(); DataContext = model;
+        AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler((_, _) => model.BeginGesture(this)), true);
+        AddHandler(Mouse.MouseUpEvent, new MouseButtonEventHandler((_, _) => model.EndGesture(this)), true);
+        Unloaded += (_, _) => model.EndGesture(this);
         BaseSelector.ItemsSource = EquipmentCatalog.Amps.Select(a => a.Name).ToArray();
         foreach (string key in new[] { "AmpAccent", "AmpBandA", "AmpBandB" }) ampBrushes[key] = Resources[key];
         Loaded += (_, _) => { ThemeService.Instance.Changed += UpdateColors; UpdateColors(); UpdateLayoutMode(); };

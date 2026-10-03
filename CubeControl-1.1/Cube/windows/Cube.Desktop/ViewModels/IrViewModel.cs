@@ -11,6 +11,7 @@ public sealed class IrViewModel : Observable
     private bool preview, previewConfirmed, transferActive;
     public string Origin { get; private set; } = "";
     public string SourceCollection { get; private set; } = "";
+    public string SourcePath { get; private set; } = "";
     public IrAudio? Audio { get; private set; }
     public string File { get => file; private set => Set(ref file, value); }
     public string Information { get => information; private set => Set(ref information, value); }
@@ -20,7 +21,13 @@ public sealed class IrViewModel : Observable
     public bool PreviewConfirmed { get => previewConfirmed; set { Set(ref previewConfirmed, value); Notify(nameof(PreviewLabel)); } }
     public bool TransferActive { get => transferActive; set => Set(ref transferActive, value); }
     public string PreviewLabel => PreviewActive ? PreviewConfirmed ? "Prévia confirmada em RAM · não gravada no slot" : "Prévia pendente · restauração não confirmada" : "Nenhuma prévia ativa";
-    public string[] Slots { get; } = Enumerable.Range(1, 8).Select(i => $"Slot {i}").ToArray();
+    public string[] Slots { get; private set; } = Enumerable.Range(1, 8).Select(i => $"Slot {i} — IR não identificado").ToArray();
+    public void UpdateSlots(IEnumerable<string> names)
+    {
+        int selectedSlot = slot;
+        Slots = names.ToArray(); Notify(nameof(Slots));
+        slot = selectedSlot; Notify(nameof(Slot));
+    }
     public int Slot { get => slot; set { if (Set(ref slot, Math.Clamp(value, 0, 7))) SlotInfo = "Conteúdo ainda não lido do aparelho."; } }
     public int Distance { get => distance; set { Set(ref distance, Math.Clamp(value, 0, 99)); Notify(nameof(DistanceLabel)); } }
     public string DistanceLabel => $"{Distance}%";
@@ -35,16 +42,25 @@ public sealed class IrViewModel : Observable
         Origin = collection == null ? "Arquivo externo" : "Biblioteca";
         SourceCollection = collection ?? "";
         Notify(nameof(Origin)); Notify(nameof(SourceCollection));
-        Audio = audio; File = Path.GetFileName(path);
+        SourcePath = path;
+        Audio = audio; File = DisplayName(path, collection);
         Information = $"{audio.Format} {audio.Bits} bits · {audio.SampleRate:N0} Hz · {audio.Channels} canal(is) · {audio.Duration * 1000:0.##} ms";
         Notify(nameof(Waveform)); Notify(nameof(Conversion)); Notify(nameof(PreparationSummary)); Notify(nameof(Audio));
+    }
+    public static string DisplayName(string path, string? collection = null)
+    {
+        string name = Path.GetFileNameWithoutExtension(path);
+        var parts = (collection ?? "").Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries)
+            .Where(p => p is not ("IRs WAV" or "Configuração Não Informada" or "ImpulseResponses"))
+            .Append(name).Distinct(StringComparer.OrdinalIgnoreCase);
+        return string.Join(" ", parts);
     }
     public void ClearLoadedFile()
     {
         Audio = null;
         File = "Nenhum arquivo selecionado";
         Information = "Selecione um WAV para preparar a prévia.";
-        Origin = SourceCollection = "";
+        Origin = SourceCollection = SourcePath = "";
         Notify(nameof(Audio)); Notify(nameof(Origin)); Notify(nameof(SourceCollection));
         Notify(nameof(Waveform)); Notify(nameof(Conversion)); Notify(nameof(PreparationSummary));
     }

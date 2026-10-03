@@ -11,13 +11,14 @@ public sealed partial class EditorViewModel
     public AmpViewModel Amp { get; } = new();
     private byte[]? ampOriginalRam;
     private string? ampPreviewIdentity;
-    public bool CanUseAmp => CanOperate && !Ir.PreviewActive
+    public bool CanUseAmp => CanOperate
 #if CUBE_SIMULATION
         && false
 #endif
         ;
     public bool AmpPreviewActive => ampOriginalRam != null;
-    public bool CanRestoreAmp => CanUseAmp && AmpPreviewActive;
+    public bool CanRestoreAmp => Connected && !Busy && AmpPreviewActive;
+    public System.Windows.Input.ICommand EndAmpPreview { get; private set; } = null!;
     public bool CanSaveAmp => CanUseAmp && Amp.Loaded;
     private AmpOperationState ampOperation;
     public AmpOperationState AmpOperation { get => ampOperation; private set => Set(ref ampOperation, value); }
@@ -56,6 +57,7 @@ public sealed partial class EditorViewModel
     }
     private Task<bool>? ampPreviewTask;
     private bool ampPreviewPending;
+    private object? ampHistoryGroup;
     public bool IsAmpPreviewSending { get; private set; }
     public bool CanAdjustAmp => (!Busy || IsAmpPreviewSending) && Amp.Loaded;
     private string ampPreviewMessage = "Ajuste seu som. As alterações são ouvidas automaticamente.";
@@ -64,6 +66,7 @@ public sealed partial class EditorViewModel
     private void AmpEdited() { InvalidateAmpSaved(); _ = PreviewAmpAsync(); }
     public Task<bool> PreviewAmpAsync()
     {
+        ampHistoryGroup = OperationGroup("AMP");
         ampPreviewPending = true;
         return ampPreviewTask ??= SendLatestAmpAsync();
     }
@@ -162,6 +165,10 @@ public sealed partial class EditorViewModel
         await Execute(async () =>
         {
             var data = Amp.Build();
+            string name = Amp.Name;
+            int slot = Amp.Slot;
+            var bankContext = confirmed?.ToArray();
+            object? group = ampHistoryGroup;
             if (ampOriginalRam != null && ampPreviewIdentity != session!.IdentityHex) throw new ArgumentException("Reconecte o aparelho usado na prévia.");
             await session!.ApplyAmpRam(data.AsSpan(AmpImage.BodyOffset, AmpImage.BodyLength).ToArray(), ampOriginalRam == null ? async before =>
             {
@@ -174,13 +181,18 @@ public sealed partial class EditorViewModel
             Status = "Amp aplicado em RAM. Nenhum slot foi gravado. Trocar o amp físico pode encerrar a prévia.";
             Notify(nameof(AmpPreviewActive));
             applied = true;
+            RecordOperation("Prévia de AMP: " + name, async () =>
+            {
+                Amp.Load(data, name); Amp.Slot = slot;
+                return await PreviewAmpAsync();
+            }, () => CanUseAmp && bankContext != null && confirmed?.SequenceEqual(bankContext) == true, group);
         });
         return applied;
     }
 
     public async Task<bool?> RestoreAmpAsync()
     {
-        if (!CanUseAmp || ampOriginalRam == null) return null;
+        if (!CanRestoreAmp || ampOriginalRam == null) return null;
         bool completed = false;
         await Execute(async () => { await RestoreAmpCore(); completed = true; });
         if (completed) AmpOperation = AmpOperationState.Restored;
@@ -217,6 +229,7 @@ public sealed partial class EditorViewModel
                 if (!(await File.ReadAllBytesAsync(path)).SequenceEqual(bytes)) throw new IOException("Não foi possível preservar o amp original.");
             }, new Progress<TransferProgress>(p => Status = $"{p.Stage}: {p.Done}/{p.Total}"));
             completed = true;
+            soundContentRevision++;
             ampSavedBytes = target.ToArray(); ampSavedSlot = slot; ampSavedIdentity = session.IdentityHex;
             Notify(nameof(AmpSavedMessage));
             AmpOperation = AmpOperationState.Saved;

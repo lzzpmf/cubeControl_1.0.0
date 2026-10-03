@@ -39,7 +39,10 @@ public sealed class EffectGraphEditor : Grid
     private GraphNode? selected;
     private double numericStart, resumeRate = 100;
     private bool editing;
-    private double W => Math.Max(260, ActualWidth - 48);
+    private double W => Math.Max(260, surface.ActualWidth - 48);
+    private double DesignHeight => EffectKind == "Chorus" ? 550 : EffectKind == "Reverb" ? 500 : 520;
+    private double GraphScaleY => surface.ActualHeight > 0 ? surface.ActualHeight / DesignHeight : 1;
+    private Point GraphPosition(Point point) => new(point.X, point.Y / GraphScaleY);
     private double X(double fraction) => 24 + W * fraction;
     private static string T(string text) => LanguageService.T(text);
     private double V(string key)
@@ -57,12 +60,15 @@ public sealed class EffectGraphEditor : Grid
         MinWidth = 308;
         SetResourceReference(BackgroundProperty, "CubeInset");
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(0) });
         drawing = new GraphDrawing(this);
         surface.Children.Add(drawing);
         surface.Children.Add(overlay);
-        SetRow(surface, 1); SetRow(footer, 2);
+        surface.SizeChanged += (_, _) => RefreshGraph();
+        SetRow(surface, 1); SetRow(footer, 2); SetColumnSpan(footer, 2);
         Children.Add(inspector); Children.Add(surface); Children.Add(footer);
         var heading = new WrapPanel();
         caption.Margin = new Thickness(0, 6, 12, 0);
@@ -81,7 +87,16 @@ public sealed class EffectGraphEditor : Grid
         number.Click += (_, _) => BeginNumber();
         entry.PreviewKeyDown += NumberKey;
         entry.LostKeyboardFocus += (_, _) => { if (editing) EndNumber(false, false); };
-        SizeChanged += (_, _) => RefreshGraph();
+        SizeChanged += (_, _) =>
+        {
+            bool wide = ActualWidth >= 520;
+            ColumnDefinitions[0].Width = wide ? new GridLength(ActualWidth >= 720 ? 240 : 180) : new GridLength(1, GridUnitType.Star);
+            ColumnDefinitions[1].Width = wide ? new GridLength(1, GridUnitType.Star) : new GridLength(0);
+            RowDefinitions[0].Height = wide ? new GridLength(1, GridUnitType.Star) : GridLength.Auto;
+            RowDefinitions[1].Height = wide ? new GridLength(0) : new GridLength(1, GridUnitType.Star);
+            SetRow(surface, wide ? 0 : 1); SetColumn(surface, wide ? 1 : 0);
+            RefreshGraph();
+        };
         IsEnabledChanged += (_, _) => { if (!IsEnabled) CancelInteraction(); RefreshGraph(); };
         IsVisibleChanged += (_, _) => { if (!IsVisible) CancelInteraction(); };
         Loaded += (_, _) =>
@@ -144,7 +159,6 @@ public sealed class EffectGraphEditor : Grid
     {
         CancelInteraction(); nodes.Clear(); overlay.Children.Clear(); selected = null;
         choices.Children.Clear();
-        surface.Height = EffectKind == "Chorus" ? 550 : EffectKind == "Reverb" ? 500 : 520;
         switch (EffectKind)
         {
             case "Delay":
@@ -216,14 +230,17 @@ public sealed class EffectGraphEditor : Grid
     internal void RefreshGraph()
     {
         if (drawing == null) return;
-        caption.MaxWidth = W;
-        entry.MaxWidth = W;
-        number.Width = Math.Min(260, W);
-        inspector.MinHeight = W < 400 ? 172 : 148;
+        double inspectorWidth = ActualWidth >= 520 ? ActualWidth >= 720 ? 192 : 132 : Math.Max(260, ActualWidth - 48);
+        caption.MaxWidth = inspectorWidth;
+        entry.MaxWidth = inspectorWidth;
+        number.Width = Math.Min(260, inspectorWidth);
+        inspector.MinHeight = selected == null ? 44 : W < 400 ? 172 : 148;
+        choices.Visibility = choices.Children.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        help.Visibility = selected == null ? Visibility.Collapsed : Visibility.Visible;
         foreach (var node in nodes.Values)
         {
             Point p = node.Anchor();
-            Canvas.SetLeft(node, p.X - 18); Canvas.SetTop(node, p.Y - 18);
+            Canvas.SetLeft(node, p.X - 18); Canvas.SetTop(node, p.Y * GraphScaleY - 18);
             AutomationProperties.SetName(node, $"{T(node.Name)} ({T(node.Unit)})");
             AutomationProperties.SetHelpText(node, T(node.Hint));
             node.InvalidateVisual();
@@ -254,7 +271,7 @@ public sealed class EffectGraphEditor : Grid
         else
         {
             caption.Text = T("Selecione um ponto para ajustar"); help.Text = "";
-            number.Visibility = Visibility.Hidden;
+            number.Visibility = Visibility.Collapsed;
         }
         footer.Text = T("Tab seleciona · setas ajustam · Enter digita") + "\n" + T("Visualização ilustrativa");
         drawing.InvalidateVisual();
@@ -359,6 +376,7 @@ public sealed class EffectGraphEditor : Grid
     {
         if (nodes.Count == 0) return;
         dc.PushOpacity(IsEnabled ? 1 : .55);
+        dc.PushTransform(new ScaleTransform(1, GraphScaleY));
         switch (EffectKind)
         {
             case "Delay": DrawDelay(dc); break;
@@ -366,6 +384,7 @@ public sealed class EffectGraphEditor : Grid
             case "Phaser": DrawPhaser(dc); break;
             case "Reverb": DrawReverb(dc); break;
         }
+        dc.Pop();
         dc.Pop();
     }
 
@@ -383,7 +402,9 @@ public sealed class EffectGraphEditor : Grid
             new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
             12, Brush("Muted"), VisualTreeHelper.GetDpi(this).PixelsPerDip)
         { MaxTextWidth = Math.Max(10, W * Math.Min(width, 1 - x)), Trimming = TextTrimming.CharacterEllipsis };
-        dc.DrawText(formatted, new Point(X(x), y));
+        dc.PushTransform(new ScaleTransform(1, 1 / GraphScaleY));
+        dc.DrawText(formatted, new Point(X(x), y * GraphScaleY));
+        dc.Pop();
     }
     private void Curve(DrawingContext dc, IEnumerable<Point> points, string key, bool fill = false)
     {
@@ -652,18 +673,18 @@ public sealed class EffectGraphEditor : Grid
         {
             base.OnMouseLeftButtonDown(e); Focus(); owner.Select(this); e.Handled = true;
             if (Key is "Waveform" or "Sections") { owner.OpenChoices(this); return; }
-            original = Value; origin = e.GetPosition(owner.surface); dragging = CaptureMouse();
+            original = Value; origin = owner.GraphPosition(e.GetPosition(owner.surface)); dragging = CaptureMouse();
             if (e.ClickCount == 2) { Finish(); owner.BeginNumber(); }
         }
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            if (dragging) Change(drag(original, e.GetPosition(owner.surface) - origin));
+            if (dragging) Change(drag(original, owner.GraphPosition(e.GetPosition(owner.surface)) - origin));
         }
         protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
         {
             base.OnMouseLeftButtonUp(e);
-            if (dragging) Change(drag(original, e.GetPosition(owner.surface) - origin));
+            if (dragging) Change(drag(original, owner.GraphPosition(e.GetPosition(owner.surface)) - origin));
             Finish(); e.Handled = true;
         }
         protected override void OnLostMouseCapture(MouseEventArgs e) { base.OnLostMouseCapture(e); if (dragging) Cancel(); }

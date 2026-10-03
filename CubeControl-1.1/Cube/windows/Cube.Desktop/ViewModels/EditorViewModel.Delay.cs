@@ -10,6 +10,7 @@ public sealed partial class EditorViewModel
     public DelayViewModel Delay { get; } = new();
     private DelayRecovery? delayRecovery;
     private Task? delaySendTask;
+    private object? delayHistoryGroup;
     private Task? delayMonitorTask;
     private CancellationTokenSource? delayMonitorStop;
     private bool delayPending, delayStopped;
@@ -89,6 +90,7 @@ public sealed partial class EditorViewModel
             File.Copy(PendingDelay, Path.Combine(directory, $"delay-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
             Delay.Load(session.IdentityHex, delayRecovery!.Target);
             delayStopped = false;
+            RecordOperation("Prévia de delay iniciada na RAM.");
             Delay.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
         });
         if (DelayPreviewActive && !delayStopped)
@@ -107,11 +109,12 @@ public sealed partial class EditorViewModel
                 await Task.Delay(2000, stop);
                 if (Busy || delaySendTask != null || session == null || delayRecovery == null) continue;
                 delayMonitoring = true;
-                try { await Execute(async () => await session.CheckDelayPreview(delayRecovery)); }
+                try { await CheckPreviewInBackground(() => session.CheckDelayPreview(delayRecovery)); }
                 finally { delayMonitoring = false; RefreshPresentation(); }
             }
         }
         catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception ex) { Fault(ex); }
     }
 
     private void DelayEdited()
@@ -122,6 +125,7 @@ public sealed partial class EditorViewModel
             return;
         }
         Delay.Message = "Alterações pendentes de aplicação na RAM · não salvas no pedal.";
+        delayHistoryGroup = OperationGroup("Delay");
         delayPending = true;
         delaySendTask ??= SendDelayEdits();
     }
@@ -139,7 +143,16 @@ public sealed partial class EditorViewModel
                     try
                     {
                         if (session == null || delayRecovery == null) throw new IOException("Reconecte para restaurar o delay.");
-                        await session.ApplyDelayPreview(delayRecovery, Delay.Parameters, KeepDelayRecovery);
+                        var parameters = Delay.Parameters;
+                        var context = delayRecovery.OriginalDsp;
+                        object? group = delayHistoryGroup;
+                        await session.ApplyDelayPreview(delayRecovery, parameters, KeepDelayRecovery);
+                        RecordOperation("Prévia de delay ajustada na RAM.", async () =>
+                        {
+                            Delay.Load(Delay.Identity, parameters); DelayEdited();
+                            if (delaySendTask != null) await delaySendTask;
+                            return !delayStopped && delayRecovery?.Target == parameters;
+                        }, () => Connected && !Busy && !delayStopped && ReferenceEquals(delayRecovery?.OriginalDsp, context), group);
                         Delay.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
                     }
                     catch
@@ -172,6 +185,7 @@ public sealed partial class EditorViewModel
             File.Delete(PendingDelay);
             delayRecovery = null; delayStopped = false;
             Delay.Message = "Delay original restaurado e conferido. Edição local disponível.";
+            RecordOperation("Prévia de delay encerrada; parâmetros anteriores restaurados.");
         }
         catch { Delay.Message = "Restauração não confirmada. O backup do delay continua preservado."; throw; }
         finally { Refresh(); }
@@ -214,6 +228,7 @@ public sealed partial class EditorViewModel
         {
             var exported = Delay.Parameters;
             await File.WriteAllTextAsync(picker.FileName, DelayPreset.Export(Delay.Identity, exported));
+            RecordOperation("Ajustes de delay exportados para arquivo.");
             if (Delay.Parameters == exported)
                 Delay.Message = "Arquivo exportado no computador · isso não salva os ajustes no pedal.";
         });
