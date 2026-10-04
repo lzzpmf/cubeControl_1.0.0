@@ -18,9 +18,8 @@
    <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
    <Style.Triggers><DataTrigger Binding="{Binding IsCompactLayout,RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True"><Setter Property="VerticalScrollBarVisibility" Value="Disabled"/></DataTrigger></Style.Triggers>
   </Style>
-  <Style x:Key="AmpReset" TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}">
-   <Setter Property="Appearance" Value="Transparent"/><Setter Property="Width" Value="32"/><Setter Property="Height" Value="32"/>
-   <Setter Property="MinWidth" Value="32"/><Setter Property="MinHeight" Value="32"/><Setter Property="Padding" Value="0"/>
+  <Style x:Key="AmpReset" TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}">
+   <Setter Property="Appearance" Value="Transparent"/>
    <Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource Muted}"/>
    <Setter Property="ToolTip" Value="{loc:Translate Text='Restaurar ajuste inicial'}"/>
    <Setter Property="AutomationProperties.Name" Value="{loc:Translate Text='Restaurar ajuste inicial'}"/>
@@ -32,7 +31,7 @@
   <DataTemplate x:Key="AmpValue">
    <StackPanel>
     <Grid>
-     <ui:Button x:Name="ValueButton" Click="EditValueClick" Appearance="Transparent" Padding="4,2" MinHeight="32" HorizontalAlignment="Center" ToolTip="{loc:Translate Text='Clique ou pressione Enter para digitar. Enter confirma; Escape cancela.'}" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding ModificationState}}">
+     <ui:Button x:Name="ValueButton" Click="EditValueClick" Appearance="Transparent" HorizontalAlignment="Center" ToolTip="{loc:Translate Text='Clique ou pressione Enter para digitar. Enter confirma; Escape cancela.'}" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding ModificationState}}">
       <StackPanel Orientation="Horizontal">
        <TextBlock x:Name="ModifiedDot" Text="●" Visibility="Hidden" Margin="0,0,4,0" Foreground="{DynamicResource AmpAccent}"/>
        <TextBlock x:Name="NumberText" Text="{Binding Display}"/>
@@ -98,7 +97,7 @@
       </StackPanel>
      </WrapPanel>
      <TextBlock Text="{loc:Translate Value={Binding SelectedProfile.Description}}" TextWrapping="Wrap" Foreground="{DynamicResource Muted}" Margin="0,8,0,8"/>
-     <ui:Button Content="{loc:Translate Text='Restaurar original'}" Command="{Binding RestoreOriginal}" Appearance="Transparent" HorizontalAlignment="Left" Padding="8,4">
+     <ui:Button Content="{loc:Translate Text='Restaurar original'}" Command="{Binding RestoreOriginal}" Appearance="Transparent" HorizontalAlignment="Left">
       <ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon>
      </ui:Button>
     </StackPanel>
@@ -125,12 +124,12 @@
       <ui:Button Content="{loc:Translate Text='Exportar preset'}" Click="ExportClick" IsEnabled="{Binding Amp.Loaded}" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Salva os ajustes atuais em um preset no computador.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowUpload24" FontSize="16"/></ui:Button.Icon></ui:Button>
      </WrapPanel>
     </StackPanel>
-    <StackPanel x:Name="GlobalControls" Grid.Column="1" IsEnabled="{Binding CanAdjustAmp}">
+    <StackPanel x:Name="GlobalControls" Grid.Column="1" IsEnabled="{Binding CanAdjustAmp}" VerticalAlignment="Bottom" Margin="0,48,0,0">
      <ItemsControl ItemsSource="{Binding Amp.MainControls}" Foreground="{DynamicResource AmpAccent}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/>
      <TextBlock Text="{loc:Translate Text='Referência carregada: 1×'}" Foreground="{DynamicResource Muted}" FontSize="12" Margin="0,0,0,12"/>
     </StackPanel>
    </Grid>
-   <ListBox x:Name="AmpSections" SelectedIndex="0" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Seções do amp'}">
+   <ListBox x:Name="AmpSections" Margin="0,12,0,0" SelectedIndex="0" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Seções do amp'}">
     <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
     <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource SelectionTile}">
      <Setter Property="Padding" Value="12,8"/><Setter Property="Margin" Value="0,0,8,4"/>
@@ -155,28 +154,9 @@
   </StackPanel>
   <Grid IsEnabled="{Binding CanAdjustAmp}">
    <TabControl SelectedIndex="{Binding SelectedIndex,ElementName=AmpSections}" Style="{StaticResource HiddenTabs}" IsEnabled="{Binding Amp.Loaded}">
-    <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource AmpPanel}"><StackPanel>
-     <DockPanel Margin="0,12,0,12">
-      <TextBlock Text="{loc:Translate Text='Equalização'}" FontSize="18" FontWeight="SemiBold"/>
-      <ComboBox x:Name="EqPresentation" ToolTip="{loc:Translate Text='Alterne entre gráfico e controles clássicos.'}" SelectedIndex="1" Width="150" HorizontalAlignment="Right" AutomationProperties.Name="{loc:Translate Text='Apresentação do EQ'}">
-       <ComboBoxItem Content="{loc:Translate Text='Clássico'}"/><ComboBoxItem Content="{loc:Translate Text='Moderno'}"/>
-      </ComboBox>
-     </DockPanel>
-     <WrapPanel>
-      <WrapPanel.Style><Style TargetType="WrapPanel"><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqPresentation}" Value="1"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
-      <StackPanel Margin="0,0,24,12">
-       <TextBlock Text="EQ A" Foreground="{DynamicResource AmpBandA}" FontWeight="SemiBold"/>
-       <ItemsControl ItemsSource="{Binding Amp.EqAControls}" Foreground="{DynamicResource AmpBandA}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/>
-       <ui:Button Content="{loc:Translate Text='Restaurar banda'}" Click="ResetBandClick" Tag="0" Appearance="Transparent" HorizontalAlignment="Left" IsEnabled="{Binding Amp.ChangeEqA}"/>
-      </StackPanel>
-      <StackPanel Margin="0,0,0,12">
-       <TextBlock Text="EQ B" Foreground="{DynamicResource AmpBandB}" FontWeight="SemiBold"/>
-       <ItemsControl ItemsSource="{Binding Amp.EqBControls}" Foreground="{DynamicResource AmpBandB}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/>
-       <ui:Button Content="{loc:Translate Text='Restaurar banda'}" Click="ResetBandClick" Tag="1" Appearance="Transparent" HorizontalAlignment="Left" IsEnabled="{Binding Amp.ChangeEqB}"/>
-      </StackPanel>
-     </WrapPanel>
+    <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource Card}" Padding="16" Margin="0,16,0,12"><StackPanel>
+     <TextBlock Text="{loc:Translate Text='Equalização'}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
      <Grid x:Name="ModernEq">
-      <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqPresentation}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Grid.Style>
       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="240"/></Grid.ColumnDefinitions>
       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
       <StackPanel x:Name="EqPlot">
@@ -185,7 +165,7 @@
         <TextBlock Text="B ┄" Foreground="{DynamicResource AmpBandB}" FontWeight="SemiBold" Margin="0,0,16,0"/>
         <TextBlock Text="{loc:Translate Text='Combinada'}" Foreground="{DynamicResource Muted}"/>
        </WrapPanel>
-       <controls:AmpEqGraph x:Name="EqGraph" ToolTip="{loc:Translate Text='Arraste A ou B: horizontal altera frequência; vertical altera reforço/corte.'}" Model="{Binding Amp}" BandABrush="{DynamicResource AmpBandA}" BandBBrush="{DynamicResource AmpBandB}" SelectedFilter="{Binding SelectedIndex,ElementName=EqFilter,Mode=TwoWay}" Height="320" AutomationProperties.Name="{loc:Translate Text='Equalização'}"/>
+       <controls:AmpEqGraph x:Name="EqGraph" ToolTip="{loc:Translate Text='Arraste A ou B: horizontal altera frequência; vertical altera reforço/corte. Role sobre A ou B para ajustar Q.'}" Model="{Binding Amp}" BandABrush="{DynamicResource AmpBandA}" BandBBrush="{DynamicResource AmpBandB}" SelectedFilter="{Binding SelectedIndex,ElementName=EqFilter,Mode=TwoWay}" Height="320" AutomationProperties.Name="{loc:Translate Text='Equalização'}"/>
        <TextBlock Text="{loc:Translate Text='Resposta calculada dos dois filtros; não é uma medição do amp.'}" Foreground="{DynamicResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,4,12,8"/>
       </StackPanel>
       <StackPanel x:Name="EqControlsPanel" Grid.Column="1" Margin="12,0,0,0">
@@ -206,7 +186,7 @@
      </Grid>
 
     </StackPanel></Border></ScrollViewer></TabItem>
-    <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource AmpPanel}"><StackPanel>
+    <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource Card}" Padding="16" Margin="0,16,0,12"><StackPanel>
      <TextBlock Text="{loc:Translate Text='Descrições baseadas em escuta'}" Foreground="{DynamicResource Muted}"/>
      <TextBlock Text="{loc:Translate Text='100% mantém a referência carregada.'}" Foreground="{DynamicResource Muted}" FontSize="12" Margin="0,4,0,12"/>
      <WrapPanel>
@@ -220,7 +200,7 @@
       </StackPanel>
      </WrapPanel>
     </StackPanel></Border></ScrollViewer></TabItem>
-    <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource AmpPanel}"><StackPanel>
+    <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource Card}" Padding="16" Margin="0,16,0,12"><StackPanel>
      <TextBlock Text="{loc:Translate Text='Descrições baseadas em escuta'}" Foreground="{DynamicResource Muted}"/>
      <TextBlock Text="{loc:Translate Text='100% mantém a referência carregada.'}" Foreground="{DynamicResource Muted}" FontSize="12" Margin="0,4,0,12"/>
      <WrapPanel>

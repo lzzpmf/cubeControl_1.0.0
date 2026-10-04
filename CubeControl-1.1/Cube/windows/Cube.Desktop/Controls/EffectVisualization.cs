@@ -37,7 +37,7 @@ public sealed class EffectVisualization : FrameworkElement
     private double[] current = new double[4], from = new double[4], target = new double[4];
     internal bool IsAnimating => timer.IsEnabled;
     private bool MotionAllowed => SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast && !ThemeService.Instance.IsHighContrast;
-    private bool CanAnimate => IsLoaded && IsVisible && owner?.IsVisible == true && owner.WindowState != WindowState.Minimized && Active && Mode is >= 1 and <= 4 && MotionAllowed && (Mode != 3 || Mix > 0);
+    private bool CanAnimate => IsLoaded && IsVisible && owner?.IsVisible == true && owner.WindowState != WindowState.Minimized && Active && Mode is >= 1 and <= 6 && MotionAllowed && (Mode != 3 || Mix > 0);
 
     public EffectVisualization()
     {
@@ -72,7 +72,7 @@ public sealed class EffectVisualization : FrameworkElement
     {
         Sample();
         from = (double[])current.Clone();
-        target = [Unit((Position - 1) / 6), Unit(Time / 31), Unit(Feedback / 127), Unit(Mix / (Mode == 4 ? 15 : 118))];
+        target = [Mode == 5 ? Unit(Position / 7) : Mode == 6 ? Unit(Position / 15) : Unit((Position - 1) / 6), Unit(Time / 31), Unit(Feedback / 127), Unit(Mix / (Mode == 4 ? 15 : 118))];
         transitionStart = clock.Elapsed.TotalSeconds;
         if (!interpolate || !CanAnimate) { current = (double[])target.Clone(); from = (double[])target.Clone(); }
         if (CanAnimate)
@@ -101,7 +101,7 @@ public sealed class EffectVisualization : FrameworkElement
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
-        if (ActualWidth < 32 || ActualHeight < 20 || Mode is < 1 or > 4) return;
+        if (ActualWidth < 32 || ActualHeight < 20 || Mode is < 1 or > 6) return;
         bool contrast = ThemeService.Instance.IsHighContrast;
         var accent = contrast ? ThemeService.Brush("CubeText") : Accent;
         var neutral = ThemeService.Brush("CubeBorder");
@@ -131,6 +131,18 @@ public sealed class EffectVisualization : FrameworkElement
         }
         switch (Mode)
         {
+            case 5:
+                // Illustrative saturation: more gain rounds off the wave peaks.
+                Curve(x => middle + Math.Sin(x * Math.PI * 4 - phase) * height * .35, neutral);
+                double drive = 1 + current[0] * 5;
+                Curve(x => middle + Math.Tanh(Math.Sin(x * Math.PI * 4 - phase) * drive)
+                    * height * (.35 + current[0] * .45), accent);
+                break;
+            case 6:
+                // Illustrative tonal balance, not a measured frequency response.
+                double tilt = current[0] * 2 - 1;
+                Curve(x => middle - tilt * Math.Tanh((x - .5) * 4) * height * .8, accent);
+                break;
             case 1:
                 Curve(x => middle + Math.Sin(x * Math.PI * 4) * height * .42, neutral);
                 double separation = .15 + current[0] * .95;

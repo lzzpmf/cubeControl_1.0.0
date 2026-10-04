@@ -5,6 +5,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Win32.SafeHandles;
@@ -67,13 +68,19 @@ internal static class FirmwareUpdater
             if (message.Finished) { final = message; break; }
         }
         await exit;
-        if (final?.Success != true) throw new IOException(final?.Text ?? "A atualização foi interrompida. Reconecte em modo flash antes de tentar novamente.");
+        if (final?.Success != true) throw new IOException(final?.Text ??
+            $"O auxiliar de atualização encerrou sem informar o resultado (código {worker.ExitCode}). Não foi possível confirmar a etapa da atualização.");
     }
 
     internal static int RunWorker(string[] args)
     {
         if (args.Length != 4) return 1;
-        using var pipe = new NamedPipeClientStream(".", args[3], PipeDirection.Out, PipeOptions.CurrentUserOnly);
+        // CurrentUserOnly on the elevated client compares the server owner with the
+        // elevated token owner (Administrators), rejecting the unelevated app's pipe.
+        // The server still restricts access to the current user. Identification also
+        // prevents the server from impersonating this elevated worker.
+        using var pipe = new NamedPipeClientStream(".", args[3], PipeDirection.Out,
+            PipeOptions.None, TokenImpersonationLevel.Identification);
         try { pipe.Connect(30000); } catch { return 1; }
         using var writer = new StreamWriter(pipe) { AutoFlush = true };
         void Report(UpdateMessage message) => writer.WriteLine(JsonSerializer.Serialize(message));

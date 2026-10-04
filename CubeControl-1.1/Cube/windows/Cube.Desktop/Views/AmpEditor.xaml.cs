@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 using Cube.Protocol;
 using System.Windows;
 using Cube.Desktop.Localization;
@@ -20,6 +20,13 @@ public partial class AmpEditor : UserControl
         AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler((_, _) => model.BeginGesture(this)), true);
         AddHandler(Mouse.MouseUpEvent, new MouseButtonEventHandler((_, _) => model.EndGesture(this)), true);
         Unloaded += (_, _) => model.EndGesture(this);
+        PreviewMouseWheel += (_, e) =>
+        {
+            if (!model.CanAdjustAmp || !EqGraph.IsVisible || EqGraph.FilterAt(e.GetPosition(EqGraph)) < 0) return;
+            model.BeginGesture(this);
+            try { e.Handled = EqGraph.AdjustQ(e.GetPosition(EqGraph), e.Delta); }
+            finally { model.EndGesture(this); }
+        };
         BaseSelector.ItemsSource = EquipmentCatalog.Amps.Select(a => a.Name).ToArray();
         foreach (string key in new[] { "AmpAccent", "AmpBandA", "AmpBandB", "CapacitorAmber", "CapacitorDisplay" }) ampBrushes[key] = Resources[key];
         Loaded += (_, _) => { ThemeService.Instance.Changed += UpdateColors; UpdateColors(); UpdateLayoutMode(); };
@@ -42,6 +49,7 @@ public partial class AmpEditor : UserControl
         bool headerWide = ActualWidth >= 800, eqWide = ActualWidth >= 960;
         AmpHeader.ColumnDefinitions[1].Width = headerWide ? GridLength.Auto : new GridLength(0);
         Grid.SetColumn(GlobalControls, headerWide ? 1 : 0); Grid.SetRow(GlobalControls, headerWide ? 0 : 1);
+        GlobalControls.Margin = new Thickness(0, headerWide ? 48 : 16, 0, 0);
         ModernEq.ColumnDefinitions[1].Width = new GridLength(eqWide ? 240 : 0);
         Grid.SetColumn(EqControlsPanel, eqWide ? 1 : 0); Grid.SetRow(EqControlsPanel, eqWide ? 0 : 1);
         EqControlsPanel.Margin = eqWide ? new Thickness(12, 0, 0, 0) : new Thickness(0, 8, 0, 0);

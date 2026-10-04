@@ -23,7 +23,11 @@ public sealed class ConnectionViewModel : Observable
         var foundInputs = await WindowsMidiConnection.Inputs();
         var foundOutputs = await WindowsMidiConnection.Outputs();
         Inputs = foundInputs; Outputs = foundOutputs;
-        Input = Inputs.FirstOrDefault(p => p.Name == "USB-Midi"); Output = Outputs.FirstOrDefault(p => p.Name == "USB-Midi");
+        var previousInput = Inputs.FirstOrDefault(p => p.Id == Input?.Id);
+        var previousOutput = Outputs.FirstOrDefault(p => p.Id == Output?.Id);
+        var selected = CubeMidiPorts.Select(Inputs, Outputs);
+        Input = previousInput != null && previousOutput != null ? previousInput : selected.Input;
+        Output = previousInput != null && previousOutput != null ? previousOutput : selected.Output;
 #endif
     }
 }

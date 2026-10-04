@@ -24,7 +24,7 @@ public sealed partial class EditorViewModel
     private string ImagePreferencesPath => Path.Combine(DataDirectory, "gear-images-v1.json");
     private int stage;
     public StageViewModel[] Stages { get; } =
-    [new(0, "Amp", "Caráter e ganho", "#D5AD7D"), new(1, "Chorus", "Chorus", "#80B8A8"), new(2, "Phaser", "Phaser", "#80B8A8"), new(3, "Delay", "Delay", "#82ACD2"), new(4, "Reverb", "Reverb", "#B49ACF"), new(5, "Cabinet", "Gabinete / IR", "#C5B77F")];
+    [new(0, "Amp", "Caráter e ganho", "#D5AD7D"), new(1, "Chorus", "Chorus", "#80B8A8"), new(2, "Phaser", "Phaser", "#D9A071"), new(3, "Delay", "Delay", "#82ACD2"), new(4, "Reverb", "Reverb", "#B49ACF"), new(5, "Cabinet", "Gabinete / IR", "#C5B77F")];
     public int SelectedStage { get => stage; set { if (value >= 0 && value < Stages.Length && Set(ref stage, value)) RefreshEditor(); } }
     public StageViewModel Stage => Stages[stage];
     public bool IsAmp => stage == 0;
@@ -112,7 +112,7 @@ public sealed partial class EditorViewModel
         catch (Exception ex) { ErrorMessage = Status = "Preferências não carregadas: " + ex.Message; }
         Amps = EquipmentCatalog.Amps.Select((reference, i) => WithImage(new GearItem($"amp-{i}", i,
             reference.Name, reference.Category, "amp", "#D5AD7D", reference.Description, reference.Alias))).ToArray();
-        Effects = [WithImage(new("chorus", 0, "Chorus", "Modulação", "chorus", "#80B8A8")), WithImage(new("phaser", 1, "Phaser", "Modulação", "phaser", "#80B8A8")), WithImage(new("delay", 2, "Delay", "Repetições", "delay", "#82ACD2")), WithImage(new("reverb", 3, "Reverb", "Ambiência", "reverb", "#B49ACF"))];
+        Effects = [WithImage(new("chorus", 0, "Chorus", "Modulação", "chorus", "#80B8A8")), WithImage(new("phaser", 1, "Phaser", "Modulação", "phaser", "#D9A071")), WithImage(new("delay", 2, "Delay", "Repetições", "delay", "#82ACD2")), WithImage(new("reverb", 3, "Reverb", "Ambiência", "reverb", "#B49ACF"))];
         RebuildCabinets();
         Undo = Command(UndoAsync, () => CanEdit && history.CanUndo, changesEffects: true);
         MatchCabinet = new UiCommand(() => QueueAmpMatch(null), () => CanMatch);

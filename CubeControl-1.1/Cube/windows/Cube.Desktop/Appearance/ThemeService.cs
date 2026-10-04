@@ -196,7 +196,7 @@ public sealed class ThemeService
         resources["Muted"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("TextFillColorSecondaryBrush");
         resources["CubeDisabledText"] = IsHighContrast ? SystemColors.GrayTextBrush : Brush("TextFillColorDisabledBrush");
         resources["CubeWarning"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("SystemFillColorCautionBrush");
-        Set("CubePhaserGraph", "#FA6904", "#AF4903", SystemColors.WindowTextBrush);
+        Set("CubePhaserGraph", "#D9A071", "#965622", SystemColors.WindowTextBrush);
         Set("CubePurple", "#B4A4D6", "#67508F", SystemColors.WindowTextBrush);
         Set("CubeKnobBase", "#202020", "#DCE3E8", SystemColors.WindowBrush);
         Set("CubeKnobTop", "#555555", "#FFFFFF", SystemColors.WindowBrush);
@@ -213,7 +213,7 @@ public sealed class ThemeService
         if (!Instance.IsLight) return color;
         return color.ToUpperInvariant() switch
         {
-            "#D5AD7D" => "#82551F", "#80B8A8" => "#226E59", "#82ACD2" => "#2D638B", "#B49ACF" => "#765394", "#C5B77F" => "#726021", _ => "#53626D"
+            "#D5AD7D" => "#82551F", "#80B8A8" => "#226E59", "#D9A071" => "#965622", "#82ACD2" => "#2D638B", "#B49ACF" => "#765394", "#C5B77F" => "#726021", _ => "#53626D"
         };
     }
 }

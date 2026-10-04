@@ -55,7 +55,7 @@ public sealed class AmpEqGraph : FrameworkElement
     private void Refresh() => InvalidateVisual();
     private void ModelPropertyChanged(object? sender, PropertyChangedEventArgs e) => InvalidateVisual();
     private double X(double hz) => Plot.Left + Math.Log(hz / 20) / Math.Log(1000) * Plot.Width;
-    private double Y(double db) => Plot.Top + (24 - db) / 48 * Plot.Height;
+    private double Y(double db) => Plot.Top + (12 - db) / 24 * Plot.Height;
     private void Text(DrawingContext dc, string text, Point at, Brush brush) => dc.DrawText(
         new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), 11, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip), at);
     private static double Response(double[] c, double hz)
@@ -76,7 +76,7 @@ public sealed class AmpEqGraph : FrameworkElement
             double x = X(hz); dc.DrawLine(new Pen(grid, 1), new(x, Plot.Top), new(x, Plot.Bottom));
             Text(dc, hz >= 1000 ? $"{hz / 1000:0}k" : $"{hz:0}", new(x - 8, Plot.Bottom + 6), foreground);
         }
-        foreach (int db in new[] { -24, -12, 0, 12, 24 })
+        foreach (int db in new[] { -12, -6, 0, 6, 12 })
         {
             double y = Y(db); dc.DrawLine(new Pen(grid, db == 0 ? 1.5 : .5), new(Plot.Left, y), new(Plot.Right, y));
             Text(dc, $"{db} dB", new(0, y - 7), foreground);
@@ -119,6 +119,31 @@ public sealed class AmpEqGraph : FrameworkElement
                 AutomationProperties.SetHelpText(this, $"EQ {(i == 0 ? "A" : "B")}: {controls[0].Display}; {controls[1].Display}; Q {controls[2].Display}");
         }
     }
+    public int FilterAt(Point at)
+    {
+        if (!IsEnabled || Model is not { Loaded: true } model) return -1;
+        int found = -1;
+        double best = 20;
+        for (int i = 0; i < 2; i++)
+        {
+            var controls = i == 0 ? model.EqAControls : model.EqBControls;
+            if (controls.Length != 3) continue;
+            double distance = (at - new Point(X(controls[0].Number), Y(controls[1].Number))).Length;
+            if (distance < best || (distance == best && i == SelectedFilter))
+            { best = distance; found = i; }
+        }
+        return found;
+    }
+    public bool AdjustQ(Point at, int delta)
+    {
+        int filter = FilterAt(at);
+        if (filter < 0 || Model == null || delta == 0) return false;
+        SelectedFilter = filter;
+        var q = (filter == 0 ? Model.EqAControls : Model.EqBControls)[2];
+        double step = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 ? .01 : .1;
+        q.SetNumber(Math.Clamp(q.Number + delta / 120d * step, q.Minimum, q.Maximum));
+        return true;
+    }
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
         if (!IsEnabled || Model is not { Loaded: true }) return;
@@ -140,7 +165,7 @@ public sealed class AmpEqGraph : FrameworkElement
         var controls = SelectedFilter == 0 ? Model.EqAControls : Model.EqBControls;
         double factor = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 ? .1 : 1;
         double hz = Math.Clamp(controls[0].Number * Math.Pow(1000, (at.X - previous.X) * factor / Plot.Width), 20, 20000);
-        double db = Math.Clamp(controls[1].Number - (at.Y - previous.Y) * factor * 48 / Plot.Height, -12, 12);
+        double db = Math.Clamp(controls[1].Number - (at.Y - previous.Y) * factor * 24 / Plot.Height, -12, 12);
         changed |= Math.Abs(hz - controls[0].Number) > 1e-10 || Math.Abs(db - controls[1].Number) > 1e-10;
         controls[0].SetNumber(hz); controls[1].SetNumber(db); previous = at;
     }

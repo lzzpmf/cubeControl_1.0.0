@@ -13,6 +13,16 @@ internal static class Program
     [STAThread]
     static int Main()
     {
+        if (Environment.GetCommandLineArgs().Contains("--midi-ports-only"))
+        {
+            try { MidiPortSelectionTests.Run(); return 0; }
+            catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
+        }
+        if (Environment.GetCommandLineArgs().Contains("--firmware-worker-only"))
+        {
+            try { FirmwareWorkerTests.Run().GetAwaiter().GetResult(); return 0; }
+            catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
+        }
         if (Environment.GetCommandLineArgs().Contains("--usability")) return QaUsability.RunMain(Environment.GetCommandLineArgs().Skip(1).ToArray());
         if (Environment.GetCommandLineArgs().Contains("--qa")) return QaDesktop.RunMain(Environment.GetCommandLineArgs().Skip(1).ToArray());
         var app = new Cube.Desktop.App { ShutdownMode = ShutdownMode.OnExplicitShutdown }; app.InitializeComponent();

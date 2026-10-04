@@ -4,6 +4,7 @@ public partial class App : Application
 {
     static App()
     {
+        Appearance.PopupMotion.Initialize();
         // Hide chrome only; retain ScrollViewer offsets, wheel and keyboard scrolling.
         EventManager.RegisterClassHandler(typeof(System.Windows.Controls.Primitives.ScrollBar), FrameworkElement.LoadedEvent,
             new RoutedEventHandler((sender, _) =>

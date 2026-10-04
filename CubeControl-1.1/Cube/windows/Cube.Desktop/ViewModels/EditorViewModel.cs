@@ -112,7 +112,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Delay.Edited += DelayEdited;
         RefreshPorts = Command(async () => { SearchingPorts = true;
         try { await Connection.Refresh(); }
-        finally { SearchingPorts = false; } Status = Connection.Input == null ? "USB-Midi não encontrado. Verifique o cabo de dados." : "USB-Midi encontrado. Conecte para ler os presets."; }, () => CanConnect);
+        finally { SearchingPorts = false; } Status = Connection.Input == null ? "Portas MIDI do Cube Baby não selecionadas. Verifique o cabo USB e os detalhes da conexão." : "Cube Baby encontrado. Conecte para ler os presets."; }, () => CanConnect);
         Connect = Command(ConnectAsync, () => CanConnect);
         Disconnect = Command(DisconnectAsync, () => Connected && !Busy, changesEffects: true);
         Reload = Command(async () => { if (!Dirty || await Ask("Reler o banco atual e descartar as alterações locais?")) { await RestorePreviewAsync(); await LoadBank(); Completed("Presets atualizados com a leitura do pedal."); } }, () => Connected && !Busy, changesEffects: true);
@@ -248,7 +248,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     {
         if (Dirty && !automaticConnectionAttempt && !await Ask("Há uma edição local não salva. Conectar e substituí-la pela leitura do pedal?")) return;
         await Connection.Refresh();
-        if (Connection.Input == null || Connection.Output == null) throw new InvalidOperationException("USB-Midi não encontrado. Verifique o cabo de dados.");
+        if (Connection.Input == null || Connection.Output == null) throw new InvalidOperationException("Portas MIDI do Cube Baby não selecionadas. Verifique o cabo USB e os detalhes da conexão.");
         BusyDetail = Status = "Identificando Cube Baby…";
 #if CUBE_SIMULATION
         var opened = new CubeSession(simulatedDevice);

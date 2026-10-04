@@ -83,7 +83,7 @@ public sealed class Knob : FrameworkElement
     private bool gestureActive;
     public Knob()
     {
-        Focusable = true; Cursor = Cursors.Hand; MinWidth = 48; MinHeight = 48;
+        Focusable = true; FocusVisualStyle = null; Cursor = Cursors.Hand; MinWidth = 48; MinHeight = 48;
         // Smooth the official textures when reduced and rotated at UI sizes.
         RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
         SetResourceReference(ThemeRevisionProperty, "CubeThemeRevision");
@@ -131,7 +131,7 @@ public sealed class Knob : FrameworkElement
                 else
                 {
                     dc.DrawLine(new Pen(accent, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new(center.X, bottom), new(center.X, handleY));
-                    dc.DrawRoundedRectangle(IsKeyboardFocused ? ThemeService.Brush("CubeSelected") : ThemeService.Brush("CubeKnobTop"),
+                    dc.DrawRoundedRectangle(ThemeService.Brush("CubeKnobTop"),
                         new Pen(ThemeService.Brush("CubeKnobTrack"), 1), new Rect(center.X - 15, handleY - 10, 30, 20), 4, 4);
                     dc.DrawLine(new Pen(accent, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new(center.X - 8, handleY), new(center.X + 8, handleY));
                 }
@@ -151,7 +151,6 @@ public sealed class Knob : FrameworkElement
                 dc.DrawImage(OfficialKnob, new Rect(center.X - radius + 4, center.Y - radius + 4, (radius - 4) * 2, (radius - 4) * 2));
                 dc.Pop();
             }
-            if (IsKeyboardFocused) dc.DrawRoundedRectangle(null, new Pen(accent, 1), new Rect(1, 1, ActualWidth - 2, ActualHeight - 2), 4, 4);
             dc.Pop(); return;
         }
         dc.DrawEllipse(ThemeService.Brush("CubeKnobBase"), new Pen(ThemeService.Brush("CubeKnobTrack"), 2), center, radius, radius);
@@ -162,7 +161,7 @@ public sealed class Knob : FrameworkElement
         var end = new Point(center.X + Math.Cos(angle) * (radius - 6), center.Y + Math.Sin(angle) * (radius - 6));
         var from = new Point(center.X + Math.Cos(angle) * radius * 0.35, center.Y + Math.Sin(angle) * radius * 0.35);
         var face = new LinearGradientBrush(((SolidColorBrush)ThemeService.Brush("CubeKnobTop")).Color, ((SolidColorBrush)ThemeService.Brush("CubeKnobBottom")).Color, 90);
-        dc.DrawEllipse(IsKeyboardFocused ? ThemeService.Brush("CubeSelected") : face, new Pen(ThemeService.Brush("CubeKnobTrack"), 1), center, radius - 5, radius - 5);
+        dc.DrawEllipse(face, new Pen(ThemeService.Brush("CubeKnobTrack"), 1), center, radius - 5, radius - 5);
         dc.DrawLine(new Pen(accent, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, from, end);
         dc.Pop();
     }

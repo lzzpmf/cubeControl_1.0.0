@@ -32,7 +32,7 @@ public sealed class EffectGraphEditor : Grid
     private readonly WrapPanel choices = new() { MinHeight = 36 };
     private readonly TextBlock footer = new() { Margin = new Thickness(24, 8, 24, 12), FontSize = 11, TextWrapping = TextWrapping.Wrap };
     private readonly TextBlock caption = new() { TextWrapping = TextWrapping.Wrap, FontSize = 14, FontWeight = FontWeights.SemiBold };
-    private readonly Wpf.Ui.Controls.Button number = new() { Padding = new Thickness(6, 2, 6, 2), HorizontalAlignment = HorizontalAlignment.Left };
+    private readonly Wpf.Ui.Controls.Button number = new() { HorizontalAlignment = HorizontalAlignment.Left };
     private readonly TextBlock numberText = new() { TextWrapping = TextWrapping.Wrap, MinHeight = 34, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBox entry = new() { Visibility = Visibility.Collapsed, MinWidth = 100 };
     private readonly TextBlock help = new() { FontSize = 12, TextWrapping = TextWrapping.Wrap, MinHeight = 44 };
@@ -368,8 +368,8 @@ public sealed class EffectGraphEditor : Grid
         {
             var button = new Wpf.Ui.Controls.Button
             {
-                Content = T(label), Tag = value, Padding = new Thickness(8, 3, 8, 3),
-                Margin = new Thickness(0, 2, 8, 2), MinHeight = 32
+                Content = T(label), Tag = value,
+                Margin = new Thickness(0, 2, 8, 2)
             };
             button.Click += (_, _) => { if (IsEnabled) action(); };
             choices.Children.Add(button);

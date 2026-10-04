@@ -80,6 +80,8 @@ Use `-Simulation` no mesmo script. Ele inclui `FakeConnection.cs` e define `CUBE
 
 Os comandos abaixo executam suítes de teste; não geram pacote de distribuição. Os testes são **programas executáveis**, acionados por `dotnet run`; não são suítes descobertas por `dotnet test`.
 
+O modo desktop `--firmware-worker-only` testa a comunicação com o auxiliar elevado e pode solicitar autorização do Windows. Usa uma extensão inválida, garantindo rejeição antes de enumerar ou acessar o pedal; não grava firmware.
+
 ```powershell
 dotnet run --project .\CubeControl-1.1\Cube\windows\Cube.Tests -c Release
 dotnet run --project .\CubeControl-1.1\Cube\windows\Cube.Desktop.Tests -c Release -- --responsive-only

@@ -411,12 +411,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (FooterActions.Parent is Panel parent) parent.Children.Remove(FooterActions);
         content.Children.Add(FooterActions);
     }
+    // Prevent ListBoxItem from focusing/selecting on right-click in navigation controls.
+    private void IgnoreSelectorRightClick(object sender, MouseButtonEventArgs e) => e.Handled = true;
+
     private int chainWheelDelta;
     private void EditorPageWheel(object sender, MouseWheelEventArgs e)
     {
         // Preserve controls whose wheel has a musical/navigation meaning.
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null && node != EditorScroll;)
         {
+            if (node is Controls.AmpEqGraph eq && eq.FilterAt(e.GetPosition(eq)) >= 0) return;
             if (node is Controls.Knob { IsEnabled: true }
                 || (node == EffectChain && Model.HasBank)
                 || (node == FocusedArt && Model.HasGallery)) return;
@@ -620,6 +624,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         int next = Math.Clamp(index - steps, 0, choices.Length - 1);
         if (next != index)
         {
+            EquipmentImageButton.AnimateScrollChevron(Math.Sign(next - index));
             FocusedArt.AnimateScroll(Math.Sign(next - index));
             Model.ChooseGear(choices[next]);
         }

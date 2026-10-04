@@ -25,34 +25,32 @@
       </RepeatButton>
      </Track.IncreaseRepeatButton>
     </Track>
-    <Border x:Name="FaderFocus" BorderBrush="{DynamicResource CubeAccent}" BorderThickness="1" CornerRadius="4" IsHitTestVisible="False" Visibility="Collapsed"/>
    </Grid>
    <ControlTemplate.Triggers>
     <Trigger Property="IsEnabled" Value="False"><Setter TargetName="FaderRoot" Property="Opacity" Value="0.4"/></Trigger>
-    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="FaderFocus" Property="Visibility" Value="Visible"/></Trigger>
    </ControlTemplate.Triggers>
   </ControlTemplate>
   <Style TargetType="Slider" BasedOn="{StaticResource {x:Type Slider}}">
+   <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Style.Triggers><Trigger Property="Orientation" Value="Horizontal"><Setter Property="Template" Value="{StaticResource OfficialHorizontalFaderTemplate}"/></Trigger></Style.Triggers>
   </Style>
-  <ImageBrush x:Key="OfficialSwitchOn" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_on.png" Viewbox="0.16,0.36,0.66,0.25" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
-  <ImageBrush x:Key="OfficialSwitchOff" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_off.png" Viewbox="0.16,0.36,0.66,0.25" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
+  <ImageBrush x:Key="OfficialSwitchOn" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_on.png" Viewbox="0.24,0.37,0.50,0.225" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
+  <ImageBrush x:Key="OfficialSwitchOff" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_off.png" Viewbox="0.24,0.37,0.50,0.225" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
   <Style TargetType="ui:ToggleSwitch" BasedOn="{StaticResource {x:Type ui:ToggleSwitch}}">
+   <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Setter Property="MinHeight" Value="32"/>
    <Setter Property="Template"><Setter.Value>
     <ControlTemplate TargetType="ui:ToggleSwitch">
      <Border x:Name="SwitchRoot" Background="Transparent" Padding="{TemplateBinding Padding}">
       <Grid>
        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-       <Border x:Name="SwitchFace" Width="64" Height="26" VerticalAlignment="Center" Background="{StaticResource OfficialSwitchOff}" RenderOptions.BitmapScalingMode="HighQuality"/>
-       <ContentPresenter Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"/>
-       <Border x:Name="SwitchFocus" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="{DynamicResource CubeAccent}" CornerRadius="4" Visibility="Collapsed" IsHitTestVisible="False"/>
+       <Border x:Name="SwitchFace" Width="56" Height="26" VerticalAlignment="Center" Background="{StaticResource OfficialSwitchOff}" RenderOptions.BitmapScalingMode="HighQuality"/>
+       <ContentPresenter Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{DynamicResource CubeText}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"/>
       </Grid>
      </Border>
      <ControlTemplate.Triggers>
       <Trigger Property="IsChecked" Value="True"><Setter TargetName="SwitchFace" Property="Background" Value="{StaticResource OfficialSwitchOn}"/></Trigger>
       <Trigger Property="IsEnabled" Value="False"><Setter TargetName="SwitchRoot" Property="Opacity" Value="0.4"/></Trigger>
-      <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="SwitchFocus" Property="Visibility" Value="Visible"/></Trigger>
      </ControlTemplate.Triggers>
     </ControlTemplate>
    </Setter.Value></Setter>
@@ -78,8 +76,8 @@
    <Grid Background="Transparent">
     <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
     <StackPanel x:Name="CarouselHint" IsHitTestVisible="False" Visibility="Collapsed" Opacity="0.65" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0">
-     <ui:SymbolIcon Symbol="ChevronUp24" FontSize="20" Foreground="{DynamicResource CubeText}" Margin="0,0,0,12"/>
-     <ui:SymbolIcon Symbol="ChevronDown24" FontSize="20" Foreground="{DynamicResource CubeText}"/>
+     <ui:SymbolIcon x:Name="CarouselUpChevron" Symbol="ChevronUp24" FontSize="20" Foreground="{DynamicResource CubeText}" Margin="0,0,0,12"/>
+     <ui:SymbolIcon x:Name="CarouselDownChevron" Symbol="ChevronDown24" FontSize="20" Foreground="{DynamicResource CubeText}"/>
     </StackPanel>
    </Grid>
    <ControlTemplate.Triggers>
@@ -247,8 +245,12 @@
   <Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="{DynamicResource CubeCard}"/><Setter Property="CornerRadius" Value="14"/><Setter Property="Padding" Value="24"/><Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}"/><Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/></Style>
   <!-- Keep native WPF UI templates/states, with one comfortable command-button density. -->
   <Style x:Key="CubeButtonStyle" TargetType="ui:Button" BasedOn="{StaticResource DefaultUiButtonStyle}">
-   <Setter Property="Padding" Value="16,8"/><Setter Property="MinHeight" Value="40"/>
+   <Setter Property="Padding" Value="16,8"/><Setter Property="MinHeight" Value="40"/><Setter Property="MinWidth" Value="0"/><Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="VerticalAlignment" Value="Center"/>
    <Setter Property="FontSize" Value="14"/><Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+  </Style>
+  <Style x:Key="CubeIconButtonStyle" TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}">
+   <Setter Property="Width" Value="40"/><Setter Property="Height" Value="40"/><Setter Property="Padding" Value="0"/>
+   <Setter Property="Margin" Value="0,0,8,8"/>
   </Style>
   <Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Setter Property="Margin" Value="0,0,8,8"/></Style>
   <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}"><Setter Property="MinWidth" Value="160"/><Setter Property="Margin" Value="0,0,12,0"/></Style>
@@ -262,7 +264,6 @@
     <ControlTemplate.Triggers>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeInset}"/></Trigger>
      <Trigger Property="IsSelected" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeSelected}"/><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource CubeAccent}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></Trigger>
-     <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></Trigger>
      <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeCard}"/><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource CubeBorder}"/><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/></Trigger>
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>

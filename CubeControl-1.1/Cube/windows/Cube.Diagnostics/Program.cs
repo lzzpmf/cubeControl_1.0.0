@@ -101,6 +101,19 @@ if (args.Length > 0 && args[0] is "phaser-snapshot" or "phaser-map" or "phaser-s
 var inputs = await WindowsMidiConnection.Inputs();
 var outputs = await WindowsMidiConnection.Outputs();
 Console.WriteLine(JsonSerializer.Serialize(new { inputs, outputs }, new JsonSerializerOptions { WriteIndented = true }));
+if (args.Length > 0 && args[0] == "probe-cube")
+{
+    var ports = CubeMidiPorts.Select(inputs, outputs);
+    if (ports.Input == null || ports.Output == null)
+        throw new InvalidOperationException("Nenhum par MIDI Cube Baby único encontrado.");
+    using var probe = new CubeSession(await WindowsMidiConnection.Open(ports.Input.Id, ports.Output.Id));
+    await probe.Identify();
+    var probeBank = await probe.ReadBank();
+    CubeBabyProfile.ValidateBank(probeBank);
+    Console.WriteLine(JsonSerializer.Serialize(new { identity = probe.Identity, identityHex = probe.IdentityHex,
+        bankHex = Convert.ToHexString(probeBank), writes = 0 }));
+    return;
+}
 if (args.Length > 0 && args[0] is "observe-state" or "snapshot-state" or "firmware-state")
 {
     if (args[0] == "firmware-state" && (System.Diagnostics.Process.GetProcessesByName("CubeControl").Length != 0 ||
