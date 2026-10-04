@@ -128,7 +128,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Ir.PropertyChanged += (_, _) => RefreshPresentation();
         RestoreIr = Command(RestoreIrAsync, () => CanOperate, changesEffects: true);
         ResetPresets = Command(ResetPresetsAsync, () => CanOperate && factory != null, changesEffects: true);
-        ApplyIrPack = Command(ApplyIrPackAsync, () => CanOperate && SelectedIrPack != null, changesEffects: true);
+        ApplyIrPack = Command(ApplyIrPackAsync, () => CanOperate && SelectedIrPack != null && SelectedIrPack.Problem.Length == 0, changesEffects: true);
         InitializeFirmware();
         LoadFactory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CubeSuite", "CubeSuite.exe"));
     }
@@ -675,9 +675,8 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     {
         try { factory = FactoryResources.Load(path); }
         catch (Exception) { factory = null; }
-        IrPacks = IrPackCatalog.LoadAvailable(Path.Combine(Path.GetDirectoryName(path)!, "bin"));
-        SelectedIrPack = IrPacks.FirstOrDefault();
-        Notify(nameof(IrPacks));
+        originalPacks = IrPackCatalog.LoadAvailable(Path.Combine(Path.GetDirectoryName(path)!, "bin"));
+        ReloadIrPacks();
         inventory.SetBfiReference(factory);
         inventory.Clear(); RebuildCabinets();
         Refresh();
@@ -692,13 +691,15 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     private async Task ApplyIrPackAsync()
     {
         var pack = SelectedIrPack ?? throw new InvalidOperationException("Selecione um pack de IRs.");
+        if (pack.Definition != null) pack = PackStore.Resolve(pack.Definition);
+        if (pack.Problem.Length > 0) throw new FormatException("Pendências: " + pack.Problem);
         await RestorePreviewAsync(); var originals = new byte[8][];
         for (int i = 0; i < 8; i++) { BusyDetail = Status = $"Leitura do IR {i + 1}/8…"; originals[i] = await session!.ReadIrSlot(i, Progress()); await BackupIr(i, originals[i]); }
-        var different = Enumerable.Range(0, 8).Select(i => !originals[i].SequenceEqual(pack.Sectors[i])).ToArray();
+        var different = Enumerable.Range(0, 8).Select(i => pack.HasSlot(i) && !originals[i].SequenceEqual(pack.Sectors[i])).ToArray();
         for (int i = 0; i < 8; i++) UpdateCabinet(i, originals[i]);
         if (!different.Any(value => value))
         {
-            Status = Ir.State = "Os oito IRs já correspondem ao pack selecionado. Nenhuma gravação necessária.";
+            Status = Ir.State = "Os slots preenchidos já correspondem ao pack selecionado. Nenhuma gravação necessária.";
             Completed(Status); return;
         }
         var selection = ChoosePackIrSlots != null ? await ChoosePackIrSlots(different) : await ShowPackIrSelection(pack, different);
@@ -706,11 +707,27 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         if (selected == null || selected.Length == 0) { Status = "Restauração de IRs cancelada."; return; }
         if (selected.Any(i => i < 0 || i >= 8 || !different[i])) throw new InvalidOperationException("Seleção de IRs inválida.");
         if (!await Ask($"Aplicar {pack.Name} nos slots: {string.Join(", ", selected.Select(i => i + 1))}?\nOs IRs atuais foram preservados em memória nesta sessão. Somente os slots selecionados serão substituídos.")) return;
-        foreach (int i in selected)
+        var completedSlots = new List<int>();
+        try
         {
-            int slot = i; BusyDetail = Status = $"Aplicando {pack.Name} no slot {i + 1}…";
-            await session!.ReplaceIr(i, originals[i], pack.Sectors[i], async bytes => { await BackupIr(slot, bytes); }, Progress());
-            UpdateCabinet(i, pack.Sectors[i]);
+            foreach (int i in selected)
+            {
+                int slot = i; BusyDetail = Status = $"Aplicando {pack.Name} no slot {i + 1}…";
+                await session!.ReplaceIr(i, originals[i], pack.Sectors[i], async bytes => { await BackupIr(slot, bytes); }, Progress());
+                completedSlots.Add(i + 1);
+                if (pack.Definition != null)
+                {
+                    string hash = CabinetInventory.Hash(pack.Sectors[i]);
+                    preferences.IrNames[hash] = pack.SlotName(i);
+                    resolvedIrNames[hash] = pack.SlotName(i);
+                    SavePackIrNames();
+                }
+                UpdateCabinet(i, pack.Sectors[i]);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Aplicação interrompida. Slots concluídos: {string.Join(", ", completedSlots)}. {ex.Message}", ex);
         }
         Ir.SlotInfo = $"{pack.Name} aplicado e conferido nos slots: {string.Join(", ", selected.Select(i => i + 1))}."; Status = Ir.State = Ir.SlotInfo;
         Completed(Status);

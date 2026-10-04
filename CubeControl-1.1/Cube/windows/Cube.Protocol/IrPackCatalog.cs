@@ -4,6 +4,13 @@ namespace Cube.Protocol;
 
 public sealed record IrPack(string Id, string Name, byte[][] Sectors)
 {
+    public string Description { get; init; } = "";
+    public string Group { get; init; } = "Originais BFI/BFIN";
+    public IrPackDefinition? Definition { get; init; }
+    public string Problem { get; init; } = "";
+    public string SlotName(int slot) => Definition?.Entries.FirstOrDefault(e => e.Slot == slot)?.Name
+        ?? (Definition != null ? "Preservar slot" : IrPackCatalog.CabinetName(Id, slot));
+    public bool HasSlot(int slot) => Definition == null || Definition.Entries.Any(e => e.Slot == slot);
     public override string ToString() => Name;
 }
 

@@ -1,0 +1,652 @@
+[
+  {
+    "Version": 1,
+    "Id": "4dca5dc767cc59a3a148cc22e1b4b993",
+    "Name": "Palco Versátil",
+    "Description": "Repertório variado: limpos e distorções.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/Blend Of All - DC.wav",
+        "Sha256": "0C38306C4280538FC4BE6F8B68EF6037C035B6070AB379C0A8146C80CD3B78E8",
+        "Name": "Marshall · 4x12 · 1960AV · Blend Of All - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "EB49DEFF8B6A98E6C8929450B788E1FB91E27B6A75E6A6EF0867E2046542AB25",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/1.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "4D4AC53CBC54A56B54520BE4B51D01D42ABEAF5233B85D66D8D9FAF260852291",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 1.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "da078e35cd4e50f1be01fd6f6bba234b",
+    "Name": "Fender — Clean & Blues",
+    "Description": "Limpos, blues, country e dinâmica.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Clean.wav",
+        "Sha256": "46D47C497938FA8AAF1E375DC13F5A05BFDAB51E30832440DAAE28ED7CDBD840",
+        "Name": "Fender · 2x12 · Twin Reverb · Clean",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Midrange.wav",
+        "Sha256": "F156C1E6A1EE348045BA8ACA3C734FA686634D81CE30B8E2C1299AA24CBDC815",
+        "Name": "Fender · 2x12 · Twin Reverb · Midrange",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "fd76b43e194f5bd78a7564bb2db05b30",
+    "Name": "Marshall — Classic Rock",
+    "Description": "Blues-rock e rock clássico.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/Blend Of All - DC.wav",
+        "Sha256": "0C38306C4280538FC4BE6F8B68EF6037C035B6070AB379C0A8146C80CD3B78E8",
+        "Name": "Marshall · 4x12 · 1960AV · Blend Of All - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/RB500 - DC.wav",
+        "Sha256": "0E3F3C82CFEF11221DF4CEE9E302E0055EE7F5F10B25FD48282454792740FF55",
+        "Name": "Marshall · 4x12 · 1960AV · RB500 - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/SC1100 - DC.wav",
+        "Sha256": "F47D26DE533111C44BE13AE91CF87F2855FE03999DA2C7549E576226BAD9EDA6",
+        "Name": "Marshall · 4x12 · 1960AV · SC1100 - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/V7X - DC.wav",
+        "Sha256": "24FF79A21340599A287DE6E20FE4389B106E8D4BC111F8C44EDD3D28047B76D6",
+        "Name": "Marshall · 4x12 · 1960AV · V7X - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.00 Inches - 0.0 Inches - SA73.wav",
+        "Sha256": "7E50B41EA90BE782073D1F3C94772395B8B008D521614C5B7B1D7B72F2674590",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.00 Inches - 0.0 Inches - SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/1.00 Inches - 0.0 Inches - SA73.wav",
+        "Sha256": "C0B052B0F8ADB65001208B3DE3A323CBBA013F7C0F3306F609BDDD797242E835",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 1.00 Inches - 0.0 Inches - SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/2.00 Inches - 0.0 Inches - SA73.wav",
+        "Sha256": "87344C467DDC1F77BF7D6999520BA482EFC499AA3E2BA8C4BCC568DEAD073541",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 2.00 Inches - 0.0 Inches - SA73",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "0cf0c1c1fee85400b8eb769dfa7ffcdb",
+    "Name": "Mesa — Heavy & Lead",
+    "Description": "Bases pesadas e solos.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "EB49DEFF8B6A98E6C8929450B788E1FB91E27B6A75E6A6EF0867E2046542AB25",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/1.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "4D4AC53CBC54A56B54520BE4B51D01D42ABEAF5233B85D66D8D9FAF260852291",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 1.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/2.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "6147592C088788D6E402B1D545B1E6ECF013DB3D9E921CE7CA697E516BDCE0C2",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 2.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - UL/0.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "EF07CF54DD2241C6E33A862648F43A9514FFA12510AF71AFBCD308D5D7205C89",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - UL · 0.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - UL/1.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "5C804EC28D296F08CCC46BCC5B9472275B358829DDD442F3506471527DCE61DA",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - UL · 1.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - UL/2.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "3736C6333C40828A85676DC816DE15E3B960F865AC26815C12057B01F545E693",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - UL · 2.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "a5ce13c9543b54ac8794170627ed6261",
+    "Name": "Orange — Alternative",
+    "Description": "Rock alternativo, stoner e texturas com drive.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - C.wav",
+        "Sha256": "172BC5584BD5BCA9B40118DC802517CE11FC3605C967A7871E7074F9CD636880",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/RM700 - A.wav",
+        "Sha256": "3FA5046FB32FD5503E8D7B9E12AF1FE4E51AE91C6E61BA6926E617390C6544D3",
+        "Name": "Orange · 2x12 · Vintage 30 · RM700 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/RM700 - C.wav",
+        "Sha256": "515AC2279F7391495AB9C488085B272285E65B0455325A0F8B3C0BB17AF14B1E",
+        "Name": "Orange · 2x12 · Vintage 30 · RM700 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Sennheiser E906 - A.wav",
+        "Sha256": "2813DD76909157D24FF4BDD3DD070AC69E3028A9D3D3BA810956341C355D3A99",
+        "Name": "Orange · 2x12 · Vintage 30 · Sennheiser E906 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Shure SM57 - A.wav",
+        "Sha256": "BA2817D0DB6861A35FA5BE6BEB3D7646DE5D3C6FED7739AA41D2B23A02B4730F",
+        "Name": "Orange · 2x12 · Vintage 30 · Shure SM57 - A",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "84293987cf5a52c28e7e63a00e2d7258",
+    "Name": "Blues & Soul",
+    "Description": "Limpos e crunch para blues e soul.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Clean.wav",
+        "Sha256": "46D47C497938FA8AAF1E375DC13F5A05BFDAB51E30832440DAAE28ED7CDBD840",
+        "Name": "Fender · 2x12 · Twin Reverb · Clean",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/Blend Of All - DC.wav",
+        "Sha256": "0C38306C4280538FC4BE6F8B68EF6037C035B6070AB379C0A8146C80CD3B78E8",
+        "Name": "Marshall · 4x12 · 1960AV · Blend Of All - DC",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "7c92108de16a51c1808322d245a1f5f0",
+    "Name": "Country & Pop Clean",
+    "Description": "Bases limpas para country e pop.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Clean.wav",
+        "Sha256": "46D47C497938FA8AAF1E375DC13F5A05BFDAB51E30832440DAAE28ED7CDBD840",
+        "Name": "Fender · 2x12 · Twin Reverb · Clean",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Midrange.wav",
+        "Sha256": "F156C1E6A1EE348045BA8ACA3C734FA686634D81CE30B8E2C1299AA24CBDC815",
+        "Name": "Fender · 2x12 · Twin Reverb · Midrange",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "3f8fe784dc4353029f350de698357304",
+    "Name": "Indie & Worship",
+    "Description": "Limpos e drives para combinar com ambiência.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - C.wav",
+        "Sha256": "172BC5584BD5BCA9B40118DC802517CE11FC3605C967A7871E7074F9CD636880",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - C",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "4fe507e4e0ce53539750b4d387dbcb84",
+    "Name": "Hard Rock & Solos",
+    "Description": "Gabinetes para bases e solos com ganho.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/Blend Of All - DC.wav",
+        "Sha256": "0C38306C4280538FC4BE6F8B68EF6037C035B6070AB379C0A8146C80CD3B78E8",
+        "Name": "Marshall · 4x12 · 1960AV · Blend Of All - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/RB500 - DC.wav",
+        "Sha256": "0E3F3C82CFEF11221DF4CEE9E302E0055EE7F5F10B25FD48282454792740FF55",
+        "Name": "Marshall · 4x12 · 1960AV · RB500 - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/SC1100 - DC.wav",
+        "Sha256": "F47D26DE533111C44BE13AE91CF87F2855FE03999DA2C7549E576226BAD9EDA6",
+        "Name": "Marshall · 4x12 · 1960AV · SC1100 - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - C.wav",
+        "Sha256": "172BC5584BD5BCA9B40118DC802517CE11FC3605C967A7871E7074F9CD636880",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "EB49DEFF8B6A98E6C8929450B788E1FB91E27B6A75E6A6EF0867E2046542AB25",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/1.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "4D4AC53CBC54A56B54520BE4B51D01D42ABEAF5233B85D66D8D9FAF260852291",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 1.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "bfc5aff9e5a6583ca387f044398f84e0",
+    "Name": "Metal & Afinações Baixas",
+    "Description": "Alternativas para bases pesadas.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/Blend Of All - DC.wav",
+        "Sha256": "0C38306C4280538FC4BE6F8B68EF6037C035B6070AB379C0A8146C80CD3B78E8",
+        "Name": "Marshall · 4x12 · 1960AV · Blend Of All - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - C.wav",
+        "Sha256": "172BC5584BD5BCA9B40118DC802517CE11FC3605C967A7871E7074F9CD636880",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "EB49DEFF8B6A98E6C8929450B788E1FB91E27B6A75E6A6EF0867E2046542AB25",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/1.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "4D4AC53CBC54A56B54520BE4B51D01D42ABEAF5233B85D66D8D9FAF260852291",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 1.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/2.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "6147592C088788D6E402B1D545B1E6ECF013DB3D9E921CE7CA697E516BDCE0C2",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 2.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - UL/0.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "EF07CF54DD2241C6E33A862648F43A9514FFA12510AF71AFBCD308D5D7205C89",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - UL · 0.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      }
+    ]
+  }
+]

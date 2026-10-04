@@ -113,3 +113,16 @@ Backups, imagens, associações e preferências ficam em `%LOCALAPPDATA%\CubeCon
 | Inicializador não encontra o script/executável | Preserve a estrutura do checkout, confirme o SDK .NET 10 e verifique o erro de build no [guia Windows](../windows/README.md) |
 
 A ajuda física do pedal está no [manual PDF incluído](../windows/Cube.Desktop/Assets/Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf). O estado atual do dispositivo não pode ser deduzido de capturas históricas.
+
+
+## Packs de IRs por marca e estilo
+
+Em **Packs de IRs e recuperação**, escolha um dos dez packs da biblioteca ou um pack pessoal. A descrição mostra a composição dos oito slots antes de aplicar. A coleção combina Fender, Vox, Marshall, Orange e Mesa Boogie; os estilos são sugestões de uso, não presets de amplificador ou efeitos.
+
+Os packs novos usam **distância de 50% no pedal**. Esse parâmetro é independente da distância física registrada na captura do WAV. BFI/BFIN preservam seus dados originais e aparecem quando os recursos correspondentes estão disponíveis.
+
+Use **Gerenciar packs…** para criar, duplicar, editar ou excluir packs pessoais, mesmo desconectado. Busque um IR da biblioteca e clique em **Usar IR** na linha de destino. Ajuste a distância de 0 a 99 e use as setas para reorganizar. Um pack pessoal pode conter de um a oito IRs; posições vazias preservam os slots do pedal. Navegar e editar packs não inicia prévias de áudio.
+
+**Importar pack…** e **Exportar pack…** usam arquivos `.cubeirpack.json` com referências e hashes da biblioteca, sem incluir WAVs. Importações recebem uma nova identidade; referências ausentes ou modificadas são mostradas como pendências e precisam ser substituídas antes da aplicação. Os packs pessoais ficam em `IrPacks` dentro da pasta de dados da edição em uso.
+
+Ao aplicar, selecione os slots diferentes que deseja substituir e confirme. O conteúdo anterior permanece em memória durante a sessão; a gravação é verificada. Em caso de falha, a operação informa os slots concluídos. Os nomes dos IRs aplicados são reconhecidos pelo conteúdo nas leituras seguintes.

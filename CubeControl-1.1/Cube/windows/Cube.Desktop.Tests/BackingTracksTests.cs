@@ -89,9 +89,9 @@ internal static class BackingTracksTests
             }
             Check(BackingTracksViewModel.FormatTime(3661) == "01:01:01", "time labels handle tracks longer than one hour");
             await CheckSilentTransport(source);
+            await Render(source, folder);
             if (File.Exists(Path.Combine(AppContext.BaseDirectory, "CubeBackingDsp.dll"))) await CheckDsp(source, folder);
             else Console.WriteLine("NOT VALIDATED native DSP: CubeBackingDsp.dll is unavailable; pitch and processed export acceptance remains open.");
-            await Render(source, folder);
         }
         finally { Directory.Delete(folder, true); }
     }
@@ -162,7 +162,7 @@ internal static class BackingTracksTests
         var window = new MainWindow(model); window.Show();
         try
         {
-            var tabs = (TabControl)window.FindName("Tabs"); tabs.SelectedIndex = 3;
+            var tabs = (TabControl)window.FindName("Tabs"); tabs.SelectedIndex = 2;
             window.BackingTracks.AddPaths([source]); await Wait(() => window.BackingTracks.Duration > 0);
             string reports = "C:/CubeControl-Build/backing-validation/reports"; Directory.CreateDirectory(reports);
             foreach (var (width, height) in new[] { (1280, 720), (640, 480), (1800, 1000) })

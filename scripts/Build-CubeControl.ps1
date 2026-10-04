@@ -144,6 +144,7 @@ try {
             }
         }
     }
+    $resources['Assets\IrPacks.v1.json'] = Join-Path $desktop 'Assets\IrPacks.v1.json'
     $resources['Assets\Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf'] = Join-Path $desktop 'Assets\Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf'
     $resources['LEIA-ME.md'] = Join-Path $workspace 'README.md'
     $resources['THIRD-PARTY-NOTICES.txt'] = Join-Path $workspace 'THIRD-PARTY-NOTICES.txt'

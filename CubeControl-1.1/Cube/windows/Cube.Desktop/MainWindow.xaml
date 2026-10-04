@@ -690,9 +690,14 @@
       <TextBlock Text="{loc:Translate Value={Binding FactoryAvailability}}" Style="{StaticResource HelpText}" Margin="0,8,0,12"/>
       <WrapPanel>
        <ui:Button ToolTip="{loc:Translate Text='Restaura os presets A, B e C de fábrica após confirmação.'}" Content="{loc:Translate Text='Restaurar presets de fábrica'}" Command="{Binding ResetPresets}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
-       <ComboBox MinWidth="140" Margin="8,0" ItemsSource="{Binding IrPacks}" SelectedItem="{Binding SelectedIrPack}" IsEnabled="{Binding CanOperate}" ToolTip="{loc:Translate Text='Pack de IRs'}"/>
+       <ComboBox MinWidth="200" MaxWidth="380" Margin="8,0" ItemsSource="{Binding IrPackGroups}" SelectedItem="{Binding SelectedIrPack}" IsEnabled="{Binding CanChooseIr}" ToolTip="{loc:Translate Text='Pack de IRs'}">
+        <ComboBox.GroupStyle><GroupStyle><GroupStyle.HeaderTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Name}}" FontWeight="Bold" Margin="4,8"/></DataTemplate></GroupStyle.HeaderTemplate></GroupStyle></ComboBox.GroupStyle>
+       </ComboBox>
+       <ui:Button Content="{loc:Translate Text='Gerenciar packs…'}" Command="{Binding ManageIrPacks}" Margin="0,0,8,0"/>
        <ui:Button ToolTip="{loc:Translate Text='Compara os oito slots com o pack escolhido e aplica somente os selecionados.'}" Content="{loc:Translate Text='Aplicar pack de IRs…'}" Command="{Binding ApplyIrPack}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
       </WrapPanel>
+      <TextBlock Text="{loc:Translate Value={Binding SelectedPackSummary}}" TextWrapping="Wrap" Margin="0,12,0,0" Style="{StaticResource HelpText}"/>
+      <TextBlock Text="{Binding PackCatalogProblems}" TextWrapping="Wrap" Style="{StaticResource HelpText}"/>
       <TextBlock Text="{loc:Translate Text='Reinstalar / atualizar firmware'}" Style="{StaticResource BodyStrongText}" Margin="0,16,0,8"/>
       <TextBlock Text="{loc:Translate Text='Feche o flash_loader. Ligue o pedal conectado ao PC segurando o terceiro footswitch para entrar em modo flash. Escolha a variante correta; presets e IRs podem ser substituídos.'}" Style="{StaticResource HelpText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
       <ComboBox ItemsSource="{Binding Firmwares}" SelectedItem="{Binding SelectedFirmware}" DisplayMemberPath="Name" IsEnabled="{Binding CanChooseFirmware}" ToolTip="{Binding SelectedFirmware.Path}" AutomationProperties.Name="{loc:Translate Text='Firmware do Cube Baby'}" HorizontalAlignment="Stretch"/>
