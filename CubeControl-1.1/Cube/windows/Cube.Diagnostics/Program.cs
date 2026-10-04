@@ -2,6 +2,42 @@ using Cube.Protocol;
 using Cube.Usb;
 using System.Text.Json;
 
+if (args.Length > 0 && args[0] == "compare-factory-irs")
+{
+    if (args.Length != 2) throw new ArgumentException("Uso: compare-factory-irs PASTA-NOVA");
+    if (System.Diagnostics.Process.GetProcessesByName("CubeControl").Length != 0 ||
+        System.Diagnostics.Process.GetProcessesByName("CubeSuite").Length != 0)
+        throw new InvalidOperationException("Feche CubeControl e CubeSuite antes da leitura dos IRs.");
+    var factoryIrs = FactoryResources.Load(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        "Downloads", "CubeSuite", "CubeSuite.exe"));
+    string folder = Path.GetFullPath(args[1]);
+    if (Directory.Exists(folder)) throw new IOException("Use uma pasta nova para preservar as evidências.");
+    var input = (await WindowsMidiConnection.Inputs()).Single(p => p.Name == "USB-Midi");
+    var output = (await WindowsMidiConnection.Outputs()).Single(p => p.Name == "USB-Midi");
+    using var comparisonSession = new CubeSession(await WindowsMidiConnection.Open(input.Id, output.Id));
+    await comparisonSession.Identify();
+    Directory.CreateDirectory(folder);
+    var sectors = await comparisonSession.ReadIrInventory();
+    var results = new List<object>();
+    for (int slot = 0; slot < 8; slot++)
+    {
+        await IrBackup.Save(folder, comparisonSession.Identity, comparisonSession.IdentityHex, slot, sectors[slot]);
+        var expected = factoryIrs.IrSectors[slot];
+        bool equal = sectors[slot].SequenceEqual(expected);
+        results.Add(new { slot = slot + 1, equal, currentHash = CabinetInventory.Hash(sectors[slot]),
+            factoryHash = CabinetInventory.Hash(expected),
+            differentBytes = sectors[slot].Zip(expected).Count(pair => pair.First != pair.Second) });
+        Console.WriteLine($"IR {slot + 1}: {(equal ? "idêntico ao de fábrica" : "diferente do de fábrica")}");
+    }
+    await File.WriteAllTextAsync(Path.Combine(folder, "comparison.json"), JsonSerializer.Serialize(new
+    {
+        capturedAt = DateTimeOffset.UtcNow, identity = comparisonSession.IdentityHex,
+        factorySource = factoryIrs.SourceDirectory, factoryBfiHash = FactoryResources.BfiHash,
+        writes = 0, slots = results
+    }, new JsonSerializerOptions { WriteIndented = true }));
+    return;
+}
+
 if (args.Length > 0 && args[0] == "effects-firmware-b")
 {
     if (args.Length != 2) throw new ArgumentException("Uso: effects-firmware-b PASTA-NOVA");
@@ -195,9 +231,9 @@ if (args[0] == "verify-musical")
     var ram = await session.ReadIrRam(); await IrRamBackup.Save(Path.Combine(folder, "ram-before.json"), session.IdentityHex, ram);
     var sectors = await session.ReadIrInventory();
     var inventory = new CabinetInventory();
-    inventory.SetFactory(FactoryResources.Load(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CubeSuite", "CubeSuite.exe")));
+    inventory.SetBfiReference(FactoryResources.Load(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CubeSuite", "CubeSuite.exe")));
     for (int slot = 0; slot < 8; slot++) inventory.Update(slot, sectors[slot]);
-    var cabinet = inventory.Resolve("factory-cab-2") ?? inventory.Slots[0];
+    var cabinet = inventory.Resolve("pack-bfi-cab-2") ?? inventory.Slots[0];
     var expected = bank.ToArray();
     async Task Set(int offset, int value) { expected = await session.WriteLiveChecked(0, offset, value, expected); await Task.Delay(100); }
     try

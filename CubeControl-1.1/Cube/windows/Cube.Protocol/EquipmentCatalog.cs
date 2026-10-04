@@ -34,7 +34,7 @@ public static class EquipmentCatalog
         new("Diezel 4×12 · Vintage 30", "Diezel V30 SM57 (Soldano HR PowerAmp)", "4×12", "Falantes Celestion Vintage 30. Microfone Shure SM57. Power amp Soldano HR.")
     ]);
 
-    public static EquipmentReference? FindFactoryCabinet(string? factoryId)
-        => factoryId != null && factoryId.StartsWith("factory-cab-", StringComparison.Ordinal)
-            && int.TryParse(factoryId[12..], out int index) && index >= 0 && index < Cabinets.Count ? Cabinets[index] : null;
+    public static EquipmentReference? FindCabinet(string? cabinetId)
+        => cabinetId != null && cabinetId.StartsWith("pack-bfi-cab-", StringComparison.Ordinal)
+            && int.TryParse(cabinetId[13..], out int index) && index >= 0 && index < Cabinets.Count ? Cabinets[index] : null;
 }

@@ -89,7 +89,7 @@ Arquivos `.delay.json` guardam a edição no computador. Importar não envia ao 
 
 ## Criador de amps e Backing Tracks
 
-O [Criador de amps](criador-de-amps.md) edita um setor de modelo de amp, separado dos presets A/B/C e dos IRs. Carregar/importar pela interface pode iniciar uma prévia em RAM. Os nove modelos originais são aceitos pelo limite atual de ganho 100. Ganho/Volume são globais; os valores podem ser digitados com Enter e os resets de EQ restauram a banda inteira. Resposta mantém 16 ajustes por trechos da tabela, sem pressupor uma curva de palhetada. O estado local, a prévia em RAM e a gravação no slot têm indicações separadas. Restaurar o som anterior mantém a edição local.
+O [Criador de amps](criador-de-amps.md) edita um setor de modelo de amp, separado dos presets A/B/C e dos IRs. Carregar/importar pela interface pode iniciar uma prévia em RAM. Os nove modelos originais são aceitos pelo limite atual de ganho 100. Ganho/Volume são globais; os valores podem ser digitados com Enter e os resets de EQ restauram a banda inteira. Resposta oferece dois painéis vintage de capacitores, cada um com chave de perfil e intensidade para oito trechos internos. A intensidade começa em 50%; Original e intensidade zero preservam a referência. Os perfis são propostas de timbre para escuta, sem pressupor equivalência elétrica ou curva de palhetada. O estado local, a prévia em RAM e a gravação no slot têm indicações separadas. Restaurar o som anterior mantém a edição local.
 
 [Backing Tracks](backing-tracks.md) reproduz até três arquivos MP3/WAV pelo áudio do Windows, com seleção de saída, trechos A/B e exportação WAV. Sua reprodução independe da conexão USB de edição.
 

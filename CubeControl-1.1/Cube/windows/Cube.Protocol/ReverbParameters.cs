@@ -52,8 +52,7 @@ public sealed record ReverbParameters(float Dry, float Wet, int Decay, int Retur
         int slot = physical[0];
         if (bank[slot * 16 + 3] == 0 || bank[slot * 16 + 10] != 1 || dsp[0x6E0] != 3)
             throw new FormatException("Ative o reverb e a seção reverb/cabinet no preset físico antes de ler.");
-        // Modulation must be off: its dynamic masks are algorithm-dependent and not part of this profile.
-        if (dsp[0x63C] != 0) throw new FormatException("Desligue a modulação para esta edição em RAM de reverb.");
+        PhaserParameters.ValidateConcurrentModulation(dsp);
         for (int i = 1; i < 0x84; i++)
             if (!IsControlOffset(0x6E0 + i) && i != 2 && dsp[0x6E0 + i] != DefaultBlock[i])
                 throw new FormatException("Estrutura de reverb desconhecida; edição em RAM bloqueada.");

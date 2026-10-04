@@ -50,9 +50,8 @@ public sealed partial class CubeSession
     private void CheckChorusContext(ChorusRecovery recovery, PhaserResearchSnapshot current, bool recovering)
     {
         recovery.Validate();
-        if (IdentityHex != recovery.Identity || !current.Bank.SequenceEqual(recovery.Bank) ||
-            !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
-            !ChorusParameters.StableEquals(current.Dsp, recovery.OriginalDsp, ignoreControls: true))
+        if (IdentityHex != recovery.Identity || !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
+            !EffectContextMatches(1, current.Bank, recovery.Bank, current.Dsp, recovery.OriginalDsp, recovery.PhysicalState[0]))
             throw new IOException("O contexto do chorus mudou; prévia interrompida e backup preservado.");
         var parameters = ChorusParameters.Read(current.Dsp);
         if (!recovering && parameters != recovery.Target)
@@ -88,6 +87,7 @@ public sealed partial class CubeSession
             ct.ThrowIfCancellationRequested();
             await WriteChorusFields(transaction, before.Dsp, parameters, CancellationToken.None);
             var after = await ReadChorusPreviewCore(CancellationToken.None);
+            VerifyEffectMutation(1, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckChorusContext(transaction, after, recovering: false);
             return transaction;
         }
@@ -104,6 +104,7 @@ public sealed partial class CubeSession
             var original = ChorusParameters.Read(recovery.OriginalDsp);
             await WriteChorusFields(recovery, before.Dsp, original, CancellationToken.None);
             var after = await ReadChorusPreviewCore(CancellationToken.None);
+            VerifyEffectMutation(1, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckChorusContext(recovery with { Target = original }, after, recovering: false);
         }
         finally { gate.Release(); }

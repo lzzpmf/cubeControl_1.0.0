@@ -43,9 +43,8 @@ public sealed partial class CubeSession
     private void CheckPhaserContext(PhaserRecovery recovery, PhaserResearchSnapshot current, bool recovering)
     {
         recovery.Validate();
-        if (IdentityHex != recovery.Identity || !current.Bank.SequenceEqual(recovery.Bank) ||
-            !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
-            !PhaserParameters.StableEquals(current.Dsp, recovery.OriginalDsp, ignoreControls: true))
+        if (IdentityHex != recovery.Identity || !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
+            !EffectContextMatches(2, current.Bank, recovery.Bank, current.Dsp, recovery.OriginalDsp, recovery.PhysicalState[0]))
             throw new IOException("O contexto do phaser mudou; prévia interrompida e backup preservado.");
         var parameters = PhaserParameters.Read(current.Dsp);
         if (!recovering && parameters != recovery.Target)
@@ -79,6 +78,7 @@ public sealed partial class CubeSession
             ct.ThrowIfCancellationRequested();
             await WritePhaserFields(before.Dsp, parameters, CancellationToken.None);
             var after = await ReadPhaserCore(CancellationToken.None);
+            VerifyEffectMutation(2, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckPhaserContext(transaction, after, recovering: false);
             return transaction;
         }
@@ -95,6 +95,7 @@ public sealed partial class CubeSession
             var original = PhaserParameters.Read(recovery.OriginalDsp);
             await WritePhaserFields(before.Dsp, original, CancellationToken.None);
             var after = await ReadPhaserCore(CancellationToken.None);
+            VerifyEffectMutation(2, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckPhaserContext(recovery with { Target = original }, after, recovering: false);
         }
         finally { gate.Release(); }

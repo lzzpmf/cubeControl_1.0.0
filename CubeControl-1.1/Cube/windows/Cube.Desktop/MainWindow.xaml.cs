@@ -100,7 +100,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     }
 
     public MainWindow() : this(new EditorViewModel()) { automaticConnectionEnabled = true; }
-    internal MainWindow(EditorViewModel model)
+    internal MainWindow(EditorViewModel model, bool initializeDevices = true)
     {
         Model = model;
         BackingTracks = new BackingTracksViewModel(Model.DataDirectory);
@@ -141,8 +141,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             Appearance.ThemeService.Instance.Attach(this);
             Appearance.ThemeService.Instance.Changed += RefreshThemeColors;
-            await Model.Initialize();
-            await BackingTracks.Initialize();
+            // Visual test hosts exercise the real window with isolated models and simulated MIDI.
+            if (initializeDevices)
+            {
+                await Model.Initialize();
+                await BackingTracks.Initialize();
+            }
             string[] args = Environment.GetCommandLineArgs(); int smoke = Array.IndexOf(args, "--smoke");
             if (automaticConnectionEnabled && smoke < 0 && !args.Contains("--offline")) Model.StartAutomaticConnection();
             if (smoke >= 0 && args.Length > smoke + 1)
@@ -220,7 +224,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             }
             catch (Exception ex)
             {
-                if (!await Model.Ask(ex.Message + "\nFechar mesmo assim? Os backups permanecem no computador.")) return;
+                if (!await Model.Ask(ex.Message + "\nFechar mesmo assim? Os snapshots em memória serão descartados.")) return;
             }
             closing = true; Appearance.ThemeService.Instance.Detach(); Model.Dispose(); _ = Dispatcher.BeginInvoke(new Action(Close));
         };
@@ -780,92 +784,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
         if (command?.CanExecute(null) == true) { command.Execute(null); e.Handled = true; }
     }
-    private readonly Dictionary<int, Wpf.Ui.Controls.FluentWindow> advancedEffectWindows = new();
-
     private async void AdvancedEffectClick(object sender, RoutedEventArgs e)
-    {
-        int stage = Model.SelectedStage;
-        if (stage is < 1 or > 4) return;
-        if (advancedEffectWindows.TryGetValue(stage, out var existing))
-        {
-            if (existing.WindowState == WindowState.Minimized) existing.WindowState = WindowState.Normal;
-            existing.Activate();
-        }
-        else
-        {
-            UserControl editor = stage switch
-            {
-                1 => new Views.ChorusEditor(),
-                2 => new Views.PhaserEditor(),
-                3 => new Views.DelayEditor(),
-                _ => new Views.ReverbEditor()
-            };
-            string effect = stage switch { 1 => "Chorus", 2 => "Phaser", 3 => "Delay", _ => "Reverb" };
-            var window = new Wpf.Ui.Controls.FluentWindow
-            {
-                Owner = this, Title = $"{LanguageService.T("Opções avançadas")} — {effect}",
-                Width = Math.Min(900, SystemParameters.WorkArea.Width),
-                Height = Math.Min(780, SystemParameters.WorkArea.Height),
-                MinWidth = Math.Min(560, SystemParameters.WorkArea.Width), MinHeight = Math.Min(560, SystemParameters.WorkArea.Height), DataContext = Model,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                ExtendsContentIntoTitleBar = true, UseLayoutRounding = true
-            };
-            window.SetResourceReference(BackgroundProperty, "CubeCanvas");
-            window.SetResourceReference(ForegroundProperty, "CubeText");
-            window.SetResourceReference(FontFamilyProperty, "CubeUiFont");
-            window.SetResourceReference(IconProperty, "CubeWindowIcon");
-            var layout = new DockPanel();
-            var title = new Wpf.Ui.Controls.TitleBar { Title = window.Title };
-            DockPanel.SetDock(title, Dock.Top);
-            layout.Children.Add(title);
-            var error = new TextBlock { TextWrapping = TextWrapping.Wrap, Margin = new Thickness(24, 0, 24, 0) };
-            error.SetBinding(TextBlock.TextProperty, new System.Windows.Data.Binding(nameof(EditorViewModel.ErrorMessage)));
-            error.SetResourceReference(TextBlock.ForegroundProperty, "CubeWarning");
-            DockPanel.SetDock(error, Dock.Top);
-            layout.Children.Add(error);
-            editor.Margin = new Thickness(16);
-            layout.Children.Add(editor);
-            window.Content = layout;
-            window.AddHandler(Mouse.PreviewMouseDownEvent, new MouseButtonEventHandler((_, _) => Model.BeginGesture(editor)), true);
-            window.AddHandler(Mouse.MouseUpEvent, new MouseButtonEventHandler((_, _) => Model.EndGesture(editor)), true);
-            advancedEffectWindows.Add(stage, window);
-            window.Closed += (_, _) => { Model.EndGesture(editor); advancedEffectWindows.Remove(stage); };
-            bool restored = false, closingPreview = false;
-            window.Closing += async (_, args) =>
-            {
-                if (closing || restored) return;
-                if (!Model.HasAdvancedPreview(stage)) { args.Cancel = Model.Busy; return; }
-                args.Cancel = true;
-                if (closingPreview) return;
-                closingPreview = true;
-                try
-                {
-                    if (Model.AdvancedPreviewHasChanges(stage))
-                    {
-                        var dialog = new Wpf.Ui.Controls.MessageBox
-                        {
-                            Owner = window, Title = LanguageService.T("Alterações não salvas"),
-                            Content = LanguageService.T("Os ajustes estão apenas na RAM e não foram salvos no pedal. Ao encerrar a prévia, os parâmetros anteriores serão restaurados."),
-                            PrimaryButtonText = LanguageService.T("Encerrar prévia e restaurar"), CloseButtonText = LanguageService.T("Voltar à edição")
-                        };
-                        if (await dialog.ShowDialogAsync() != Wpf.Ui.Controls.MessageBoxResult.Primary) return;
-                    }
-                    window.IsEnabled = false;
-                    restored = await Model.CloseAdvancedPreviewAsync(stage);
-                    if (restored) window.Close();
-                }
-                finally { window.IsEnabled = true; closingPreview = false; }
-            };
-            window.Show();
-        }
-        switch (stage)
-        {
-            case 1: await Model.ReadChorusAsync(); break;
-            case 2: await Model.ReadPhaserAsync(); break;
-            case 3: await Model.ReadDelayAsync(); break;
-            case 4: await Model.ReadReverbAsync(); break;
-        }
-    }
+        => await Model.ToggleEffectCardAsync();
 
     private void CreateAmpClick(object sender, RoutedEventArgs e)
     {

@@ -1,4 +1,4 @@
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using Cube.Protocol;
 using System.Windows;
 using Cube.Desktop.Localization;
@@ -21,7 +21,7 @@ public partial class AmpEditor : UserControl
         AddHandler(Mouse.MouseUpEvent, new MouseButtonEventHandler((_, _) => model.EndGesture(this)), true);
         Unloaded += (_, _) => model.EndGesture(this);
         BaseSelector.ItemsSource = EquipmentCatalog.Amps.Select(a => a.Name).ToArray();
-        foreach (string key in new[] { "AmpAccent", "AmpBandA", "AmpBandB" }) ampBrushes[key] = Resources[key];
+        foreach (string key in new[] { "AmpAccent", "AmpBandA", "AmpBandB", "CapacitorAmber", "CapacitorDisplay" }) ampBrushes[key] = Resources[key];
         Loaded += (_, _) => { ThemeService.Instance.Changed += UpdateColors; UpdateColors(); UpdateLayoutMode(); };
         Unloaded += (_, _) => ThemeService.Instance.Changed -= UpdateColors;
         SizeChanged += (_, _) => UpdateLayoutMode();
@@ -29,7 +29,13 @@ public partial class AmpEditor : UserControl
     private void UpdateColors()
     {
         foreach (var entry in ampBrushes)
-            Resources[entry.Key] = ThemeService.Instance.IsHighContrast ? SystemColors.WindowTextBrush : entry.Value;
+            Resources[entry.Key] = ThemeService.Instance.IsHighContrast
+                ? entry.Key == "CapacitorDisplay" ? SystemColors.WindowBrush : SystemColors.WindowTextBrush
+                : ThemeService.Instance.IsLight && entry.Key == "CapacitorAmber"
+                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(128, 80, 13))
+                : ThemeService.Instance.IsLight && entry.Key == "CapacitorDisplay"
+                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 234, 221))
+                : entry.Value;
     }
     private void UpdateLayoutMode()
     {

@@ -69,8 +69,9 @@ internal static class BackingTracksTests
             File.WriteAllText(settings, JsonSerializer.Serialize(new { Version = 1, Sources = new[] { source }, SelectedSource = source, OutputId = (string?)null, Volume = 42, IsMuted = true }));
             using (var model = new BackingTracksViewModel(folder))
             {
+                Check(model.Tracks.Count == 0 && model.Volume == 30 && !model.IsMuted, "legacy playlist is ignored");
+                model.AddPaths([source]);
                 await Wait(() => model.Duration > 0);
-                Check(model.Tracks.Count == 1 && model.Volume == 42 && model.IsMuted && !model.IsPlaying, "v1 migration restores preferences without autoplay");
                 model.RangeStart = .5; model.RangeEnd = 1;
                 model.Position = 1.5; Check(model.Position == 1.5, "loop off permits seek beyond B");
                 model.RangeStart = .6; Check(model.Position == 1.5, "marking A does not move position with loop off");
@@ -84,8 +85,7 @@ internal static class BackingTracksTests
             }
             using (var restored = new BackingTracksViewModel(folder))
             {
-                await Wait(() => restored.Duration > 0);
-                Check(restored.Tracks.Count == 100 && restored.Speed == 75 && restored.Pitch == -1 && restored.RangeStart == .6 && !restored.IsLooping && restored.Position == 0, "v2 restores per-track practice without loop or resume autoplay");
+                Check(restored.Tracks.Count == 0 && restored.Position == 0, "new session starts with an empty playlist");
             }
             Check(BackingTracksViewModel.FormatTime(3661) == "01:01:01", "time labels handle tracks longer than one hour");
             await CheckSilentTransport(source);

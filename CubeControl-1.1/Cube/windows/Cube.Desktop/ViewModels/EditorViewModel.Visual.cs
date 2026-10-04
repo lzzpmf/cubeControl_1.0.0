@@ -21,7 +21,7 @@ public sealed partial class EditorViewModel
     }
     private readonly Dictionary<int, PendingMatch> pendingMatches = [];
     private VisualPreferences preferences = new();
-    private string PreferencesPath => Path.Combine(DataDirectory, "visual-preferences-v1.json");
+    private string ImagePreferencesPath => Path.Combine(DataDirectory, "gear-images-v1.json");
     private int stage;
     public StageViewModel[] Stages { get; } =
     [new(0, "Amp", "Caráter e ganho", "#D5AD7D"), new(1, "Chorus", "Chorus", "#80B8A8"), new(2, "Phaser", "Phaser", "#80B8A8"), new(3, "Delay", "Delay", "#82ACD2"), new(4, "Reverb", "Reverb", "#B49ACF"), new(5, "Cabinet", "Gabinete / IR", "#C5B77F")];
@@ -57,7 +57,7 @@ public sealed partial class EditorViewModel
         4 => Current.Musical.ReverbEnabled ? "Misture a ambiência com o sinal direto." : "Desligado. Ajustar a mistura prepara a próxima ativação.",
         _ => Current.Parameters[10].Value == 0 ? "Seção IR desligada. Escolher um gabinete não liga a seção." : Current.Parameters[9].Value == 0 ? "Nenhum cabinet selecionado." : "O nome e a imagem acompanham o conteúdo identificado do IR."
     };
-    public string InventoryStatus => inventory.Complete ? $"8 slots lidos · {inventory.Slots.Count(c => c.FactoryId != null)} referências de fábrica reconhecidas" : "Inventário de IRs não verificado";
+    public string InventoryStatus => inventory.Complete ? $"8 slots lidos · {inventory.Slots.Count(c => c.CabinetId != null)} IRs de packs reconhecidos" : "Inventário de IRs não verificado";
     public bool CanMatch => CanEdit && inventory.Complete;
     public bool AutomaticCabinetMatching
     {
@@ -67,7 +67,6 @@ public sealed partial class EditorViewModel
             if (preferences.AutomaticCabinetMatching == value) return;
             preferences.AutomaticCabinetMatching = value;
             Notify(nameof(AutomaticCabinetMatching));
-            SavePreferences();
             if (value && CanMatch) QueueAmpMatch(null);
         }
     }
@@ -109,17 +108,17 @@ public sealed partial class EditorViewModel
         Stages[3].BindToggle(() => Current.Musical.DelayEnabled, v => EditSwitch(() => Current.Musical.DelayEnabled = v), () => CanEdit);
         Stages[4].BindToggle(() => Current.Musical.ReverbEnabled, v => Current.Musical.ReverbEnabled = v, () => CanEdit);
         Stages[5].BindToggle(() => Current.Parameters[10].Enabled, v => Current.Parameters[10].Enabled = v, () => CanEdit);
-        try { preferences = VisualPreferences.Load(PreferencesPath); }
+        try { preferences.Images = GearImagePreferences.Load(ImagePreferencesPath, Path.Combine(DataDirectory, "visual-preferences-v1.json")); }
         catch (Exception ex) { ErrorMessage = Status = "Preferências não carregadas: " + ex.Message; }
         Amps = EquipmentCatalog.Amps.Select((reference, i) => WithImage(new GearItem($"amp-{i}", i,
             reference.Name, reference.Category, "amp", "#D5AD7D", reference.Description, reference.Alias))).ToArray();
         Effects = [WithImage(new("chorus", 0, "Chorus", "Modulação", "chorus", "#80B8A8")), WithImage(new("phaser", 1, "Phaser", "Modulação", "phaser", "#80B8A8")), WithImage(new("delay", 2, "Delay", "Repetições", "delay", "#82ACD2")), WithImage(new("reverb", 3, "Reverb", "Ambiência", "reverb", "#B49ACF"))];
         RebuildCabinets();
-        Undo = Command(UndoAsync, () => CanEdit && history.CanUndo);
+        Undo = Command(UndoAsync, () => CanEdit && history.CanUndo, changesEffects: true);
         MatchCabinet = new UiCommand(() => QueueAmpMatch(null), () => CanMatch);
         RefreshInventory = Command(RefreshInventoryAsync, () => CanOperate);
         ChangeImage = new UiCommand(ImportImage, () => !Busy && (!IsCabinet || inventory.Complete));
-        ResetImage = new UiCommand(() => { preferences.Images.Remove(FocusedGear.Id); FocusedGear.Image = FocusedGear.DefaultImage; SavePreferences(); }, () => !Busy);
+        ResetImage = new UiCommand(() => { preferences.Images.Remove(FocusedGear.Id); FocusedGear.Image = FocusedGear.DefaultImage; SaveImages(); }, () => !Busy);
         foreach (var preset in Presets)
         {
             preset.Musical.PropertyChanged += (_, _) => RefreshEditor();
@@ -132,11 +131,11 @@ public sealed partial class EditorViewModel
         item.Image ??= item.DefaultImage;
         return item;
     }
-    private bool SavePreferences()
+    private bool SaveImages()
     {
         try
         {
-            preferences.Save(PreferencesPath);
+            GearImagePreferences.Save(ImagePreferencesPath, preferences.Images);
             if (ErrorMessage.StartsWith("Não foi possível salvar as preferências locais:", StringComparison.Ordinal)) ErrorMessage = "";
             return true;
         }
@@ -144,6 +143,7 @@ public sealed partial class EditorViewModel
     }
     private void RefreshEditor()
     {
+        RefreshEffectCard();
         if (Amps.Length == 0 || Cabinets.Length == 0 || Presets == null) return;
         Notify(nameof(DelayGraphState)); Notify(nameof(ChorusGraphState));
         Notify(nameof(PhaserGraphState)); Notify(nameof(ReverbGraphState));
@@ -186,8 +186,6 @@ public sealed partial class EditorViewModel
     {
         string hash = CabinetInventory.Hash(bytes);
         if (inventory.Slots.FirstOrDefault(c => c.Slot == slot) is { } previous && previous.Hash != hash) soundContentRevision++;
-        if (!preferences.IrNames.ContainsKey(hash) && File.Exists(MetadataPath(bytes)))
-        { preferences.IrNames[hash] = File.ReadAllText(MetadataPath(bytes)); SavePreferences(); }
         preferences.IrNames.TryGetValue(hash, out var name);
         if (!string.IsNullOrWhiteSpace(name))
         {
@@ -211,8 +209,7 @@ public sealed partial class EditorViewModel
             }
             if (name != resolved)
             {
-                name = resolved; preferences.IrNames[hash] = name; SavePreferences();
-                if (File.Exists(MetadataPath(bytes))) File.WriteAllText(MetadataPath(bytes), name);
+                name = resolved; preferences.IrNames[hash] = name;
             }
         }
         inventory.Update(slot, bytes, name); RebuildCabinets();
@@ -224,15 +221,17 @@ public sealed partial class EditorViewModel
         for (int i = 0; i < 8; i++)
         {
             var cab = inventory.Slots.FirstOrDefault(x => x.Slot == i);
-            var reference = EquipmentCatalog.FindFactoryCabinet(cab?.FactoryId);
+            var reference = EquipmentCatalog.FindCabinet(cab?.CabinetId);
             items.Add(WithImage(new(cab?.Hash ?? $"unverified-{i}", i + 1, cab?.Name ?? $"IR personalizado — slot {i + 1}", cab?.Category ?? "Não verificado", "cab", "#C5B77F",
-                reference?.Description ?? "Conteúdo sem referência de equipamento identificada. Nome e imagem personalizados são metadados locais.", reference?.Alias ?? "", cab?.FactoryId)));
+                reference?.Description ?? (cab?.CabinetId?.StartsWith("pack-bfin-", StringComparison.Ordinal) == true
+                    ? "Pack BFIN reconhecido pelo conteúdo. O modelo do gabinete ainda não foi confirmado; a imagem é genérica."
+                    : "Conteúdo sem referência de equipamento identificada. Nome e imagem personalizados são metadados locais."), reference?.Alias ?? "", cab?.CabinetId)));
         }
         Cabinets = items.ToArray();
         Ir.UpdateSlots(Enumerable.Range(0, 8).Select(i =>
         {
             var cab = inventory.Slots.FirstOrDefault(c => c.Slot == i);
-            string name = cab != null && (cab.FactoryId != null || preferences.IrNames.ContainsKey(cab.Hash)) ? cab.Name : "IR não identificado";
+            string name = cab != null && (cab.CabinetId != null || preferences.IrNames.ContainsKey(cab.Hash)) ? cab.Name : "IR não identificado";
             return $"Slot {i + 1} — {name}";
         }));
         Notify(nameof(Cabinets)); Notify(nameof(CanMatch)); RefreshEditor();
@@ -332,8 +331,8 @@ public sealed partial class EditorViewModel
             if (row.Selected == null || row.Selected.Value == 0) preferences.Matches.Remove(row.Amp.Value);
             else { var cab = inventory.Slots.FirstOrDefault(c => c.Slot == row.Selected.Value - 1); if (cab != null) preferences.Matches[row.Amp.Value] = cab.Hash; }
         }
-        bool saved = SavePreferences(); RefreshEditor();
-        if (saved) { Status = "Associações salvas no computador. Nenhum comando enviado."; Completed(Status); }
+        RefreshEditor();
+        Status = "Associações mantidas nesta sessão. Nenhum comando enviado."; Completed(Status);
     }
     private void ImportImage()
     {
@@ -346,7 +345,7 @@ public sealed partial class EditorViewModel
             string name = Guid.NewGuid().ToString("N") + Path.GetExtension(dialog.FileName).ToLowerInvariant();
             Directory.CreateDirectory(Path.Combine(DataDirectory, "Images")); File.Copy(dialog.FileName, Path.Combine(DataDirectory, "Images", name));
             preferences.Images[FocusedGear.Id] = name; FocusedGear.Image = image;
-            if (SavePreferences()) { Status = "Imagem local atualizada."; Completed(Status); }
+            if (SaveImages()) { Status = "Imagem local atualizada."; Completed(Status); }
         }
         catch (Exception ex) { ErrorMessage = Status = "Não foi possível importar a imagem: " + ex.Message; NotifyFailure(Status); }
     }

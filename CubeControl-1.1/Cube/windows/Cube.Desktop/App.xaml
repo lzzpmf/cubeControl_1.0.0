@@ -1,6 +1,62 @@
 ﻿<Application x:Class="Cube.Desktop.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:local="clr-namespace:Cube.Desktop.Controls" xmlns:loc="clr-namespace:Cube.Desktop.Localization">
  <Application.Resources><ResourceDictionary>
   <ResourceDictionary.MergedDictionaries><ui:ThemesDictionary Theme="Dark"/><ui:ControlsDictionary/></ResourceDictionary.MergedDictionaries>
+  <ControlTemplate x:Key="OfficialHorizontalFaderTemplate" TargetType="Slider">
+   <Grid x:Name="FaderRoot" Background="Transparent" MinHeight="32">
+    <Border Height="4" Margin="10,0" VerticalAlignment="Center" CornerRadius="2" Background="{DynamicResource CubeKnobTrack}"/>
+    <Track x:Name="PART_Track" Orientation="Horizontal" IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+     <Track.DecreaseRepeatButton>
+      <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+       <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Grid Background="Transparent"><Border Height="4" Margin="10,0,0,0" VerticalAlignment="Center" Background="{DynamicResource CubeAccent}" CornerRadius="2"/></Grid></ControlTemplate></RepeatButton.Template>
+      </RepeatButton>
+     </Track.DecreaseRepeatButton>
+     <Track.Thumb>
+      <Thumb Width="20" Height="32" Focusable="False" RenderOptions.BitmapScalingMode="HighQuality">
+       <Thumb.Template><ControlTemplate TargetType="Thumb">
+        <Border Background="Transparent">
+         <Border Margin="1"><Border.Background><ImageBrush ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Faders/fader_horizontal_oficial_01.png" Viewbox="0.30,0.18,0.38,0.62" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/></Border.Background></Border>
+        </Border>
+       </ControlTemplate></Thumb.Template>
+      </Thumb>
+     </Track.Thumb>
+     <Track.IncreaseRepeatButton>
+      <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+       <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+      </RepeatButton>
+     </Track.IncreaseRepeatButton>
+    </Track>
+    <Border x:Name="FaderFocus" BorderBrush="{DynamicResource CubeAccent}" BorderThickness="1" CornerRadius="4" IsHitTestVisible="False" Visibility="Collapsed"/>
+   </Grid>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsEnabled" Value="False"><Setter TargetName="FaderRoot" Property="Opacity" Value="0.4"/></Trigger>
+    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="FaderFocus" Property="Visibility" Value="Visible"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate>
+  <Style TargetType="Slider" BasedOn="{StaticResource {x:Type Slider}}">
+   <Style.Triggers><Trigger Property="Orientation" Value="Horizontal"><Setter Property="Template" Value="{StaticResource OfficialHorizontalFaderTemplate}"/></Trigger></Style.Triggers>
+  </Style>
+  <ImageBrush x:Key="OfficialSwitchOn" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_on.png" Viewbox="0.16,0.36,0.66,0.25" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
+  <ImageBrush x:Key="OfficialSwitchOff" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_off.png" Viewbox="0.16,0.36,0.66,0.25" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
+  <Style TargetType="ui:ToggleSwitch" BasedOn="{StaticResource {x:Type ui:ToggleSwitch}}">
+   <Setter Property="MinHeight" Value="32"/>
+   <Setter Property="Template"><Setter.Value>
+    <ControlTemplate TargetType="ui:ToggleSwitch">
+     <Border x:Name="SwitchRoot" Background="Transparent" Padding="{TemplateBinding Padding}">
+      <Grid>
+       <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+       <Border x:Name="SwitchFace" Width="64" Height="26" VerticalAlignment="Center" Background="{StaticResource OfficialSwitchOff}" RenderOptions.BitmapScalingMode="HighQuality"/>
+       <ContentPresenter Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"/>
+       <Border x:Name="SwitchFocus" Grid.ColumnSpan="2" BorderThickness="1" BorderBrush="{DynamicResource CubeAccent}" CornerRadius="4" Visibility="Collapsed" IsHitTestVisible="False"/>
+      </Grid>
+     </Border>
+     <ControlTemplate.Triggers>
+      <Trigger Property="IsChecked" Value="True"><Setter TargetName="SwitchFace" Property="Background" Value="{StaticResource OfficialSwitchOn}"/></Trigger>
+      <Trigger Property="IsEnabled" Value="False"><Setter TargetName="SwitchRoot" Property="Opacity" Value="0.4"/></Trigger>
+      <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="SwitchFocus" Property="Visibility" Value="Visible"/></Trigger>
+     </ControlTemplate.Triggers>
+    </ControlTemplate>
+   </Setter.Value></Setter>
+  </Style>
   <ControlTemplate x:Key="DownUpExpanderHeader" TargetType="ToggleButton">
    <Grid Background="Transparent">
    <Border x:Name="HeaderHover" Background="{DynamicResource ControlFillColorSecondaryBrush}" CornerRadius="6" Opacity="0"/>

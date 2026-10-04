@@ -1,4 +1,4 @@
-<UserControl x:Class="Cube.Desktop.Views.AmpEditor"
+﻿<UserControl x:Class="Cube.Desktop.Views.AmpEditor"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -72,14 +72,37 @@
     <ui:Button Click="ResetControlClick" Style="{StaticResource AmpReset}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
    </StackPanel>
   </DataTemplate>
-  <DataTemplate x:Key="AmpSegment">
-   <StackPanel Width="88" Margin="4,4,4,12">
-    <TextBlock Text="{loc:Translate Value={Binding Label}}" TextAlignment="Center" FontWeight="SemiBold"/>
-    <TextBlock Text="{Binding IndexRange}" TextAlignment="Center" FontSize="12" Foreground="{DynamicResource Muted}" ToolTip="{loc:Translate Text='Índices na tabela interna'}"/>
-    <controls:Knob Value="{Binding Position,Mode=TwoWay}" Accent="{DynamicResource AmpAccent}" Minimum="0" Maximum="1000" FineAdjustment="True" WheelSpeedMultiplier="11.5" IsFader="True" Width="64" Height="164" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding ModificationState}}" ToolTip="{loc:Translate Text='Arraste ou role para ajustar. Shift permite ajuste fino.'}"/>
-    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource AmpValue}"/>
-    <ui:Button Click="ResetControlClick" Style="{StaticResource AmpReset}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
-   </StackPanel>
+  <SolidColorBrush x:Key="CapacitorAmber" Color="#F0BE72"/>
+  <SolidColorBrush x:Key="CapacitorDisplay" Color="#24211C"/>
+  <DataTemplate x:Key="CapacitorPanel">
+   <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,16">
+    <StackPanel>
+     <TextBlock Text="{loc:Translate Value={Binding Title}}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+     <TextBlock Text="{Binding Subtitle}" FontSize="12" Foreground="{DynamicResource Muted}" Margin="0,3,0,12"/>
+     <WrapPanel HorizontalAlignment="Center">
+      <StackPanel Width="200" Margin="0,0,8,8">
+       <ComboBox ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex,Mode=TwoWay}" HorizontalContentAlignment="Center" Padding="12,8" Background="{DynamicResource CapacitorDisplay}" Foreground="{DynamicResource CapacitorAmber}"
+                 AutomationProperties.Name="{loc:Translate Value={Binding Title}}" ToolTip="{loc:Translate Text='Capacitâncias são referências de timbre. Escolha um perfil para ouvir.'}">
+        <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
+       </ComboBox>
+       <controls:Knob Value="{Binding ProfileIndex,Mode=TwoWay}" Minimum="0" Maximum="5" StepSize="1" Face="{Binding SelectorFace}" Accent="{DynamicResource CapacitorAmber}" Width="132" Height="132" Margin="0,10,0,6"
+                      AutomationProperties.Name="{loc:Translate Value={Binding Title}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding SelectedProfile.Label}}" ToolTip="{loc:Translate Text='Gire para escolher um perfil. Home retorna a Original.'}"/>
+       <TextBlock Text="{loc:Translate Text='Mais magro ↔ Mais gordo'}" TextAlignment="Center" Foreground="{DynamicResource Muted}" FontSize="12"/>
+      </StackPanel>
+      <StackPanel Width="160" Margin="0,8,16,8">
+       <TextBlock Text="{loc:Translate Text='Intensidade'}" TextAlignment="Center" FontWeight="SemiBold"/>
+       <controls:Knob Value="{Binding Intensity,Mode=TwoWay}" Minimum="0" Maximum="100" FineAdjustment="True" Face="{Binding IntensityFace}" Accent="{DynamicResource CapacitorAmber}" IsEnabled="{Binding IsActive}" Width="96" Height="96" Margin="0,16,0,4"
+                      AutomationProperties.Name="{loc:Translate Text='Intensidade do perfil'}" AutomationProperties.ItemStatus="{Binding IntensityDisplay}" ToolTip="{loc:Translate Text='Dose o perfil de 0 a 100%. Shift permite ajuste fino.'}"/>
+       <TextBlock Text="{Binding IntensityDisplay}" TextAlignment="Center" FontSize="16" Foreground="{DynamicResource CapacitorAmber}"/>
+       <TextBlock Text="{loc:Translate Text='0% preserva o original'}" FontSize="12" TextAlignment="Center" Foreground="{DynamicResource Muted}" Margin="0,6,0,0"/>
+      </StackPanel>
+     </WrapPanel>
+     <TextBlock Text="{loc:Translate Value={Binding SelectedProfile.Description}}" TextWrapping="Wrap" Foreground="{DynamicResource Muted}" Margin="0,8,0,8"/>
+     <ui:Button Content="{loc:Translate Text='Restaurar original'}" Command="{Binding RestoreOriginal}" Appearance="Transparent" HorizontalAlignment="Left" Padding="8,4">
+      <ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon>
+     </ui:Button>
+    </StackPanel>
+   </Border>
   </DataTemplate>
   <ItemsPanelTemplate x:Key="AmpWrap"><WrapPanel/></ItemsPanelTemplate>
  </UserControl.Resources>
@@ -216,9 +239,10 @@
      </WrapPanel>
     </StackPanel></Border></ScrollViewer></TabItem>
     <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource AmpPanel}"><StackPanel>
-     <TextBlock Text="{loc:Translate Text='Ajustes por trecho'}" FontSize="18" FontWeight="SemiBold"/>
-     <TextBlock Text="{loc:Translate Text='Cada controle ajusta 16 valores da tabela. 100% mantém a referência carregada.'}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"/>
-     <ItemsControl ItemsSource="{Binding Amp.CurveControls}" ItemTemplate="{StaticResource AmpSegment}" ItemsPanel="{StaticResource AmpWrap}" MaxWidth="768" HorizontalAlignment="Left"/>
+     <TextBlock Text="{loc:Translate Text='Resposta e capacitores'}" FontSize="20" FontWeight="SemiBold"/>
+     <TextBlock Text="{loc:Translate Text='Escolha o caráter. Dose a intensidade. Encontre seu timbre.'}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,4,0,16"/>
+     <ItemsControl ItemsSource="{Binding Amp.CapacitorBanks}" ItemTemplate="{StaticResource CapacitorPanel}"/>
+     <TextBlock Text="{loc:Translate Text='Perfis de timbre para escuta, inspirados em capacitores. Original preserva o modelo carregado.'}" Foreground="{DynamicResource Muted}" FontSize="12" TextWrapping="Wrap"/>
     </StackPanel></Border></ScrollViewer></TabItem>
    </TabControl>
   </Grid>

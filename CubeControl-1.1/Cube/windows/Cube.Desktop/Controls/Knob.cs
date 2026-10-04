@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
@@ -11,6 +12,33 @@ namespace Cube.Desktop.Controls;
 
 public sealed class Knob : FrameworkElement
 {
+    private static readonly ImageSource OfficialKnob = LoadOfficialFace("Knobs/knob_oficial_01.png");
+    private static readonly ImageSource OfficialFader = LoadOfficialFace("Faders/fader_oficial_01.png");
+
+    private static ImageSource LoadOfficialFace(string asset)
+    {
+        var bitmap = new BitmapImage(new Uri($"pack://application:,,,/CubeControl;component/Assets/imagens/{asset}"));
+        // Trim transparent canvas margins for consistent sizing and rotation around the cap.
+        var pixels = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+        int stride = pixels.PixelWidth * 4;
+        var data = new byte[stride * pixels.PixelHeight];
+        pixels.CopyPixels(data, stride, 0);
+        int left = pixels.PixelWidth, top = pixels.PixelHeight, right = 0, bottom = 0;
+        for (int y = 0; y < pixels.PixelHeight; y++)
+            for (int x = 0; x < pixels.PixelWidth; x++)
+                if (data[y * stride + x * 4 + 3] > 16)
+                {
+                    left = Math.Min(left, x); top = Math.Min(top, y);
+                    right = Math.Max(right, x); bottom = Math.Max(bottom, y);
+                }
+        var face = new CroppedBitmap(bitmap, new Int32Rect(left, top, right - left + 1, bottom - top + 1));
+        face.Freeze();
+        return face;
+    }
+    public static readonly DependencyProperty StepSizeProperty = DependencyProperty.Register(nameof(StepSize), typeof(double), typeof(Knob),
+        new PropertyMetadata(0d, (d, _) => d.CoerceValue(ValueProperty)), value => value is double step && double.IsFinite(step) && step >= 0);
+    public double StepSize { get => (double)GetValue(StepSizeProperty); set => SetValue(StepSizeProperty, value); }
+    private double InputStep => StepSize > 0 ? StepSize : Fine ? .1 : 1;
     public static readonly DependencyProperty FineAdjustmentProperty = DependencyProperty.Register(nameof(FineAdjustment), typeof(bool), typeof(Knob), new PropertyMetadata(false));
     public bool FineAdjustment { get => (bool)GetValue(FineAdjustmentProperty); set => SetValue(FineAdjustmentProperty, value); }
     private bool Fine => FineAdjustment && (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
@@ -23,6 +51,13 @@ public sealed class Knob : FrameworkElement
     {
         if (UIElementAutomationPeer.FromElement((Knob)d) is KnobPeer peer)
             peer.RaisePropertyChangedEvent(RangeValuePatternIdentifiers.ValueProperty, e.OldValue, e.NewValue);
+    }, (d, value) =>
+    {
+        var knob = (Knob)d;
+        if (knob.StepSize <= 0) return value;
+        double number = (double)value;
+        if (!double.IsFinite(number)) return knob.Minimum;
+        return Math.Clamp(knob.Minimum + Math.Round((number - knob.Minimum) / knob.StepSize, MidpointRounding.AwayFromZero) * knob.StepSize, knob.Minimum, knob.Maximum);
     }));
     public static readonly DependencyProperty MaximumProperty = DependencyProperty.Register(nameof(Maximum), typeof(double), typeof(Knob), new FrameworkPropertyMetadata(127d, FrameworkPropertyMetadataOptions.AffectsRender));
     public static readonly DependencyProperty MinimumProperty = DependencyProperty.Register(nameof(Minimum), typeof(double), typeof(Knob), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
@@ -49,6 +84,8 @@ public sealed class Knob : FrameworkElement
     public Knob()
     {
         Focusable = true; Cursor = Cursors.Hand; MinWidth = 48; MinHeight = 48;
+        // Smooth the official textures when reduced and rotated at UI sizes.
+        RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
         SetResourceReference(ThemeRevisionProperty, "CubeThemeRevision");
         idle.Tick += (_, _) => EndGesture();
         Unloaded += (_, _) => EndGesture();
@@ -71,7 +108,7 @@ public sealed class Knob : FrameworkElement
         if (radius < 2) return;
         dc.PushOpacity(IsEnabled || ThemeService.Instance.IsHighContrast ? 1 : 0.35);
         var accent = !IsEnabled && ThemeService.Instance.IsHighContrast ? ThemeService.Brush("CubeDisabledText") : Accent;
-        if (Face != null || IsFader)
+        if (!ThemeService.Instance.IsHighContrast || IsFader)
         {
             double position = Math.Clamp((Value - Minimum) / Math.Max(1, Maximum - Minimum), 0, 1);
             if (IsFader)
@@ -84,7 +121,13 @@ public sealed class Knob : FrameworkElement
                     dc.DrawLine(new Pen(i == 5 ? accent : ThemeService.Brush("CubeKnobTrack"), 1), new(center.X - 22, y), new(center.X - 12, y));
                 }
                 double handleY = bottom - position * (bottom - top);
-                if (Face != null) dc.DrawImage(Face, new Rect(center.X - 23, handleY - 24, 46, 48));
+                if (!ThemeService.Instance.IsHighContrast)
+                {
+                    dc.DrawLine(new Pen(accent, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new(center.X, bottom), new(center.X, handleY));
+                    double width = Math.Min(46, ActualWidth - 8);
+                    double height = width * OfficialFader.Height / OfficialFader.Width;
+                    dc.DrawImage(OfficialFader, new Rect(center.X - width / 2, handleY - height / 2, width, height));
+                }
                 else
                 {
                     dc.DrawLine(new Pen(accent, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new(center.X, bottom), new(center.X, handleY));
@@ -97,8 +140,15 @@ public sealed class Knob : FrameworkElement
             {
                 DrawArc(dc, center, radius + 1, 270, new Pen(ThemeService.Brush("CubeKnobTrack"), 3));
                 if (position > 0) DrawArc(dc, center, radius + 1, position * 270, new Pen(accent, 3));
+                if (StepSize > 0)
+                    for (double tick = Minimum; tick <= Maximum; tick += StepSize)
+                    {
+                        double tickAngle = (135 + (tick - Minimum) / Math.Max(1, Maximum - Minimum) * 270) * Math.PI / 180;
+                        dc.DrawLine(new Pen(accent, 2), new(center.X + Math.Cos(tickAngle) * (radius - 2), center.Y + Math.Sin(tickAngle) * (radius - 2)),
+                            new(center.X + Math.Cos(tickAngle) * (radius + 4), center.Y + Math.Sin(tickAngle) * (radius + 4)));
+                    }
                 dc.PushTransform(new RotateTransform(-135 + position * 270, center.X, center.Y));
-                dc.DrawImage(Face, new Rect(center.X - radius + 4, center.Y - radius + 4, (radius - 4) * 2, (radius - 4) * 2));
+                dc.DrawImage(OfficialKnob, new Rect(center.X - radius + 4, center.Y - radius + 4, (radius - 4) * 2, (radius - 4) * 2));
                 dc.Pop();
             }
             if (IsKeyboardFocused) dc.DrawRoundedRectangle(null, new Pen(accent, 1), new Rect(1, 1, ActualWidth - 2, ActualHeight - 2), 4, 4);
@@ -147,7 +197,7 @@ public sealed class Knob : FrameworkElement
             wheelDelta %= WheelStepDelta;
             if (steps != 0)
             {
-                BeginGesture(true); Value += steps * (Fine ? .1 : 1);
+                BeginGesture(true); Value += steps * InputStep;
                 if (Value <= Minimum || Value >= Maximum) wheelDelta = 0;
             }
         }
@@ -162,8 +212,8 @@ public sealed class Knob : FrameworkElement
         if (e.Key is Key.Up or Key.Right or Key.Down or Key.Left or Key.Home or Key.End) BeginGesture(true);
         switch (e.Key)
         {
-            case Key.Up: case Key.Right: Value += Fine ? .1 : 1; break;
-            case Key.Down: case Key.Left: Value -= Fine ? .1 : 1; break;
+            case Key.Up: case Key.Right: Value += InputStep; break;
+            case Key.Down: case Key.Left: Value -= InputStep; break;
             case Key.Home: Value = Minimum; break;
             case Key.End: Value = Maximum; break;
             default: base.OnKeyDown(e); return;
@@ -177,7 +227,7 @@ public sealed class Knob : FrameworkElement
         public override object? GetPattern(PatternInterface patternInterface) => patternInterface == PatternInterface.RangeValue ? this : base.GetPattern(patternInterface);
         public bool IsReadOnly => !owner.IsEnabled;
         public double LargeChange => 5;
-        public double SmallChange => 1;
+        public double SmallChange => owner.StepSize > 0 ? owner.StepSize : 1;
         public double Maximum => owner.Maximum;
         public double Minimum => owner.Minimum;
         public double Value => owner.Value;

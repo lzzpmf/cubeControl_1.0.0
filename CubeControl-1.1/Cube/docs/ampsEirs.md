@@ -26,7 +26,17 @@ B, A e OD em aliases não comprovam canais com esses nomes nos equipamentos come
 
 ## Gabinetes / IRs
 
-`cabinet=0` é OFF e não possui setor. Valores 1–8 selecionam slots internos 0–7. A posição só indica onde os dados estão; a identificação de fábrica depende do conteúdo reconhecido.
+`cabinet=0` é OFF e não possui setor. Valores 1–8 selecionam slots internos 0–7. A posição só indica onde os dados estão; a identificação do pack depende do conteúdo reconhecido.
+
+### Packs BFI e BFIN — revisão de 03/10/2026
+
+Nenhum conjunto de oito IRs é apresentado como “de fábrica”. O app identifica os packs **BFI** e **BFIN** por SHA-256 de cada setor completo, independentemente do slot e da presença do CubeSuite. Para aplicar um pack, o recurso local precisa existir e passar pela validação de tamanho e hash. A interface compara os oito slots e permite selecionar quais substituir, com backup, confirmação e conferência da gravação.
+
+Os oito setores lidos do dispositivo em 03/10/2026 coincidem, byte a byte e na mesma ordem, com `CubeSuite/bin/BFIN.bin` (32.768 bytes, SHA-256 `1FABBBF9DD2797E4B4F9B43247BC2112C7285C6D8E73EDDEC0AE9191332E7E0B`). Também coincidem com o intervalo `0x69100..0x710FF` dos firmwares locais registrados no [relatório de identificação](../../../engenharia-reversa/cube-baby/artefatos/ir-comparison-20261003/pack-identification.json). Nenhuma gravação no pedal foi feita nessa investigação.
+
+Isso confirma **o pack**, mas não os modelos dos gabinetes. O manual local contém a tabela abaixo; outra versão do manual apresenta uma lista diferente, sem vincular cada nome ao hash de um arquivo BFIN. Não há base suficiente para escolher uma dessas listas apenas pela posição. Por isso o BFIN aparece como `Pack BFIN · IR 1` até `IR 8`, com imagem genérica e indicação de modelo não confirmado. Nomes e imagens personalizados continuam vinculados ao hash e acompanham o IR quando ele muda de slot.
+
+A tabela abaixo conserva as referências visuais históricas do **Pack BFI**. Elas não são uma identificação acústica medida. Seus identificadores internos passaram de `factory-cab-N` para `pack-bfi-cab-N`; associações e fotos personalizadas persistidas pelo hash continuam válidas.
 
 | Valor de cabinet | Slot interno | Alias/referência do catálogo |
 | ---: | ---: | --- |
@@ -48,4 +58,4 @@ Para o modelo comercial **Marshall 1960AV**, a referência do fabricante usa **G
 
 [Perfil USB](../windows/Cube.Protocol/CubeBabyProfile.cs), [catálogo de apresentação](../windows/Cube.Protocol/EquipmentCatalog.cs), [identificação de gabinetes](../windows/Cube.Protocol/CabinetCatalog.cs) e [imagens](../windows/Cube.Desktop/Assets/Equipment/README.md).
 
-Características de gabinete descrevem um modelo de referência, não uma medição do arquivo. Setores personalizados ou desconhecidos não devem herdar automaticamente identidade e foto de fábrica.
+Características de gabinete descrevem um modelo de referência, não uma medição do arquivo. Setores personalizados ou desconhecidos não devem herdar automaticamente identidade e foto de outro pack.

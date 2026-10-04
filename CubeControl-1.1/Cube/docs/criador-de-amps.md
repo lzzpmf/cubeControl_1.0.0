@@ -33,13 +33,17 @@ O gráfico de EQ representa os coeficientes calculados, não uma medição de re
 
 ## Apresentação e edição
 
-Ganho e Volume ficam no cabeçalho, com referência **1×**. Volume multiplica a compensação do modelo; sua posição final na cadeia DSP não foi comprovada. As quatro categorias preservam os mesmos 40 controles. A EQ usa coral para A, azul e linha tracejada para B e linha neutra para a combinação. Em janelas amplas, os controles da banda ficam ao lado do gráfico; em janelas menores, abaixo. Clássico/Moderno muda apenas a apresentação.
+Ganho e Volume ficam no cabeçalho, com referência **1×**. Volume multiplica a compensação do modelo; sua posição final na cadeia DSP não foi comprovada. Resposta abstrai seus 16 trechos em dois painéis de capacitores; as demais categorias preservam seus controles e faixas. A EQ usa coral para A, azul e linha tracejada para B e linha neutra para a combinação. Em janelas amplas, os controles da banda ficam ao lado do gráfico; em janelas menores, abaixo. Clássico/Moderno muda apenas a apresentação.
 
 Clique no valor ou pressione Enter para digitar com precisão completa. Enter confirma; Escape ou sair do campo descarta. Valores inválidos não são aplicados. A exibição arredondada nunca retorna automaticamente ao modelo. Mouse, roda, teclado e Shift conservam os passos anteriores.
 
 O ponto junto ao valor identifica diferença da referência do controle. **Restaurar banda** recupera os três parâmetros e os coeficientes originais daquele EQ. Os demais resets mantêm o alcance individual existente. **Sem alterações locais** compara os bytes da edição com o arquivo carregado; não significa original de fábrica ou salvo no pedal.
 
-Os códigos A01–A08/B01–B08 acompanham os nomes de escuta, sem atribuir funções DSP ainda desconhecidas. **Resposta** apresenta Trechos 01–16, cada qual multiplicando 16 elementos contíguos. Não há eixo de intensidade da palhetada, interpolação ou curva de transferência demonstrada. A organização compacta não altera essa operação.
+Os códigos A01–A08/B01–B08 acompanham os nomes de escuta, sem atribuir funções DSP ainda desconhecidas. **Resposta** reúne os trechos 01–08 em Capacitores de Acoplamento e 09–16 em Capacitor de Derivação de Cátodo. Cada painel oferece uma chave Original + cinco perfis e intensidade de 0–100%, inicialmente 50%; os trechos individuais não aparecem na interface. A chave aceita arraste, roda, setas e Home/End; o visor permite selecionar o perfil pelo menu. Original desabilita a intensidade e preserva a referência. Restaurar original redefine somente aquele painel e prepara intensidade de 50%.
+
+Os perfis são propostas para escuta, não uma simulação elétrica calibrada. Cada um contém oito desvios; a intensidade aplica `percentual = 100 + desvio × intensidade / 100`. Cada percentual multiplica os 16 valores originais do trecho correspondente, limitado a 0–1. Somente esses trechos têm faixa 67–133%; ganho, volume, EQ e coeficientes A/B mantêm suas faixas. A atualização conjunta emite um único evento de edição. Não há acumulação ao trocar perfis, inferência de frequência por índice ou medição acústica.
+
+O histórico conserva a referência e os estados das duas chaves e intensidades. Exportar/gravar mantém o formato binário, sem metadados de capacitor; importar/ler/carregar estabelece nova referência com ambos os painéis em Original. O som importado é preservado, sem tentar inferir um perfil. Os vetores de `AmpCapacitors.cs` ainda dependem de validação sonora no pedal.
 
 O estado da edição local é separado do resultado operacional. Importar identifica a origem como arquivo; exportar guarda somente o arquivo. A prévia informa a verificação da RAM. **Salvo no slot N** aparece após gravação e comparação integral; nova edição, carregamento, troca de slot ou perda do contexto do dispositivo invalida essa indicação. Não comprova recarga física do som ou retenção após desligamento.
 

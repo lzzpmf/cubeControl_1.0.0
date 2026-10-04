@@ -24,7 +24,7 @@ internal static class DelayDesktopTests
         await model.ReadDelayAsync();
         Check(model.DelayPreviewActive && model.CanEditDelay && !model.CanEdit && !model.CanUseAmp && !model.CanOperate && !model.CanStartPhaser && !model.CanStartChorus && !model.CanStartReverb,
             "delay preview excludes preset edits and amp/IR operations");
-        Check(File.Exists(Path.Combine(directory, "pending-delay-preview.json")), "delay durable recovery created");
+        Check(!File.Exists(Path.Combine(directory, "pending-delay-preview.json")), "delay snapshot stays in memory");
         model.Delay.Mix = 10; model.Delay.Mix = 20; model.Delay.Mix = 30;
         for (int i = 0; i < 200 && (DelayParameters.Read(fake.Dsp).Mix != 0.3f || model.Busy); i++) await Task.Delay(10);
         Check(DelayParameters.Read(fake.Dsp).Mix == 0.3f && fake.Writes == 1, "delay rapid edits coalesce to final value");
@@ -61,20 +61,21 @@ internal static class DelayDesktopTests
         var second = new CubeSession(fake); await second.Identify(); await model.AttachSession(second); await model.ReadDelayAsync();
         model.Delay.Depth = 50;
         for (int i = 0; i < 200 && (DelayParameters.Read(fake.Dsp).Depth != 0.05f || model.Busy); i++) await Task.Delay(10);
-        model.Dispose(); // Abnormal shutdown: retain pending record, never silently discard it.
+        model.Dispose(); // Abnormal shutdown ends the app session; only the current pedal RAM survives.
         using var reopened = new EditorViewModel(directory);
         int writes = fake.Writes;
         await reopened.Initialize();
-        Check(reopened.DelayPreviewActive && !reopened.CanEditDelay && fake.Writes == writes,
-            "restart loads pending recovery without reapplying controls");
+        Check(!reopened.DelayPreviewActive && !reopened.CanEditDelay && fake.Writes == writes,
+            "restart ignores previous session without reapplying controls");
         var third = new CubeSession(fake); await third.Identify(); await reopened.AttachSession(third);
+        var currentDsp = fake.Dsp.ToArray();
         await reopened.EndDelayPreviewAsync();
-        Check(DelayParameters.Read(fake.Dsp) == new DelayParameters(9600, 0.25f, 0.1f, 0.01f, 0.25f) && !reopened.DelayPreviewActive,
-            "explicit recovery survives process restart");
+        Check(fake.Dsp.SequenceEqual(currentDsp) && !reopened.DelayPreviewActive,
+            "new session never restores the previous snapshot");
         await reopened.ReadDelayAsync();
         fake.State[0] = 1;
         await Task.Delay(2300);
-        Check(!reopened.CanEditDelay && reopened.DelayPreviewActive && File.Exists(Path.Combine(directory, "pending-delay-preview.json")),
+        Check(!reopened.CanEditDelay && reopened.DelayPreviewActive && !File.Exists(Path.Combine(directory, "pending-delay-preview.json")),
             "idle monitoring stops on physical context change and keeps recovery");
         fake.State[0] = 0;
         await reopened.EndDelayPreviewAsync();
@@ -102,8 +103,8 @@ internal static class DelayDesktopTests
         using var invalid = new EditorViewModel(invalidDirectory);
         try { await invalid.Initialize(); } catch (Exception) { }
         var invalidSession = new CubeSession(fake); await invalidSession.Identify(); await invalid.AttachSession(invalidSession);
-        Check(!invalid.CanStartDelay && !invalid.CanStartPhaser && !invalid.CanStartChorus && !invalid.CanStartReverb && !invalid.CanUseAmp &&
-            await File.ReadAllTextAsync(invalidPath) == "{}", "malformed recovery blocks all previews without overwriting evidence");
+        Check(invalid.CanStartDelay && invalid.CanStartPhaser && invalid.CanStartChorus && invalid.CanStartReverb && invalid.CanUseAmp &&
+            await File.ReadAllTextAsync(invalidPath) == "{}", "malformed legacy recovery does not block previews");
         var closeFake = new DelayConnection(); closeFake.Activate();
         var closeSession = new CubeSession(closeFake); await closeSession.Identify();
         using var closeModel = new EditorViewModel(Path.Combine(directory, "closing"));

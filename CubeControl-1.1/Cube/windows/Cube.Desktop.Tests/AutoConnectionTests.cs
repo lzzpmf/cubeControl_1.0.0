@@ -85,9 +85,8 @@ internal static class AutoConnectionTests
         Check(connected.Connected && connected.CanEdit && !connected.Busy && !connected.HasError,
             "real reconnect reloads inventory and releases editing without stale error");
         Check(connected.Dirty && connected.Save.CanExecute(null), "unsaved RAM edits remain available to save after USB reconnect");
-        var backups = System.IO.Directory.GetFiles(System.IO.Path.Combine(connected.DataDirectory, "Backups"), "*-edicao-antes-reconexao-*.json");
-        Check(backups.Length == 1 && System.IO.File.ReadAllText(backups[0]).Contains(Convert.ToHexString(localEdits)),
-            "automatic reconnection preserves exact local edits in an importable backup");
+        Check(!System.IO.Directory.Exists(System.IO.Path.Combine(connected.DataDirectory, "Backups")),
+            "automatic reconnection creates no disk backups");
         Check(device.Writes == 0, "automatic reconnection only reads pedal");
         connected.Current.Parameters[1].Value = 2;
         await connected.Flush();
@@ -99,7 +98,7 @@ internal static class AutoConnectionTests
         await connected.TryAutomaticConnection(RefreshPorts, Reconnect);
         Check(connected.CanEdit && !connected.HasError && !connected.Dirty && connected.Current.Parameters[1].Value == 0,
             "power cycle loads actual pedal bank and releases controls");
-        Check(device.Writes == beforeReconnect && System.IO.Directory.GetFiles(System.IO.Path.Combine(connected.DataDirectory, "Backups"), "*-edicao-antes-reconexao-*.json").Length == 2,
+        Check(device.Writes == beforeReconnect && !System.IO.Directory.Exists(System.IO.Path.Combine(connected.DataDirectory, "Backups")),
             "power cycle preserves draft without replaying edits to pedal");
         var stalled = new TaskCompletionSource<IDisposable>();
         var openMethod = typeof(WindowsMidiConnection).GetMethod("OpenWithTimeout", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!.MakeGenericMethod(typeof(IDisposable));

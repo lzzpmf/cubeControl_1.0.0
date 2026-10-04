@@ -42,9 +42,8 @@ public sealed partial class CubeSession
     private void CheckDelayContext(DelayRecovery recovery, DelaySnapshot current, bool recovering)
     {
         recovery.Validate();
-        if (IdentityHex != recovery.Identity || !current.Bank.SequenceEqual(recovery.Bank) ||
-            !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
-            !DelayParameters.StableEquals(current.Dsp, recovery.OriginalDsp, ignoreControls: true))
+        if (IdentityHex != recovery.Identity || !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
+            !EffectContextMatches(3, current.Bank, recovery.Bank, current.Dsp, recovery.OriginalDsp, recovery.PhysicalState[0]))
             throw new IOException("O contexto do delay mudou; prévia interrompida e backup preservado.");
         if (!recovering && DelayParameters.Read(current.Dsp) != recovery.Target)
             throw new IOException("Parâmetros recarregados ou alterados externamente; prévia interrompida.");
@@ -73,6 +72,7 @@ public sealed partial class CubeSession
             ct.ThrowIfCancellationRequested();
             await WriteDelayFields(before, parameters, CancellationToken.None);
             var after = await ReadDelayCore(CancellationToken.None);
+            VerifyEffectMutation(3, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckDelayContext(transaction, after, recovering: false);
             return transaction;
         }
@@ -89,6 +89,7 @@ public sealed partial class CubeSession
             var original = DelayParameters.Read(recovery.OriginalDsp);
             await WriteDelayFields(before, original, CancellationToken.None);
             var after = await ReadDelayCore(CancellationToken.None);
+            VerifyEffectMutation(3, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckDelayContext((recovery with { Target = original }).Seal(), after, recovering: false);
         }
         finally { gate.Release(); }

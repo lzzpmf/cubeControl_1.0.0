@@ -220,7 +220,7 @@
     <Grid x:Name="ConnectionGroup" Grid.Column="1" Margin="24,0,0,0" VerticalAlignment="Center">
      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
      <StackPanel Margin="0,0,12,0" MaxWidth="280" HorizontalAlignment="Left">
-      <Image Source="{Binding ConnectedDeviceImage}" Width="40" Height="24" MaxWidth="40" MaxHeight="24" Stretch="Uniform" HorizontalAlignment="Left" Visibility="{Binding Connected,Converter={StaticResource Visible}}" AutomationProperties.Name="{loc:Translate Text='Aparelho conectado'}"/>
+      <Image Source="{Binding ConnectedDeviceImage}" Width="128" Height="48" Stretch="UniformToFill" ClipToBounds="True" HorizontalAlignment="Left" Visibility="{Binding Connected,Converter={StaticResource Visible}}" AutomationProperties.Name="{loc:Translate Text='Aparelho conectado'}"/>
       <TextBlock Text="{loc:Translate Value={Binding HeaderConnectionStatus}}" Style="{StaticResource HelpText}" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>
       <ProgressBar Style="{StaticResource InfiniteProgressBar}" Visibility="{Binding SearchingPorts,Converter={StaticResource Visible}}" AutomationProperties.Name="{loc:Translate Text='Procurando portas USB-MIDI…'}" Height="4" MinWidth="160" Margin="0,8,0,0"/>
      </StackPanel>
@@ -250,7 +250,7 @@
          <Border Width="62" Height="62" CornerRadius="8" BorderThickness="2" BorderBrush="Transparent" Padding="2" Cursor="Hand">
 
           <Border CornerRadius="6" RenderOptions.BitmapScalingMode="HighQuality">
-           <Border.Background><ImageBrush ImageSource="pack://siteoforigin:,,,/Assets/Equipment/footswitch.png" Viewbox="0.23,0.08,0.54,0.82" ViewboxUnits="RelativeToBoundingBox" Stretch="UniformToFill"/></Border.Background>
+           <Border.Background><ImageBrush ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/footswitch_oficial_01.png" Viewbox="0.234,0.210,0.532,0.564" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/></Border.Background>
           </Border>
          </Border>
          <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" Margin="0,4,0,4" Style="{StaticResource TitleText}"/>
@@ -263,7 +263,7 @@
       <local:Knob x:Name="PresetVolumeKnob" WheelStepDelta="100" WheelSpeedMultiplier="1.43" Accent="{DynamicResource CubeAccent}" Width="104" Height="104" Maximum="127" Value="{Binding Current.Volume.Value,Mode=TwoWay}" AutomationProperties.Name="{loc:Translate Text='Volume geral'}" ToolTip="{Binding Current.Volume.Value}"/>
      </StackPanel>
      <StackPanel x:Name="SaveGroup" Grid.Column="2" VerticalAlignment="Center" Width="220">
-      <ui:Button HorizontalAlignment="Right" x:Name="SavePresetsButton" Content="{loc:Translate Text='Salvar presets'}" Command="{Binding Save}" Appearance="{Binding SaveAppearance}" MinHeight="40" Margin="0" ToolTip="{loc:Translate Text='Salva os três presets A, B e C no pedal, incluindo as alterações feitas no aplicativo. Cria um backup antes de gravar e verifica o resultado. Não grava arquivos de IR.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24" FontSize="16"/></ui:Button.Icon></ui:Button>
+      <ui:Button HorizontalAlignment="Right" x:Name="SavePresetsButton" Content="{loc:Translate Text='Salvar presets'}" Command="{Binding Save}" Appearance="{Binding SaveAppearance}" MinHeight="40" Margin="0" ToolTip="{loc:Translate Text='Salva os três presets A, B e C no pedal e verifica o resultado. Preserva o original em memória nesta sessão. Não grava arquivos de IR.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24" FontSize="16"/></ui:Button.Icon></ui:Button>
       <TextBlock x:Name="UnsavedPresetNotice" Text="{loc:Translate Value={Binding BankSaveStatus}}" MinHeight="40" TextAlignment="Right" Margin="0,8,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" LineHeight="20">
        <TextBlock.Style>
         <Style TargetType="TextBlock" BasedOn="{StaticResource BodyText}"><Setter Property="Foreground" Value="{DynamicResource Muted}"/>
@@ -321,7 +321,8 @@
         <ui:CardAction Style="{StaticResource QuickAction}" Click="AmpCatalogClick" IsEnabled="{Binding CanEditAmpLocally}" Margin="0,0,8,8"><ui:CardAction.Icon><ui:SymbolIcon Symbol="Library24" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon><TextBlock Text="{loc:Translate Text='Catálogo de amps'}" Style="{StaticResource BodyStrongText}"/></ui:CardAction>
         <ui:CardAction Style="{StaticResource QuickAction}" Click="CreateAmpClick" IsEnabled="{Binding CanEditAmpLocally}" Margin="0,0,8,8"><ui:CardAction.Icon><ui:SymbolIcon Symbol="Add24" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon><TextBlock Text="{loc:Translate Text='Criar amp'}" Style="{StaticResource BodyStrongText}"/></ui:CardAction>
        </WrapPanel>
-       <Border x:Name="EffectDetailSurface" local:SurfaceMotion.Enabled="True" local:SurfaceMotion.Key="{Binding SelectedStage}" Visibility="{Binding HasBank,Converter={StaticResource Visible}}" Style="{StaticResource Card}" Padding="0" Margin="0"><local:AdaptivePanel Breakpoint="740" ControlsFirstWhenStacked="True">
+       <Border x:Name="EffectDetailSurface" local:SurfaceMotion.Enabled="True" local:SurfaceMotion.Key="{Binding SelectedStage}" Visibility="{Binding HasBank,Converter={StaticResource Visible}}" Style="{StaticResource Card}" Padding="0" Margin="0"><local:AdaptivePanel ControlsFirstWhenStacked="True">
+        <local:AdaptivePanel.Style><Style TargetType="local:AdaptivePanel"><Setter Property="Breakpoint" Value="740"/><Setter Property="FirstShare" Value="0.4"/><Style.Triggers><DataTrigger Binding="{Binding IsAdvancedCard}" Value="True"><Setter Property="Breakpoint" Value="1040"/><Setter Property="FirstShare" Value="0.3"/></DataTrigger></Style.Triggers></Style></local:AdaptivePanel.Style>
         <Border Background="{DynamicResource CubeInset}" CornerRadius="14,0,0,14" Padding="24"><StackPanel>
          <DockPanel><DockPanel.Style><Style TargetType="DockPanel"><Style.Triggers><DataTrigger Binding="{Binding IsAmp}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DockPanel.Style><TextBlock Text="{loc:Translate Value={Binding Stage.Title}}" Foreground="{Binding Stage.Color}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Value={Binding FocusedGear.SlotLabel}}" Foreground="{DynamicResource Muted}" HorizontalAlignment="Right" Style="{StaticResource CaptionText}"/></DockPanel>
          <local:GearImageButton IsInteractive="{Binding HasGallery}" x:Name="EquipmentImageButton" Template="{StaticResource GearCarouselImageTemplate}" HorizontalAlignment="Stretch" Click="GalleryClick" Appearance="Transparent" Padding="0" Margin="0,18,0,16" BorderThickness="0" HorizontalContentAlignment="Stretch" IsEnabled="{Binding CanOpenGearGallery}" Focusable="{Binding HasGallery}" IsTabStop="{Binding HasGallery}" AutomationProperties.Name="{loc:Translate Value={Binding GalleryLabel}}">
@@ -344,11 +345,6 @@
           <ui:CardAction.Icon><ui:SymbolIcon Symbol="Add24" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon>
           <StackPanel><TextBlock Text="{loc:Translate Text='Criar amp'}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Escolha a base do seu timbre.'}" TextWrapping="Wrap" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
          </ui:CardAction>
-         <ui:CardAction Click="AdvancedEffectClick" HorizontalAlignment="Stretch" MinWidth="0" Margin="0,0,8,12" ToolTip="{loc:Translate Text='Lê o efeito ativo e abre os ajustes com aplicação automática em RAM.'}">
-          <ui:CardAction.Style><Style TargetType="ui:CardAction" BasedOn="{StaticResource QuickAction}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedStage}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding SelectedStage}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding SelectedStage}" Value="3"><Setter Property="Visibility" Value="Visible"/></DataTrigger><DataTrigger Binding="{Binding SelectedStage}" Value="4"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></ui:CardAction.Style>
-          <ui:CardAction.Icon><ui:SymbolIcon Symbol="Settings24" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon>
-          <StackPanel><TextBlock Text="{loc:Translate Text='Opções avançadas'}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Ajuste o efeito em tempo real.'}" TextWrapping="Wrap" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
-         </ui:CardAction>
          </UniformGrid>
          </StackPanel>
          <TextBlock Text="{loc:Translate Value={Binding FocusedGear.Description}}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,14" FontSize="12" LineHeight="16"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding IsAmp}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsCabinet}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
@@ -359,7 +355,16 @@
          </StackPanel></Expander>
         </StackPanel></Border>
         <StackPanel Margin="24">
-         <TextBlock Text="{loc:Translate Value={Binding Stage.Subtitle}}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/>
+         <DockPanel LastChildFill="True" Margin="0,0,0,12">
+          <ui:Button x:Name="EffectCardToggle" DockPanel.Dock="Right" Click="AdvancedEffectClick"
+             Content="{loc:Translate Value={Binding EffectCardAction}}" Visibility="{Binding HasAdvancedCard,Converter={StaticResource Visible}}"
+             HorizontalAlignment="Right" VerticalAlignment="Top" HorizontalContentAlignment="Center"
+             MinWidth="0" MinHeight="32" Padding="10,6" Margin="12,0,0,0" Appearance="Transparent">
+           <ui:Button.Icon><ui:SymbolIcon FontSize="16"><ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon"><Setter Property="Symbol" Value="Settings24"/><Style.Triggers><DataTrigger Binding="{Binding IsAdvancedCard}" Value="True"><Setter Property="Symbol" Value="ArrowLeft24"/></DataTrigger></Style.Triggers></Style></ui:SymbolIcon.Style></ui:SymbolIcon></ui:Button.Icon>
+          </ui:Button>
+          <TextBlock Text="{loc:Translate Value={Binding Stage.Subtitle}}" TextWrapping="Wrap" VerticalAlignment="Center" Style="{StaticResource BodyStrongText}"/>
+         </DockPanel>
+         <StackPanel x:Name="SimpleEffectCard" Visibility="{Binding IsSimpleCard,Converter={StaticResource Visible}}">
          <TextBlock Text="{loc:Translate Value={Binding EffectHint}}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,8,0,20" MaxWidth="620" HorizontalAlignment="Left" Style="{StaticResource BodyText}"/>
          <ItemsControl IsEnabled="{Binding CanEdit}" ItemsSource="{Binding EditorDials}" ItemTemplate="{StaticResource DialTemplate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel></ItemsControl>
          <Grid x:Name="EffectVisualizationBand" Height="144" Margin="0,16,0,0" Background="Transparent" ToolTip="{loc:Translate Text='O desenho acompanha os ajustes e ilustra o efeito; não representa uma medição do áudio.'}">
@@ -406,6 +411,15 @@
           </ui:Button>
           <TextBlock Text="{loc:Translate Value={Binding InventoryStatus}}" Style="{StaticResource HelpText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
          </StackPanel>
+        </StackPanel>
+         <Grid x:Name="AdvancedEffectCard" Visibility="{Binding IsAdvancedCard,Converter={StaticResource Visible}}">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="700"/></Grid.RowDefinitions>
+          <TextBlock Text="{Binding EffectCardError}" Foreground="{DynamicResource CubeWarning}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+          <views:ChorusEditor Grid.Row="1" Visibility="{Binding IsAdvancedChorusCard,Converter={StaticResource Visible}}"/>
+          <views:PhaserEditor Grid.Row="1" Visibility="{Binding IsAdvancedPhaserCard,Converter={StaticResource Visible}}"/>
+          <views:DelayEditor Grid.Row="1" Visibility="{Binding IsAdvancedDelayCard,Converter={StaticResource Visible}}"/>
+          <views:ReverbEditor Grid.Row="1" Visibility="{Binding IsAdvancedReverbCard,Converter={StaticResource Visible}}"/>
+         </Grid>
         </StackPanel>
        </local:AdaptivePanel></Border>
       </StackPanel>
@@ -537,7 +551,7 @@
        </ComboBox>
        <TextBlock Text="{loc:Translate Value={Binding Ir.SlotInfo}}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,12" Style="{StaticResource BodyText}"/>
        <TextBlock Text="{loc:Translate Value={Binding IrAvailability}}" Style="{StaticResource HelpText}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
-       <WrapPanel><ui:Button Content="{loc:Translate Text='Ler e criar backup'}" Command="{Binding ReadSlot}" ToolTip="{loc:Translate Text='Lê o IR do slot selecionado no pedal e salva uma cópia no computador. Não altera o pedal. Use Restaurar backup de IR para recuperá-lo.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowDownload24" FontSize="16"/></ui:Button.Icon></ui:Button><ui:Button ToolTip="{loc:Translate Text='Grava o IR preparado no slot escolhido após confirmação. Cria um backup do conteúdo anterior.'}" Content="{loc:Translate Text='Gravar IR'}" Command="{Binding WriteIr}" Appearance="Primary"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24" FontSize="16"/></ui:Button.Icon></ui:Button></WrapPanel>
+       <WrapPanel><ui:Button Content="{loc:Translate Text='Ler e exportar backup'}" Command="{Binding ReadSlot}" ToolTip="{loc:Translate Text='Lê o IR do slot selecionado e permite escolher onde exportar o backup. Não altera o pedal.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowDownload24" FontSize="16"/></ui:Button.Icon></ui:Button><ui:Button ToolTip="{loc:Translate Text='Grava o IR preparado no slot escolhido após confirmação. Preserva o conteúdo anterior em memória nesta sessão.'}" Content="{loc:Translate Text='Gravar IR'}" Command="{Binding WriteIr}" Appearance="Primary"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24" FontSize="16"/></ui:Button.Icon></ui:Button></WrapPanel>
        <ui:Button ToolTip="{loc:Translate Text='Escolha um backup de IR para restaurar seu conteúdo no pedal.'}" Content="{loc:Translate Text='Restaurar backup de IR'}" Command="{Binding RestoreIr}" Margin="0,12,0,0" HorizontalAlignment="Left"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
       </StackPanel></Border>
      </local:AdaptivePanel>
@@ -632,11 +646,23 @@
       </Grid>
      </ui:CardExpander>
      <ui:CardExpander x:Name="RecoveryCard" Style="{StaticResource SettingsExpander}">
-      <ui:CardExpander.Header><StackPanel><TextBlock Text="{loc:Translate Text='Recuperação de fábrica'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Restaure os presets e os IRs originais do pedal.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel></ui:CardExpander.Header>
+      <ui:CardExpander.Header><StackPanel><TextBlock Text="{loc:Translate Text='Packs de IRs e recuperação'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Escolha um pack de IRs, restaure presets ou reinstale o firmware do pedal.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel></ui:CardExpander.Header>
       <ui:CardExpander.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="20"/></ui:CardExpander.Icon>
       <StackPanel>
       <TextBlock Text="{loc:Translate Value={Binding FactoryAvailability}}" Style="{StaticResource HelpText}" Margin="0,8,0,12"/>
-      <WrapPanel><ui:Button ToolTip="{loc:Translate Text='Restaura os presets A, B e C de fábrica após confirmação.'}" Content="{loc:Translate Text='Restaurar presets de fábrica'}" Command="{Binding ResetPresets}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button><ui:Button ToolTip="{loc:Translate Text='Restaura os oito IRs de fábrica após confirmação, substituindo os IRs atuais.'}" Content="{loc:Translate Text='Restaurar os 8 IRs de fábrica'}" Command="{Binding ResetIrs}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button></WrapPanel>
+      <WrapPanel>
+       <ui:Button ToolTip="{loc:Translate Text='Restaura os presets A, B e C de fábrica após confirmação.'}" Content="{loc:Translate Text='Restaurar presets de fábrica'}" Command="{Binding ResetPresets}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
+       <ComboBox MinWidth="140" Margin="8,0" ItemsSource="{Binding IrPacks}" SelectedItem="{Binding SelectedIrPack}" IsEnabled="{Binding CanOperate}" ToolTip="{loc:Translate Text='Pack de IRs'}"/>
+       <ui:Button ToolTip="{loc:Translate Text='Compara os oito slots com o pack escolhido e aplica somente os selecionados.'}" Content="{loc:Translate Text='Aplicar pack de IRs…'}" Command="{Binding ApplyIrPack}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
+      </WrapPanel>
+      <TextBlock Text="{loc:Translate Text='Reinstalar / atualizar firmware'}" Style="{StaticResource BodyStrongText}" Margin="0,16,0,8"/>
+      <TextBlock Text="{loc:Translate Text='Feche o flash_loader. Ligue o pedal conectado ao PC segurando o terceiro footswitch para entrar em modo flash. Escolha a variante correta; presets e IRs podem ser substituídos.'}" Style="{StaticResource HelpText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+      <ComboBox ItemsSource="{Binding Firmwares}" SelectedItem="{Binding SelectedFirmware}" DisplayMemberPath="Name" IsEnabled="{Binding CanChooseFirmware}" ToolTip="{Binding SelectedFirmware.Path}" AutomationProperties.Name="{loc:Translate Text='Firmware do Cube Baby'}" HorizontalAlignment="Stretch"/>
+      <WrapPanel Margin="0,8,0,0">
+       <ui:Button Content="{loc:Translate Text='Escolher arquivo .up'}" Command="{Binding ChooseFirmware}"/>
+       <ui:Button Content="{loc:Translate Text='Atualizar lista'}" Command="{Binding RefreshFirmwareList}"/>
+       <ui:Button Content="{loc:Translate Text='Reinstalar / atualizar'}" Command="{Binding InstallFirmware}" ToolTip="{loc:Translate Text='Disponível após desconectar o modo normal do pedal. Requer modo flash e permissão de administrador.'}"/>
+      </WrapPanel>
       </StackPanel>
      </ui:CardExpander>
      <ui:CardExpander Style="{StaticResource SettingsExpander}">

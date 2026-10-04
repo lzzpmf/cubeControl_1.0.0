@@ -18,6 +18,17 @@ public sealed record IrBackup(string Format, string Identity, string IdentityHex
         return json;
     }
 
+    public static async Task Export(string path, string identity, string identityHex, int slot, byte[] data)
+    {
+        if (data.Length != 4096 || slot is < 0 or > 7) throw new ArgumentException("Backup IR inválido.");
+        string binary = Path.GetFileNameWithoutExtension(path) + "-" + Guid.NewGuid().ToString("N") + ".bin";
+        await File.WriteAllBytesAsync(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(path))!, binary), data);
+        var record = new IrBackup("cubecontrol-ir-v1", identity, identityHex, slot, DateTimeOffset.Now,
+            Convert.ToHexString(SHA256.HashData(data)), binary);
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(record, new JsonSerializerOptions { WriteIndented = true }));
+        _ = await Load(path);
+    }
+
     public static async Task<(IrBackup Info, byte[] Data)> Load(string path)
     {
         var info = JsonSerializer.Deserialize<IrBackup>(await File.ReadAllTextAsync(path)) ?? throw new FormatException("Backup inválido.");

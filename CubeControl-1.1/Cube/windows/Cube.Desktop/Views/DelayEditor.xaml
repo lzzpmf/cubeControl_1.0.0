@@ -7,9 +7,9 @@
   <Grid Margin="0" MaxWidth="900" HorizontalAlignment="Stretch">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <WrapPanel>
+    <ui:Button Content="Ler efeito atual" Click="ReadClick" IsEnabled="{Binding CanOperate}" Margin="0,0,8,8"/>
     <ui:Button Content="{loc:Translate Text='Restaurar delay'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreDelay}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowUndo24"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
-   <TextBlock Grid.Row="1" Text="{loc:Translate Text='Ative a seção delay/modulação e desligue chorus/phaser antes de ler.'}" TextWrapping="Wrap" Margin="0,0,0,8"/>
    <TextBlock Grid.Row="2" Text="{loc:Translate Value={Binding DelayGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
    <graph:EffectGraphEditor Grid.Row="3" EffectKind="Delay" Accent="{DynamicResource AccentTextFillColorPrimaryBrush}" DataContext="{Binding Delay}" IsEnabled="{Binding DataContext.CanEditDelay,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 

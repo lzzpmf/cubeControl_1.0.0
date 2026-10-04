@@ -23,7 +23,7 @@ internal static class ReverbDesktopTests
         await model.ReadReverbAsync();
         Check(model.ReverbPreviewActive && model.CanEditReverb && !model.CanEdit && !model.CanUseAmp && !model.CanOperate && !model.CanStartPhaser && !model.CanStartChorus && !model.CanStartDelay,
             "reverb preview excludes preset edits and amp/IR operations");
-        Check(File.Exists(Path.Combine(directory, "pending-reverb-preview.json")), "reverb durable recovery created");
+        Check(!File.Exists(Path.Combine(directory, "pending-reverb-preview.json")), "reverb snapshot stays in memory");
         model.Reverb.Wet = 10; model.Reverb.Wet = 20; model.Reverb.Wet = 30;
         for (int i = 0; i < 200 && (ReverbParameters.Read(fake.Dsp).Wet != 0.3f || model.Busy); i++) await Task.Delay(10);
         Check(ReverbParameters.Read(fake.Dsp).Wet == 0.3f && fake.Writes == 1, "reverb rapid edits coalesce to final value");
@@ -49,20 +49,21 @@ internal static class ReverbDesktopTests
         var second = new CubeSession(fake); await second.Identify(); await model.AttachSession(second); await model.ReadReverbAsync();
         model.Reverb.ReturnLevel = 50;
         for (int i = 0; i < 200 && (ReverbParameters.Read(fake.Dsp).ReturnLevel != 40 || model.Busy); i++) await Task.Delay(10);
-        model.Dispose(); // Abnormal shutdown: retain pending record, never silently discard it.
+        model.Dispose(); // Abnormal shutdown ends the app session; only the current pedal RAM survives.
         using var reopened = new EditorViewModel(directory);
         int writes = fake.Writes;
         await reopened.Initialize();
-        Check(reopened.ReverbPreviewActive && !reopened.CanEditReverb && fake.Writes == writes,
-            "restart loads pending recovery without reapplying controls");
+        Check(!reopened.ReverbPreviewActive && !reopened.CanEditReverb && fake.Writes == writes,
+            "restart ignores previous session without reapplying controls");
         var third = new CubeSession(fake); await third.Identify(); await reopened.AttachSession(third);
+        var currentDsp = fake.Dsp.ToArray();
         await reopened.EndReverbPreviewAsync();
-        Check(ReverbParameters.Read(fake.Dsp) == new ReverbParameters(1, 0.55f, 8, 80, 10) && !reopened.ReverbPreviewActive,
-            "explicit recovery survives process restart");
+        Check(fake.Dsp.SequenceEqual(currentDsp) && !reopened.ReverbPreviewActive,
+            "new session never restores the previous snapshot");
         await reopened.ReadReverbAsync();
         fake.State[0] = 1;
         await Task.Delay(2300);
-        Check(!reopened.CanEditReverb && reopened.ReverbPreviewActive && File.Exists(Path.Combine(directory, "pending-reverb-preview.json")),
+        Check(!reopened.CanEditReverb && reopened.ReverbPreviewActive && !File.Exists(Path.Combine(directory, "pending-reverb-preview.json")),
             "idle monitoring stops on physical context change and keeps recovery");
         fake.State[0] = 0;
         await reopened.EndReverbPreviewAsync();

@@ -18,6 +18,9 @@ Este documento reúne todos os opcodes encontrados nas fontes e capturas consult
 - [8. Comandos adicionais encontrados, sem suporte comprovado na Cube Baby](#8-comandos-adicionais-encontrados-sem-suporte-comprovado-na-cube-baby)
 - [9. O que o pedal pode enviar e o que continua desconhecido](#9-o-que-o-pedal-pode-enviar-e-o-que-continua-desconhecido)
 - [10. Teste físico no pedal conectado em 26/09/2026](#10-teste-físico-no-pedal-conectado-em-26092026)
+- [11. Captura de atualização de firmware em 03/10/2026](#11-captura-de-atualização-de-firmware-em-03102026)
+- [12. Catálogo dos firmwares incluídos no app](#12-catálogo-dos-firmwares-incluídos-no-app)
+- [13. Investigação de entrada em modo flash via USB](#13-investigação-de-entrada-em-modo-flash-via-usb)
 
 ## 1. Fontes e grau de evidência
 
@@ -326,7 +329,7 @@ Para as consultas genéricas, `makeQueryPacket` constrói payload vazio; a mera 
 
 Mensagens comprovadas pedal → host: identificação `0x11`, informações adicionais `0x12`, conteúdos de memória `0x23` e ACK `0x00`. Não foi encontrada, no conjunto analisado, evidência de transmissão espontânea de notas MIDI, CC, Program Change, posição de knobs, preset ativo, estado do afinador ou eventos A/B/C.
 
-Também não foram confirmados comandos remotos de ativação de A/B/C, bypass global, afinador, tap tempo, reset de fábrica, reinicialização ou atualização de firmware. A ausência nessas fontes **não prova impossibilidade**; significa que não há bytes confiáveis para documentar tais funções como suportadas.
+Também não foram confirmados, nesse transporte USB-MIDI, comandos remotos de ativação de A/B/C, bypass global, afinador, tap tempo, reset de fábrica, reinicialização ou atualização de firmware. A ausência nessas fontes **não prova impossibilidade**; significa que não há bytes confiáveis para documentar tais funções como suportadas. A atualização pelo bootloader USB Mass Storage foi capturada posteriormente e está descrita na seção 11.
 
 O protocolo permite endereçamento genérico, mas isso não autoriza tratar todos os endereços como conhecidos. Permanecem abertos os campos de `0x12`, a estrutura completa de `00002100`, a semântica de todos os status ACK, os metadados de identificação e a extensão real do mapa de memória. Este catálogo reúne análise estática, capturas e as consultas físicas da seção 10. As limitações de cada etapa são próprias dela; comandos de escrita descritos pelas capturas não foram executados naquela rodada de consultas.
 
@@ -366,3 +369,193 @@ Essa comparação cobre os 48 bytes lidos do banco, não uma auditoria de toda a
 Não foram transmitidos `0x00` vazio (Init de efeito desconhecido), `0x15` (MIDI encapsulado sem mapa Cube Baby), comandos MIDI PC/CC adivinhados, escritas `0x22`, controles DSP `0x24`, apagamentos `0x21`, reset ou atualização de firmware. Também não foi realizada varredura de opcodes/endereço nem uma sequência coordenada de acionamento físico dos footswitches.
 
 Assim, foram testadas todas as consultas adicionais declaradas no Android e identificadas neste documento como candidatas. Os demais comandos não confirmados continuam pendentes; o teste não os transforma em comandos suportados.
+
+## 11. Captura de atualização de firmware em 03/10/2026
+
+Atualização executada pelo usuário no SmartLink Flash Loader V1.0.9, com reinicialização automática habilitada. O usuário informou que entrou no bootloader ligando o pedal conectado ao PC com o terceiro footswitch pressionado. Após a gravação, o atualizador indicou verificação e conclusão, e o usuário confirmou o retorno ao modo preset. Nenhum comando de gravação foi enviado pelo CubeControl ou pela análise.
+
+### Evidência preservada
+
+- Captura: [flash-update-20261003-130744.pcap](artefatos/flash-update-20261003-130744.pcap), 575.537 bytes, 1.106 registros completos, sem registro final truncado.
+- SHA-256 da captura: `61e47f6aa59bdf871abd37bacdeb402a27f621feb4fbc6be53828e9232a4dffa`.
+- Firmware efetivamente transmitido: `cubebaby_B_20220706.up`, 504.600 bytes, SHA-256 `9184852bdebfa1d939ad21a250a579104ec1e3de17f072edbd8311015daad216`. Comparação integral do payload capturado com o arquivo local, não apenas do nome.
+- Executável observado: SHA-256 `2ab8a2ad82e0dbc2e88c6bcef56176988676842b9a132230cc56833823ee00bf`.
+- Bootloader: `USB\VID_301A&PID_2800\20121120222017`, disco `SMTLINK DEVICE`. Endereço USB 22 no barramento capturado; esse endereço é temporário e não deve ser fixado no app.
+- Após reiniciar: `VID_301A&PID_5555`, interfaces normais de áudio/MIDI. A captura estava filtrada no endereço do bootloader; a nova enumeração foi confirmada separadamente pelo Windows.
+
+### Transporte e envelope
+
+Os comandos observados usam USB Mass Storage Bulk-Only, com OUT `0x01` e IN `0x81`, e não SysEx. O CBW de 31 bytes começa por `55 53 42 43` (`USBC`), seguido de tag de 4 bytes, tamanho da transferência em UInt32 little-endian, flags (`00` saída ou `80` entrada), LUN `00`, comprimento do CDB `10` e CDB de 16 bytes. As tags variam e são repetidas pelo CSW; não são constantes do protocolo.
+
+O CSW de 13 bytes começa por `55 53 42 53` (`USBS`), seguido da tag, resíduo UInt32 little-endian e status. Foram observadas 29 transações proprietárias: 28 terminaram com tag correspondente, resíduo zero e status zero. A última, associada ao reset, não retornou CSW e foi seguida por erros USB e remoção. Isso descreve esta captura, não autoriza tratar qualquer desconexão como sucesso.
+
+### Sequência proprietária observada
+
+Nos comandos abaixo, `N` e `A` são UInt32 little-endian. Para os comandos de bloco, o CDB tem `C0 opcode N[4] A[4] 00 00 00 00 00 00`.
+
+| Ordem/operação | CDB / parâmetros | Dados e resposta observados |
+|---|---|---|
+| Preparação | `C0 81 09 00 00 00 00 00 00 00 00 00 00 00 00 00` | Sem dados; CSW sucesso. Papel interno não determinado. |
+| Consulta exibida como FLASH ID | `C0 00 04 00 00 00 00 00 00 00 00 00 00 00 00 00` | IN de 4 bytes: `85 12 85 12`; corresponde a `12851285` no log. |
+| Preparação/apagamento provável de bloco | Opcode `05`, `N=0`, `A=endereço` | Sem dados; CSW sucesso. Granularidade real do apagamento não comprovada. |
+| Escrita de bloco | Opcode `02`, `N=tamanho`, `A=endereço` | OUT de exatamente N bytes; CSW sucesso. |
+| Verificação de bloco | Opcode `82`, `N=tamanho`, `A=endereço` | IN de **2 bytes**, embora N no CDB seja o tamanho do bloco; CRC little-endian e CSW sucesso. |
+| Preparação final | Mesmo `C0 81 09 ...` inicial | Sem dados; CSW sucesso. |
+| Carga auxiliar de reset | Opcode `09`, `N=0x3000`, `A=0x00820000` | OUT de 12.288 bytes; CSW sucesso. Destino RAM é interpretação, não prova da topologia da memória. |
+| Execução/reset provável | `C0 0A 00 00 00 00 01 00 82 00 00 00 00 00 00 00` | Sem dados; remoção do dispositivo sem CSW. Campo em bytes 6–9: `0x00820001`. |
+
+Para cada endereço, o atualizador executou `05 → 02 → 82` antes do próximo bloco. A ordem foi `0x10000`, `0x20000`, `0x30000`, `0x40000`, `0x50000`, `0x60000`, `0x70000` e **`0x00000` por último**. Não houve leitura integral de retorno: a verificação capturada é por CRC.
+
+### Arquivo `.up` e CRC comprovados nesta amostra
+
+O arquivo B tem cabeçalho de 256 bytes e payload de 504.344 bytes (`0x7B218`). A concatenação dos blocos capturados, ordenados pelo endereço, é exatamente `arquivo[256:]`, sem transformação. SHA-256 do payload: `16870a3981858bd3f74fe326363a4961c3cd77944d3a5554b3988c7c396576db`.
+
+No cabeçalho, bytes 0–5 são `CONFIG`; offset `0x10` contém o tamanho do payload em UInt32 little-endian; offset `0x14` contém `73 C8 00 00`; offsets `0xFE–0xFF` contêm `55 AA`. O CRC do payload inteiro é `0xC873`, igual ao valor armazenado em `0x14`. Demais campos não foram interpretados nesta análise; não se deve aceitar qualquer `.up` apenas pela extensão.
+
+O CRC reproduzido nos oito blocos usa polinômio `0x1021`, inicialização `0xFFFF`, sem reflexão e XOR final zero (CRC-16/CCITT-FALSE; reproduzível por `binascii.crc_hqx(dados, 0xFFFF)`). A resposta do pedal transporta esse valor em little-endian.
+
+| Endereço | Bytes | CRC confirmado |
+|---|---:|---|
+| `0x10000` | 65.536 | `0x176B` |
+| `0x20000` | 65.536 | `0xB1E1` |
+| `0x30000` | 65.536 | `0x53FF` |
+| `0x40000` | 65.536 | `0xA8D3` |
+| `0x50000` | 65.536 | `0x1D0F` |
+| `0x60000` | 65.536 | `0x164A` |
+| `0x70000` | 45.592 | `0xAE54` |
+| `0x00000` | 65.536 | `0x4BF8` |
+
+### Reset e limites para implementação
+
+A carga auxiliar tem SHA-256 `fc283220367a9aec33064864b9997a2c449d2e986f5401409c4db357b8381606`. Seus primeiros 12.032 bytes coincidem integralmente com `flash_loader_files/reset.bin` a partir do offset 256. Os 256 bytes finais enviados não pertencem a esse arquivo: começam por `73 F5 DC 83 3F B1 12 00 D0 F4 BA 08 40 84 D1 04`, seguidos de 240 zeros. A origem e a necessidade desses bytes permanecem desconhecidas; não os transformar em constantes nem presumir que sejam preenchimento válido sem investigar o carregador.
+
+A captura começou com o bootloader já conectado: não cobre sua enumeração inicial nem eventuais consultas anteriores ao início da captura. Há comandos SCSI de manutenção do Windows além dos 29 comandos proprietários. A análise estática abaixo esclarece o acesso Windows, a preparação e a origem dos bytes extras do reset. Permanecem sem validação física o reset com buffer corrigido, o tratamento de falhas, a compatibilidade das variantes A/C e a preservação de presets/IRs após atualização. A evidência não equivale a validação de um atualizador próprio no hardware.
+
+### Complemento: análise estática do carregador em 03/10/2026
+
+Nova captura de conexão: [flash-initial-20261003-132459.pcap](artefatos/flash-initial-20261003-132459.pcap), 57.959 bytes, 1.096 registros completos, SHA-256 `59f382e72c25b4038cdecea8d00ce8205eebd2876fdc81688c2f70a1b980e3c7`. O pedal enumerou no endereço USB 24 como `301A:2800`. Foram observados apenas comandos SCSI padrão (`00`, `03`, `12`, `1A`, `23`, `25`), sem comandos proprietários `C0`, escrita ou apagamento. Assim, essa reconexão com o carregador já aberto não confirma a execução da preparação identificada estaticamente. As 89 respostas de sense observadas foram `70 00 02 00 00 00 00 0C 00 00 00 00 3A 00 00 00 00 00`; não confundir falhas das consultas de mídia com falha de atualização, que não foi iniciada.
+
+Reabertura do carregador com o pedal já em flash: [flash-loader-open-20261003-132658.pcap](artefatos/flash-loader-open-20261003-132658.pcap), 57.204 bytes, 1.068 registros completos, SHA-256 `1ef35f4423cd62268761dd09fe18ccbed1dd4a7c48bd9d38cabb3424e1d7a136`. O processo do carregador mudou para PID 4216. Novamente nenhum CDB proprietário foi transmitido: apenas 102 `TEST UNIT READY`, 102 `REQUEST SENSE` e sete `MODE SENSE(6)`. Portanto, abrir/reabrir o programa não demonstrou uma preparação proprietária obrigatória anterior ao início da gravação. A sequência `C0 81 09 ...` continua comprovada fisicamente no início da atualização anterior e identificada estaticamente; não afirmar que ela ocorre automaticamente ao abrir o aplicativo.
+
+Executável com o mesmo SHA-256 acima, inspecionado por `dumpbin /disasm` do Visual Studio, sem executá-lo sobre o pedal. Endereços abaixo são VAs dessa compilação x86, base `0x00400000`.
+
+**Acesso Windows confirmado.** A rotina `0x00415050` abre um caminho de volume `\\.\X:` com `CreateFileW`, acesso `GENERIC_READ | GENERIC_WRITE`, compartilhamento leitura/escrita e `OPEN_EXISTING` (`0x00415107–0x00415117`). Usa `IOCTL_STORAGE_QUERY_PROPERTY=0x002D1400` (`0x00415162`) para consultar o descritor e exige barramento USB (`BusType=7`). O carregador enumera letras de unidades; a string de formato está em `0x004A55A0` e as identificações `SMTLINK`/`DEVICE` em `0x004A5540`/`0x004A5550`.
+
+As rotinas `0x004153D0` (entrada) e `0x004154A0` (saída) chamam `DeviceIoControl` com **`IOCTL_SCSI_PASS_THROUGH_DIRECT=0x0004D014`** (`0x00415461` e `0x00415531`). O pacote local x86 tem 80 bytes, `Length=44`, `CdbLength=16`, `SenseInfoLength=26`, `SenseInfoOffset=48`, `TimeOutValue=10` segundos e ponteiro direto para os dados. O campo `DataIn` difere entre leitura e escrita; o CDB observado na captura é copiado sem envelope USB montado pelo aplicativo. Windows/USBSTOR gera CBW/CSW.
+
+O wrapper original verifica apenas o retorno booleano de `DeviceIoControl`. Uma implementação própria deve verificar também `ScsiStatus`, sense e quantidade transferida, além do CRC. Não copiar o layout x86 para um processo x64: tamanho/alinhamento de ponteiros muda. O buffer de dados deve respeitar `AlignmentMask` do adaptador, conforme a [documentação Microsoft](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntddscsi/ni-ntddscsi-ioctl_scsi_pass_through_direct). A identificação do destino deve ser vinculada ao PnP `301A:2800`, sem fixar letra, número de disco ou endereço USB. Abertura/gravação por implementação própria e requisitos de elevação ainda precisam de validação local. USBPcap serve à pesquisa e não é dependência do transporte do app.
+
+**Preparação identificada.** A rotina de conexão `0x0040BDDF–0x0040BE4A` abre/valida o dispositivo e envia `C0 81` com cinco bytes de configuração. `0x004149FF–0x00414A69` carrega esses valores do INI. O byte 2 do CDB é `clkDiv`, com fallback `09` quando zero; os bytes 3–6 vêm das quatro configurações seguintes do INI. Com a configuração observada, o resultado é `C0 81 09 00 00 00 00 ...`. A operação é repetida no início da gravação (`0x0040A33C–0x0040A37B`) e antes do reset (`0x0040A935–0x0040A95F`). Isso identifica a origem dos parâmetros, mas não o efeito elétrico interno de cada opção. A enumeração inicial precisa de captura própria para confirmar todo o fluxo desde a conexão, sem inferir ausência de outras operações pelo trecho analisado.
+
+**Bytes extras do reset explicados: leitura além do buffer.** Em `0x0040A8EA`, o carregador obtém o tamanho integral de `reset.bin` (12.288) e o guarda em `[esp+0x10]`. Em `0x0040A8F3`, calcula tamanho menos `0x100`; aloca 12.032 bytes (`0x0040A8FA`), posiciona o arquivo em `0x100` (`0x0040A914`) e lê 12.032 bytes (`0x0040A924`). Entretanto, em `0x0040A964–0x0040A971`, passa o tamanho **integral**, 12.288, à rotina de envio `0x00402630`, que o utiliza tanto no CDB quanto em `DataTransferLength`. Portanto, envia 256 bytes além do buffer alocado. Isso explica os bytes estranhos da captura como memória adjacente do processo, não como conteúdo válido de `reset.bin`.
+
+O código chama o comando `09` para carregar o auxiliar em `0x00820000` e, se a transferência retornar sucesso, `0A` com `0x00820001` (`0x00402690`). A implementação própria deve usar um buffer de tamanho consistente e nunca reproduzir os bytes vazados. O envio apenas dos 12.032 bytes reais é a correção derivada do código, validada no ensaio isolado abaixo.
+
+### Validação física do reset corrigido em 03/10/2026
+
+Teste solicitado explicitamente pelo usuário, com o pedal em flash. Nenhum comando de apagamento ou gravação do firmware foi enviado. Um processo Python x64 elevado usou `CreateFileW` e `IOCTL_SCSI_PASS_THROUGH_DIRECT` em `\\.\PHYSICALDRIVE3`, após confirmar o vínculo PnP com `301A:2800`, descritor USB e identificação `SMTLINK`/`DEVICE`. O adaptador retornou `AlignmentMask=0`; estrutura SPTD x64 de 56 bytes e buffer alocado por `VirtualAlloc`. O arquivo `reset.bin` foi conferido pelo SHA-256 antes do envio.
+
+Sequência efetivamente capturada:
+
+1. `C0 81 09 00 00 00 00 00 00 00 00 00 00 00 00 00`: preparação aceita, CSW sucesso.
+2. `C0 09 00 2F 00 00 00 00 82 00 00 00 00 00 00 00`: **12.032 bytes**, exatamente `reset.bin[256:]`, SHA-256 `f1be00b63550945c81a9624bdda3209d65c7bd09959aea3924d3870c45eda0e2`. Tanto a API Windows quanto o CBW e o payload USB confirmaram esse tamanho; CSW sucesso, resíduo zero.
+3. `C0 0A 00 00 00 00 01 00 82 00 00 00 00 00 00 00`: comando final sem dados. A chamada Windows retornou erro 121, sem CSW; em seguida o dispositivo flash desapareceu e o Windows enumerou `301A:5555`, com interfaces `MI_00` e `MI_03` em status OK.
+
+**Resultado:** reset corrigido validado nesta unidade, pelo retorno ao modo USB normal, sem os 256 bytes fora do buffer. O erro 121 isolado não deve ser classificado como sucesso: a confirmação é a remoção do bootloader seguida da enumeração do mesmo pedal em modo normal. Não houve ensaio auditivo, comparação de presets/IRs nem nova atualização completa pelo transporte próprio.
+
+Evidências: [registro das chamadas](artefatos/reset-corrected-20261003.json) e [captura USB](artefatos/reset-corrected-20261003.pcap), 70.572 bytes, 1.096 registros completos, SHA-256 `19a0d9092517bd3c3eb72cf24f8d5eab7d7176b28caf577f8ba64e5806614a9e`. A captura incluiu a nova enumeração USB; tráfego posterior à remoção não deve ser associado à resposta do comando `0A` apenas pela proximidade temporal.
+
+## 12. Catálogo dos firmwares incluídos no app
+
+Reavaliação em **03/10/2026**, diretamente sobre [Assets/Firmwares/CubeBaby](../../CubeControl-1.1/Cube/windows/Cube.Desktop/Assets/Firmwares/CubeBaby). Esta seção descreve os arquivos atuais dessa pasta; os nomes históricos das capturas anteriores não devem ser usados como identificadores de conteúdo.
+
+### Datas e integridade
+
+As datas abaixo foram extraídas **dos nomes**, não de metadados de compilação ou de notas oficiais de lançamento. As datas de modificação locais são de 03/10/2026 e não comprovam a idade do firmware. Todos os arquivos contêm a string ASCII `VER-20191115`; por ser comum a todas as imagens e não ter origem funcional identificada, ela não comprova a versão/data do firmware completo.
+
+| Arquivo atual | Data indicada no nome | Tamanho | CRC-16 do payload | Observação comprovada |
+|---|---|---:|---|---|
+| `cubebaby_20210830.up` | 30/08/2021 | 504.600 bytes | `6557` | Conteúdo distinto dos demais. |
+| `cubebaby_20220111.up` | 11/01/2022 | 504.600 bytes | `C873` | Idêntico ao arquivo denominado B na atualização física registrada na seção 11. |
+| `cubebaby_A_20220706.up` | 06/07/2022 | 504.600 bytes | `97D1` | Conteúdo distinto dos demais. |
+| `cubebaby_B_20220706.up` | 06/07/2022 | 504.600 bytes | `ACDE` | Conteúdo distinto dos demais; diferente do B usado na captura histórica. |
+
+Todos os quatro passaram novamente pela conferência do cabeçalho `CONFIG`, tamanho declarado, marcador final `55 AA` do cabeçalho e CRC-16/CCITT-FALSE do payload. Cada arquivo contém cabeçalho de 256 bytes e payload de 504.344 bytes. São **quatro arquivos e quatro imagens únicas, sem duplicatas**. O usuário removeu `cubebaby_20220525old.up`, anteriormente confirmado como idêntico ao B atual. O arquivo C/PDF encontrado na análise anterior também não está nesta pasta. Integridade estrutural não equivale a compatibilidade de hardware.
+
+### Identificação inequívoca por SHA-256
+
+| Arquivo | SHA-256 do arquivo completo |
+|---|---|
+| `cubebaby_20210830.up` | `1b93f8550923a197db0538f1a7ca086c0bd2f6c7f1c2212512a4d26f92544fe8` |
+| `cubebaby_20220111.up` | `9184852bdebfa1d939ad21a250a579104ec1e3de17f072edbd8311015daad216` |
+| `cubebaby_A_20220706.up` | `b90e9eaf10c8036e4847e22449e122718761fa0bce63f06804da2ab9feaeaa0a` |
+| `cubebaby_B_20220706.up` | `d99a9bc4ba0636118801b1e3a8d11adadf03831d316c7477af8de015ba5bd743` |
+
+A correspondência entre `20220111` e o B histórico foi confirmada por comparação integral com `engenharia-reversa/cube-baby/cubebaby_B_20220706.up`, além do hash. Não se alteraram nomes, seleção padrão do app ou arquivos binários nesta reavaliação.
+
+### Diferenças binárias
+
+Comparação byte a byte em posições iguais do **payload**, excluindo os 256 bytes do cabeçalho. Os números não representam quantidade de funções corrigidas ou novas: deslocamentos de código e dados também produzem diferenças.
+
+| Par de conteúdos | Posições diferentes no payload |
+|---|---:|
+| `20210830` × `20220111` | 31.238 |
+| `20210830` × B atual | 61.475 |
+| `20210830` × A atual | 77.205 |
+| `20220111` × B atual | 56.465 |
+| `20220111` × A atual | 75.495 |
+| B atual × A atual | 61.494 |
+
+Todas as diferenças observadas entre imagens distintas ficam entre offsets de payload `0x00007C` e `0x04F14B`. Os três blocos finais, a partir de `0x050000` até o fim do payload, são idênticos em todos os quatro arquivos. Isso não prova preservação de presets/IRs numa atualização: a operação inclui apagamento/gravação e esses endereços não foram classificados funcionalmente nesta comparação.
+
+Todos contêm identificações `CubeBaby` e `SINCO-CubeBaby`, além de referências comuns ao atualizador. A inspeção não encontrou uma data interna distinta que confirme as datas dos nomes. **Não há evidência suficiente nesta comparação para atribuir às versões mudanças de timbre, efeitos, correções, melhorias ou variantes físicas específicas.** Essas diferenças funcionais exigem análise de código/dados ou ensaios controlados; nomes A/B e cronologia aparente, isoladamente, não as demonstram. Nenhum firmware foi enviado ao pedal durante esta reavaliação.
+
+### Investigação de cronologia e origem dos pacotes — 03/10/2026
+
+Foram inspecionados os ZIPs locais em `C:\Users\lzzpm\Downloads`, incluindo arquivos ZIP internos, sem extrair ou modificar os firmwares. Os hashes dos membros foram comparados com os arquivos atuais do app. Datas de entradas ZIP são metadados editáveis, sem fuso horário registrado; corroboram o histórico do pacote, mas não certificam data de compilação. A procedência desses ZIPs não foi autenticada junto ao fabricante nesta investigação.
+
+| Arquivo atual do app | Correspondência integral nos pacotes locais | Evidência temporal |
+|---|---|---|
+| `cubebaby_20210830.up` | Firmware homônimo dentro de `2. CubeSuite V2.3.3 and Firmware 8.30.21.zip` | Entrada ZIP: 30/08/2021 18:40:34. Nome do pacote coerente com agosto de 2021. |
+| `cubebaby_20220111.up` | Firmware homônimo dentro de `3. CubeSuite and Firmware 01.11.2022.zip`; também `cubebaby_B_20220706.up` no pacote de julho | Entrada do pacote de janeiro: 07/01/2022 16:59:52. A imagem foi reutilizada no pacote de julho, sem alteração de bytes. |
+| `cubebaby_B_20220706.up` | `cubebaby_20220525old.up` dentro de `7. Firmware 05.25.2022.zip`; também `cubebaby_A_20220706.up` no pacote de julho | Entrada no pacote de maio: 01/07/2022 14:35:44; diverge da data do nome. Não atribuir compilação em maio ou julho apenas com isso. |
+| `cubebaby_A_20220706.up` | `cubebaby_C_20220706.up` dentro de `10. Firmwares 7.6.22 (A, B and C).zip` | Não encontrada nos pacotes anteriores examinados. Todas as entradas desse ZIP têm 01/01/1980 00:00:00, data padrão sem utilidade cronológica. |
+
+O PDF `C:\Users\lzzpm\Downloads\10. Firmwares 7.6.22 (A, B and C)\CUBE_BABY.pdf`, incluído no pacote de três variantes, informa que a descontinuação de um chip levou a diferentes hardwares Cube Baby, exigindo firmwares correspondentes. Isso fornece evidência documental de **variantes de compatibilidade**, não de uma sequência A → B → C de melhorias. O documento não identifica chips, números de série ou uma regra que associe cada letra a uma placa específica. Seu texto recomenda experimentar variantes após uma atualização equivocada; essa orientação do documento não foi executada nem adotada como método de identificação nesta análise.
+
+A busca interna por datas ASCII compactas/separadas, datas de compilação no formato textual e strings de versão/build encontrou somente `VER-20191115`, no mesmo offset de payload (`0x754` para o início de `VER`) em todas as imagens. Não foi localizado identificador distinto de compilação nessas strings. Cabeçalhos iguais salvo CRC e diferenças de código não fornecem, sozinhos, uma ordem cronológica confiável.
+
+**Conclusão:** o pacote de julho de 2022 é o mais recente entre os pacotes locais examinados, segundo sua identificação. Ele reúne variantes, incluindo duas imagens já presentes em pacotes anteriores. O **A atual do app (C no ZIP original)** é o único conteúdo dos três que não foi encontrado nos pacotes anteriores examinados; é candidato a ter sido introduzido nessa distribuição, mas isso **não comprova que foi compilado por último nem que seja adequado à unidade do usuário**. Não há base para rotular um arquivo como “firmware mais recente” de forma absoluta. O conteúdo fisicamente validado na captura desta sessão continua sendo `9184852b...`, atualmente denominado `cubebaby_20220111.up`, independentemente das letras usadas em cada pasta.
+
+A consulta web localizou o [portal de downloads M-VAVE](https://www.cuvave.com/download), mas a leitura direta dessa página e de `/fcp` falhou por timeout; não se obteve pacote remoto ou changelog autenticado para ampliar a cronologia. Nenhum resultado de fórum foi usado como prova de versão. Nesta investigação, somente esta documentação foi atualizada; nomes dos arquivos, seleção padrão e código do aplicativo foram preservados.
+
+## 13. Investigação de entrada em modo flash via USB
+
+Investigação estática em 03/10/2026, sem enviar comandos ao pedal. **Não foi identificado um procedimento confirmado para passar de `301A:5555` (normal) para `301A:2800` (flash) por USB.** Isso não demonstra impossibilidade absoluta; significa que não há sequência validada para substituir o terceiro footswitch durante a inicialização.
+
+### Evidência nos quatro firmwares
+
+Desmontagem Thumb com Capstone do analisador que verifica o envelope `00 59`, comprimento de payload e checksum. Offsets abaixo são relativos ao payload do `.up` (offset no arquivo = valor + `0x100`), não endereços para escrita no pedal.
+
+| Arquivo atual | Início do analisador | Comandos explicitamente despachados |
+|---|---|---|
+| `cubebaby_20210830.up` | `0x4D4CC` | `11`, `12`, `21`, `22`, `23` |
+| `cubebaby_20220111.up` | `0x4D4CC` | `11`, `12`, `21`, `22`, `23` |
+| `cubebaby_A_20220706.up` | `0x49F00` | `11`, `12`, `21`, `22`, `23` |
+| `cubebaby_B_20220706.up` | `0x49CB8` | `11`, `12`, `21`, `22`, `23` |
+
+No `20220111`, após o caso `23`, o caminho padrão em `0x4D6CA` prepara uma resposta de oito bytes, em vez de chamar um reset. Os casos são identificação (`11`/`12`) e operações de memória (`21`/`22`/`23`). O ramo de escrita `22`, seletor `04`, soma uma base ao endereço e chama cópia de memória; isso é uma primitiva genérica, **não um comando de bootloader**. Endereços arbitrários poderiam atingir estado, ponteiros ou periféricos, mas nenhum endereço/valor foi estabelecido como transição correta para flash.
+
+A análise cobre esse handler localizado, não todo o caminho USB nem rotinas em ROM interna do chip, que não estão necessariamente contidas no `.up`. Por isso, não extrapolar sua lista de casos para afirmar que todo comando fora dela é impossível; por exemplo, há evidência histórica de `24` em outro fluxo de IR. Não foram testados opcodes desconhecidos, sobrescritas de ponteiros, flags de boot ou registradores de reset.
+
+Uma rotina com padrão de reset Cortex-M foi localizada no payload `0x44F0` do `20220111`: barreira, escrita no bloco SCB com literal `0x05FA0004` e laço de espera. Sua presença não prova entrada em flash: não foi estabelecida uma chamada alcançável por USB nem a condição que selecionaria o bootloader após reiniciar. As strings `sl_update_root.bin`/`sl_update.upd2` também existem, sem um fluxo USB normal → flash demonstrado.
+
+### Descritores USB e ferramentas
+
+A captura preservada `reset-corrected-20261003.pcap` contém as configurações dos dois modos. No modo normal, as interfaces declaradas são classe `01`, subclasses `01` (controle de áudio), `02` (streaming de áudio) e `03` (MIDI). Não há interface DFU declarada nessa configuração. Em flash, há classe `08`, subclasse `06`, protocolo `50` (Mass Storage/SCSI/Bulk-Only). Portanto, não foi encontrado um caminho padrão DFU de runtime nessa unidade; isso não exclui pedidos vendor-specific não mapeados.
+
+O `flash_loader` analisado abre o dispositivo de armazenamento já enumerado. Seus comandos `C0 09`/`C0 0A` e o `reset.bin` validado dependem desse modo e fazem o caminho **flash → normal**. Eles não são uma sequência utilizável diretamente pela interface USB-MIDI normal. Reconectar a interface USB no Windows tampouco foi comprovado como equivalente à sequência física de entrada no bootloader.
+
+As fontes específicas consultadas — [pesquisa de Pedro Ferreira](https://garden.turbofish.cc/notes/Reverse-engineering-the-Cuvave-Cube-Baby), [parser cuvave-midi](https://github.com/pferreir/cuvave-midi) e `Communication.java` local — não forneceram uma sequência normal → flash. Comandos OTA encontrados em pesquisas de outros produtos M-VAVE não foram tratados como compatíveis com a Cube Baby.
+
+**Conclusão para o aplicativo:** manter a instrução física atualmente validada. Um modo automático ainda exigiria mapear a seleção de boot e um caminho alcançável pelo USB normal, possivelmente envolvendo ROM interna, e depois validar a transição isoladamente no hardware. Não foi alterado código do app nem a função de atualização nesta investigação.

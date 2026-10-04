@@ -24,7 +24,7 @@ internal static class ChorusDesktopTests
         await model.ReadChorusAsync();
         Check(model.ChorusPreviewActive && model.CanEditChorus && !model.CanEdit && !model.CanUseAmp && !model.CanOperate && !model.CanStartPhaser && !model.CanStartDelay,
             "chorus preview excludes preset edits and amp/IR operations");
-        Check(File.Exists(Path.Combine(directory, "pending-chorus-preview.json")), "chorus durable recovery created");
+        Check(!File.Exists(Path.Combine(directory, "pending-chorus-preview.json")), "chorus snapshot stays in memory");
         model.Chorus.Depth = 60; model.Chorus.Depth = 70; model.Chorus.Depth = 50;
         for (int i = 0; i < 200 && (ChorusParameters.Read(fake.Dsp).Depth != 0.2f || model.Busy); i++) await Task.Delay(10);
         Check(ChorusParameters.Read(fake.Dsp).Depth == 0.2f && fake.Writes == 1, "chorus rapid edits coalesce to final value");
@@ -73,20 +73,21 @@ internal static class ChorusDesktopTests
         var second = new CubeSession(fake); await second.Identify(); await model.AttachSession(second); await model.ReadChorusAsync();
         model.Chorus.Mix = 50;
         for (int i = 0; i < 200 && (ChorusParameters.Read(fake.Dsp).Mix != 0.425f || model.Busy); i++) await Task.Delay(10);
-        model.Dispose(); // Abnormal shutdown: retain pending record, never silently discard it.
+        model.Dispose(); // Abnormal shutdown ends the app session; only the current pedal RAM survives.
         using var reopened = new EditorViewModel(directory);
         int writes = fake.Writes;
         await reopened.Initialize();
-        Check(reopened.ChorusPreviewActive && !reopened.CanEditChorus && fake.Writes == writes,
-            "restart loads pending recovery without reapplying controls");
+        Check(!reopened.ChorusPreviewActive && !reopened.CanEditChorus && fake.Writes == writes,
+            "restart ignores previous session without reapplying controls");
         var third = new CubeSession(fake); await third.Identify(); await reopened.AttachSession(third);
+        var currentDsp = fake.Dsp.ToArray();
         await reopened.EndChorusPreviewAsync();
-        Check(ChorusParameters.Read(fake.Dsp) == ChorusParameters.Default && !reopened.ChorusPreviewActive,
-            "explicit recovery survives process restart");
+        Check(fake.Dsp.SequenceEqual(currentDsp) && !reopened.ChorusPreviewActive,
+            "new session never restores the previous snapshot");
         await reopened.ReadChorusAsync();
         fake.State[0] = 1;
         await Task.Delay(2300);
-        Check(!reopened.CanEditChorus && reopened.ChorusPreviewActive && File.Exists(Path.Combine(directory, "pending-chorus-preview.json")),
+        Check(!reopened.CanEditChorus && reopened.ChorusPreviewActive && !File.Exists(Path.Combine(directory, "pending-chorus-preview.json")),
             "idle monitoring stops on physical context change and keeps recovery");
         fake.State[0] = 0;
         await reopened.EndChorusPreviewAsync();
@@ -97,8 +98,8 @@ internal static class ChorusDesktopTests
         await corrupted.Initialize();
         using var corruptFake = new ChorusPreviewConnection(); var corruptSession = new CubeSession(corruptFake);
         await corruptSession.Identify(); await corrupted.AttachSession(corruptSession);
-        Check(!corrupted.CanStartChorus && !corrupted.CanStartPhaser && !corrupted.CanEdit && !corrupted.CanUseAmp &&
-            File.ReadAllText(corruptPath) == "{invalid" && corruptFake.Writes == 0, "corrupt recovery blocks new previews without overwriting evidence");
+        Check(corrupted.CanStartChorus && corrupted.CanStartPhaser && corrupted.CanEdit && corrupted.CanUseAmp &&
+            File.ReadAllText(corruptPath) == "{invalid" && corruptFake.Writes == 0, "corrupt legacy recovery is ignored without overwriting evidence");
         Console.WriteLine($"{passed} chorus desktop checks passed. Render: {render}");
     }
 }

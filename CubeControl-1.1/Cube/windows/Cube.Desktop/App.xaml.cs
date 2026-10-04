@@ -19,6 +19,11 @@ public partial class App : Application
     }
     protected override void OnStartup(StartupEventArgs e)
     {
+        if (e.Args.FirstOrDefault() == "--firmware-worker")
+        {
+            Shutdown(FirmwareUpdater.RunWorker(e.Args));
+            return;
+        }
         base.OnStartup(e);
         Appearance.ThemeService.Instance.Initialize();
         // Test hosts reuse application resources without opening a second editor window.

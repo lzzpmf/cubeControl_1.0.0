@@ -14,18 +14,17 @@ public sealed partial class EditorViewModel
     private Task? delayMonitorTask;
     private CancellationTokenSource? delayMonitorStop;
     private bool delayPending, delayStopped;
-    private bool delayRecoveryInvalid;
     private bool delayMonitoring;
     private bool DelayBackgroundOperation => delaySendTask != null || delayMonitoring;
-    private string PendingDelay => Path.Combine(DataDirectory, "pending-delay-preview.json");
     public bool DelayPreviewActive => delayRecovery != null;
     public string DelayGraphState => !Connected ? "Dispositivo desconectado · edição local quando disponível."
         : delayStopped ? "Edição em RAM interrompida · restaure o efeito; consulte a mensagem abaixo."
+        : DelayPreviewActive && !IsAdvancedEffectAudible(3) ? "Seção desligada. A janela permanece aberta; ligue a seção para retomar a prévia."
         : DelayPreviewActive ? "Edição automática em RAM · não salva no pedal."
         : !Current.Musical.DelayEnabled ? "Efeito desligado no preset do aplicativo · confira também o preset físico."
         : !CanStartDelay ? "Recurso indisponível durante a operação ou edição em RAM atual."
         : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
-    public bool CanStartDelay => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !DelayPreviewActive && !File.Exists(PendingDelay)
+    public bool CanStartDelay => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !DelayPreviewActive
 #if CUBE_SIMULATION
         && false
 #endif
@@ -35,69 +34,38 @@ public sealed partial class EditorViewModel
     public bool CanUseDelayFiles => !Busy;
     public bool CanApplyDelay => !Busy && DelayPreviewActive && !delayStopped;
 
-    private async Task KeepDelayRecovery(DelayRecovery recovery)
+    private Task KeepDelayRecovery(DelayRecovery recovery)
     {
         recovery.Validate();
-        Directory.CreateDirectory(DataDirectory);
-        string json = JsonSerializer.Serialize(recovery);
-        string temporary = PendingDelay + ".tmp";
-        await using (var file = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None,
-            4096, FileOptions.Asynchronous | FileOptions.WriteThrough))
-        {
-            await file.WriteAsync(System.Text.Encoding.UTF8.GetBytes(json));
-            file.Flush(flushToDisk: true);
-        }
-        var verified = JsonSerializer.Deserialize<DelayRecovery>(await File.ReadAllTextAsync(temporary))!;
-        verified.Validate();
-        if (await File.ReadAllTextAsync(temporary) != json) throw new IOException("Backup de delay divergiu.");
-        File.Move(temporary, PendingDelay, true);
-        delayRecovery = recovery;
+        // Own the snapshot for this process only; never recover a previous app session.
+        delayRecovery = JsonSerializer.Deserialize<DelayRecovery>(JsonSerializer.Serialize(recovery))!;
+        delayRecovery.Validate();
         Refresh();
-    }
-
-    private async Task LoadPendingDelay()
-    {
-        if (!File.Exists(PendingDelay)) return;
-        try
-        {
-            if (new FileInfo(PendingDelay).Length > 65536) throw new FormatException("Backup de delay excessivamente grande.");
-            var pending = JsonSerializer.Deserialize<DelayRecovery>(await File.ReadAllTextAsync(PendingDelay))
-                ?? throw new FormatException("Backup de delay vazio.");
-            pending.Validate();
-            delayRecovery = pending;
-        }
-        catch
-        {
-            delayRecoveryInvalid = true; delayStopped = true;
-            Delay.Message = "Backup de delay inválido. Edição em RAM bloqueada; o arquivo original foi preservado.";
-            Refresh();
-            throw;
-        }
-        Delay.Load(delayRecovery.Identity, delayRecovery.Target);
-        delayStopped = true;
-        Delay.Message = "Edição em RAM interrompida. Conecte o mesmo pedal e use Restaurar delay. Nenhum ajuste será reaplicado automaticamente.";
-        Refresh();
+        return Task.CompletedTask;
     }
 
     public async Task ReadDelayAsync()
     {
-        if (!CanStartDelay) return;
-        await Execute(async () =>
+        await advancedLifecycle.WaitAsync();
+        try
         {
-            await session!.BeginDelayPreview(SelectedIndex, KeepDelayRecovery);
-            string directory = Path.Combine(DataDirectory, "DelayRecovery");
-            Directory.CreateDirectory(directory);
-            File.Copy(PendingDelay, Path.Combine(directory, $"delay-{DateTime.UtcNow:yyyyMMdd-HHmmss-fffffff}.json"));
-            Delay.Load(session.IdentityHex, delayRecovery!.Target);
-            delayStopped = false;
-            RecordOperation("Prévia de delay iniciada na RAM.");
-            Delay.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
-        });
-        if (DelayPreviewActive && !delayStopped)
-        {
-            delayMonitorStop = new();
-            delayMonitorTask = MonitorDelay(delayMonitorStop.Token);
+            await WaitForAdvancedEffectOperationAsync();
+            if (HasAdvancedPreview(3) && delayStopped)
+                await ExecuteAdvancedEffect(3, () => ReconcileAdvancedRecoveryAsync(3));
+            while (Busy) await WaitForAdvancedEffectOperationAsync();
+            if (!CanStartDelay) { EnsureAdvancedMonitor(3); return; }
+            await ExecuteAdvancedEffect(3, async () =>
+            {
+                await PrepareAdvancedEffectAsync(3);
+                await session!.BeginDelayPreview(SelectedIndex, KeepDelayRecovery);
+                Delay.Load(session.IdentityHex, delayRecovery!.Target);
+                delayStopped = false;
+                RecordOperation("Prévia de delay iniciada na RAM.");
+                Delay.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
+            });
+            EnsureAdvancedMonitor(3);
         }
+        finally { advancedLifecycle.Release(); }
     }
 
     private async Task MonitorDelay(CancellationToken stop)
@@ -107,19 +75,19 @@ public sealed partial class EditorViewModel
             while (!stop.IsCancellationRequested && DelayPreviewActive && !delayStopped)
             {
                 await Task.Delay(2000, stop);
-                if (Busy || delaySendTask != null || session == null || delayRecovery == null) continue;
+                if (Busy || delaySendTask != null || session == null || delayRecovery == null || !IsAdvancedEffectAudible(3)) continue;
                 delayMonitoring = true;
-                try { await CheckPreviewInBackground(() => session.CheckDelayPreview(delayRecovery)); }
+                try { await CheckPreviewInBackground(3, () => session.CheckDelayPreview(delayRecovery)); }
                 finally { delayMonitoring = false; RefreshPresentation(); }
             }
         }
         catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
-        catch (Exception ex) { Fault(ex); }
+        catch (Exception ex) { FaultAdvancedPreview(ex, 3); }
     }
 
     private void DelayEdited()
     {
-        if (!DelayPreviewActive || delayStopped)
+        if (!DelayPreviewActive || delayStopped || !IsAdvancedEffectAudible(3))
         {
             if (!delayStopped) Delay.Message = "Edição local alterada · ainda não aplicada nem exportada.";
             return;
@@ -135,22 +103,27 @@ public sealed partial class EditorViewModel
         await Task.Yield();
         try
         {
-            await Execute(async () =>
+            await ExecuteAdvancedEffect(3, async () =>
             {
-                while (delayPending && !delayStopped)
+                while (delayPending && !delayStopped && IsAdvancedEffectAudible(3))
                 {
                     delayPending = false;
                     try
                     {
                         if (session == null || delayRecovery == null) throw new IOException("Reconecte para restaurar o delay.");
                         var parameters = Delay.Parameters;
+                        if (parameters == delayRecovery.Target)
+                        {
+                            Delay.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
+                            continue;
+                        }
                         var context = delayRecovery.OriginalDsp;
                         object? group = delayHistoryGroup;
                         await session.ApplyDelayPreview(delayRecovery, parameters, KeepDelayRecovery);
                         RecordOperation("Prévia de delay ajustada na RAM.", async () =>
                         {
                             Delay.Load(Delay.Identity, parameters); DelayEdited();
-                            if (delaySendTask != null) await delaySendTask;
+                            if (!Busy && delaySendTask != null) await delaySendTask;
                             return !delayStopped && delayRecovery?.Target == parameters;
                         }, () => Connected && !Busy && !delayStopped && ReferenceEquals(delayRecovery?.OriginalDsp, context), group);
                         Delay.Message = "Ajustes conferidos na RAM · não salvos no pedal.";
@@ -158,7 +131,7 @@ public sealed partial class EditorViewModel
                     catch
                     {
                         delayStopped = true; delayPending = false;
-                        Delay.Message = "Edição em RAM interrompida. Restauração não confirmada; backup preservado. Use Restaurar delay.";
+                        Delay.Message = "Edição em RAM interrompida. Restauração não confirmada; snapshot preservado nesta sessão. Use Restaurar delay.";
                         throw;
                     }
                 }
@@ -174,27 +147,34 @@ public sealed partial class EditorViewModel
         delayMonitorTask = null;
         delayMonitorStop?.Dispose(); delayMonitorStop = null;
         delayPending = false;
-        if (delaySendTask != null) await delaySendTask;
+        if (!Busy && delaySendTask != null) await delaySendTask;
         if (delayRecovery == null) return;
-        if (session == null) throw new IOException("Reconecte o pedal para restaurar o delay. Backup preservado.");
+        if (session == null) throw new IOException("Reconecte o pedal para restaurar o delay. Snapshot preservado em memória nesta sessão.");
+        if (await RetireObsoleteAdvancedRecoveryAsync(3)) return;
+        if (!delayStopped && !IsAdvancedEffectAudible(3))
+        {
+            delayRecovery = null;
+            Delay.Message = "Prévia encerrada. A seção permanece desligada; edição local preservada.";
+            Refresh();
+            return;
+        }
         delayStopped = true;
         try
         {
             await session.RestoreDelayPreview(delayRecovery);
             Delay.Load(delayRecovery.Identity, DelayParameters.Read(delayRecovery.OriginalDsp));
-            File.Delete(PendingDelay);
             delayRecovery = null; delayStopped = false;
             Delay.Message = "Delay original restaurado e conferido. Edição local disponível.";
             RecordOperation("Prévia de delay encerrada; parâmetros anteriores restaurados.");
         }
-        catch { Delay.Message = "Restauração não confirmada. O backup do delay continua preservado."; throw; }
+        catch { Delay.Message = "Restauração não confirmada. O snapshot do delay continua em memória nesta sessão."; throw; }
         finally { Refresh(); }
     }
 
     public async Task RestoreDelayAsync()
     {
         if (!CanRestoreDelay) return;
-        await Execute(EndDelayPreviewAsync);
+        await CloseAdvancedPreviewAsync(3);
     }
 
     public async Task ImportDelayAsync()
@@ -203,7 +183,7 @@ public sealed partial class EditorViewModel
         var picker = new OpenFileDialog { Filter = Localization.LanguageService.T("Delay (*.delay.json)") + "|*.delay.json" };
         if (picker.ShowDialog() != true) return;
         bool loaded = false;
-        await Execute(async () => { await LoadDelayFileAsync(picker.FileName); loaded = true; });
+        await ExecuteAdvancedEffect(3, async () => { await LoadDelayFileAsync(picker.FileName); loaded = true; });
         if (loaded) ApplyDelayEdits();
     }
 
@@ -224,7 +204,7 @@ public sealed partial class EditorViewModel
         if (Busy || !Delay.Loaded) return;
         var picker = new SaveFileDialog { Filter = Localization.LanguageService.T("Delay (*.delay.json)") + "|*.delay.json", FileName = Localization.LanguageService.T("Meu delay.delay.json") };
         if (picker.ShowDialog() != true) return;
-        await Execute(async () =>
+        await ExecuteAdvancedEffect(3, async () =>
         {
             var exported = Delay.Parameters;
             await File.WriteAllTextAsync(picker.FileName, DelayPreset.Export(Delay.Identity, exported));

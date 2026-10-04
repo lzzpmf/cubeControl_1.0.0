@@ -27,21 +27,48 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public int WriteCommandCount => writeCommandCount;
     private string status = "Conecte seu Cube Baby por USB para começar.", log = "";
     public string DataDirectory { get; }
-    private string Backups => Path.Combine(DataDirectory, "Backups");
-    private string PendingPreview => Path.Combine(DataDirectory, "pending-ir-preview.json");
     public ConnectionViewModel Connection { get; } = new();
     public IrViewModel Ir { get; } = new();
     public PresetViewModel[] Presets { get; }
-    public bool Busy { get => busy; private set { Set(ref busy, value); Refresh(); } }
+    private TaskCompletionSource? operationCompletion;
+    public bool Busy
+    {
+        get => busy;
+        private set
+        {
+            if (value && !busy) operationCompletion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            var completion = operationCompletion;
+            Set(ref busy, value); Refresh();
+            if (!value) completion?.TrySetResult();
+        }
+    }
     public bool Connected => session != null;
-    public bool CanEdit => Connected && !Busy && !blocked && !chorusRecoveryInvalid && !reverbRecoveryInvalid && !delayRecoveryInvalid && edited != null && !Ir.PreviewActive && !AmpPreviewActive && !PhaserPreviewActive && !ChorusPreviewActive && !ReverbPreviewActive && !DelayPreviewActive;
-    public bool CanOperate => Connected && !Busy && !blocked && !chorusRecoveryInvalid && !reverbRecoveryInvalid && !delayRecoveryInvalid && !PhaserPreviewActive && !ChorusPreviewActive && !ReverbPreviewActive && !DelayPreviewActive;
+    public bool CanEdit => Connected && (!Busy || liveParameterOperation) && !blocked && edited != null && !Ir.PreviewActive && !AmpPreviewActive;
+    public bool CanOperate => Connected && !Busy && !blocked;
     public bool CanConnect => !Connected && !Busy;
     public bool HasBank => edited != null;
     public bool Dirty => baseline != null && edited != null && !baseline.SequenceEqual(edited);
     public string Status { get => status; private set => Set(ref status, value); }
     public string Log { get => log; private set => Set(ref log, value); }
-    public int SelectedIndex { get => selected; set { if (value is >= 0 and <= 2 && Set(ref selected, value)) { Notify(nameof(Current)); RefreshEditor(); } } }
+    public int SelectedIndex
+    {
+        get => selected;
+        set
+        {
+            if (value is < 0 or > 2 || value == selected) return;
+            if (HasAdvancedPreviews) { _ = SelectPresetAsync(value); return; }
+            SetSelectedPreset(value);
+        }
+    }
+    private void SetSelectedPreset(int value)
+    {
+        if (Set(ref selected, value, nameof(SelectedIndex))) { Notify(nameof(Current)); RefreshEditor(); }
+    }
+    private async Task SelectPresetAsync(int value)
+    {
+        await Execute(() => { SetSelectedPreset(value); return Task.CompletedTask; }, changesEffects: true);
+        Notify(nameof(SelectedIndex));
+    }
     public PresetViewModel Current => Presets[SelectedIndex];
     public ICommand RefreshPorts { get; }
     public ICommand Connect { get; }
@@ -57,7 +84,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public ICommand ReadSlot { get; }
     public ICommand RestoreIr { get; }
     public ICommand ResetPresets { get; }
-    public ICommand ResetIrs { get; }
+    public ICommand ApplyIrPack { get; }
 
     public EditorViewModel(string? dataDirectory = null)
     {
@@ -87,11 +114,11 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         try { await Connection.Refresh(); }
         finally { SearchingPorts = false; } Status = Connection.Input == null ? "USB-Midi não encontrado. Verifique o cabo de dados." : "USB-Midi encontrado. Conecte para ler os presets."; }, () => CanConnect);
         Connect = Command(ConnectAsync, () => CanConnect);
-        Disconnect = Command(DisconnectAsync, () => Connected && !Busy);
-        Reload = Command(async () => { if (!Dirty || await Ask("Reler o banco atual e descartar as alterações locais?")) { await EndDelayPreviewAsync(); await EndReverbPreviewAsync(); await EndChorusPreviewAsync(); await EndPhaserPreviewAsync(); await RestorePreviewAsync(); await LoadBank(); Completed("Presets atualizados com a leitura do pedal."); } }, () => Connected && !Busy);
-        Save = new UiCommand(async () => { if (CanEdit && Dirty) await Execute(SaveAsync); }, () => CanEdit && Dirty);
+        Disconnect = Command(DisconnectAsync, () => Connected && !Busy, changesEffects: true);
+        Reload = Command(async () => { if (!Dirty || await Ask("Reler o banco atual e descartar as alterações locais?")) { await RestorePreviewAsync(); await LoadBank(); Completed("Presets atualizados com a leitura do pedal."); } }, () => Connected && !Busy, changesEffects: true);
+        Save = new UiCommand(async () => { if (CanEdit && Dirty) await Execute(SaveAsync, changesEffects: true); }, () => CanEdit && Dirty);
         Export = Command(ExportAsync, () => HasBank && !Busy);
-        Import = Command(ImportAsync, () => CanEdit);
+        Import = Command(ImportAsync, () => CanEdit, changesEffects: true);
         ChooseWav = Command(ChooseWavAsync, () => !Busy);
         PreviewIr = Command(PreviewAsync, () => CanOperate && Ir.Audio != null);
         EndPreview = Command(EndPreviewAsync, () => Connected && !Busy && originalRam != null);
@@ -99,23 +126,49 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         WriteIr = new UiCommand(async () => await ConfirmWriteIrAsync(), () => CanOperate && Ir.Audio != null && !confirmingIrWrite);
         ReadSlot = Command(ReadSlotAsync, () => CanOperate);
         Ir.PropertyChanged += (_, _) => RefreshPresentation();
-        RestoreIr = Command(RestoreIrAsync, () => CanOperate);
-        ResetPresets = Command(ResetPresetsAsync, () => CanOperate && factory != null);
-        ResetIrs = Command(ResetIrsAsync, () => CanOperate && factory != null);
+        RestoreIr = Command(RestoreIrAsync, () => CanOperate, changesEffects: true);
+        ResetPresets = Command(ResetPresetsAsync, () => CanOperate && factory != null, changesEffects: true);
+        ApplyIrPack = Command(ApplyIrPackAsync, () => CanOperate && SelectedIrPack != null, changesEffects: true);
+        InitializeFirmware();
         LoadFactory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CubeSuite", "CubeSuite.exe"));
     }
 
-    private UiCommand Command(Func<Task> action, Func<bool> can) => new(async () => await Execute(action), can);
-    private Task? previewCheckTask;
-    private async Task CheckPreviewInBackground(Func<Task> check)
+    private UiCommand Command(Func<Task> action, Func<bool> can, bool changesEffects = false) => new(async () => await Execute(action, changesEffects), can);
+    private async Task WaitForAdvancedEffectOperationAsync()
     {
+        while (Busy && operationCompletion != null) await operationCompletion.Task;
+    }
+    private async Task ExecuteAdvancedEffect(int stage, Func<Task> action)
+    {
+        bool started = false;
+        while (!started)
+        {
+            await WaitForAdvancedEffectOperationAsync();
+            SetAdvancedError(stage, "");
+            await Execute(() => { started = true; return action(); }, advancedEffect: true, advancedStage: stage);
+            if (!started && (!Connected || session?.IsFaulted == true || ErrorMessage.Length > 0)) return;
+        }
+    }
+    private Task? previewCheckTask;
+    private int previewCheckStage;
+    private async Task CheckPreviewInBackground(int stage, Func<Task> check)
+    {
+        if (previewCheckTask != null) return;
+        previewCheckStage = stage;
         previewCheckTask = check();
         try { await previewCheckTask; }
         finally { previewCheckTask = null; }
     }
-    public async Task Execute(Func<Task> action)
+    private bool liveParameterOperation;
+    public async Task Execute(Func<Task> action, bool changesEffects = false, bool advancedEffect = false, bool liveEdit = false, int? advancedStage = null)
     {
         if (Busy) return;
+        if (!advancedEffect)
+        {
+            foreach (var sending in new[] { chorusSendTask, phaserSendTask, delaySendTask, reverbSendTask })
+                if (sending != null) await sending;
+            if (Busy) return;
+        }
         string previousStatus = Status;
         long previousOperation = operationVersion;
         irSelectionGeneration++;
@@ -123,23 +176,36 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         if (!blocked) ErrorMessage = "";
         BusyDetail = "Aguarde a conclusão da operação.";
         InventoryReadCount = 0; ReadingInventory = false;
+        liveParameterOperation = liveEdit;
         Busy = true;
-        try { if (previewCheckTask != null) await previewCheckTask; if (queue != null && !blocked) await queue.Flush(); await action(); }
+        try
+        {
+            if (previewCheckTask != null)
+            {
+                try { await previewCheckTask; }
+                catch (Exception ex) { if (session?.IsFaulted == true) throw; else FaultAdvancedPreview(ex, previewCheckStage); }
+            }
+            if (queue != null && !blocked) await queue.Flush();
+            if (changesEffects && !await ConfirmAdvancedPreviewChangeAsync()) return;
+            await action();
+        }
         catch (Exception ex)
         {
             Status = ex.Message; ErrorMessage = ex.Message; AddLog("ERRO " + ex.Message);
-            if (session != null && (session.IsFaulted || ex is InvalidOperationException or IOException)) Fault(ex);
+            if (advancedEffect) FaultAdvancedPreview(ex, advancedStage);
+            else if (session != null && (session.IsFaulted || ex is InvalidOperationException or IOException)) Fault(ex);
             else if (!automaticConnectionAttempt) NotifyFailure(ex.Message);
         }
         finally
         {
-            Ir.TransferActive = false; ReadingInventory = false; Busy = false;
+            Ir.TransferActive = false; ReadingInventory = false; liveParameterOperation = false; Busy = false;
             if (operationVersion == previousOperation && Status != previousStatus) RecordOperation(Status);
         }
     }
 
     private void Refresh()
     {
+        Notify(nameof(CanChooseFirmware));
         Notify(nameof(DelayGraphState)); Notify(nameof(ChorusGraphState));
         Notify(nameof(PhaserGraphState)); Notify(nameof(ReverbGraphState));
         Notify(nameof(DelayPreviewActive)); Notify(nameof(CanStartDelay)); Notify(nameof(CanRestoreDelay));
@@ -149,6 +215,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Notify(nameof(ChorusPreviewActive)); Notify(nameof(CanStartChorus)); Notify(nameof(CanRestoreChorus));
         Notify(nameof(CanEditChorus)); Notify(nameof(CanUseChorusFiles)); Notify(nameof(CanApplyChorus));
         Notify(nameof(PhaserPreviewActive)); Notify(nameof(CanStartPhaser)); Notify(nameof(CanRestorePhaser));
+        Notify(nameof(CanListenChorus)); Notify(nameof(CanListenPhaser));
         Notify(nameof(CanEditPhaser)); Notify(nameof(CanUsePhaserFiles));
         Notify(nameof(CanUseAmp)); Notify(nameof(CanAdjustAmp)); Notify(nameof(CanOpenGearGallery)); Notify(nameof(CanEditAmpLocally)); Notify(nameof(AmpPreviewActive));
         RefreshAmpAvailability();
@@ -166,18 +233,10 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     public async Task Initialize() => await Execute(async () =>
     {
-        await LoadPendingDelay(); await LoadPendingReverb(); await LoadPendingChorus(); await LoadPendingPhaser();
         BusyDetail = "Procurando portas USB-MIDI…";
         SearchingPorts = true;
         try { await Connection.Refresh(); }
         finally { SearchingPorts = false; }
-        if (File.Exists(PendingPreview))
-        {
-            (ramIdentity, originalRam) = await IrRamBackup.Load(PendingPreview);
-            Ir.PreviewActive = true;
-            Status = "Prévia anterior sem restauração confirmada. Conecte o mesmo aparelho e use Encerrar prévia.";
-            Ir.State = Status;
-        }
     });
     public async Task ConnectAsync()
     {
@@ -230,7 +289,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         finally { LoadingDevice = wasLoading; }
         NotifyUser("Pedal reconhecido", originalRam == null
             ? previousEdits == null ? "Conexão USB confirmada. Presets e IRs carregados."
-                : "Pedal reconectado e pronto para editar. A edição anterior foi preservada em um backup local."
+                : "Pedal reconectado e pronto para editar. O estado atual foi lido do pedal."
             : "Conexão USB confirmada. Encerre a prévia interrompida para restaurar o IR anterior.",
             Wpf.Ui.Controls.ControlAppearance.Success);
     }
@@ -258,8 +317,82 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private void Change(ParameterKey key, int value)
     {
-        if (!CanEdit || edited == null) return;
-        history.Record(key, edited[key.Slot * 16 + key.Offset], gesture);
+        if (edited == null) return;
+        if (!CanEdit) { Presets[key.Slot].Parameters[key.Offset].Load(edited[key.Slot * 16 + key.Offset]); return; }
+        if (HasAdvancedPreviews || liveParameterSending)
+        {
+            advancedParameterChanges[key] = value;
+            if (!liveParameterSending) _ = ApplyAdvancedParameterChangesAsync();
+            return;
+        }
+        ApplyParameterChange(key, value);
+    }
+    private readonly Dictionary<ParameterKey, int> advancedParameterChanges = new();
+    private bool liveParameterSending;
+    private async Task ApplyAdvancedParameterChangesAsync()
+    {
+        liveParameterSending = true;
+        await Task.Yield();
+        try
+        {
+            while (advancedParameterChanges.Count > 0 && Connected && !blocked)
+            {
+                await WaitForAdvancedEffectOperationAsync();
+                await Execute(async () =>
+                {
+                    var offsets = new HashSet<int>();
+                    while (advancedParameterChanges.Count > 0)
+                    {
+                        var changes = advancedParameterChanges.ToArray();
+                        advancedParameterChanges.Clear();
+                        foreach (var change in changes)
+                        {
+                            ApplyParameterChange(change.Key, change.Value);
+                            offsets.Add(change.Key.Offset);
+                        }
+                        await Flush();
+                    }
+                    await SynchronizeAdvancedEffectsAsync(offsets);
+                }, liveEdit: true);
+            }
+        }
+        finally { advancedParameterChanges.Clear(); liveParameterSending = false; }
+    }
+    private async Task SynchronizeAdvancedEffectsAsync(IEnumerable<int> offsets, int? excludeStage = null)
+    {
+        var changed = offsets.ToHashSet();
+        try
+        {
+            if (changed.Overlaps([8, 11]))
+            {
+                if (excludeStage != 1 && ChorusPreviewActive && !chorusStopped && IsModulationPreviewAudible(1))
+                {
+                    await session!.BeginChorusPreview(SelectedIndex, KeepChorusRecovery);
+                    Chorus.Load(chorusRecovery!.Identity, chorusRecovery.Target);
+                }
+                if (excludeStage != 2 && PhaserPreviewActive && !phaserStopped && IsModulationPreviewAudible(2))
+                {
+                    await session!.BeginPhaserPreview(SelectedIndex, KeepPhaserRecovery);
+                    Phaser.Load(phaserRecovery!.Identity, phaserRecovery.Target);
+                }
+            }
+            if (changed.Overlaps([4, 6, 7, 11]) && excludeStage != 3 && DelayPreviewActive && !delayStopped && IsAdvancedEffectAudible(3))
+            {
+                await session!.BeginDelayPreview(SelectedIndex, KeepDelayRecovery);
+                Delay.Load(delayRecovery!.Identity, delayRecovery.Target);
+            }
+            if (changed.Overlaps([3, 10]) && excludeStage != 4 && ReverbPreviewActive && !reverbStopped && IsAdvancedEffectAudible(4))
+            {
+                await session!.BeginReverbPreview(SelectedIndex, KeepReverbRecovery);
+                Reverb.Load(reverbRecovery!.Identity, reverbRecovery.Target);
+            }
+            Refresh();
+        }
+        catch (Exception ex) { FaultAdvancedPreview(ex); }
+    }
+    private void ApplyParameterChange(ParameterKey key, int value)
+    {
+        history.Record(key, edited![key.Slot * 16 + key.Offset], gesture);
         bankOperationGroup = gesture ?? new object();
         bankOperationDescription = $"Preset {(char)('A' + key.Slot)} · {Presets[key.Slot].Parameters[key.Offset].Name}: {value}";
         edited[key.Slot * 16 + key.Offset] = (byte)value;
@@ -283,22 +416,22 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         if (DelayPreviewActive)
         {
             delayStopped = true; delayPending = false;
-            Delay.Message = "Prévia interrompida. Restauração do delay não confirmada; backup preservado.";
+            Delay.Message = "Prévia interrompida. Restauração do delay não confirmada; snapshot preservado nesta sessão.";
         }
         if (ReverbPreviewActive)
         {
             reverbStopped = true; reverbPending = false;
-            Reverb.Message = "Prévia interrompida. Restauração do reverb não confirmada; backup preservado.";
+            Reverb.Message = "Prévia interrompida. Restauração do reverb não confirmada; snapshot preservado nesta sessão.";
         }
         if (ChorusPreviewActive)
         {
             chorusStopped = true; chorusPending = false;
-            Chorus.Message = "Prévia interrompida. Restauração do chorus não confirmada; backup preservado.";
+            Chorus.Message = "Prévia interrompida. Restauração do chorus não confirmada; snapshot preservado nesta sessão.";
         }
         if (PhaserPreviewActive)
         {
             phaserStopped = true; phaserPending = false;
-            Phaser.Message = "Prévia interrompida. Restauração do phaser não confirmada; backup preservado.";
+            Phaser.Message = "Prévia interrompida. Restauração do phaser não confirmada; snapshot preservado nesta sessão.";
         }
         Ir.PreviewConfirmed = false;
         blocked = true;
@@ -341,10 +474,13 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Status = "Presets A/B/C salvos e confirmados por leitura."; Completed(Status); Refresh();
     }
     private static string BankJson(byte[] bank) => JsonSerializer.Serialize(new { format = "cubecontrol-bank-v1", device = "SINCO-CubeBaby", capturedAt = DateTimeOffset.Now, bankHex = Convert.ToHexString(bank) }, new JsonSerializerOptions { WriteIndented = true });
-    private async Task BackupBank(byte[] bank, string reason)
+    private byte[]? bankRecovery;
+    private readonly Dictionary<(string Identity, int Slot), byte[]> irRecovery = [];
+    private Task BackupBank(byte[] bank, string reason)
     {
-        Directory.CreateDirectory(Backups);
-        await File.WriteAllTextAsync(Path.Combine(Backups, $"{DateTime.Now:yyyyMMdd-HHmmss-fff}-{reason}-{Guid.NewGuid():N}.json"), BankJson(bank));
+        CubeBabyProfile.ValidateBank(bank);
+        bankRecovery = bank.ToArray();
+        return Task.CompletedTask;
     }
     private async Task ExportAsync()
     {
@@ -400,19 +536,12 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private async Task PreviewAsync()
     {
-        if (DelayPreviewActive) throw new InvalidOperationException("Restaure o delay antes de iniciar uma prévia de IR.");
-        if (ReverbPreviewActive) throw new InvalidOperationException("Restaure o reverb antes de iniciar uma prévia de IR.");
-        if (ChorusPreviewActive) throw new InvalidOperationException("Restaure o chorus antes de iniciar uma prévia de IR.");
-        if (PhaserPreviewActive) throw new InvalidOperationException("Restaure o phaser antes de iniciar uma prévia de IR.");
         BusyDetail = "Preparando prévia de IR…";
         if (originalRam == null)
         {
             var snapshot = await session!.ReadIrRam();
-            Directory.CreateDirectory(Backups);
-            string path = Path.Combine(Backups, $"ram-{DateTime.Now:yyyyMMdd-HHmmss-fff}.json");
-            await IrRamBackup.Save(path, session.IdentityHex, snapshot);
-            File.Copy(path, PendingPreview, true);
-            _ = await IrRamBackup.Load(PendingPreview);
+            if (snapshot.Payload.Length != 2052) throw new FormatException("Snapshot RAM inválido.");
+            snapshot = new(snapshot.Flag, snapshot.Payload.ToArray());
             originalRam = snapshot; ramIdentity = session.IdentityHex;
         }
         if (ramIdentity != session!.IdentityHex) throw new InvalidOperationException("O snapshot de prévia pertence a outra identidade de aparelho.");
@@ -454,19 +583,29 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         if (ramIdentity != session.IdentityHex) throw new InvalidOperationException("Conecte o aparelho correspondente ao snapshot de prévia.");
         Ir.PreviewConfirmed = false;
         await session.ApplyIrRam(originalRam, Progress());
-        File.Delete(PendingPreview); originalRam = null; ramIdentity = null;
+        originalRam = null; ramIdentity = null;
         Ir.PreviewActive = false; Ir.State = "IR anterior restaurado e conferido."; Status = Ir.State; Refresh();
     }
-    private async Task<string> BackupIr(int slot, byte[] bytes) => await IrBackup.Save(Backups, session!.Identity, session.IdentityHex, slot, bytes);
-    private string MetadataPath(byte[] data) => Path.Combine(DataDirectory, "IrNames", Convert.ToHexString(SHA256.HashData(data)) + ".txt");
+    private Task BackupIr(int slot, byte[] bytes)
+    {
+        if (slot is < 0 or > 7 || bytes.Length != 4096) throw new ArgumentException("Snapshot IR inválido.");
+        irRecovery[(session!.IdentityHex, slot)] = bytes.ToArray();
+        return Task.CompletedTask;
+    }
     private async Task ReadSlotAsync()
     {
-        BusyDetail = "Lendo e preservando o slot de IR…";
-        var data = await session!.ReadIrSlot(Ir.Slot, Progress()); string path = await BackupIr(Ir.Slot, data);
+        BusyDetail = "Lendo o slot de IR…";
+        var data = await session!.ReadIrSlot(Ir.Slot, Progress());
+        await BackupIr(Ir.Slot, data);
         UpdateCabinet(Ir.Slot, data);
-        string metadata = MetadataPath(data);
-        Ir.SlotInfo = File.Exists(metadata) ? "Nome local confirmado pelo conteúdo: " + await File.ReadAllTextAsync(metadata) : "Conteúdo lido · nome original não fornecido pelo pedal.";
-        Ir.State = "Backup completo criado: " + Path.GetFileName(path); Status = $"Slot {Ir.Slot + 1} lido e preservado.";
+        Ir.SlotInfo = "Conteúdo lido do pedal.";
+        var picker = new SaveFileDialog { Filter = "Backup de IR CubeControl|*.json", FileName = $"IR-{Ir.Slot + 1}.json" };
+        if (picker.ShowDialog() == true)
+        {
+            await IrBackup.Export(picker.FileName, session.Identity, session.IdentityHex, Ir.Slot, data);
+            Status = Ir.State = "Backup de IR exportado.";
+        }
+        else Status = Ir.State = "Slot lido nesta sessão. Exportação cancelada.";
         Completed(Status);
     }
     private bool confirmingIrWrite;
@@ -481,7 +620,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         string file = Ir.File;
         try
         {
-            string message = $"Gravar {file}?\nDestino: {Ir.Slots[slot]}\n\nDistância: {distance}%\nO conteúdo atual será substituído.\nUm backup será criado antes da gravação.";
+            string message = $"Gravar {file}?\nDestino: {Ir.Slots[slot]}\n\nDistância: {distance}%\nO conteúdo atual será substituído.\nO conteúdo anterior será mantido em memória durante esta sessão.";
             var choice = ConfirmIrWrite != null ? await ConfirmIrWrite(message) : (Confirmed: await Ask(message), ImagePath: (string?)null);
             if (!choice.Confirmed || !CanOperate) return;
             await Execute(() => WriteIrAsync(slot, audio, distance, file, choice.ImagePath));
@@ -491,13 +630,12 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private async Task WriteIrAsync(int slot, IrAudio audio, int distance, string file, string? imagePath)
     {
-        BusyDetail = "Criando backup do slot de IR…";
+        BusyDetail = "Preservando o slot de IR em memória…";
         var data = audio.Sector(distance);
         var current = await session!.ReadIrSlot(slot, Progress()); await BackupIr(slot, current);
         await RestorePreviewAsync();
         BusyDetail = "Gravando e verificando IR…";
         await session.ReplaceIr(slot, current, data, async bytes => { await BackupIr(slot, bytes); }, Progress());
-        Directory.CreateDirectory(Path.GetDirectoryName(MetadataPath(data))!); await File.WriteAllTextAsync(MetadataPath(data), file);
         string hash = CabinetInventory.Hash(data);
         preferences.IrNames[hash] = file;
         resolvedIrNames[hash] = file;
@@ -509,22 +647,23 @@ public sealed partial class EditorViewModel : Observable, IDisposable
                 Directory.CreateDirectory(Path.Combine(DataDirectory, "Images"));
                 File.Copy(imagePath, Path.Combine(DataDirectory, "Images", imageName), true);
                 preferences.Images[hash] = imageName;
+                SaveImages();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             { ErrorMessage = "IR gravado, mas não foi possível salvar a imagem: " + ex.Message; NotifyFailure(ErrorMessage); }
         }
-        SavePreferences(); UpdateCabinet(slot, data);
+        UpdateCabinet(slot, data);
         Ir.SlotInfo = "Nome local confirmado pelo conteúdo: " + file;
         Status = Ir.State = $"IR gravado e verificado no slot {slot + 1}. Selecione outro cabinet e volte a este slot para recarregá-lo.";
         Completed("IR gravado e verificado.");
     }
     private async Task RestoreIrAsync()
     {
-        var dlg = new OpenFileDialog { Filter = LanguageService.T("Backup de IR CubeControl|*.json"), InitialDirectory = Backups }; if (dlg.ShowDialog() != true) return;
-        BusyDetail = "Criando backup do slot de IR…";
+        var dlg = new OpenFileDialog { Filter = LanguageService.T("Backup de IR CubeControl|*.json") }; if (dlg.ShowDialog() != true) return;
+        BusyDetail = "Preservando o slot de IR em memória…";
         var (info, data) = await IrBackup.Load(dlg.FileName);
         var current = await session!.ReadIrSlot(info.Slot, Progress()); await BackupIr(info.Slot, current);
-        if (!await Ask($"Restaurar o backup de {info.CapturedAt:g} no slot {info.Slot + 1}?\nO conteúdo atual já foi preservado em outro backup.")) return;
+        if (!await Ask($"Restaurar o backup de {info.CapturedAt:g} no slot {info.Slot + 1}?\nO conteúdo atual está preservado em memória nesta sessão.")) return;
         await RestorePreviewAsync();
         BusyDetail = "Gravando e verificando IR…";
         await session.ReplaceIr(info.Slot, current, data, async bytes => { await BackupIr(info.Slot, bytes); }, Progress());
@@ -536,29 +675,44 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     {
         try { factory = FactoryResources.Load(path); }
         catch (Exception) { factory = null; }
-        inventory.SetFactory(factory);
+        IrPacks = IrPackCatalog.LoadAvailable(Path.Combine(Path.GetDirectoryName(path)!, "bin"));
+        SelectedIrPack = IrPacks.FirstOrDefault();
+        Notify(nameof(IrPacks));
+        inventory.SetBfiReference(factory);
         inventory.Clear(); RebuildCabinets();
         Refresh();
     }
     private async Task ResetPresetsAsync()
     {
         await RestorePreviewAsync(); var current = await session!.ReadBank(); await BackupBank(current, "antes-reset-fabrica");
-        if (!await Ask("Restaurar os três presets A/B/C de fábrica?\nOs presets atuais foram copiados para backup. Os IRs não serão alterados.")) return;
+        if (!await Ask("Restaurar os três presets A/B/C de fábrica?\nOs presets atuais foram preservados em memória nesta sessão. Os IRs não serão alterados.")) return;
         if (!current.SequenceEqual(confirmed!)) throw new InvalidOperationException("Banco mudou. Releia antes do reset.");
         await SetBankLive(factory!.Presets); await SaveAsync(); Status = "Presets de fábrica aplicados, salvos e conferidos. IRs preservados.";
     }
-    private async Task ResetIrsAsync()
+    private async Task ApplyIrPackAsync()
     {
+        var pack = SelectedIrPack ?? throw new InvalidOperationException("Selecione um pack de IRs.");
         await RestorePreviewAsync(); var originals = new byte[8][];
-        for (int i = 0; i < 8; i++) { BusyDetail = Status = $"Backup completo do IR {i + 1}/8…"; originals[i] = await session!.ReadIrSlot(i, Progress()); await BackupIr(i, originals[i]); }
-        if (!await Ask("Restaurar os oito IRs de fábrica?\nTodos os slots atuais foram copiados para backup. A operação substituirá os oito IRs; presets A/B/C não serão alterados.")) return;
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 8; i++) { BusyDetail = Status = $"Leitura do IR {i + 1}/8…"; originals[i] = await session!.ReadIrSlot(i, Progress()); await BackupIr(i, originals[i]); }
+        var different = Enumerable.Range(0, 8).Select(i => !originals[i].SequenceEqual(pack.Sectors[i])).ToArray();
+        for (int i = 0; i < 8; i++) UpdateCabinet(i, originals[i]);
+        if (!different.Any(value => value))
         {
-            int slot = i; BusyDetail = Status = $"Restaurando IR de fábrica {i + 1}/8…";
-            await session!.ReplaceIr(i, originals[i], factory!.IrSectors[i], async bytes => { await BackupIr(slot, bytes); }, Progress());
-            UpdateCabinet(i, factory.IrSectors[i]);
+            Status = Ir.State = "Os oito IRs já correspondem ao pack selecionado. Nenhuma gravação necessária.";
+            Completed(Status); return;
         }
-        Ir.SlotInfo = "Oito IRs de fábrica restaurados e conferidos."; Status = Ir.State = Ir.SlotInfo;
+        var selection = ChoosePackIrSlots != null ? await ChoosePackIrSlots(different) : await ShowPackIrSelection(pack, different);
+        var selected = selection?.Distinct().Order().ToArray();
+        if (selected == null || selected.Length == 0) { Status = "Restauração de IRs cancelada."; return; }
+        if (selected.Any(i => i < 0 || i >= 8 || !different[i])) throw new InvalidOperationException("Seleção de IRs inválida.");
+        if (!await Ask($"Aplicar {pack.Name} nos slots: {string.Join(", ", selected.Select(i => i + 1))}?\nOs IRs atuais foram preservados em memória nesta sessão. Somente os slots selecionados serão substituídos.")) return;
+        foreach (int i in selected)
+        {
+            int slot = i; BusyDetail = Status = $"Aplicando {pack.Name} no slot {i + 1}…";
+            await session!.ReplaceIr(i, originals[i], pack.Sectors[i], async bytes => { await BackupIr(slot, bytes); }, Progress());
+            UpdateCabinet(i, pack.Sectors[i]);
+        }
+        Ir.SlotInfo = $"{pack.Name} aplicado e conferido nos slots: {string.Join(", ", selected.Select(i => i + 1))}."; Status = Ir.State = Ir.SlotInfo;
         Completed(Status);
     }
     public Func<string, Task<bool>> Ask { get; set; } = async message =>
@@ -569,6 +723,120 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public async Task Flush() { if (queue != null) await queue.Flush(); }
     public bool HasAdvancedPreview(int stage) => stage switch
     { 1 => ChorusPreviewActive, 2 => PhaserPreviewActive, 3 => DelayPreviewActive, 4 => ReverbPreviewActive, _ => false };
+    private bool HasAdvancedPreviews => Enumerable.Range(1, 4).Any(HasAdvancedPreview);
+    private bool IsAdvancedEffectAudible(int stage)
+    {
+        int? slot = stage == 3 ? delayRecovery?.PhysicalState[0] : reverbRecovery?.PhysicalState[0];
+        if (slot == null || confirmed == null) return false;
+        return stage == 3 ? confirmed[slot.Value * 16 + 11] == 1
+            : confirmed[slot.Value * 16 + 10] == 1 && confirmed[slot.Value * 16 + 3] > 0;
+    }
+    private bool IsModulationPreviewAudible(int stage)
+    {
+        int? slot = stage == 1 ? chorusRecovery?.PhysicalState[0] : phaserRecovery?.PhysicalState[0];
+        if (slot == null || confirmed == null || confirmed[slot.Value * 16 + 11] != 1) return false;
+        int mod = confirmed[slot.Value * 16 + 8];
+        return stage == 1 ? mod <= 6 : mod >= 9;
+    }
+    public bool CanListenChorus => Connected && !Busy && ChorusPreviewActive && !chorusStopped && !IsModulationPreviewAudible(1);
+    public bool CanListenPhaser => Connected && !Busy && PhaserPreviewActive && !phaserStopped && !IsModulationPreviewAudible(2);
+    public async Task ListenAdvancedModulationAsync(int stage)
+    {
+        await advancedLifecycle.WaitAsync();
+        try
+        {
+            await WaitForAdvancedEffectOperationAsync();
+            if (stage == 1 ? !CanListenChorus : stage != 2 || !CanListenPhaser) return;
+            await ExecuteAdvancedEffect(stage, async () =>
+            {
+                await PrepareAdvancedEffectAsync(stage);
+                if (stage == 1)
+                {
+                    var original = chorusRecovery!;
+                    var target = Chorus.Parameters;
+                    await session!.BeginChorusPreview(SelectedIndex, next => KeepChorusRecovery(next with { OriginalDsp = original.OriginalDsp }));
+                    await session.ApplyChorusPreview(chorusRecovery!, target, KeepChorusRecovery);
+                    Chorus.Message = "Chorus em prévia na RAM. Os ajustes do phaser foram preservados.";
+                }
+                else
+                {
+                    var original = phaserRecovery!;
+                    var target = Phaser.Parameters;
+                    await session!.BeginPhaserPreview(SelectedIndex, next => KeepPhaserRecovery(next with { OriginalDsp = original.OriginalDsp }));
+                    await session.ApplyPhaserPreview(phaserRecovery!, target, KeepPhaserRecovery);
+                    Phaser.Message = "Phaser em prévia na RAM. Os ajustes do chorus foram preservados.";
+                }
+            });
+        }
+        finally { advancedLifecycle.Release(); }
+    }
+
+    private async Task<bool> PrepareAdvancedEffectAsync(int stage)
+    {
+        if (session == null || confirmed == null || edited == null) throw new IOException("Conecte o pedal para iniciar a prévia.");
+        var snapshot = await session.ReadEffectPreviewState(stage);
+        if (snapshot.PhysicalState[1] != 1 || snapshot.PhysicalState[0] > 2)
+            throw new IOException("Selecione o modo PRESET no pedal. O protocolo não oferece troca remota desse modo.");
+        if (!snapshot.Bank.SequenceEqual(confirmed)) throw new IOException("O banco mudou no pedal. Releia os presets antes de iniciar a prévia.");
+        foreach (var context in new[]
+        {
+            (chorusRecovery?.Identity, chorusRecovery?.PhysicalState), (phaserRecovery?.Identity, phaserRecovery?.PhysicalState),
+            (delayRecovery?.Identity, delayRecovery?.PhysicalState), (reverbRecovery?.Identity, reverbRecovery?.PhysicalState)
+        })
+            if (context.Item2 != null && (context.Item1 != session.IdentityHex || !context.Item2.SequenceEqual(snapshot.PhysicalState)))
+                throw new IOException("O aparelho ou preset físico mudou. Restaure as prévias pendentes antes de iniciar outra edição.");
+        int slot = snapshot.PhysicalState[0];
+        SetSelectedPreset(slot);
+        int mod = snapshot.Bank[slot * 16 + 8];
+        int desiredMod = stage == 1 ? chorusRecovery?.Bank[slot * 16 + 8] ?? (mod <= 6 ? mod : 3)
+            : phaserRecovery?.Bank[slot * 16 + 8] ?? (mod >= 9 ? mod : 12);
+        var requirements = stage switch
+        {
+            1 or 2 => new[] { (Offset: 8, Value: desiredMod), (Offset: 11, Value: 1) },
+            3 => new[] { (Offset: 7, Value: snapshot.Bank[slot * 16 + 7] == 0 ? 32 : (int)snapshot.Bank[slot * 16 + 7]), (Offset: 11, Value: 1) },
+            _ => new[] { (Offset: 3, Value: snapshot.Bank[slot * 16 + 3] == 0 ? 8 : (int)snapshot.Bank[slot * 16 + 3]), (Offset: 10, Value: 1) }
+        };
+        bool changed = false;
+        var changedOffsets = new HashSet<int>();
+        foreach (var (offset, value) in requirements)
+        {
+            if (confirmed[slot * 16 + offset] == value) continue;
+            confirmed = await session.WriteLiveChecked(slot, offset, value, confirmed);
+            edited[slot * 16 + offset] = (byte)value;
+            Presets[slot].Parameters[offset].Load(value);
+            changed = true;
+            changedOffsets.Add(offset);
+        }
+        if (changed)
+        {
+            await Task.Delay(200);
+            await SynchronizeAdvancedEffectsAsync(changedOffsets, stage);
+        }
+        UpdateStates();
+        return changed;
+    }
+    private void FaultAdvancedPreview(Exception ex, int? stage = null)
+    {
+        if (session?.IsFaulted == true) { Fault(ex); return; }
+        if ((stage == null || stage == 1) && ChorusPreviewActive) { chorusStopped = true; chorusPending = false; chorusMonitorStop?.Cancel(); Chorus.Message = "Prévia interrompida. Use Restaurar chorus; snapshot preservado nesta sessão."; }
+        if ((stage == null || stage == 2) && PhaserPreviewActive) { phaserStopped = true; phaserPending = false; phaserMonitorStop?.Cancel(); Phaser.Message = "Prévia interrompida. Use Restaurar phaser; snapshot preservado nesta sessão."; }
+        if ((stage == null || stage == 3) && DelayPreviewActive) { delayStopped = true; delayPending = false; delayMonitorStop?.Cancel(); Delay.Message = "Prévia interrompida. Use Restaurar delay; snapshot preservado nesta sessão."; }
+        if ((stage == null || stage == 4) && ReverbPreviewActive) { reverbStopped = true; reverbPending = false; reverbMonitorStop?.Cancel(); Reverb.Message = "Prévia interrompida. Use Restaurar reverb; snapshot preservado nesta sessão."; }
+        Status = ErrorMessage = "Operação do efeito não concluída. Restauração não confirmada: " + ex.Message;
+        foreach (int affected in Enumerable.Range(1, 4).Where(i => stage == null || stage == i)) SetAdvancedError(affected, Status);
+        RecordOperation(Status); NotifyFailure(Status); Refresh();
+    }
+    private async Task<bool> ConfirmAdvancedPreviewChangeAsync()
+    {
+        if (!HasAdvancedPreviews) return true;
+        if (!await Ask("Esta ação encerra a prévia dos efeitos e restaura os parâmetros anteriores. A edição continuará disponível no card. Continuar?")) return false;
+        try
+        {
+            await EndDelayPreviewAsync(); await EndReverbPreviewAsync(); await EndChorusPreviewAsync(); await EndPhaserPreviewAsync();
+            return true;
+        }
+        catch (Exception ex) { FaultAdvancedPreview(ex); return false; }
+    }
     public bool AdvancedPreviewHasChanges(int stage) => stage switch
     {
         1 => chorusRecovery != null && Chorus.Parameters != ChorusParameters.Read(chorusRecovery.OriginalDsp),
@@ -579,22 +847,29 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     };
     public async Task<bool> CloseAdvancedPreviewAsync(int stage)
     {
-        Task? sending = stage switch { 1 => chorusSendTask, 2 => phaserSendTask, 3 => delaySendTask, 4 => reverbSendTask, _ => null };
-        if (sending != null) await sending;
-        if (Busy) { ErrorMessage = "Aguarde a operação terminar antes de fechar."; return false; }
-        bool restored = false;
-        await Execute(async () =>
+        await advancedLifecycle.WaitAsync();
+        try
         {
-            switch (stage)
+            Task? sending = stage switch { 1 => chorusSendTask, 2 => phaserSendTask, 3 => delaySendTask, 4 => reverbSendTask, _ => null };
+            if (sending != null) await sending;
+            while (Busy && operationCompletion != null) await operationCompletion.Task;
+            if (!HasAdvancedPreview(stage)) return true;
+            bool restored = false;
+            await ExecuteAdvancedEffect(stage, async () =>
             {
-                case 1: await EndChorusPreviewAsync(); break;
-                case 2: await EndPhaserPreviewAsync(); break;
-                case 3: await EndDelayPreviewAsync(); break;
-                case 4: await EndReverbPreviewAsync(); break;
-            }
-            restored = true;
-        });
-        return restored;
+                switch (stage)
+                {
+                    case 1: await EndChorusPreviewAsync(); break;
+                    case 2: await EndPhaserPreviewAsync(); break;
+                    case 3: await EndDelayPreviewAsync(); break;
+                    case 4: await EndReverbPreviewAsync(); break;
+                }
+                restored = true;
+            });
+            return restored;
+        }
+        catch (Exception ex) { FaultAdvancedPreview(ex, stage); return false; }
+        finally { advancedLifecycle.Release(); }
     }
     public void Dispose() { delayMonitorStop?.Cancel(); Delay.Edited -= DelayEdited; reverbMonitorStop?.Cancel(); Reverb.Edited -= ReverbEdited; chorusMonitorStop?.Cancel(); Chorus.Edited -= ChorusEdited; phaserMonitorStop?.Cancel(); Phaser.Edited -= PhaserEdited; Amp.Edited -= AmpEdited; Amp.PropertyChanged -= AmpPresentationChanged; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
 }

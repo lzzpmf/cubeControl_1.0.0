@@ -18,7 +18,7 @@ public sealed class ParameterViewModel(Parameter parameter, int slot, Action<Par
     public int Choice { get => current; set => Value = value; }
     public bool Enabled { get => current != 0; set => Value = value ? 1 : 0; }
     public string Display => parameter.Offset == 8 || (parameter.Offset is 3 or 7 && current == 0) ? CubeBabyProfile.Display(parameter.Offset, current) : "";
-    public string Detail => parameter.Offset switch { 8 => "CHORUS  ←  OFF  →  PHASER", 9 => "Referências de fábrica · slots podem conter IRs próprios", _ => Description };
+    public string Detail => parameter.Offset switch { 8 => "CHORUS  ←  OFF  →  PHASER", 9 => "Gabinetes reconhecidos pelo conteúdo · packs e IRs próprios", _ => Description };
     public UiCommand TurnModOff => new(() => Value = 8);
     public double Value
     {

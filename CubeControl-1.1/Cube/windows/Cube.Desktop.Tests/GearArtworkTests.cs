@@ -28,7 +28,7 @@ internal static class GearArtworkTests
         string folder = Path.GetFullPath("C:/CubeControl-Build/reports/gear-artwork"); Directory.CreateDirectory(folder);
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-artwork-" + Guid.NewGuid().ToString("N")));
         var amps = model.Amps;
-        var cabinets = Enumerable.Range(0, 8).Select(i => new GearItem("cab-" + i, i + 1, Cube.Protocol.EquipmentCatalog.Cabinets[i].Name, "", "cab", "#C5B77F", factoryId: "factory-cab-" + i)).ToArray();
+        var cabinets = Enumerable.Range(0, 8).Select(i => new GearItem("cab-" + i, i + 1, Cube.Protocol.EquipmentCatalog.Cabinets[i].Name, "", "cab", "#C5B77F", cabinetId: "pack-bfi-cab-" + i)).ToArray();
         foreach (var group in new[] { amps, cabinets })
         {
             var sheet = new WrapPanel { Width = 720, Background = new SolidColorBrush(Color.FromRgb(37, 37, 37)) };

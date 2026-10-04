@@ -37,6 +37,9 @@ public sealed class EffectGraphEditor : Grid
     private readonly TextBox entry = new() { Visibility = Visibility.Collapsed, MinWidth = 100 };
     private readonly TextBlock help = new() { FontSize = 12, TextWrapping = TextWrapping.Wrap, MinHeight = 44 };
     private GraphNode? selected;
+    private readonly ComboBox parameterPicker = new() { MinHeight = 32, Margin = new Thickness(0, 0, 0, 8) };
+    private readonly Slider adjustment = new() { MinHeight = 32, Margin = new Thickness(0, 4, 0, 4), IsMoveToPointEnabled = true };
+    private bool updatingInspector;
     private double numericStart, resumeRate = 100;
     private bool editing;
     private double W => Math.Max(260, surface.ActualWidth - 48);
@@ -77,7 +80,15 @@ public sealed class EffectGraphEditor : Grid
         valueRow.Children.Add(number); valueRow.Children.Add(entry);
         number.Content = numberText;
         heading.Children.Add(valueRow);
-        inspector.Children.Add(heading); inspector.Children.Add(choices); inspector.Children.Add(help);
+        inspector.Children.Add(parameterPicker); inspector.Children.Add(heading); inspector.Children.Add(adjustment); inspector.Children.Add(choices); inspector.Children.Add(help);
+        parameterPicker.SelectionChanged += (_, _) =>
+        {
+            if (!updatingInspector && parameterPicker.SelectedItem is ComboBoxItem { Tag: GraphNode node }) Select(node);
+        };
+        adjustment.ValueChanged += (_, _) =>
+        {
+            if (!updatingInspector && IsEnabled) selected?.Change(adjustment.Value);
+        };
         help.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
         footer.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
         choices.PreviewKeyDown += (_, e) =>
@@ -86,7 +97,7 @@ public sealed class EffectGraphEditor : Grid
         };
         number.Click += (_, _) => BeginNumber();
         entry.PreviewKeyDown += NumberKey;
-        entry.LostKeyboardFocus += (_, _) => { if (editing) EndNumber(false, false); };
+        entry.LostKeyboardFocus += (_, _) => { if (editing) EndNumber(true, false); };
         SizeChanged += (_, _) =>
         {
             bool wide = ActualWidth >= 520;
@@ -109,7 +120,12 @@ public sealed class EffectGraphEditor : Grid
             CancelInteraction();
             PropertyChangedEventManager.RemoveHandler(LanguageService.Instance, LanguageChanged, "");
         };
-        DataContextChanged += (_, _) => { CancelInteraction(); selected = null; choices.Children.Clear(); RefreshGraph(); };
+        DataContextChanged += (_, _) =>
+        {
+            CancelInteraction(); selected = null; choices.Children.Clear();
+            if (nodes.Count > 0) Select(nodes.Values.First());
+            else RefreshGraph();
+        };
         SetResourceReference(TextElement.ForegroundProperty, "CubeText");
         // Resource changes invalidate the drawing as well as the WPF children.
         SetResourceReference(ThemeRevisionProperty, "CubeThemeRevision");
@@ -128,10 +144,10 @@ public sealed class EffectGraphEditor : Grid
         {
             Mode = BindingMode.TwoWay,
             UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
-            FallbackValue = min,
-            TargetNullValue = min
+            FallbackValue = min
         });
         overlay.Children.Add(node);
+        parameterPicker.Items.Add(new ComboBoxItem { Content = T(name), Tag = node });
     }
 
     private void Amplitude(string key, string name, string unit, double min, double max, double step,
@@ -158,6 +174,7 @@ public sealed class EffectGraphEditor : Grid
     private void CreateGraph()
     {
         CancelInteraction(); nodes.Clear(); overlay.Children.Clear(); selected = null;
+        parameterPicker.Items.Clear();
         choices.Children.Clear();
         switch (EffectKind)
         {
@@ -215,13 +232,18 @@ public sealed class EffectGraphEditor : Grid
                     "Suaviza as reflexões. 10 mantém os coeficientes originais; a escala não representa frequência de corte.");
                 break;
         }
-        RefreshGraph();
+        if (nodes.Count > 0) Select(nodes.Values.First());
+        else RefreshGraph();
     }
 
     internal void Select(GraphNode node)
     {
         bool changed = selected != node;
-        if (changed && editing) EndNumber(false, false);
+        if (changed && editing)
+        {
+            EndNumber(true, false);
+            if (editing) EndNumber(false, false);
+        }
         selected = node;
         if (changed) CreateChoices(node);
         RefreshGraph();
@@ -247,6 +269,27 @@ public sealed class EffectGraphEditor : Grid
         }
         if (selected != null)
         {
+            updatingInspector = true;
+            try
+            {
+                foreach (ComboBoxItem item in parameterPicker.Items)
+                {
+                    var parameter = (GraphNode)item.Tag;
+                    item.Content = T(parameter.Name);
+                    if (parameter == selected) parameterPicker.SelectedItem = item;
+                }
+                adjustment.Minimum = EffectKind == "Phaser" && selected.Key == "Upper" ? V("Lower") : selected.Minimum;
+                adjustment.Maximum = EffectKind == "Phaser" && selected.Key == "Lower" ? V("Upper") : selected.Maximum;
+                adjustment.SmallChange = selected.Step;
+                adjustment.LargeChange = selected.Step * 10;
+                adjustment.TickFrequency = selected.Step;
+                adjustment.IsSnapToTickEnabled = selected.IsDiscrete;
+                adjustment.Value = selected.Value;
+                adjustment.Visibility = selected.Key is "Waveform" or "Sections" ? Visibility.Collapsed : Visibility.Visible;
+                AutomationProperties.SetName(adjustment, T(selected.Name));
+                AutomationProperties.SetName(parameterPicker, T("Selecione um ponto para ajustar"));
+            }
+            finally { updatingInspector = false; }
             caption.Text = T(selected.Name);
             string valueText = selected.Key == "Waveform" ? T(selected.Value == 0 ? "Original" : "Triangular")
                 : $"{selected.Value.ToString("0.#####", CultureInfo.CurrentCulture)} {T(selected.Unit)}";
@@ -270,6 +313,7 @@ public sealed class EffectGraphEditor : Grid
         }
         else
         {
+            adjustment.Visibility = Visibility.Collapsed;
             caption.Text = T("Selecione um ponto para ajustar"); help.Text = "";
             number.Visibility = Visibility.Collapsed;
         }
@@ -305,7 +349,7 @@ public sealed class EffectGraphEditor : Grid
             { help.Text = T("Valor inválido ou fora dos limites.") + $" {selected.Minimum:0.###}–{selected.Maximum:0.###}"; return; }
             selected.Change(value);
         }
-        // Text is only committed on Enter; Escape or focus loss leaves the original value intact.
+        // Enter, Tab and clicking away commit; Escape explicitly cancels.
         editing = false; entry.Visibility = Visibility.Collapsed; number.Visibility = Visibility.Visible;
         if (restoreFocus) selected.Focus();
         RefreshGraph();
@@ -367,7 +411,7 @@ public sealed class EffectGraphEditor : Grid
         else if (e.Key is Key.Up or Key.Right or Key.Down or Key.Left)
         {
             double direction = e.Key is Key.Up or Key.Right ? 1 : -1;
-            double step = node.Step * (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? .1 : 1);
+            double step = node.Step * (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) && !node.IsDiscrete ? .1 : 1);
             node.Change(node.Value + direction * step); e.Handled = true;
         }
     }
@@ -619,7 +663,7 @@ public sealed class EffectGraphEditor : Grid
             new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, (d, e) =>
             {
                 var node = (GraphNode)d;
-                node.owner.RefreshGraph();
+                if (!node.changing) node.owner.RefreshGraph();
                 if (UIElementAutomationPeer.FromElement(node) is GraphNodePeer peer)
                     peer.RaisePropertyChangedEvent(RangeValuePatternIdentifiers.ValueProperty, e.OldValue, e.NewValue);
             }));
@@ -631,12 +675,14 @@ public sealed class EffectGraphEditor : Grid
         internal double Minimum { get; }
         internal double Maximum { get; }
         internal double Step { get; }
+        internal bool IsDiscrete => Key is "TimeSamples" or "Sections" or "Waveform" or "Decay" or "Damping";
         internal Func<Point> Anchor { get; }
         private readonly Func<double, Vector, double> drag;
         private readonly EffectGraphEditor owner;
         private Point origin;
         private double original;
         private bool dragging;
+        private bool changing;
 
         internal GraphNode(EffectGraphEditor owner, string key, string name, string unit, double min, double max, double step,
             Func<Point> anchor, Func<double, Vector, double> drag, string hint)
@@ -664,10 +710,16 @@ public sealed class EffectGraphEditor : Grid
                 if (Key == "Lower") value = Math.Min(value, owner.V("Upper"));
                 if (Key == "Upper") value = Math.Max(value, owner.V("Lower"));
             }
-            SetCurrentValue(ValueProperty, value);
-            GetBindingExpression(ValueProperty)?.UpdateSource();
-            // Read back rounding/clamping performed by the authoritative ViewModel.
-            GetBindingExpression(ValueProperty)?.UpdateTarget();
+            changing = true;
+            try
+            {
+                SetCurrentValue(ValueProperty, value);
+                GetBindingExpression(ValueProperty)?.UpdateSource();
+                // Finish the source update before synchronizing the inspector controls.
+                GetBindingExpression(ValueProperty)?.UpdateTarget();
+            }
+            finally { changing = false; }
+            owner.RefreshGraph();
         }
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
         {

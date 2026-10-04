@@ -1,8 +1,11 @@
 using Cube.Protocol;
 using System.Buffers.Binary;
 
+if (args.Contains("--qa")) { Environment.ExitCode = await Cube.Qa.QaProtocol.Run(args); return; }
+
 int passed = 0;
 void Check(bool result, string name) { if (!result) throw new Exception(name); Console.WriteLine("PASS " + name); passed++; }
+if (args.Contains("--ir-packs-only")) { IrPackTests.Run(Check); await MusicalTests.Run(Check); Console.WriteLine($"{passed} pack/catalog checks passed."); return; }
 using (var factory = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Cube.FactoryAmps")!)
 {
     var amp = new byte[AmpImage.Size];

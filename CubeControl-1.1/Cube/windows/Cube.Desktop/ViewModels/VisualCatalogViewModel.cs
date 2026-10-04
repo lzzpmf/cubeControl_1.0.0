@@ -5,32 +5,32 @@ using Cube.Protocol;
 
 namespace Cube.Desktop.ViewModels;
 
-public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? factoryId = null) : Observable
+public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? cabinetId = null) : Observable
 {
     public string Id => id;
     public int Value => value;
     public string Name => name;
     // Model specifications, not an analysis of the recorded IR. Sources: docs/cabinet-characteristics.md.
-    public string Category => kind == "cab" ? factoryId switch
+    public string Category => kind == "cab" ? cabinetId switch
     {
-        "factory-cab-0" => "2×12 · Traseira aberta · Celestion customizados",
-        "factory-cab-1" => "4×12 · Frente inclinada · Celestion G12-Vintage",
-        "factory-cab-2" => "4×12 · Frente inclinada · Celestion G12T-75",
-        "factory-cab-3" => "2×12 · Frente reta",
-        "factory-cab-4" => "2×12 · Disposição horizontal",
-        "factory-cab-5" => "4×12 · Caixa oversized · Graves encorpados",
-        "factory-cab-6" => "4×12 · Graves firmes · Médios pronunciados",
-        "factory-cab-7" => "4×12 · Celestion Vintage 30",
+        "pack-bfi-cab-0" => "2×12 · Traseira aberta · Celestion customizados",
+        "pack-bfi-cab-1" => "4×12 · Frente inclinada · Celestion G12-Vintage",
+        "pack-bfi-cab-2" => "4×12 · Frente inclinada · Celestion G12T-75",
+        "pack-bfi-cab-3" => "2×12 · Frente reta",
+        "pack-bfi-cab-4" => "2×12 · Disposição horizontal",
+        "pack-bfi-cab-5" => "4×12 · Caixa oversized · Graves encorpados",
+        "pack-bfi-cab-6" => "4×12 · Graves firmes · Médios pronunciados",
+        "pack-bfi-cab-7" => "4×12 · Celestion Vintage 30",
         _ => category
     } : category;
-    public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindFactoryCabinet(factoryId) != null
+    public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindCabinet(cabinetId) != null
         ? "Características do modelo de referência; a captura do IR pode variar." : null;
     public string Kind => kind;
     public string Color => Appearance.ThemeService.ModuleColor(color);
     public void RefreshColor() => Notify(nameof(Color));
     public string Description => description;
     public string Alias => alias;
-    public ImageSource? DefaultImage => ReadImage(Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", (factoryId ?? id) switch
+    public ImageSource? DefaultImage => ReadImage(Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", (cabinetId ?? id) switch
     {
         "amp-0" => "Koch Powertone.png",
         "amp-1" => "Friedman BE-100.png",
@@ -46,14 +46,15 @@ public sealed class GearItem(string id, int value, string name, string category,
         "phaser" => "phaserCuvave.png",
         "delay" => "delayCuvave.png",
         "reverb" => "reverbCuvave.png",
-        "factory-cab-0" => "Line 6 Vetta.png",
-        "factory-cab-1" => "Marshall 1960AV.png",
-        "factory-cab-2" => "Marshall 1960A 4×12 com G12T-75.png",
-        "factory-cab-3" => "VHT Deliverance.png",
-        "factory-cab-4" => "Soldano.png",
-        "factory-cab-5" => "Peavey 5150 + Mesa Oversized.png",
-        "factory-cab-6" => "JSX KT77 + Mesa Stiletto AKG C1000.png",
-        "factory-cab-7" => "Diezel V30 SM57 (Soldano HR PowerAmp).png",
+        "pack-bfi-cab-0" => "Line 6 Vetta.png",
+        "pack-bfi-cab-1" => "Marshall 1960AV.png",
+        "pack-bfi-cab-2" => "Marshall 1960A 4×12 com G12T-75.png",
+        "pack-bfi-cab-3" => "VHT Deliverance.png",
+        "pack-bfi-cab-4" => "Soldano.png",
+        "pack-bfi-cab-5" => "Peavey 5150 + Mesa Oversized.png",
+        "pack-bfi-cab-6" => "JSX KT77 + Mesa Stiletto AKG C1000.png",
+        "pack-bfi-cab-7" => "Diezel V30 SM57 (Soldano HR PowerAmp).png",
+        string key when key.StartsWith("pack-bfin-cab-", StringComparison.Ordinal) => "gabineteGenerico.png",
         _ => "not-provided.png"
     }));
     // Brief effect explanations; sources in docs/effect-descriptions.md.

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
 using Cube.Protocol;
 
@@ -24,6 +24,8 @@ public sealed class AmpValue(int index, float value) : Observable
 
 public sealed class AmpControl(string label, string detail, string asset, double minimum, double maximum, double initial, string unit, Action<double> changed, bool logarithmic = false) : Observable
 {
+    public double Minimum { get; } = minimum;
+    public double Maximum { get; } = maximum;
     private double number = initial;
     private readonly double referenceNumber = initial;
     public string Code { get; init; } = "";
@@ -33,7 +35,7 @@ public sealed class AmpControl(string label, string detail, string asset, double
     public string EditText => number.ToString("G17", CultureInfo.CurrentCulture);
     public bool IsModified => Math.Abs(number - referenceNumber) >= 1e-10;
     public string ModificationState => IsModified ? "Alterado" : "Referência carregada";
-    public string RangeText => $"{minimum:0.###}{unit} – {maximum:0.###}{unit}";
+    public string RangeText => $"{Minimum:0.###}{unit} – {Maximum:0.###}{unit}";
     public string ReferenceText => $"{referenceNumber:0.##}{unit}";
     public string IndexRange { get; init; } = "";
     public string Caption { get; init; } = "";
@@ -43,29 +45,29 @@ public sealed class AmpControl(string label, string detail, string asset, double
     public string Asset { get; } = Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", asset);
     public double Position
     {
-        get => 1000 * (logarithmic ? Math.Log(number / minimum) / Math.Log(maximum / minimum) : (number - minimum) / (maximum - minimum));
+        get => 1000 * (logarithmic ? Math.Log(number / Minimum) / Math.Log(Maximum / Minimum) : (number - Minimum) / (Maximum - Minimum));
         set
         {
             if (!double.IsFinite(value)) return;
             double ratio = Math.Clamp(value / 1000, 0, 1);
-            double next = logarithmic ? minimum * Math.Pow(maximum / minimum, ratio) : minimum + ratio * (maximum - minimum);
-            SetNumber(next);
+            double next = logarithmic ? Minimum * Math.Pow(Maximum / Minimum, ratio) : Minimum + ratio * (Maximum - Minimum);
+            SetNumber(Math.Clamp(next, Minimum, Maximum));
         }
     }
     public string Display => number.ToString(unit == " dB" ? "+0.##;-0.##;0" : Decimals == 3 ? "0.000" : "0.##", CultureInfo.CurrentCulture) + unit;
     public bool SetNumber(double value)
     {
-        if (!double.IsFinite(value) || value < minimum || value > maximum) return false;
+        if (!double.IsFinite(value) || value < Minimum || value > Maximum) return false;
         if (Math.Abs(value - number) < 1e-10) return true;
         number = value; NotifyValues(); changed(number); return true;
     }
     public bool TryEdit(string text) => double.TryParse(text.Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out double value) && SetNumber(value);
     private void NotifyValues() { Notify(nameof(Position)); Notify(nameof(Display)); Notify(nameof(EditText)); Notify(nameof(Number)); Notify(nameof(IsModified)); Notify(nameof(ModificationState)); }
-    public void Reset(double value) { number = Math.Clamp(value, minimum, maximum); NotifyValues(); }
+    public void Reset(double value) { number = Math.Clamp(value, Minimum, Maximum); NotifyValues(); }
     public void Restore() { if (RestoreAction != null) RestoreAction(); else SetNumber(referenceNumber); }
 }
 
-public sealed class AmpViewModel : Observable
+public sealed partial class AmpViewModel : Observable
 {
     public AmpViewModel() => Edited += RefreshPresentation;
     private void RefreshPresentation() { Notify(nameof(HasLocalChanges)); Notify(nameof(LocalState)); }
@@ -84,6 +86,8 @@ public sealed class AmpViewModel : Observable
     public AmpControl[] EqAControls { get; private set; } = [];
     public AmpControl[] EqBControls { get; private set; } = [];
     public AmpControl[] CurveControls { get; private set; } = [];
+    public AmpControl[] CouplingControls => CurveControls.Take(8).ToArray();
+    public AmpControl[] CathodeBypassControls => CurveControls.Skip(8).ToArray();
     public AmpControl[] CoefficientAControls { get; private set; } = [];
     public AmpControl[] CoefficientBControls { get; private set; } = [];
     public AmpControl[][] CoefficientASections => [CoefficientAControls.Take(5).ToArray(), CoefficientAControls.Skip(5).ToArray()];
@@ -143,18 +147,20 @@ public sealed class AmpViewModel : Observable
         CoefficientsA = Rows(0x50, 50); CoefficientsB = Rows(0x51C, 50);
         GainFactor = CompensationFactor = "1"; ChangeEqA = ChangeEqB = false;
         MainControls = [
-            new("Ganho", "Ajuste a intensidade do ganho do seu amp.", "Botão Metálico de Controle Texturizado.png", 0, Math.Min(100, AmpImage.MaximumGain / Math.Max(.001, Gain.Max(r => r.Number()))), 1, "×", v => { GainFactor = Invariant(v); UpdateEffective(Gain, v); Edited?.Invoke(); }),
-            new("Volume", "Equilibre o volume ao ajustar seu timbre.", "Botão Vintage de Metal Dourado.png", 0, Math.Min(8, AmpImage.MaximumCompensation / Math.Max(.001, Compensation.Max(r => r.Number()))), 1, "×", v => { CompensationFactor = Invariant(v); UpdateEffective(Compensation, v); Edited?.Invoke(); }) { Caption = "Compensação do modelo" }];
+            new("Ganho", "Ajuste a intensidade do ganho do seu amp.", "Botão Metálico de Controle Texturizado.png", 0, Math.Min(100, AmpImage.MaximumGain / Math.Max(.001, Gain.Max(r => r.Number()))), 1, "×", v => { GainFactor = Invariant(v); UpdateEffective(Gain, v); RaiseEdited(); }),
+            new("Volume", "Equilibre o volume ao ajustar seu timbre.", "Botão Vintage de Metal Dourado.png", 0, Math.Min(8, AmpImage.MaximumCompensation / Math.Max(.001, Compensation.Max(r => r.Number()))), 1, "×", v => { CompensationFactor = Invariant(v); UpdateEffective(Compensation, v); RaiseEdited(); }) { Caption = "Compensação do modelo" }];
         EqAControls = EqControls(bytes, 0x5E8, true);
         EqBControls = EqControls(bytes, 0x604, false);
         CurveControls = GroupControls(Curve, 16, true, "Fader Retrô preto com faixa creme.png", "Fader Vintage de Estilo Retrô.png");
         CoefficientAControls = GroupControls(CoefficientsA, 8, false, "Fader Preto com Indicador Prateado.png", prefix: "A");
         CoefficientBControls = GroupControls(CoefficientsB, 8, false, "Fader Retrô Charcoal com Faixa Creme.png", prefix: "B");
-        foreach (var row in Gain) row.Edited += () => { UpdateEffective(Gain, Parse(GainFactor)); Edited?.Invoke(); };
-        foreach (var row in Compensation) row.Edited += () => { UpdateEffective(Compensation, Parse(CompensationFactor)); Edited?.Invoke(); };
+        foreach (var row in Gain) row.Edited += () => { UpdateEffective(Gain, Parse(GainFactor)); RaiseEdited(); };
+        foreach (var row in Compensation) row.Edited += () => { UpdateEffective(Compensation, Parse(CompensationFactor)); RaiseEdited(); };
+        Notify(nameof(CouplingControls)); Notify(nameof(CathodeBypassControls));
         Notify(nameof(CoefficientASections)); Notify(nameof(CoefficientBSections));
         foreach (string property in new[] { nameof(MainControls), nameof(EqAControls), nameof(EqBControls), nameof(CurveControls), nameof(CoefficientAControls), nameof(CoefficientBControls) }) Notify(property);
         foreach (string property in new[] { nameof(Loaded), nameof(Gain), nameof(Compensation), nameof(Curve), nameof(CoefficientsA), nameof(CoefficientsB), nameof(GainFactor), nameof(CompensationFactor), nameof(ChangeEqA), nameof(ChangeEqB) }) Notify(property);
+        InitializeCapacitors();
         RefreshPresentation();
     }
     private static string Invariant(double value) => value.ToString("G17", CultureInfo.InvariantCulture);
@@ -182,7 +188,7 @@ public sealed class AmpViewModel : Observable
         {
             if (first) { ChangeEqA = true; if (field == 0) FrequencyA = Invariant(value); else if (field == 1) LevelA = Invariant(value); else QA = Invariant(value); }
             else { ChangeEqB = true; if (field == 0) FrequencyB = Invariant(value); else if (field == 1) LevelB = Invariant(value); else QB = Invariant(value); }
-            Edited?.Invoke();
+            RaiseEdited();
         }
         AmpControl[] controls = [new("Frequência", "Centro do reforço ou corte.", asset, 20, 20000, hz, " Hz", v => Changed(0, v), true),
             new("Reforço/corte", "Positivo reforça; negativo corta.", asset, -12, 12, db, " dB", v => Changed(1, v)),
@@ -192,7 +198,7 @@ public sealed class AmpViewModel : Observable
             controls[0].Reset(hz); controls[1].Reset(db); controls[2].Reset(q);
             if (first) { FrequencyA = Invariant(hz); LevelA = Invariant(db); QA = Invariant(q); ChangeEqA = false; }
             else { FrequencyB = Invariant(hz); LevelB = Invariant(db); QB = Invariant(q); ChangeEqB = false; }
-            Edited?.Invoke();
+            RaiseEdited();
         };
         return controls;
     }
@@ -214,13 +220,14 @@ public sealed class AmpViewModel : Observable
             string[] names = prefix == "A" ? ["Ganho adicional", "Corpo", "Médio-graves", "Médios", "Punch", "Suavidade 1", "Suavidade 2", "Suavidade 3"]
                 : ["Caráter de captação", "Ressonância de médios", "Ressonância de médio-agudos", "Corpo grave 1", "Corpo grave 2", "Corpo grave 3", "Definição 1", "Definição 2"];
             bool capped = (prefix == "A" && (group is 1 or 3)) || (prefix == "B" && group <= 2);
-            double maximum = curve ? 200 : capped ? 100 : 110;
+            // Only response segments use 33% of their former 0–200% travel.
+            double maximum = curve ? 133 : capped ? 100 : 110;
             string detail = curve ? "Cada controle ajusta 16 valores da tabela. 100% mantém a referência carregada."
                 : "Explore a mudança no timbre. 100% mantém o ajuste inicial; use Shift para ajustar com precisão.";
             if (prefix == "B" && group == 0) detail += " Explore diferentes cores de captação.";
             if (prefix == "B" && (group is 1 or 2)) detail += " Ajuste aos poucos para encontrar a ressonância desejada.";
             AmpControl? control = null;
-            control = new(curve ? $"Trecho {group + 1:00}" : names[group], detail, alternate != null && group % 2 != 0 ? alternate : asset, curve ? 0 : 90, maximum, 100, "%", percent =>
+            control = new(curve ? $"Trecho {group + 1:00}" : names[group], detail, alternate != null && group % 2 != 0 ? alternate : asset, curve ? 67 : 90, maximum, 100, "%", percent =>
             {
                 updatingGroups = true;
                 try
@@ -235,7 +242,7 @@ public sealed class AmpViewModel : Observable
                     }
                 }
                 finally { updatingGroups = false; }
-                Edited?.Invoke();
+                RaiseEdited();
             }) { Code = curve ? "" : $"{prefix}{group + 1:00}", IndexRange = $"{start}–{end - 1}", Decimals = prefix == "B" && (group is 1 or 2) ? 3 : 2 };
             for (int i = start; i < end; i++)
                 rows[i].Edited += () =>
@@ -249,7 +256,7 @@ public sealed class AmpViewModel : Observable
                         UpdateEffective(rows[start..end], 1);
                     }
                     catch (ArgumentException) { }
-                    Edited?.Invoke();
+                    RaiseEdited();
                 };
             result[group] = control;
         }

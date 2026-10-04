@@ -9,6 +9,61 @@ public sealed partial class CubeSession
     private uint EffectsPhysicalStateOffset => effectsFirmwareB ? 0xFFFD81F6u : 0xFFFD8202u;
     private uint EffectsBankAliasOffset => effectsFirmwareB ? 0xFFFD8270u : 0xFFFD827Cu;
 
+    public async Task<PhaserResearchSnapshot> ReadEffectPreviewState(int stage, CancellationToken ct = default)
+    {
+        await gate.WaitAsync(ct);
+        try
+        {
+            RequireIdentity();
+            switch (stage)
+            {
+                case 1: await VerifyChorusFirmware(ct); break;
+                case 2: await VerifyPhaserFirmware(ct); break;
+                case 3: await VerifyDelayFirmware(ct); break;
+                case 4: await VerifyReverbFirmware(ct); break;
+                default: throw new ArgumentOutOfRangeException(nameof(stage));
+            }
+            return await ReadPhaserCore(ct);
+        }
+        finally { gate.Release(); }
+    }
+
+    private static bool EffectControlOffset(int stage, int offset) => stage switch
+    {
+        1 => ChorusParameters.IsControlOffset(offset),
+        2 => PhaserParameters.IsControlOffset(offset),
+        3 => DelayParameters.IsControlOffset(offset),
+        4 => ReverbParameters.IsControlOffset(offset),
+        _ => false
+    };
+
+    private static bool EffectContextMatches(int stage, byte[] bank, byte[] expectedBank, byte[] dsp, byte[] original, int slot)
+    {
+        int[] parameters = stage switch { 1 or 2 => [8, 11], 3 => [4, 6, 7, 11], _ => [3, 10] };
+        if (parameters.Any(offset => bank[slot * 16 + offset] != expectedBank[slot * 16 + offset])) return false;
+        var (start, length) = stage switch { 1 or 2 => (0x63C, 0x58), 3 => (0x694, 0x4C), _ => (0x6E0, 0x84) };
+        return Enumerable.Range(start, length).All(i => EffectControlOffset(stage, i) ||
+            PhaserParameters.IsModulationDynamicOffset(dsp, i) || dsp[i] == original[i]);
+    }
+
+    public static bool PreviewContextMatches(int stage, PhaserResearchSnapshot current,
+        byte[] bank, byte[] physicalState, byte[] originalDsp)
+    {
+        if (stage is < 1 or > 4 || bank.Length != 48 || physicalState.Length != 2 ||
+            physicalState[0] > 2 || originalDsp.Length != 0xF70)
+            throw new ArgumentException("Invalid effect recovery context.");
+        return current.PhysicalState.SequenceEqual(physicalState) &&
+            EffectContextMatches(stage, current.Bank, bank, current.Dsp, originalDsp, physicalState[0]);
+    }
+
+    private static void VerifyEffectMutation(int stage, PhaserResearchSnapshot before, PhaserResearchSnapshot after)
+    {
+        if (!before.Bank.SequenceEqual(after.Bank) || !before.PhysicalState.SequenceEqual(after.PhysicalState) ||
+            !Enumerable.Range(0, before.Dsp.Length).All(i => i is >= 0xF6C and < 0xF70 ||
+                PhaserParameters.IsModulationDynamicOffset(before.Dsp, i) || EffectControlOffset(stage, i) || before.Dsp[i] == after.Dsp[i]))
+            throw new IOException("Outro parâmetro mudou durante a escrita do efeito; recuperação preservada.");
+    }
+
     // Extracted from cubebaby_B_20220706.up (SHA-256
     // 9184852bdebfa1d939ad21a250a579104ec1e3de17f072edbd8311015daad216).
     // Each full range is pinned independently; no wildcard/hash bypass or uniform delta.

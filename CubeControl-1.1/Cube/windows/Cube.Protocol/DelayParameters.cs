@@ -49,7 +49,7 @@ public sealed record DelayParameters(int TimeSamples, float Feedback, float Dept
         CubeBabyProfile.ValidateBank(bank);
         if (bank[physical[0] * 16 + 11] != 1 || dsp[0x694] != 3)
             throw new FormatException("Ative a seção delay/modulação no preset físico antes de ler.");
-        if (dsp[0x63C] != 0) throw new FormatException("Desligue chorus/phaser para esta edição em RAM de delay.");
+        PhaserParameters.ValidateConcurrentModulation(dsp);
         if (dsp[0x695] != 0 || !dsp.AsSpan(0x6A4, 56).SequenceEqual(Filters))
             throw new FormatException("Estrutura de delay desconhecida; edição em RAM bloqueada.");
         Read(dsp);

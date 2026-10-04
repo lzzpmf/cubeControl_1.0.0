@@ -21,7 +21,7 @@ public sealed partial class EditorViewModel
 
     internal async Task TryReadFootswitch()
     {
-        bool Eligible() => !disposed && CanEdit && gesture == null &&
+        bool Eligible() => !disposed && CanEdit && !HasAdvancedPreviews && gesture == null &&
             edited != null && confirmed != null && edited.SequenceEqual(confirmed);
         if (checkingFootswitch || !Eligible() || session is not { } current) return;
         checkingFootswitch = true;

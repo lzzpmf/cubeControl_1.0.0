@@ -60,7 +60,7 @@ public sealed partial class EditorViewModel
         RecordOperation(description, async () =>
         {
             bool done = false;
-            await Execute(async () => { await SetBankLive(snapshot); done = true; });
+            await Execute(async () => { await SetBankLive(snapshot); done = true; }, changesEffects: true);
             return done;
         }, () => CanEdit, bankOperationGroup);
     }
@@ -76,7 +76,7 @@ public sealed partial class EditorViewModel
     private bool readingInventory;
     private bool searchingPorts;
     public bool SearchingPorts { get => searchingPorts; private set { if (Set(ref searchingPorts, value)) RefreshPresentation(); } }
-    public bool ShowBusyPanel => Busy && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
+    public bool ShowBusyPanel => Busy && !liveParameterOperation && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
     public bool ShowBusyRing => ShowBusyPanel && !ReadingInventory && !ShowTransferProgress;
     public bool ShowTransferProgress => Busy && !ReadingInventory && Ir.TransferActive && Ir.HasMeasuredProgress;
     public string BusyDetail { get => busyDetail; private set { if (Set(ref busyDetail, value)) Notify(nameof(HeaderConnectionStatus)); } }
@@ -110,7 +110,7 @@ public sealed partial class EditorViewModel
         : blocked ? "Operação indisponível. Releia os presets ou reconecte."
         : !Connected ? "Conecte o aparelho para ouvir ou gravar o IR."
         : Ir.Audio == null ? "Selecione um WAV para ouvir ou gravar."
-        : "Ao gravar, o conteúdo do slot será substituído após backup e confirmação.";
+        : "Ao gravar, o conteúdo do slot será substituído após preservar o original em memória e confirmar.";
     public string GalleryLabel => IsAmp ? "Catálogo de amps" : IsCabinet ? "Catálogo de Gabinetes" : "Escolher modulação";
     private string Activation(string name, bool enabled) => name + " · " + (!HasBank ? "Não carregado" : enabled ? "Ligado" : "Desligado");
     public string ModulationLabel => Activation("Modulação", Current.Musical.ModulationEnabled);
@@ -118,9 +118,9 @@ public sealed partial class EditorViewModel
     public string ReverbLabel => Activation("Reverb", Current.Musical.ReverbEnabled);
     public string CabinetLabel => Activation("Gabinete / IR", Current.Parameters[10].Enabled);
     public string ToneLabel => Activation("Tone", Current.Parameters[12].Enabled);
-    public string FactoryAvailability => factory == null ? "Recuperação indisponível: recursos de fábrica não encontrados."
-        : !Connected ? "Conecte o aparelho para restaurar os dados de fábrica."
-        : Busy ? "Aguarde a operação em andamento." : "Backups são criados antes da confirmação de restauração.";
+    public string FactoryAvailability => factory == null && IrPacks.Count == 0 ? "Nenhum recurso de presets ou pack de IRs disponível."
+        : !Connected ? "Conecte o aparelho para aplicar packs ou restaurar presets."
+        : Busy ? "Aguarde a operação em andamento." : "O conteúdo anterior é preservado em memória durante esta sessão.";
     private void RefreshPresentation()
     {
         Notify(nameof(EditNoticeSeverity));

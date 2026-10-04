@@ -36,7 +36,7 @@ internal static class PhaserDesktopTests
         await model.ReadPhaserAsync();
         Check(model.PhaserPreviewActive && model.CanEditPhaser && !model.CanEdit && !model.CanUseAmp && !model.CanOperate && !model.CanStartDelay,
             "phaser preview excludes preset edits and amp/IR operations");
-        Check(File.Exists(Path.Combine(directory, "pending-phaser-preview.json")), "phaser durable recovery created");
+        Check(!File.Exists(Path.Combine(directory, "pending-phaser-preview.json")), "phaser snapshot stays in memory");
         model.Phaser.Lower = 400; model.Phaser.Lower = 500; model.Phaser.Lower = 600;
         for (int i = 0; i < 200 && (PhaserParameters.Read(fake.Dsp).Lower != 600 || model.Busy); i++) await Task.Delay(10);
         Check(PhaserParameters.Read(fake.Dsp).Lower == 600 && fake.Writes == 1, "phaser rapid edits coalesce to final value");
@@ -62,20 +62,21 @@ internal static class PhaserDesktopTests
         var second = new CubeSession(fake); await second.Identify(); await model.AttachSession(second); await model.ReadPhaserAsync();
         model.Phaser.Level = 50;
         for (int i = 0; i < 200 && (PhaserParameters.Read(fake.Dsp).Level != 0.32f || model.Busy); i++) await Task.Delay(10);
-        model.Dispose(); // Abnormal shutdown: retain pending record, never silently discard it.
+        model.Dispose(); // Abnormal shutdown ends the app session; only the current pedal RAM survives.
         using var reopened = new EditorViewModel(directory);
         int writes = fake.Writes;
         await reopened.Initialize();
-        Check(reopened.PhaserPreviewActive && !reopened.CanEditPhaser && fake.Writes == writes,
-            "restart loads pending recovery without reapplying controls");
+        Check(!reopened.PhaserPreviewActive && !reopened.CanEditPhaser && fake.Writes == writes,
+            "restart ignores previous session without reapplying controls");
         var third = new CubeSession(fake); await third.Identify(); await reopened.AttachSession(third);
+        var currentDsp = fake.Dsp.ToArray();
         await reopened.EndPhaserPreviewAsync();
-        Check(PhaserParameters.Read(fake.Dsp) == PhaserParameters.Default && !reopened.PhaserPreviewActive,
-            "explicit recovery survives process restart");
+        Check(fake.Dsp.SequenceEqual(currentDsp) && !reopened.PhaserPreviewActive,
+            "new session never restores the previous snapshot");
         await reopened.ReadPhaserAsync();
         fake.State[0] = 1;
         await Task.Delay(2300);
-        Check(!reopened.CanEditPhaser && reopened.PhaserPreviewActive && File.Exists(Path.Combine(directory, "pending-phaser-preview.json")),
+        Check(!reopened.CanEditPhaser && reopened.PhaserPreviewActive && !File.Exists(Path.Combine(directory, "pending-phaser-preview.json")),
             "idle monitoring stops on physical context change and keeps recovery");
         fake.State[0] = 0;
         await reopened.EndPhaserPreviewAsync();

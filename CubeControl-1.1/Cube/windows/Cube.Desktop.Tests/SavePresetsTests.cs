@@ -81,7 +81,7 @@ internal static class SavePresetsTests
             await Settle();
             Check(!model.Dirty && !button.IsEnabled && model.ErrorMessage.Length == 0, "Verified save did not clear pending changes");
             Check(notice.FontWeight == FontWeights.Normal, "Confirmed save must clear warning emphasis");
-            Check(Directory.GetFiles(folder, "*.json", SearchOption.AllDirectories).Length >= 2, "Save backups missing");
+            Check(Directory.GetFiles(folder, "*.json", SearchOption.AllDirectories).All(p => Path.GetFileName(p) == "gear-images-v1.json"), "Save must not persist session backups");
             model.Current.Volume.Value += 1; await Settle();
             await model.Execute(() => model.LoadWavAndPreviewAsync("test.wav", new IrAudio(48000, 1, 32, "float", [.5f, .2f])));
             await Settle();
@@ -95,7 +95,7 @@ internal static class SavePresetsTests
             Check(notice.FontWeight == FontWeights.SemiBold, "Failed save must retain reminder");
             await model.Execute(model.DisconnectAsync); await Settle();
             Check(model.Dirty && !button.IsEnabled, "Disconnect did not preserve dirty state and disable save");
-            Console.WriteLine("PASS edit/revert/undo on A/B/C, verified save, backups, busy lock, IR preview, restoration and disconnect.");
+            Console.WriteLine("PASS edit/revert/undo on A/B/C, verified save, memory snapshots, busy lock, IR preview, restoration and disconnect.");
         }
         finally { window.Close(); }
     }

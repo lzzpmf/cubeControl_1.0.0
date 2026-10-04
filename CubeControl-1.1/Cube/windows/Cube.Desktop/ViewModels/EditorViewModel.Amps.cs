@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Cube.Protocol;
 using Microsoft.Win32;
 
@@ -109,7 +109,7 @@ public sealed partial class EditorViewModel
         }
     }
     public bool CanOpenGearGallery => !Busy && (IsAmp || CanEdit);
-    private string AmpRecoveryDirectory => Path.Combine(DataDirectory, "AmpRecovery");
+    private byte[]? ampSlotRecovery;
 
     public async Task<bool> ReadAmpAsync(int? sourceSlot = null)
     {
@@ -165,25 +165,22 @@ public sealed partial class EditorViewModel
         await Execute(async () =>
         {
             var data = Amp.Build();
+            var editSnapshot = Amp.CaptureEditSnapshot();
             string name = Amp.Name;
-            int slot = Amp.Slot;
             var bankContext = confirmed?.ToArray();
             object? group = ampHistoryGroup;
             if (ampOriginalRam != null && ampPreviewIdentity != session!.IdentityHex) throw new ArgumentException("Reconecte o aparelho usado na prévia.");
             await session!.ApplyAmpRam(data.AsSpan(AmpImage.BodyOffset, AmpImage.BodyLength).ToArray(), ampOriginalRam == null ? async before =>
             {
-                Directory.CreateDirectory(AmpRecoveryDirectory);
-                var recovery = new byte[AmpImage.Size]; recovery[0] = 1; recovery[1] = 7;
-                before.CopyTo(recovery, AmpImage.BodyOffset);
-                await File.WriteAllBytesAsync(Path.Combine(AmpRecoveryDirectory, $"ram-{DateTime.Now:yyyyMMdd-HHmmss-fff}.bin"), recovery);
-                ampOriginalRam = before; ampPreviewIdentity = session.IdentityHex;
+                ampOriginalRam = before.ToArray(); ampPreviewIdentity = session.IdentityHex;
+                await Task.CompletedTask;
             } : null);
             Status = "Amp aplicado em RAM. Nenhum slot foi gravado. Trocar o amp físico pode encerrar a prévia.";
             Notify(nameof(AmpPreviewActive));
             applied = true;
             RecordOperation("Prévia de AMP: " + name, async () =>
             {
-                Amp.Load(data, name); Amp.Slot = slot;
+                Amp.RestoreEditSnapshot(editSnapshot);
                 return await PreviewAmpAsync();
             }, () => CanUseAmp && bankContext != null && confirmed?.SequenceEqual(bankContext) == true, group);
         });
@@ -214,19 +211,18 @@ public sealed partial class EditorViewModel
         bool? completed = false;
         await Execute(async () =>
         {
+            if (!await ConfirmAdvancedPreviewChangeAsync()) { completed = null; return; }
             int slot = Amp.Slot;
             byte[] target = Amp.Build();
             var current = await session!.ReadAmpSlot(slot);
-            if (!await (confirm ?? Ask)($"Salvar seu amp no slot {slot + 1}?\nO som salvo nessa posição será substituído.\nO som anterior será guardado para recuperação.")) { completed = null; return; }
+            if (!await (confirm ?? Ask)($"Salvar seu amp no slot {slot + 1}?\nO som salvo nessa posição será substituído.\nO som anterior será mantido em memória nesta sessão.")) { completed = null; return; }
             InvalidateAmpSaved();
             AmpOperation = AmpOperationState.Saving;
             AmpPreviewMessage = "Salvando no pedal…";
             await session.ReplaceAmp(slot, current, target, async bytes =>
             {
-                Directory.CreateDirectory(AmpRecoveryDirectory);
-                string path = Path.Combine(AmpRecoveryDirectory, $"amp-{slot + 1}-{DateTime.Now:yyyyMMdd-HHmmss-fff}.bin");
-                await File.WriteAllBytesAsync(path, bytes);
-                if (!(await File.ReadAllBytesAsync(path)).SequenceEqual(bytes)) throw new IOException("Não foi possível preservar o amp original.");
+                ampSlotRecovery = bytes.ToArray();
+                await Task.CompletedTask;
             }, new Progress<TransferProgress>(p => Status = $"{p.Stage}: {p.Done}/{p.Total}"));
             completed = true;
             soundContentRevision++;

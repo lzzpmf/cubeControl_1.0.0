@@ -42,9 +42,8 @@ public sealed partial class CubeSession
     private void CheckReverbContext(ReverbRecovery recovery, ReverbSnapshot current, bool recovering)
     {
         recovery.Validate();
-        if (IdentityHex != recovery.Identity || !current.Bank.SequenceEqual(recovery.Bank) ||
-            !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
-            !ReverbParameters.StableEquals(current.Dsp, recovery.OriginalDsp, ignoreControls: true))
+        if (IdentityHex != recovery.Identity || !current.PhysicalState.SequenceEqual(recovery.PhysicalState) ||
+            !EffectContextMatches(4, current.Bank, recovery.Bank, current.Dsp, recovery.OriginalDsp, recovery.PhysicalState[0]))
             throw new IOException("O contexto do reverb mudou; prévia interrompida e backup preservado.");
         if (!recovering && ReverbParameters.Read(current.Dsp) != recovery.Target)
             throw new IOException("Parâmetros recarregados ou alterados externamente; prévia interrompida.");
@@ -73,6 +72,7 @@ public sealed partial class CubeSession
             ct.ThrowIfCancellationRequested();
             await WriteReverbFields(before, parameters, CancellationToken.None);
             var after = await ReadReverbCore(CancellationToken.None);
+            VerifyEffectMutation(4, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckReverbContext(transaction, after, recovering: false);
             return transaction;
         }
@@ -89,6 +89,7 @@ public sealed partial class CubeSession
             var original = ReverbParameters.Read(recovery.OriginalDsp);
             await WriteReverbFields(before, original, CancellationToken.None);
             var after = await ReadReverbCore(CancellationToken.None);
+            VerifyEffectMutation(4, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckReverbContext(recovery with { Target = original }, after, recovering: false);
         }
         finally { gate.Release(); }

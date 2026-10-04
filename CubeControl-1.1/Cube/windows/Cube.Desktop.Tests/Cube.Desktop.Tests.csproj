@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows10.0.19041.0</TargetFramework><UseWPF>true</UseWPF></PropertyGroup>
+ <ItemGroup><Compile Include="../Qa.Shared/*.cs" Link="Qa/%(Filename)%(Extension)" /></ItemGroup>
  <ItemGroup><ProjectReference Include="../Cube.Desktop/Cube.Desktop.csproj"/><Compile Include="../Cube.Tests/FakeConnection.cs" Link="FakeConnection.cs"/></ItemGroup>
  <ItemGroup><Compile Include="../Cube.Tests/PhaserTests.cs" Link="PhaserProtocolTests.cs"/><None Include="../Cube.Tests/Fixtures/phaser-live-code.json" Link="Fixtures/phaser-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
  <ItemGroup><Compile Include="../Cube.Tests/ChorusPreviewConnection.cs" Link="ChorusPreviewConnection.cs"/><None Include="../Cube.Tests/Fixtures/chorus-live-code.json" Link="Fixtures/chorus-live-code.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>

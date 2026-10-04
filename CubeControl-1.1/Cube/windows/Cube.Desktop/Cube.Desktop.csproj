@@ -28,8 +28,13 @@
     </ItemGroup>
   </Target>
   <ItemGroup>
+    <None Update="Assets/Firmwares/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Assets/ImpulseResponses/**/*.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Resource Include="Assets/Icons/*.png" />
+    <Resource Include="Assets/imagens/Knobs/knob_oficial_01.png;Assets/imagens/Faders/fader_oficial_01.png" />
+    <Resource Include="Assets/imagens/Faders/fader_horizontal_oficial_01.png" />
+    <Resource Include="Assets/imagens/Interruptores/footswitch_oficial_01.png" />
+    <Resource Include="Assets/imagens/Interruptores/chave_seletora_oficial_01_on.png;Assets/imagens/Interruptores/chave_seletora_oficial_01_off.png" />
     <EmbeddedResource Include="Assets/FactoryAmps.bin" LogicalName="Cube.FactoryAmps" />
     <None Update="Assets/Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Localization/*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
