@@ -167,3 +167,13 @@ Os testes de análise usam pulsos de 60/90/120/180 BPM, progressões sintéticas
 Resultado final desta etapa: compilação e `--backing-practice-only`, `--backing-responsive`, `--theme-only` (66 verificações), `--localization-only` (13 verificações) e `--zoom-dialogs-only` passaram. Foram geradas 27 capturas da matriz e estados adicionais; houve inspeção visual de exemplos amplos, compactos, claro/escuro e alto contraste. Os rótulos das seções na waveform agora usam reticências para não se sobrepor. O teste de responsividade registrou zero reconstruções das imagens da waveform durante menus de outra faixa, reprodução e navegação durante reprodução. Tempos variam conforme a máquina e carga; não constituem garantia de latência máxima.
 
 Capturas representativas: `practice-Dark-pt-BR-1800-1.png`, `BackingTransportRack-Dark-640-2.png`, `practice-Light-en-US-1280-1.png` e `BackingTransportRack-HighContrast-1800-2.png`. Logs finais: `practice.log`, `backing-responsive.log`, `theme-only.log`, `localization-only.log` e `zoom-dialogs-only.log`. Nenhum pacote foi gerado e nenhuma publicação foi atualizada.
+
+## Busca e download do YouTube
+
+A busca da playlist também consulta o YouTube após 600 ms sem digitação, a partir de três caracteres. Os resultados locais aparecem imediatamente; até dez resultados online aparecem em uma seção separada. Limpar o campo cancela a pesquisa online.
+
+**Baixar MP3** abre Salvar como. O aplicativo obtém a melhor fonte de áudio disponível e converte para MP3 a 320 kbps; a conversão não aumenta a qualidade original. Um download por vez pode ser cancelado. O arquivo só substitui o destino confirmado após validação por ffprobe, e é adicionado à playlist sem iniciar reprodução. Vídeos privados, restritos e transmissões ao vivo não fazem parte deste fluxo.
+
+O pacote inclui yt-dlp, Deno, FFmpeg e ffprobe com versões e SHA256 em `scripts/youtube-tools.json`. O script oficial de build prepara essas ferramentas; o aplicativo não as baixa nem atualiza em execução. Para desenvolvimento, execute `scripts/Prepare-YouTubeTools.ps1 -OutputRoot <raiz externa>` e compile usando a mesma raiz em `ArtifactsPath`.
+
+Validação automatizada: `dotnet run --project CubeControl-1.1/Cube/windows/Cube.Desktop.Tests -c Release -- --youtube-only`. Cobre debounce, respostas antigas, falha de rede, cancelamento, preservação do destino, importação sem autoplay e renderizações em três temas e duas larguras. Testes de download com conteúdo real exigem um vídeo próprio ou autorizado.

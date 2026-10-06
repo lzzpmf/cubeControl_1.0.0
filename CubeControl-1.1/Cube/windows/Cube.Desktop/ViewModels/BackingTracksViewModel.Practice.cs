@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -40,7 +40,7 @@ public sealed partial class BackingTracksViewModel
     public ObservableCollection<BackingOutput> Inputs { get; } = [];
     public string[] Keys { get; } = ["Não definido", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "A#m", "Bm"];
     public string[] PresetOptions { get; } = ["Sem vínculo", "Preset A", "Preset B", "Preset C"];
-    public string Search { get => search; set { if (Set(ref search, value)) { FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); } } }
+    public string Search { get => search; set { if (Set(ref search, value)) { FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); SearchYouTube(); } } }
     public double Bpm { get => SelectedTrack?.Bpm ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.ManualBpm = true; SelectedTrack.Bpm = Math.Clamp(value, 20, 300); Notify(); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); } }
     public string CurrentBpm => $"{Bpm * Speed / 100:0.#} BPM atual · grade 4/4";
     public string OriginalKey { get => SelectedTrack?.OriginalKey ?? Keys[0]; set { if (SelectedTrack == null || !Keys.Contains(value)) return; SelectedTrack.ManualKey = true; SelectedTrack.OriginalKey = value; Notify(); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); } }

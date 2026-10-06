@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$Simulation,
     [switch]$Start,
     [string]$OutputRoot = 'C:\CubeControl-Build'
@@ -59,6 +59,7 @@ function Get-SourceHashes {
     foreach ($file in $files) {
         $hashes[$file.FullName.Substring($workspace.Length + 1)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
     }
+    foreach ($helper in 'Prepare-YouTubeTools.ps1', 'youtube-tools.json') { $hashes[$helper] = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot $helper) -Algorithm SHA256).Hash }
     $hashes['build-script'] = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash
     return $hashes
 }
@@ -118,6 +119,7 @@ try {
     Assert-ChildPath $staging $stagingRoot
     Assert-ChildPath $backup $stagingRoot
     [IO.Directory]::CreateDirectory($staging) | Out-Null
+    & (Join-Path $PSScriptRoot 'Prepare-YouTubeTools.ps1') -OutputRoot $OutputRoot
     $sources = Get-SourceHashes
     $publishArgs = @('publish', $projectPath, '-c', $configuration, '-r', 'win-x64',
         '--self-contained', 'true', '--artifacts-path', $OutputRoot,
@@ -126,7 +128,7 @@ try {
     & dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falha na compilacao. O pacote anterior foi preservado.' }
     Assert-SameHashes $sources (Get-SourceHashes)
-    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll', 'CubeBackingDsp.dll', 'NAudio.Core.dll', 'NAudio.Wasapi.dll') {
+    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll', 'CubeBackingDsp.dll', 'NAudio.Core.dll', 'NAudio.Wasapi.dll', 'Tools\YouTube\yt-dlp.exe', 'Tools\YouTube\ffmpeg.exe', 'Tools\YouTube\ffprobe.exe', 'Tools\YouTube\deno.exe', 'Tools\YouTube\versions.json') {
         if (-not (Test-Path -LiteralPath (Join-Path $staging $required) -PathType Leaf)) {
             throw "Arquivo obrigatorio ausente do pacote: $required"
         }

@@ -1392,5 +1392,20 @@
     "Ctrl + scroll para aumentar ou diminuir o zoom": "Ctrl + scroll to zoom in or out",
     "Loop A/B ativo. O trecho entre A e B será repetido.": "A/B loop is active. The section between A and B will repeat.",
     "Desativar loop": "Disable loop",
-    "Arraste e solte uma faixa aqui para começar": "Drag and drop a track here to get started"
+    "Arraste e solte uma faixa aqui para começar": "Drag and drop a track here to get started",
+    "Buscar na playlist ou no YouTube": "Search the playlist or YouTube",
+    "Baixar MP3": "Download MP3",
+    "Cancelar download": "Cancel download",
+    "Buscando no YouTube…": "Searching YouTube…",
+    "Nenhum vídeo encontrado.": "No videos found.",
+    "A busca demorou demais. Tente novamente.": "Search timed out. Try again.",
+    "Ferramentas do YouTube ausentes. Reinstale o aplicativo.": "YouTube tools are missing. Reinstall the app.",
+    "Sem permissão para salvar o MP3. Escolha outra pasta.": "Cannot save the MP3. Choose another folder.",
+    "Espaço insuficiente para salvar o MP3.": "Not enough space to save the MP3.",
+    "YouTube indisponível ou vídeo restrito. Verifique a internet e tente novamente.": "YouTube is unavailable or the video is restricted. Check your connection and try again.",
+    "Baixando áudio…": "Downloading audio…",
+    "Convertendo para MP3…": "Converting to MP3…",
+    "MP3 salvo e adicionado à playlist.": "MP3 saved and added to the playlist.",
+    "Download cancelado.": "Download canceled.",
+    "Não foi possível converter o áudio para MP3.": "Could not convert audio to MP3."
 }
