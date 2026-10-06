@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
@@ -21,9 +21,21 @@ public sealed class BackingTrack(string source) : Observable
     public string Title => Path.GetFileNameWithoutExtension(Source);
     private double length;
     private string state = File.Exists(source) ? "Pronta" : "Arquivo ausente";
-    public double Length { get => length; set { if (Set(ref length, value)) Notify(nameof(LengthLabel)); } }
+    public double Length { get => length; set { if (Set(ref length, value)) { Notify(nameof(LengthLabel)); Notify(nameof(MetadataLabel)); } } }
     public string LengthLabel => Length > 0 ? BackingTracksViewModel.FormatTime(Length) : "—";
     public string State { get => state; set => Set(ref state, value); }
+    private string tuning = "E Standard";
+    public string Tuning { get => tuning; set => Set(ref tuning, value); }
+    private double bpm;
+    internal bool ManualBpm, ManualKey, MusicPending;
+    internal double TempoConfidence, KeyConfidence;
+    internal void RefreshMusic() => Notify(nameof(MetadataLabel));
+    private string originalKey = "Não definido";
+    public double Bpm { get => bpm; set { if (Set(ref bpm, value)) Notify(nameof(MetadataLabel)); } }
+    public string OriginalKey { get => originalKey; set { if (Set(ref originalKey, value)) Notify(nameof(MetadataLabel)); } }
+    public string MetadataLabel => (MusicPending && Bpm <= 0 && !ManualKey ? LanguageService.T("Analisando…") : (Bpm > 0 ? $"{(ManualBpm ? "" : "≈")}{Bpm:0.#} BPM" : LanguageService.T("BPM não identificado")) + " · " + (OriginalKey == "Não definido" ? LanguageService.T("Tom não identificado") : OriginalKey)) + " · " + LengthLabel;
+    public int Preset { get; set; }
+    public ObservableCollection<BackingSection> Sections { get; } = [];
     public double? Start { get; set; }
     public double? End { get; set; }
     public double Speed { get; set; } = 100;
@@ -35,7 +47,7 @@ public sealed class BackingTrack(string source) : Observable
 }
 public sealed record BackingOutput(string Id, string Name);
 
-public sealed class BackingTracksViewModel : Observable, IDisposable
+public sealed partial class BackingTracksViewModel : Observable, IDisposable
 {
     private readonly Dispatcher dispatcher = Dispatcher.CurrentDispatcher;
     private readonly BackingAudioEngine engine = new();
@@ -107,7 +119,7 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
     public float[] Peaks => SelectedTrack?.Peaks ?? [];
     public string ExportLabel => HasRange ? "Exportar A → B" : "Exportar faixa WAV";
     public double Duration { get => duration; private set { Set(ref duration, value); Notify(nameof(CanSeek)); Notify(nameof(CanLoop)); Notify(nameof(TimeLabel)); } }
-    public string TimeLabel => $"{FormatTime(Position)} / {FormatTime(Duration)}";
+    public string TimeLabel => $"{FormatTime(Position, true)} / {FormatTime(Duration)}";
     public string RangeLabel => $"A {(double.IsNaN(RangeStart) ? "—" : FormatTime(RangeStart, true))}   B {(double.IsNaN(RangeEnd) ? "—" : FormatTime(RangeEnd, true))}" + (HasRange ? $"   {RangeEnd - RangeStart:0.0} s" : "");
     public static string FormatTime(double seconds, bool precise = false)
     {
@@ -116,6 +128,7 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
     }
     public BackingTracksViewModel(string dataDirectory)
     {
+        InitializePractice();
         AddFiles = new UiCommand(() => Run(() => { var dialog = new OpenFileDialog { Multiselect = true, Filter = LanguageService.T("Áudio MP3 ou WAV") + "|*.mp3;*.wav" }; if (dialog.ShowDialog() == true) AddPaths(dialog.FileNames); }));
         RemoveTrack = new UiCommand(RemoveSelected, () => SelectedTrack != null);
         PlayPause = new UiCommand(() => Start(TogglePlayback()), () => !IsLoading && SelectedTrack != null && SelectedOutput != null);
@@ -138,7 +151,8 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
         LocateFile = new UiCommand(LocateSelected, () => SelectedTrack != null);
         positionTimer.Tick += (_, _) => UpdatePosition();
         parameterTimer.Tick += (_, _) => { parameterTimer.Stop(); if (!parameterGesture) Start(ApplyParameters()); };
-        engine.Changed += EngineChanged; Tracks.CollectionChanged += (_, _) => Notify(nameof(HasTracks));
+        LanguageService.Instance.PropertyChanged += MusicLanguageChanged;
+        engine.Changed += EngineChanged; Tracks.CollectionChanged += (_, _) => { Notify(nameof(HasTracks)); ScheduleMusic(); };
 
     }
     public BackingTrack? SelectedTrack
@@ -152,7 +166,8 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
             parameterTimer.Stop(); positionTimer.Stop(); Start(engine.Clear()); position = 0;
             Duration = value?.Length ?? 0; State = value == null ? BackingPlaybackState.Empty : BackingPlaybackState.Ready;
             Notify(); Notify(nameof(Peaks)); Notify(nameof(Position)); Notify(nameof(Speed)); Notify(nameof(Pitch)); Notify(nameof(HasModifiedSpeed)); Notify(nameof(HasModifiedPitch)); RangeChanged(false);
-            Status = ""; HasError = false; Changed(); Start(LoadWaveform());
+            RefreshPractice();
+            Status = ""; HasError = false; Changed(); Start(LoadWaveform()); ScheduleMusic();
         }
     }
     public BackingOutput? SelectedOutput
@@ -161,16 +176,16 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
         set
         {
             if (!Set(ref selectedOutput, value)) return;
-            UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
+            StopMonitor(); UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
             if (HasActivePlayback) State = BackingPlaybackState.Paused;
             if (!restoring) { preferredOutputId = value?.Id; Changed(); }
             Notify(nameof(OutputName)); Notify(nameof(OutputState)); CommandManager.InvalidateRequerySuggested();
         }
     }
     public bool ContinueSequence { get => continueSequence; set { if (Set(ref continueSequence, value)) Changed(); } }
-    public bool IsLooping { get => looping; set { if (value && !CanLoop) return; if (Set(ref looping, value)) { if (value && (Position < RangeStart || Position >= RangeEnd)) position = RangeStart; Start(ApplyParameters()); Notify(nameof(Position)); } } }
-    public double Speed { get => SelectedTrack?.Speed ?? 100; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Speed = Math.Clamp(Math.Round(value), 50, 150); Notify(); Notify(nameof(HasModifiedSpeed)); ScheduleParameters(); Changed(); } }
-    public double Pitch { get => SelectedTrack?.Pitch ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Pitch = Math.Clamp(Math.Round(value), -6, 6); Notify(); Notify(nameof(HasModifiedPitch)); ScheduleParameters(); Changed(); } }
+    public bool IsLooping { get => looping; set { if (value && !CanLoop) return; if (Set(ref looping, value)) { if (value && (Position < RangeStart || Position >= RangeEnd)) position = RangeStart; Start(ApplyParameters()); Notify(nameof(Position)); Notify(nameof(TimeLabel)); } } }
+    public double Speed { get => SelectedTrack?.Speed ?? 100; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Speed = Math.Clamp(Math.Round(value), 50, 150); Notify(); Notify(nameof(HasModifiedSpeed)); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); ScheduleParameters(); Changed(); } }
+    public double Pitch { get => SelectedTrack?.Pitch ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Pitch = Math.Clamp(Math.Round(value), -6, 6); Notify(); Notify(nameof(HasModifiedPitch)); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); ScheduleParameters(); Changed(); } }
     public double Volume { get => volume; set { if (double.IsFinite(value) && Set(ref volume, Math.Clamp(value, 0, 100))) { Start(engine.SetVolume(volume / 100, IsMuted)); Changed(); } } }
     public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
     public double RangeStart
@@ -263,7 +278,7 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
     private async Task AdvanceAtEnd() { int index = SelectedTrack == null ? -1 : Tracks.IndexOf(SelectedTrack) + 1; if (index <= 0 || index >= Tracks.Count) return; SelectedTrack = Tracks[index]; await TogglePlayback(); }
     public async Task Initialize()
     {
-        try { watcher = DeviceInformation.CreateWatcher(MediaDevice.GetAudioRenderSelector()); watcher.Added += DeviceChanged; watcher.Removed += DeviceChanged; watcher.Updated += DeviceChanged; watcher.Start(); await RefreshDevices(); }
+        try { LoadInputs(); watcher = DeviceInformation.CreateWatcher(MediaDevice.GetAudioRenderSelector()); watcher.Added += DeviceChanged; watcher.Removed += DeviceChanged; watcher.Updated += DeviceChanged; watcher.Start(); await RefreshDevices(); }
         catch (Exception ex) { Error("Não foi possível listar as saídas de áudio. Tente atualizar saídas.", ex); }
     }
     private void DeviceChanged(DeviceWatcher sender, DeviceInformation args) => Dispatch(() => Start(RefreshDevices()));
@@ -281,6 +296,23 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
             }
             foreach (var device in devices) if (!Outputs.Any(d => d.Id == device.Id)) Outputs.Add(device);
             if (SelectedOutput == null && preferredOutputId != null) { restoring = true; SelectedOutput = Outputs.FirstOrDefault(d => string.Equals(d.Id, preferredOutputId, StringComparison.OrdinalIgnoreCase)); restoring = false; }
+            if (SelectedOutput == null && Outputs.Count > 0)
+            {
+                string? defaultId = await Task.Run(() =>
+                {
+                    try
+                    {
+                        using var enumerator = new MMDeviceEnumerator();
+                        using var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                        return device.ID;
+                    }
+                    catch { return null; }
+                });
+                if (disposed) return;
+                restoring = true;
+                try { SelectedOutput = Outputs.FirstOrDefault(d => d.Id == defaultId) ?? Outputs.FirstOrDefault(); }
+                finally { restoring = false; }
+            }
             if (Outputs.Count == 0) Status = "Nenhuma saída disponível. Conecte uma saída de áudio e atualize a lista.";
         }
         catch (Exception ex) { Error("Não foi possível listar as saídas de áudio. Tente atualizar saídas.", ex); }
@@ -299,14 +331,51 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
     }
     public void MoveTrack(BackingTrack track, int index) { int old = Tracks.IndexOf(track); if (old < 0 || index < 0 || index >= Tracks.Count) return; Tracks.Move(old, index); Changed(); }
     private void MoveSelected(int step) { if (SelectedTrack != null) MoveTrack(SelectedTrack, Tracks.IndexOf(SelectedTrack) + step); }
-    private void RemoveSelected() { if (SelectedTrack is not { } track) return; int index = Tracks.IndexOf(track); SelectedTrack = null; Tracks.Remove(track); SelectedTrack = Tracks.Count > 0 ? Tracks[Math.Min(index, Tracks.Count - 1)] : null; Changed(); }
-    private void LocateSelected() => Run(() =>
+    private void RemoveSelected() { if (SelectedTrack is { } track) RemoveTrackItem(track); }
+    internal void RemoveTrackItem(BackingTrack track)
     {
-        if (SelectedTrack is not { } track) return;
+        int index = Tracks.IndexOf(track); if (index < 0) return;
+        bool current = track == SelectedTrack;
+        if (current) SelectedTrack = null;
+        Tracks.Remove(track);
+        if (current) SelectedTrack = Tracks.Count > 0 ? Tracks[Math.Min(index, Tracks.Count - 1)] : null;
+        Changed();
+    }
+    internal void ShowTrackFile(BackingTrack track) => Run(() =>
+    {
+        if (Tracks.Contains(track)) Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + track.Source + "\"") { UseShellExecute = true });
+    });
+    private void LocateSelected() { if (SelectedTrack is { } track) LocateTrackFile(track); }
+    internal void LocateTrackFile(BackingTrack track) => Run(() =>
+    {
+        if (!Tracks.Contains(track)) return;
         var dialog = new OpenFileDialog { Filter = "MP3/WAV|*.mp3;*.wav" }; if (dialog.ShowDialog() != true) return;
         if (Tracks.Any(t => t != track && string.Equals(t.Source, dialog.FileName, StringComparison.OrdinalIgnoreCase))) { Status = "Este arquivo já está na playlist."; return; }
-        int index = Tracks.IndexOf(track); var replacement = new BackingTrack(Path.GetFullPath(dialog.FileName)); Tracks[index] = replacement; SelectedTrack = replacement; Changed();
+        int index = Tracks.IndexOf(track); if (index < 0) return;
+        bool current = SelectedTrack == track;
+        var replacement = new BackingTrack(Path.GetFullPath(dialog.FileName));
+        Tracks[index] = replacement;
+        if (current) SelectedTrack = replacement;
+        Changed();
     });
+    internal void UpdateTrackMetadata(BackingTrack track, double bpm, string key, string tuning, int preset)
+    {
+        if (!Tracks.Contains(track) || !double.IsFinite(bpm) || !Keys.Contains(key)) return;
+        if (bpm > 0 && bpm != track.Bpm) track.ManualBpm = true;
+        if (key != track.OriginalKey) track.ManualKey = true;
+        track.Bpm = bpm > 0 ? Math.Clamp(bpm, 20, 300) : track.Bpm; track.OriginalKey = key; track.Tuning = tuning.Trim(); track.Preset = Math.Clamp(preset, 0, 3);
+        if (track == SelectedTrack)
+            foreach (string name in new[] { nameof(Bpm), nameof(CurrentBpm), nameof(BpmBadge), nameof(OriginalKey), nameof(CurrentKey), nameof(KeyBadge), nameof(LinkedPreset), nameof(PresetBadge), nameof(PresetHint) }) Notify(name);
+        FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); Changed();
+    }
+    internal void AddSectionAt(BackingTrack track, double time, string name)
+    {
+        name = name.Trim();
+        if (!Tracks.Contains(track) || !double.IsFinite(time) || track.Length <= 0 || name.Length is 0 or > 40) return;
+        time = Math.Clamp(time, 0, track.Length);
+        int index = 0; while (index < track.Sections.Count && track.Sections[index].Position <= time) index++;
+        track.Sections.Insert(index, new BackingSection(time, name)); Changed();
+    }
     private async Task LoadWaveform()
     {
         waveformCancellation?.Cancel();
@@ -318,7 +387,7 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
             if (!file.Exists) { track.State = "Arquivo ausente"; AnalysisStatus = "Arquivo ausente. Use Localizar novamente no menu da faixa."; return; }
             if (track.FileSize != file.Length || track.LastWriteTicks != file.LastWriteTimeUtc.Ticks)
             {
-                if (track.LastWriteTicks != 0) { track.Start = track.End = null; looping = false; RangeChanged(); }
+                if (track.LastWriteTicks != 0) { track.Start = track.End = null; track.Sections.Clear(); looping = false; RangeChanged(); }
                 track.Peaks = []; track.FileSize = file.Length; track.LastWriteTicks = file.LastWriteTimeUtc.Ticks; Changed();
             }
             if (track.Peaks.Length == 0)
@@ -369,7 +438,8 @@ public sealed class BackingTracksViewModel : Observable, IDisposable
     public void Dispose()
     {
         if (disposed) return;
-        disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); parameterTimer.Stop();
+        StopMonitor(); meterTimer.Stop(); disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); parameterTimer.Stop();
+        LanguageService.Instance.PropertyChanged -= MusicLanguageChanged;
         engine.Changed -= EngineChanged; engine.Dispose();
         try { Task.WhenAll(backgroundWork.ToArray()).GetAwaiter().GetResult(); } catch (Exception ex) { if (ex is not OperationCanceledException) Log(ex); }
         if (watcher != null) { watcher.Added -= DeviceChanged; watcher.Removed -= DeviceChanged; watcher.Updated -= DeviceChanged; if (watcher.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted) watcher.Stop(); }

@@ -192,6 +192,12 @@ public sealed class ThemeService
         Set("CubeSelected", "#3B3B3B", "#E9E9E9", SystemColors.HighlightBrush);
         Set("CubeSelectedText", "#FFFFFF", "#1B1B1B", SystemColors.HighlightTextBrush);
         Set("CubeFocus", "#FFFFFF", "#1A1A1A", SystemColors.HighlightBrush);
+        Set("BackingCard", "#292D31", "#FFFFFF", SystemColors.WindowBrush);
+        Set("BackingBorder", "#4C545C", "#BBC3CB", SystemColors.WindowTextBrush);
+        Set("BackingSecondary", "#D4DAE0", "#3C4650", SystemColors.WindowTextBrush);
+        Set("BackingPlayhead", "#FFD280", "#815000", SystemColors.HighlightBrush);
+        Set("BackingPlayed", "#80B8A8", "#226E59", SystemColors.HighlightBrush);
+        Set("BackingFuture", "#82ACD2", "#2D638B", SystemColors.WindowTextBrush);
         Set("CubeAccent", "#BDBDBD", "#626262", SystemColors.HighlightBrush);
         resources["Muted"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("TextFillColorSecondaryBrush");
         resources["CubeDisabledText"] = IsHighContrast ? SystemColors.GrayTextBrush : Brush("TextFillColorDisabledBrush");

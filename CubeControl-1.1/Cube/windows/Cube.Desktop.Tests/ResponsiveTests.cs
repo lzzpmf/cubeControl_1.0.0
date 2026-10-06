@@ -142,7 +142,7 @@ internal static class ResponsiveTests
                 await Settle();
                 for (int tab = 0; tab < 3; tab++)
                 {
-                    tabs.SelectedIndex = tab; outer.ScrollToTop(); await Settle();
+                    tabs.SelectedIndex = new[] { 0, 1, 4 }[tab]; outer.ScrollToTop(); await Settle();
                     var page = (ScrollViewer)window.FindName(new[] { "EditorScroll", "IrScroll", "HelpScroll" }[tab]);
                     page.ScrollToTop(); await Settle();
                     bool compact = outer.VerticalScrollBarVisibility == ScrollBarVisibility.Auto;
@@ -196,7 +196,7 @@ internal static class ResponsiveTests
                     }
                     Capture($"{language}-{width}x{height}-zoom{zoom}-tab{tab}");
                     var owner = compact ? outer : page;
-                    Check(owner.ActualHeight >= 60, "Fixed navigation must leave a useful content viewport");
+                    Check(owner.ActualHeight >= 60, $"Fixed navigation must leave a useful content viewport: tab {tabs.SelectedIndex}, {width}x{height}, zoom {zoom}, height {owner.ActualHeight}");
                     if (tab == 0 && owner.ScrollableHeight > 0)
                     {
                         var source = (UIElement)window.FindName("SavePresetsButton");

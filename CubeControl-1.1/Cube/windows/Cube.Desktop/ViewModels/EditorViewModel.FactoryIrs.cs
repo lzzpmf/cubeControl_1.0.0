@@ -16,10 +16,8 @@ public sealed partial class EditorViewModel
     public ICollectionView? IrPackGroups { get; private set; }
     public IrPackStore PackStore => new(Path.Combine(AppContext.BaseDirectory, "Assets", "ImpulseResponses"), DataDirectory);
     private IReadOnlyList<IrPack> originalPacks = [];
-    public ICommand ManageIrPacks => new UiCommand(() =>
-    {
-        new Cube.Desktop.IrPackManagerWindow(this) { Owner = Application.Current.MainWindow }.ShowDialog();
-    }, () => !Busy);
+    private IrPackEditorViewModel? packEditor;
+    public IrPackEditorViewModel PackEditor => packEditor ??= new(this);
     public string PackCatalogProblems { get; private set; } = "";
     public string SelectedPackSummary => SelectedIrPack is not { } p ? "" : p.Description + "\n" +
         string.Join("\n", Enumerable.Range(0, 8).Select(i => $"{i + 1}. {p.SlotName(i)}" +

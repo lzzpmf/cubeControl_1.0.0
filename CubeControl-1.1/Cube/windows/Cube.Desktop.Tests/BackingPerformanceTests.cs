@@ -74,10 +74,10 @@ internal static class BackingPerformanceTests
                 await Measure("backing playing");
                 if (!window.BackingTracks.IsPlaying) throw new Exception("Playback did not stay active during measurement: " + window.BackingTracks.Status);
                 var player = (StackPanel)window.FindName("BackingPlayerPanel");
-                var waveform = player.Children.OfType<Cube.Desktop.Controls.BackingWaveform>().Single();
-                waveform.Visibility = Visibility.Hidden;
+                var waveforms = new[] { (Cube.Desktop.Controls.BackingWaveform)window.FindName("BackingMainWave"), (Cube.Desktop.Controls.BackingWaveform)window.FindName("BackingOverview") };
+                foreach (var waveform in waveforms) waveform.Visibility = Visibility.Hidden;
                 await Measure("backing playing without waveform");
-                waveform.Visibility = Visibility.Visible;
+                foreach (var waveform in waveforms) waveform.Visibility = Visibility.Visible;
                 tabs.SelectedIndex = 0; await Measure("editor with mini-player");
                 tabs.SelectedIndex = 2;
                 window.BackingTracks.PlayPause.Execute(null);

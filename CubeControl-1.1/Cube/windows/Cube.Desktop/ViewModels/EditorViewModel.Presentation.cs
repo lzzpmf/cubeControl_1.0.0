@@ -1,4 +1,4 @@
-namespace Cube.Desktop.ViewModels;
+﻿namespace Cube.Desktop.ViewModels;
 
 public sealed partial class EditorViewModel
 {
@@ -92,7 +92,31 @@ public sealed partial class EditorViewModel
     private void NotifyFailure(string message) => NotifyUser("Não foi possível concluir", message, Wpf.Ui.Controls.ControlAppearance.Danger);
 
     public string ConnectionSummary => Connected ? "Conectado por USB" : "Sem conexão USB";
-    public System.Windows.Media.ImageSource? ConnectedDeviceImage { get; } = GearItem.ReadImage(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "imagens", "Dispositivos", "SINCO-CubeBaby.png"));
+    public System.Windows.Media.ImageSource? ConnectedDeviceImage { get; } = ReadConnectedDeviceImage();
+    private static System.Windows.Media.ImageSource? ReadConnectedDeviceImage()
+    {
+        var source = GearItem.ReadImage(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "imagens", "Dispositivos", "SINCO-CubeBaby.png"));
+        if (source is not System.Windows.Media.Imaging.BitmapSource bitmap) return source;
+        var pixels = new System.Windows.Media.Imaging.FormatConvertedBitmap(bitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
+        int width = pixels.PixelWidth, height = pixels.PixelHeight;
+        var buffer = new byte[width * height * 4];
+        pixels.CopyPixels(buffer, width * 4, 0);
+        int left = width, top = height, right = -1, bottom = -1;
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                if (buffer[(y * width + x) * 4 + 3] > 16)
+                {
+                    left = Math.Min(left, x); right = Math.Max(right, x);
+                    top = Math.Min(top, y); bottom = Math.Max(bottom, y);
+                }
+        if (right < left || bottom < top) return source;
+        left = Math.Max(0, left - 2); top = Math.Max(0, top - 2);
+        right = Math.Min(width - 1, right + 2); bottom = Math.Min(height - 1, bottom + 2);
+        var cropped = new System.Windows.Media.Imaging.CroppedBitmap(bitmap, new System.Windows.Int32Rect(left, top, right - left + 1, bottom - top + 1));
+        cropped.Freeze();
+        return cropped;
+    }
+
     public string EditAvailability => ShowBusyPanel ? "Operação em andamento. Aguarde para editar."
         : blocked ? "Edição suspensa. Releia os presets ou reconecte."
         : !Connected ? "Conecte o aparelho para editar e ouvir os ajustes."

@@ -9,6 +9,8 @@ public sealed record BackingPlaybackSnapshot(BackingPlaybackState State, double 
 
 public sealed class BackingAudioEngine : IDisposable
 {
+    private float outputPeak;
+    public float ConsumeOutputPeak() => Interlocked.Exchange(ref outputPeak, 0);
     private readonly BlockingCollection<Action> commands = new();
     private readonly Task worker;
     private volatile BackingPlaybackSnapshot snapshot = new(BackingPlaybackState.Empty, 0, 0, null, 0);
@@ -113,6 +115,9 @@ public sealed class BackingAudioEngine : IDisposable
                 gain += Math.Clamp(target - gain, -step, step);
                 for (int c = 0; c < channels; c++) block[i + c] *= gain;
             }
+            float peak = 0;
+            for (int i = 0; i < count; i++) peak = Math.Max(peak, Math.Abs(block[i]));
+            Volatile.Write(ref outputPeak, Math.Max(Volatile.Read(ref outputPeak), peak));
             Buffer.BlockCopy(block, 0, bytes, 0, count * sizeof(float));
             queue.Write(bytes, count * sizeof(float));
         }

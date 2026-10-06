@@ -128,7 +128,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Ir.PropertyChanged += (_, _) => RefreshPresentation();
         RestoreIr = Command(RestoreIrAsync, () => CanOperate, changesEffects: true);
         ResetPresets = Command(ResetPresetsAsync, () => CanOperate && factory != null, changesEffects: true);
-        ApplyIrPack = Command(ApplyIrPackAsync, () => CanOperate && SelectedIrPack != null && SelectedIrPack.Problem.Length == 0, changesEffects: true);
+        ApplyIrPack = Command(ApplyIrPackAsync, () => CanOperate && !(packEditor?.Dirty ?? false) && SelectedIrPack != null && SelectedIrPack.Problem.Length == 0, changesEffects: true);
         InitializeFirmware();
         LoadFactory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CubeSuite", "CubeSuite.exe"));
     }

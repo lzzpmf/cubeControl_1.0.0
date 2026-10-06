@@ -111,6 +111,13 @@ internal static class AdaptiveDialogs
                 foreach (string name in new[] { "PrimaryButton", "SecondaryButton", "CloseButton" })
                 {
                     if (dialog.Template.FindName(name, dialog) is not Wpf.Ui.Controls.Button button) continue;
+                    // An absent secondary action must not reserve a third of the footer.
+                    if (button.Visibility != Visibility.Visible)
+                    {
+                        if (VisualTreeHelper.GetParent(button) is Grid unusedActions)
+                            Set(unusedActions.ColumnDefinitions[Grid.GetColumn(button)], ColumnDefinition.WidthProperty, new GridLength(0));
+                        continue;
+                    }
                     Set(button, FrameworkElement.MinWidthProperty, 0d);
                     Set(button, Control.PaddingProperty, new Thickness(12, 8, 12, 8));
                     var text = new FrameworkElementFactory(typeof(System.Windows.Controls.TextBlock));
