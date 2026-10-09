@@ -4,11 +4,11 @@ Editor Windows para o **Cube Baby de guitarra**, com comunicação USB-MIDI. Per
 
 ## Comece aqui
 
-- [Guia de uso](CubeControl-1.1/Cube/docs/guia-de-uso.md): conexão, edição, gravação e recuperação.
+- [Guia de uso](CubeControl-1.1/Cube/docs/usuario/pt-BR/primeiros-passos.md): conexão, edição, gravação e recuperação.
 - [Documentação completa](CubeControl-1.1/Cube/docs/README.md): índice por assunto, incluindo pesquisa e referências.
 - [Desenvolvimento e build](CubeControl-1.1/Cube/windows/README.md): requisitos, fluxo único, opções e destinos externos.
-- [Arquitetura e dados locais](CubeControl-1.1/Cube/docs/arquitetura.md): projetos, fluxos e arquivos persistidos.
-- [Revisão documental de 01/10/2026](CubeControl-1.1/Cube/docs/revisao-documental.md): verificações e divergências ainda presentes no código.
+- [Arquitetura e dados locais](CubeControl-1.1/Cube/docs/desenvolvimento/arquitetura.md): projetos, fluxos e arquivos persistidos.
+- [Revisão documental de 01/10/2026](CubeControl-1.1/Cube/docs/desenvolvimento/revisao-documental.md): verificações e divergências ainda presentes no código.
 
 ## Estado desta árvore
 
@@ -32,4 +32,4 @@ O [README do jsoup](engenharia-reversa/apk-cubesuite/resources/META-INF/README.m
 
 ## Limites de interpretação
 
-Selecionar A/B/C no editor escolhe o preset **em edição**, sem comprovar qual footswitch está ativo. Prévia em RAM e gravação persistente são operações diferentes. Os ensaios documentados referem-se ao aparelho e às condições registrados; não certificam outros modelos ou firmwares. Consulte a [política de privacidade](CubeControl-1.1/Cube/docs/POLITICA-DE-PRIVACIDADE.md).
+Selecionar A/B/C no editor escolhe o preset **em edição**, sem comprovar qual footswitch está ativo. Prévia em RAM e gravação persistente são operações diferentes. Os ensaios documentados referem-se ao aparelho e às condições registrados; não certificam outros modelos ou firmwares. Consulte a [política de privacidade](CubeControl-1.1/Cube/docs/usuario/pt-BR/privacidade.md).

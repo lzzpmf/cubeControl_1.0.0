@@ -1,6 +1,6 @@
 # Cube Baby: investigação dos amps e preamps
 
-[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Criador atual](../../CubeControl-1.1/Cube/docs/criador-de-amps.md)
+[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Criador atual](../../CubeControl-1.1/Cube/docs/referencias/criador-de-amps.md)
 
 Pesquisa iniciada em 26/09/2026; diário com etapas posteriores, revisado documentalmente em 01/10/2026. Escopo: Cube Baby de guitarra, protocolo USB, pacote oficial do CubeSuite e leituras do pedal conectado. Este documento complementa [CUBE_BABY_COMANDOS.md](CUBE_BABY_COMANDOS.md).
 
@@ -246,7 +246,7 @@ Isso é evidência de reutilização de dados entre modelos. Não prova que seja
 
 ## 8. Situação inicial da importação de amps
 
-Esta seção registra o conhecimento antes dos ensaios de escrita. As seções 14–16 comprovam substituição RAM/flash nesse aparelho; a aplicação atual implementa importação de setores `.bin`, prévia e gravação, com as limitações documentadas no [guia do criador](../../CubeControl-1.1/Cube/docs/criador-de-amps.md). Formatos externos como NAM continuam sem suporte.
+Esta seção registra o conhecimento antes dos ensaios de escrita. As seções 14–16 comprovam substituição RAM/flash nesse aparelho; a aplicação atual implementa importação de setores `.bin`, prévia e gravação, com as limitações documentadas no [guia do criador](../../CubeControl-1.1/Cube/docs/referencias/criador-de-amps.md). Formatos externos como NAM continuam sem suporte.
 
 O gabinete possui um formato e uma sequência conhecidos de transferência de amostras IR. O modelo de amp usa um bloco diferente, com parâmetros e curvas cuja semântica ainda está parcialmente desconhecida. Um WAV de gabinete não é intercambiável com esse bloco. [S3][S5]
 

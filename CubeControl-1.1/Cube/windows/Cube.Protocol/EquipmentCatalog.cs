@@ -1,6 +1,6 @@
 namespace Cube.Protocol;
 
-/// <summary>Local reference descriptions from docs/ampsEirs.md; never protocol values.</summary>
+/// <summary>Local reference descriptions from docs/referencias/ampsEirs.md; never protocol values.</summary>
 public sealed record EquipmentReference(string Name, string Alias, string Category, string Details)
 {
     public string Description => $"No Cube Baby: {Alias}. {Details}";

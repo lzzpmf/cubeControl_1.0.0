@@ -39,7 +39,7 @@ public sealed partial class EditorViewModel
         try
         {
             var definitions = JsonSerializer.Deserialize<IrPackDefinition[]>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "IrPacks.v1.json"))) ?? [];
-            packs.AddRange(definitions.Select(PackStore.Resolve));
+            packs.AddRange(definitions.Select(d => PackStore.Resolve(d with { Group = "Predefinidos" })));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or JsonException) { errors.Add(ex.Message); }
         try
@@ -48,7 +48,7 @@ public sealed partial class EditorViewModel
             if (personalErrors.Length > 0) errors.Add(personalErrors);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { errors.Add(ex.Message); }
-        packs.AddRange(originalPacks);
+
         IrPacks = packs;
         IrPackGroups = new ListCollectionView(packs);
         IrPackGroups.GroupDescriptions.Add(new PropertyGroupDescription(nameof(IrPack.Group)));
@@ -73,33 +73,25 @@ public sealed partial class EditorViewModel
 
     public Func<bool[], Task<int[]?>>? ChoosePackIrSlots { get; set; }
 
-    private static async Task<int[]?> ShowPackIrSelection(IrPack pack, bool[] different)
+    public Func<IrPackReviewViewModel, Task<bool>>? ReviewPack { get; set; }
+    private bool awaitingPackReview;
+    private void SetAwaitingPackReview(bool value) { awaitingPackReview = value; RefreshPresentation(); }
+    private async Task<bool> ShowPackReview(IrPackReviewViewModel review)
     {
-        var panel = new StackPanel();
-        panel.Children.Add(new TextBlock
-        {
-            Text = LanguageService.T("Selecione os slots que deseja substituir pelo pack escolhido. Os demais serão preservados."),
-            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 12)
-        });
-        var boxes = Enumerable.Range(0, 8).Select(i => new CheckBox
-        {
-            Content = new TextBlock { Text = $"Slot {i + 1} · {LanguageService.T(pack.SlotName(i))}\n{LanguageService.T(!pack.HasSlot(i) ? "Preservar slot" : different[i] ? "Diferente do pack" : "Idêntico ao pack")}", TextWrapping = TextWrapping.Wrap },
-            IsEnabled = different[i], IsChecked = false, Margin = new Thickness(0, 5, 0, 5)
-        }).ToArray();
-        foreach (var box in boxes) panel.Children.Add(box);
-        var dialog = new Wpf.Ui.Controls.MessageBox
-        {
-            Title = LanguageService.T("Aplicar pack de IRs") + " · " + pack.Name,
-            Content = new ScrollViewer { Content = panel, MaxHeight = 440, VerticalScrollBarVisibility = ScrollBarVisibility.Auto },
-            PrimaryButtonText = LanguageService.T("Continuar"), CloseButtonText = LanguageService.T("Cancelar"),
-            Owner = Application.Current.MainWindow, IsPrimaryButtonEnabled = false
-        };
-        foreach (var box in boxes)
-        {
-            box.Checked += (_, _) => dialog.IsPrimaryButtonEnabled = boxes.Any(b => b.IsChecked == true);
-            box.Unchecked += (_, _) => dialog.IsPrimaryButtonEnabled = boxes.Any(b => b.IsChecked == true);
-        }
-        return await dialog.ShowDialogAsync() == Wpf.Ui.Controls.MessageBoxResult.Primary
-            ? Enumerable.Range(0, 8).Where(i => boxes[i].IsChecked == true).ToArray() : null;
+        if (ReviewPack != null) return await ReviewPack(review);
+        var dialog = new Controls.PackDialog(LanguageService.T("Revisar e aplicar") + " · " + review.Definition.Name,
+            new Controls.IrPackReview { DataContext = review }, width: 1200) { IsPrimaryEnabled = review.CanContinue };
+        void StateChanged(object? sender, PropertyChangedEventArgs e) { if (e.PropertyName == nameof(review.CanContinue)) dialog.IsPrimaryEnabled = review.CanContinue; }
+        review.PropertyChanged += StateChanged;
+        SetAwaitingPackReview(true);
+        try { return await dialog.ShowAsync() == Controls.PackDialogChoice.Primary; }
+        finally { review.PropertyChanged -= StateChanged; SetAwaitingPackReview(false); }
+    }
+    private async Task RestoreOriginalIrsAsync()
+    {
+        var selector = new ComboBox { ItemsSource = originalPacks, SelectedIndex = 0, DisplayMemberPath = "Name", MinWidth = 0 };
+        var dialog = new Controls.PackDialog("Restaurar IRs originais", selector);
+        if (await dialog.ShowAsync() == Controls.PackDialogChoice.Primary && selector.SelectedItem is IrPack pack)
+            await ApplyPreparedIrPackAsync(pack, restoration: true);
     }
 }

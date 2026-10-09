@@ -1,0 +1,23 @@
+<UserControl x:Class="Cube.Desktop.Views.GearImagePicker" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:Cube.Desktop.Controls" xmlns:loc="clr-namespace:Cube.Desktop.Localization" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+ <Grid>
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel Margin="0,0,0,12">
+   <TextBlock Text="{loc:Translate Text='Escolha uma imagem. A personalização não altera o som.'}" Style="{StaticResource HelpText}" TextWrapping="Wrap"/>
+   <ComboBox x:Name="Category" SelectionChanged="FilterChanged" Margin="0,10,0,0" AutomationProperties.Name="{loc:Translate Text='Categoria'}"/>
+  </StackPanel>
+  <ListBox x:Name="Images" Grid.Row="1" SelectionChanged="ImageSelected" MouseDoubleClick="ApplyDoubleClick" PreviewKeyDown="NavigateImages" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" AutomationProperties.Name="{loc:Translate Text='Acervo de imagens'}">
+   <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource SelectionTile}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="AutomationProperties.Name" Value="{Binding Name}"/><Setter Property="ToolTip" Value="{Binding Name}"/><Style.Triggers><Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="FocusVisualStyle" Value="{DynamicResource {x:Static SystemParameters.FocusVisualStyleKey}}"/></Trigger></Style.Triggers></Style></ListBox.ItemContainerStyle>
+   <ListBox.ItemsPanel><ItemsPanelTemplate><local:EquipmentImageGridPanel Loaded="GridLoaded"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+   <ListBox.ItemTemplate><DataTemplate><StackPanel><Image Source="{Binding Thumbnail}" Height="130" Stretch="Uniform" Margin="0,0,0,8"/><TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="60" Style="{StaticResource BodyText}"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
+  </ListBox>
+  <StackPanel Grid.Row="2" Margin="0,12,0,0">
+   <TextBlock x:Name="SelectionName" TextWrapping="Wrap" Style="{StaticResource HelpText}" Margin="0,0,0,8"/>
+   <TextBlock x:Name="Error" TextWrapping="Wrap" Foreground="{DynamicResource CubeText}" Visibility="Collapsed" Margin="0,0,0,8"/>
+   <WrapPanel>
+    <ui:Button Content="{loc:Translate Text='Escolher do computador'}" Click="ChooseComputer" Margin="0,0,8,4"/>
+    <ui:Button x:Name="Apply" Content="{loc:Translate Text='Aplicar imagem'}" Click="ApplyClick" IsEnabled="False" Appearance="Primary" Margin="0,0,8,4"/>
+    <ui:Button Content="{loc:Translate Text='Cancelar'}" Click="CancelClick" Margin="0,0,0,4"/>
+   </WrapPanel>
+  </StackPanel>
+ </Grid>
+</UserControl>

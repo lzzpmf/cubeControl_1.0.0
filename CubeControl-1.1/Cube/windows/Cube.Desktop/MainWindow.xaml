@@ -219,9 +219,9 @@
        <StackPanel VerticalAlignment="Center"><TextBlock Text="{loc:Translate Text='Backing tracks'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Toque com acompanhamento'}" Style="{StaticResource SelectionSecondaryText}" Margin="0,4,0,0"/></StackPanel>
       </StackPanel></ListBoxItem>
       <ListBoxItem ToolTip="{loc:Translate Text='Crie seu timbre e ouça os ajustes automaticamente.'}" AutomationProperties.Name="{loc:Translate Text='Criador de amps'}"><StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="Add24" Style="{StaticResource NavigationIcon}"/><StackPanel VerticalAlignment="Center"><TextBlock Text="{loc:Translate Text='Criador de amps'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Seu amplificador'}" Style="{StaticResource SelectionSecondaryText}" Margin="0,4,0,0"/></StackPanel></StackPanel></ListBoxItem>
-      <ListBoxItem AutomationProperties.Name="{loc:Translate Text='Dispositivo e ajuda'}" ToolTip="{loc:Translate Text='Consulte a conexão USB, o manual e os atalhos do pedal. Acesse também a recuperação de fábrica e os registros de comunicação.'}" ToolTipService.InitialShowDelay="1200" AutomationProperties.HelpText="{loc:Translate Text='Consulte a conexão USB, o manual e os atalhos do pedal. Acesse também a recuperação de fábrica e os registros de comunicação.'}"><StackPanel Orientation="Horizontal">
+      <ListBoxItem AutomationProperties.Name="{loc:Translate Text='Dispositivo e ajuda'}" ToolTip="{loc:Translate Text='Consulte a conexão USB, a documentação e os atalhos do pedal. Acesse também a recuperação de fábrica e os registros de comunicação.'}" ToolTipService.InitialShowDelay="1200" AutomationProperties.HelpText="{loc:Translate Text='Consulte a conexão USB, a documentação e os atalhos do pedal. Acesse também a recuperação de fábrica e os registros de comunicação.'}"><StackPanel Orientation="Horizontal">
        <ui:SymbolIcon Symbol="PlugConnected24" Style="{StaticResource NavigationIcon}"/>
-       <StackPanel VerticalAlignment="Center"><TextBlock Text="{loc:Translate Text='Dispositivo e ajuda'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Conexão e manual'}" Style="{StaticResource SelectionSecondaryText}" Margin="0,4,0,0"/></StackPanel>
+       <StackPanel VerticalAlignment="Center"><TextBlock Text="{loc:Translate Text='Dispositivo e ajuda'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Conexão e documentação'}" Style="{StaticResource SelectionSecondaryText}" Margin="0,4,0,0"/></StackPanel>
       </StackPanel></ListBoxItem>
      </ListBox>
     </Border>
@@ -262,9 +262,7 @@
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
          <Border Width="62" Height="62" CornerRadius="8" BorderThickness="2" BorderBrush="Transparent" Padding="2" Cursor="Hand">
 
-          <Border CornerRadius="6" RenderOptions.BitmapScalingMode="HighQuality">
-           <Border.Background><ImageBrush ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/footswitch_oficial_01.png" Viewbox="0.234,0.210,0.532,0.564" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/></Border.Background>
-          </Border>
+          <Border CornerRadius="6" RenderOptions.BitmapScalingMode="HighQuality" Background="{DynamicResource CubeControlFootswitch}"/>
          </Border>
          <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" Margin="0,4,0,4" Style="{StaticResource TitleText}"/>
         </StackPanel>
@@ -342,15 +340,15 @@
         <local:AdaptivePanel.Style><Style TargetType="local:AdaptivePanel"><Setter Property="Breakpoint" Value="740"/><Setter Property="FirstShare" Value="0.4"/><Style.Triggers><DataTrigger Binding="{Binding IsAdvancedCard}" Value="True"><Setter Property="Breakpoint" Value="1040"/><Setter Property="FirstShare" Value="0.3"/></DataTrigger></Style.Triggers></Style></local:AdaptivePanel.Style>
         <Border Background="{DynamicResource CubeInset}" CornerRadius="14,0,0,14" Padding="24"><StackPanel>
          <DockPanel><DockPanel.Style><Style TargetType="DockPanel"><Style.Triggers><DataTrigger Binding="{Binding IsAmp}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></DockPanel.Style><TextBlock Text="{loc:Translate Value={Binding Stage.Title}}" Foreground="{Binding Stage.Color}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Value={Binding FocusedGear.SlotLabel}}" Foreground="{DynamicResource Muted}" HorizontalAlignment="Right" Style="{StaticResource CaptionText}"/></DockPanel>
-         <local:GearImageButton IsInteractive="{Binding HasGallery}" x:Name="EquipmentImageButton" Template="{StaticResource GearCarouselImageTemplate}" HorizontalAlignment="Stretch" Click="GalleryClick" Appearance="Transparent" Padding="0" Margin="0,18,0,16" BorderThickness="0" HorizontalContentAlignment="Stretch" IsEnabled="{Binding CanOpenGearGallery}" Focusable="{Binding HasGallery}" IsTabStop="{Binding HasGallery}" AutomationProperties.Name="{loc:Translate Value={Binding GalleryLabel}}">
+         <local:GearImageButton IsInteractive="{Binding HasGallery}" x:Name="EquipmentImageButton" Template="{StaticResource GearCarouselImageTemplate}" HorizontalAlignment="Stretch" Click="EquipmentImageClick" Appearance="Transparent" Padding="0" Margin="0,18,0,16" BorderThickness="0" HorizontalContentAlignment="Stretch" IsEnabled="{Binding CanOpenGearGallery}" Focusable="True" IsTabStop="True" AutomationProperties.Name="{loc:Translate Value={Binding EquipmentImageLabel}}">
           <local:GearImageButton.ContextMenu>
            <ContextMenu DataContext="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource Self}}">
-            <MenuItem Header="{loc:Translate Text='Personalizar imagem'}" Command="{Binding ChangeImage}" ToolTip="{loc:Translate Text='Escolha uma imagem do computador para este equipamento.'}"><MenuItem.Icon><ui:SymbolIcon Symbol="ImageEdit24" FontSize="16"/></MenuItem.Icon></MenuItem>
+            <MenuItem Header="{loc:Translate Text='Personalizar imagem'}" Command="{Binding ChangeImage}" ToolTip="{loc:Translate Text='Escolha uma imagem do acervo ou do computador para este equipamento.'}"><MenuItem.Icon><ui:SymbolIcon Symbol="ImageEdit24" FontSize="16"/></MenuItem.Icon></MenuItem>
             <MenuItem Header="{loc:Translate Text='Restaurar imagem padrão'}" Command="{Binding ResetImage}" ToolTip="{loc:Translate Text='Remove a imagem personalizada e volta à imagem padrão do equipamento.'}"><MenuItem.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></MenuItem.Icon></MenuItem>
            </ContextMenu>
           </local:GearImageButton.ContextMenu>
-          <local:GearImageButton.Style><Style TargetType="local:GearImageButton" BasedOn="{StaticResource DefaultUiButtonStyle}"><Setter Property="ContextMenuService.IsEnabled" Value="{Binding HasGallery}"/><Setter Property="ContextMenuService.ShowOnDisabled" Value="True"/><Style.Triggers><DataTrigger Binding="{Binding HasGallery}" Value="False"><Setter Property="IsHitTestVisible" Value="False"/></DataTrigger></Style.Triggers></Style></local:GearImageButton.Style>
-         <local:GearArt x:Name="FocusedArt" PreviewMouseWheel="GearImageWheel" MouseLeave="GearImageLeave" Kind="{Binding FocusedGear.Kind}" Accent="{Binding FocusedGear.Color}" Image="{Binding FocusedGear.Image}"><local:GearArt.Style><Style TargetType="local:GearArt"><Setter Property="Height" Value="240"/><Style.Triggers><DataTrigger Binding="{Binding FocusedGear.Kind}" Value="cab"><Setter Property="ArtworkScale" Value="1"/></DataTrigger><DataTrigger Binding="{Binding HasGallery}" Value="True"><Setter Property="Cursor" Value="Hand"/><Setter Property="ToolTip" Value="{loc:Translate Text='Role para trocar o equipamento. Clique para abrir a seleção. Clique com o botão direito para personalizar ou restaurar a imagem.'}"/></DataTrigger></Style.Triggers></Style></local:GearArt.Style></local:GearArt>
+          <local:GearImageButton.Style><Style TargetType="local:GearImageButton" BasedOn="{StaticResource DefaultUiButtonStyle}"><Setter Property="ContextMenuService.ShowOnDisabled" Value="True"/></Style></local:GearImageButton.Style>
+         <local:GearArt x:Name="FocusedArt" PreviewMouseWheel="GearImageWheel" MouseLeave="GearImageLeave" Kind="{Binding FocusedGear.Kind}" Accent="{Binding FocusedGear.Color}" Image="{Binding FocusedGear.Image}"><local:GearArt.Style><Style TargetType="local:GearArt"><Setter Property="Height" Value="240"/><Setter Property="Cursor" Value="Hand"/><Setter Property="ToolTip" Value="{loc:Translate Text='Escolha uma imagem do acervo ou do computador para este equipamento.'}"/><Style.Triggers><DataTrigger Binding="{Binding FocusedGear.Kind}" Value="cab"><Setter Property="ArtworkScale" Value="1"/></DataTrigger><DataTrigger Binding="{Binding HasGallery}" Value="True"><Setter Property="Cursor" Value="Hand"/><Setter Property="ToolTip" Value="{loc:Translate Text='Role para trocar o equipamento. Clique para abrir a seleção. Clique com o botão direito para personalizar ou restaurar a imagem.'}"/></DataTrigger></Style.Triggers></Style></local:GearArt.Style></local:GearArt>
          </local:GearImageButton>
          <StackPanel>
           <StackPanel VerticalAlignment="Center" Margin="0,0,8,0">
@@ -372,32 +370,7 @@
          </StackPanel>
          <TextBlock Text="{loc:Translate Value={Binding FocusedGear.Description}}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,14" FontSize="12" LineHeight="16"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding IsAmp}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsCabinet}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
 
-         <Expander Header="{loc:Translate Text='Imagem do equipamento'}" Margin="0,8,0,0" HorizontalContentAlignment="Left">
-          <Expander.Style><Style TargetType="Expander"><Style.Triggers><DataTrigger Binding="{Binding HasGallery}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Expander.Style>
-          <Expander.Template>
-           <ControlTemplate TargetType="Expander">
-            <StackPanel>
-             <ToggleButton HorizontalAlignment="Left" MinWidth="0" MinHeight="40" Padding="16,8" FontSize="14"
-                           IsChecked="{Binding IsExpanded,RelativeSource={RelativeSource TemplatedParent},Mode=TwoWay}">
-              <StackPanel Orientation="Horizontal">
-               <ContentPresenter ContentSource="Header" VerticalAlignment="Center"/>
-               <ui:SymbolIcon x:Name="ImageExpanderChevron" Symbol="ChevronDown24" FontSize="16" Margin="8,0,0,0" VerticalAlignment="Center"/>
-              </StackPanel>
-             </ToggleButton>
-             <ContentPresenter x:Name="ImageExpanderContent" Visibility="Collapsed" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
-            </StackPanel>
-            <ControlTemplate.Triggers>
-             <Trigger Property="IsExpanded" Value="True">
-              <Setter TargetName="ImageExpanderContent" Property="Visibility" Value="Visible"/>
-              <Setter TargetName="ImageExpanderChevron" Property="Symbol" Value="ChevronUp24"/>
-             </Trigger>
-            </ControlTemplate.Triggers>
-           </ControlTemplate>
-          </Expander.Template>
-          <StackPanel Margin="0,8,0,0">
-          <WrapPanel><ui:Button ToolTip="{loc:Translate Text='Escolha uma imagem do computador para este equipamento.'}" Content="{loc:Translate Text='Personalizar imagem'}" Command="{Binding ChangeImage}"><ui:Button.Icon><ui:SymbolIcon Symbol="ImageEdit24" FontSize="16"/></ui:Button.Icon></ui:Button><ui:Button ToolTip="{loc:Translate Text='Remove a imagem personalizada e volta à imagem padrão do equipamento.'}" Content="{loc:Translate Text='Restaurar imagem padrão'}" Command="{Binding ResetImage}" Appearance="Transparent"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button></WrapPanel>
-          <TextBlock Text="{loc:Translate Text='A imagem é local e não altera o som do pedal.'}" Style="{StaticResource HelpText}"/>
-         </StackPanel></Expander>
+
         </StackPanel></Border>
         <StackPanel Margin="24">
          <DockPanel LastChildFill="True" Margin="0,0,0,12">
@@ -480,60 +453,7 @@
         <Grid Margin="0,0,0,8"><Grid.RowDefinitions><RowDefinition Height="Auto" SharedSizeGroup="IrSectionHeader"/></Grid.RowDefinitions>
          <TextBlock Text="{loc:Translate Text='Biblioteca'}" VerticalAlignment="Center" Style="{StaticResource BodyStrongText}"/>
         </Grid>
-        <ui:AutoSuggestBox x:Name="IrLibrarySearch" Loaded="IrLibrarySearchLoaded" Text="{Binding IrLibrary.Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar IR ou coleção'}" ToolTip="{loc:Translate Text='Buscar IR ou coleção'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Buscar IR ou coleção'}">
-         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="Search24" FontSize="18" Width="20" Height="20" VerticalAlignment="Center" Margin="0,2,0,0"/></ui:AutoSuggestBox.Icon>
-         <ui:AutoSuggestBox.Resources>
-          <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
-          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="Transparent"/>
-          <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
-         </ui:AutoSuggestBox.Resources>
-        </ui:AutoSuggestBox>
-        <TreeView x:Name="IrLibraryTree" ItemsSource="{Binding IrLibrary.Roots}" MinHeight="320" MaxHeight="420" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Biblioteca'}">
-         <TreeView.Resources>
-          <Style TargetType="TreeViewItem" BasedOn="{StaticResource DefaultTreeViewItemStyle}">
-           <Setter Property="Template" Value="{StaticResource IrLibraryItemTemplate}"/>
-           <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-           <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-           <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-           <Setter Property="Padding" Value="4,6"/>
-           <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
-           <Setter Property="ToolTip" Value="{Binding ToolTip}"/>
-           <Style.Triggers><DataTrigger Binding="{Binding IsBrand}" Value="True">
-            <Setter Property="Padding" Value="8,7"/><Setter Property="Margin" Value="0,1,0,1"/><Setter Property="Background" Value="Transparent"/>
-            <Setter Property="ToolTip" Value="{loc:Translate Text='Clique em qualquer ponto desta marca para abrir ou recolher seus IRs. Explore as pastas por gabinete e microfone e selecione um arquivo para ouvir a prévia. Abrir outra marca recolhe a anterior; as subpastas podem ficar abertas.'}"/>
-           </DataTrigger></Style.Triggers>
-          </Style>
-         </TreeView.Resources>
-         <TreeView.ItemTemplate>
-          <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-           <StackPanel Orientation="Horizontal" Background="Transparent" MouseLeftButtonUp="IrLibraryFolderClick">
-            <ui:SymbolIcon Symbol="Library24" FontSize="22" Margin="0,0,12,0" VerticalAlignment="Center">
-             <ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon">
-              <Setter Property="Visibility" Value="Collapsed"/><Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
-              <Style.Triggers>
-               <DataTrigger Binding="{Binding IsBrand}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-               <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
-               <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="False"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
-              </Style.Triggers>
-             </Style></ui:SymbolIcon.Style>
-            </ui:SymbolIcon>
-            <StackPanel VerticalAlignment="Center">
-             <TextBlock TextTrimming="CharacterEllipsis" LineHeight="20"><TextBlock.Style><Style TargetType="TextBlock">
-              <Setter Property="Text" Value="{Binding DisplayName}"/><Setter Property="FontWeight" Value="Normal"/>
-              <Style.Triggers><DataTrigger Binding="{Binding IsBrand}" Value="True"><Setter Property="Text" Value="{Binding Name}"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="FontSize" Value="14"/></DataTrigger></Style.Triggers>
-             </Style></TextBlock.Style></TextBlock>
-             <TextBlock Text="{Binding EntryCount, StringFormat={}{0} IRs}" Margin="0,3,0,0" LineHeight="20"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource HelpText}">
-              <Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsBrand}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
-              <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
-              <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="False"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
-             </Style.Triggers>
-             </Style></TextBlock.Style></TextBlock>
-            </StackPanel>
-           </StackPanel>
-          </HierarchicalDataTemplate>
-         </TreeView.ItemTemplate>
-        </TreeView>
-        <TextBlock Text="{loc:Translate Value={Binding IrLibrary.Message}}" Style="{StaticResource HelpText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+        <local:IrLibraryBrowser x:Name="SingleIrLibrary" DataContext="{Binding IrLibrary}"/>
        </StackPanel>
        <StackPanel Margin="0,0,0,12">
         <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto" SharedSizeGroup="IrSectionHeader"/></Grid.RowDefinitions>
@@ -600,6 +520,31 @@
        <ui:Button ToolTip="{loc:Translate Text='Escolha um backup de IR para restaurar seu conteúdo no pedal.'}" Content="{loc:Translate Text='Restaurar backup de IR'}" Command="{Binding RestoreIr}" Margin="0,12,0,0" HorizontalAlignment="Left"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
       </StackPanel></Border>
      </local:AdaptivePanel>
+     <Border Style="{StaticResource Card}" Margin="0,0,0,12" DataContext="{Binding IrAudition}" x:Name="IrAuditionCard"><StackPanel>
+      <TextBlock Text="{loc:Translate Text='Pré-escuta'}" Style="{StaticResource SectionTitle}"/>
+      <TextBlock Text="{loc:Translate Text='Reproduza uma guitarra gravada pela saída USB do pedal. O IR em RAM e os efeitos atuais processam o áudio.'}" Style="{StaticResource HelpText}" Margin="0,6,0,12"/>
+      <local:AdaptivePanel FirstShare="0.5" Breakpoint="700">
+       <StackPanel Margin="0,0,8,8">
+        <TextBlock Text="{loc:Translate Text='Trecho de guitarra'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+        <ComboBox ItemsSource="{Binding Tracks}" SelectedItem="{Binding SelectedTrack}" MinWidth="0" AutomationProperties.Name="{loc:Translate Text='Trecho de guitarra'}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Name}}"/></DataTemplate></ComboBox.ItemTemplate></ComboBox>
+       </StackPanel>
+       <StackPanel Margin="8,0,0,8">
+        <TextBlock Text="{loc:Translate Text='Saída USB de áudio do pedal'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+        <ComboBox ItemsSource="{Binding Outputs}" SelectedItem="{Binding SelectedOutput}" DisplayMemberPath="Name" MinWidth="0" AutomationProperties.Name="{loc:Translate Text='Saída USB de áudio do pedal'}"/>
+       </StackPanel>
+      </local:AdaptivePanel>
+      <WrapPanel Margin="0,8,0,8">
+       <ui:Button Content="{loc:Translate Value={Binding PlayLabel}}" Command="{Binding PlayPause}" Margin="0,0,8,8"/>
+       <ui:Button Content="{loc:Translate Text='Parar'}" Command="{Binding Stop}" Margin="0,0,8,8"/>
+       <ui:Button Content="{loc:Translate Text='Atualizar saídas'}" Command="{Binding RefreshOutputs}" Margin="0,0,8,8"/>
+       <CheckBox Content="{loc:Translate Text='Repetir trecho'}" IsChecked="{Binding Loop}" VerticalAlignment="Center" Margin="0,0,8,8"/>
+      </WrapPanel>
+      <TextBlock Text="{loc:Translate Text='Volume da pré-escuta'}" Style="{StaticResource HelpText}"/>
+      <Slider Minimum="0" Maximum="100" Value="{Binding Volume}" HorizontalAlignment="Stretch" MaxWidth="360" Margin="0,4,0,8" AutomationProperties.Name="{loc:Translate Text='Volume da pré-escuta'}"/>
+      <TextBlock Text="{Binding TimeLabel}" Style="{StaticResource HelpText}"/>
+      <TextBlock Text="{loc:Translate Value={Binding Status}}" Style="{StaticResource HelpText}" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite"/>
+      <TextBlock Text="{loc:Translate Text='Para iniciar, conecte o pedal, selecione sua saída de áudio e confirme a prévia do IR em RAM.'}" Style="{StaticResource HelpText}" Margin="0,6,0,0"/>
+     </StackPanel></Border>
      <local:IrPackEditor x:Name="IrPacksCard" DataContext="{Binding PackEditor}" Margin="0,0,0,12"/>
     </StackPanel></ScrollViewer>
    </TabItem>
@@ -759,8 +704,12 @@
       </ContentControl>
          </StackPanel>
         </StackPanel>
-        <StackPanel x:Name="BackingPlaylistPanel" Grid.Column="1" Grid.Row="1" Margin="0,12,0,0"><Expander x:Name="BackingPlaylistToggle" Loaded="BackingPlaylistLoaded" Background="{DynamicResource CubeCard}" Foreground="{DynamicResource CubeText}" Header="{loc:Translate Text='Playlist'}" IsExpanded="True" Expanded="BackingPlaylistToggleClick" Collapsed="BackingPlaylistToggleClick"><StackPanel Margin="12" Background="{DynamicResource CubeCard}">
-        <ui:AutoSuggestBox x:Name="BackingTrackSearch" Loaded="IrLibrarySearchLoaded" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar na playlist ou no YouTube'}" ToolTip="{loc:Translate Text='Buscar na playlist ou no YouTube'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Buscar na playlist ou no YouTube'}">
+        <Grid x:Name="BackingLibraryLayout" Grid.Column="1" Grid.Row="1" Margin="0,12,0,0" SizeChanged="BackingLibrarySizeChanged">
+         <Grid.ColumnDefinitions><ColumnDefinition x:Name="BackingPlaylistColumn" Width="300"/><ColumnDefinition x:Name="BackingLibraryGap" Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+         <Border x:Name="BackingPlaylistPanel" Style="{StaticResource Card}" VerticalAlignment="Top"><StackPanel>
+          <TextBlock Text="{loc:Translate Text='Playlist'}" Style="{StaticResource SectionTitle}" Margin="0,0,0,12"/>
+        <ui:AutoSuggestBox x:Name="BackingTrackSearch" Loaded="IrLibrarySearchLoaded" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Filtrar playlist'}" ToolTip="{loc:Translate Text='Filtrar playlist'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Filtrar playlist'}">
          <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="Search24" FontSize="18" Width="20" Height="20" VerticalAlignment="Center" Margin="0,2,0,0"/></ui:AutoSuggestBox.Icon>
          <ui:AutoSuggestBox.Resources>
           <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
@@ -768,33 +717,48 @@
           <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
          </ui:AutoSuggestBox.Resources>
         </ui:AutoSuggestBox>
-         <TextBlock Text="{loc:Translate Text='Playlist'}" Style="{StaticResource BodyStrongText}" Margin="0,8,0,8"/>
-         <ListBox x:Name="BackingTrackList" ItemsSource="{Binding FilteredTracks}" SelectedItem="{Binding SelectedTrack,Mode=OneWay}" SelectionChanged="BackingSelectionChanged" MaxHeight="360" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonDown="BackingTrackDragStart" PreviewMouseMove="BackingTrackDragMove" MouseDoubleClick="BackingTrackDoubleClick" PreviewMouseRightButtonDown="BackingTrackContext" Tag="track" ContextMenuOpening="BackingContextOpening" AutomationProperties.Name="{loc:Translate Text='Lista de backing tracks'}"><ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
+         <ListBox x:Name="BackingTrackList" ItemsSource="{Binding FilteredTracks}" SelectedItem="{Binding SelectedTrack,Mode=OneWay}" SelectionChanged="BackingSelectionChanged" MaxHeight="480" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonDown="BackingTrackDragStart" PreviewMouseMove="BackingTrackDragMove" MouseDoubleClick="BackingTrackDoubleClick" PreviewMouseRightButtonDown="BackingTrackContext" Tag="track" ContextMenuOpening="BackingContextOpening" AutomationProperties.Name="{loc:Translate Text='Lista de backing tracks'}"><ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
           <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource SelectionTile}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="MinHeight" Value="72"/><Setter Property="Padding" Value="8"/></Style></ListBox.ItemContainerStyle>
           <ListBox.ItemTemplate><DataTemplate><Grid ToolTip="{Binding Source}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
            <StackPanel Margin="0,4,8,4"><TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding MetadataLabel}" Style="{StaticResource SelectionSecondaryText}" Margin="0,4,0,0" TextWrapping="Wrap"/><TextBlock Text="{Binding Tuning}" Style="{StaticResource SelectionSecondaryText}" TextTrimming="CharacterEllipsis"/></StackPanel>
           </Grid></DataTemplate></ListBox.ItemTemplate>
          </ListBox>
-         <StackPanel Margin="0,16,0,0" Visibility="{Binding ShowYouTube,Converter={StaticResource Visible}}">
-          <TextBlock Text="YouTube" Style="{StaticResource BodyStrongText}"/>
+         </StackPanel></Border>
+         <Border x:Name="BackingYouTubePanel" Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top"><StackPanel>
+          <TextBlock Text="YouTube" Style="{StaticResource SectionTitle}" Margin="0,0,0,12"/>
+        <ui:AutoSuggestBox x:Name="BackingYouTubeSearch" Loaded="IrLibrarySearchLoaded" Text="{Binding YouTubeQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar no YouTube'}" ToolTip="{loc:Translate Text='Buscar no YouTube'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Buscar no YouTube'}">
+         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="Search24" FontSize="18" Width="20" Height="20" VerticalAlignment="Center" Margin="0,2,0,0"/></ui:AutoSuggestBox.Icon>
+         <ui:AutoSuggestBox.Resources>
+          <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
+          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="Transparent"/>
+          <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
+         </ui:AutoSuggestBox.Resources>
+        </ui:AutoSuggestBox>
+          <WrapPanel Margin="0,0,0,8">
+           <TextBlock Text="{loc:Translate Value={Binding YouTubeDownloadFolderLabel}}" ToolTip="{Binding YouTubeDownloadFolder}" Style="{StaticResource HelpText}" MaxWidth="240" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" VerticalAlignment="Center" Margin="0,0,8,4"/>
+           <ui:Button Content="{loc:Translate Text='Alterar pasta'}" Command="{Binding ChangeYouTubeDownloadFolder}" Margin="0,0,0,4"/>
+          </WrapPanel>
+          <Border Background="{DynamicResource CubeInset}" CornerRadius="10" Padding="12" Margin="0,0,0,12">
+           <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding YouTubeDownloadStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
+           <StackPanel>
+            <TextBlock Text="{Binding YouTubeDownloadTitle}" ToolTip="{Binding YouTubeDownloadTitle}" TextTrimming="CharacterEllipsis" Style="{StaticResource BodyStrongText}" Visibility="{Binding YouTubeDownloading,Converter={StaticResource Visible}}"/>
+            <local:LiveStatusText Text="{loc:Translate Value={Binding YouTubeDownloadStatus}}" Style="{StaticResource HelpText}" AutomationProperties.LiveSetting="Polite"/>
+            <ProgressBar x:Name="YouTubeDownloadProgress" Style="{StaticResource InfiniteProgressBar}" Margin="0,12,0,0" Visibility="{Binding YouTubeDownloading,Converter={StaticResource Visible}}" AutomationProperties.Name="{loc:Translate Value={Binding YouTubeDownloadStatus}}"/>
+            <ui:Button Content="{loc:Translate Text='Cancelar download'}" Command="{Binding CancelYouTubeDownload}" HorizontalAlignment="Left" Margin="0,8,0,0" Visibility="{Binding YouTubeDownloading,Converter={StaticResource Visible}}"/>
+           </StackPanel>
+          </Border>
           <TextBlock Text="{loc:Translate Value={Binding YouTubeStatus}}" Style="{StaticResource HelpText}" AutomationProperties.LiveSetting="Polite"/>
-          <ProgressBar IsIndeterminate="True" Height="3" Visibility="{Binding YouTubeSearching,Converter={StaticResource Visible}}"/>
-          <ItemsControl ItemsSource="{Binding YouTubeResults}"><ItemsControl.ItemTemplate><DataTemplate>
-           <Border Style="{StaticResource Card}" Padding="12" Margin="0,8,0,0">
-            <StackPanel>
-             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="96"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-              <Image Source="{Binding Thumbnail}" Width="88" Height="50" Stretch="Uniform"/>
-              <StackPanel Grid.Column="1" Margin="8,0,0,0"><TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap"/><TextBlock Text="{Binding Channel}" Style="{StaticResource HelpText}"/><TextBlock Text="{Binding DurationLabel}" Style="{StaticResource CaptionText}"/></StackPanel>
-             </Grid>
-             <ui:Button Content="{loc:Translate Text='Baixar MP3'}" Click="BackingYouTubeDownloadClick" HorizontalAlignment="Right" Margin="0,8,0,0"><ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Style.Triggers><DataTrigger Binding="{Binding DataContext.YouTubeDownloading,RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers></Style></ui:Button.Style></ui:Button>
-            </StackPanel>
-           </Border>
-          </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-         </StackPanel>
-         <TextBlock Text="{loc:Translate Value={Binding YouTubeDownloadStatus}}" Style="{StaticResource HelpText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
-         <StackPanel Visibility="{Binding YouTubeDownloading,Converter={StaticResource Visible}}"><ProgressBar Value="{Binding YouTubePercent,Mode=OneWay}" Maximum="100" Height="4"/><ui:Button Content="{loc:Translate Text='Cancelar download'}" Command="{Binding CancelYouTubeDownload}" HorizontalAlignment="Left" Margin="0,8,0,0"/></StackPanel>
-
-        </StackPanel></Expander></StackPanel>
+          <ProgressBar Style="{StaticResource InfiniteProgressBar}" Visibility="{Binding YouTubeSearching,Converter={StaticResource Visible}}"/>
+          <ScrollViewer x:Name="BackingYouTubeScroll" MaxHeight="480" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Visibility="{Binding ShowYouTube,Converter={StaticResource Visible}}">
+          <ItemsControl x:Name="YouTubeMosaic" ItemsSource="{Binding YouTubeResults}" Margin="0,8,0,0">
+           <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:YouTubeGridPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+           <ItemsControl.ItemTemplate><DataTemplate>
+            <local:YouTubeResultCard Model="{Binding DataContext,RelativeSource={RelativeSource AncestorType=ItemsControl}}"/>
+           </DataTemplate></ItemsControl.ItemTemplate>
+          </ItemsControl>
+          </ScrollViewer>
+         </StackPanel></Border>
+        </Grid>
        </Grid>
       </StackPanel></ScrollViewer>
 
@@ -816,9 +780,9 @@
       <ui:CardAction.Icon><ui:SymbolIcon Symbol="PlugConnected24" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon>
       <StackPanel><TextBlock Text="{loc:Translate Text='Detalhes da conexão'}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Value={Binding ConnectionSummary}}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
      </ui:CardAction>
-     <ui:CardAction ToolTip="{loc:Translate Text='Abre o manual do pedal incluído no aplicativo.'}" x:Name="UserManualCard" Style="{StaticResource QuickAction}" Click="UserManualClick" AutomationProperties.Name="{loc:Translate Text='Abrir manual do usuário'}">
-      <ui:CardAction.Icon><ui:SymbolIcon Symbol="BookOpen24" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon>
-      <StackPanel><TextBlock Text="{loc:Translate Text='Manual do usuário'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Consulte o manual do Cube Baby em PDF.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
+     <ui:CardAction ToolTip="{loc:Translate Text='Abre guias do cubeControl e manuais do pedal, disponíveis offline.'}" x:Name="DocumentationCard" Style="{StaticResource QuickAction}" Click="DocumentationClick" AutomationProperties.Name="{loc:Translate Text='Abrir documentação'}">
+      <ui:CardAction.Icon><ui:SymbolIcon Symbol="Open24" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon>
+      <StackPanel><TextBlock Text="{loc:Translate Text='Documentação'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Guias do aplicativo, ajuda e manuais do pedal.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
      </ui:CardAction>
      </WrapPanel>
      <ui:CardExpander x:Name="PedalShortcutsCard" Style="{StaticResource SettingsExpander}" IsExpanded="True">
@@ -844,8 +808,8 @@
       </WrapPanel>
       <TextBlock Text="{loc:Translate Text='Reinstalar / atualizar firmware'}" Style="{StaticResource BodyStrongText}" Margin="0,16,0,8"/>
       <TextBlock Text="{loc:Translate Text='Feche o flash_loader. Ligue o pedal conectado ao PC segurando o terceiro footswitch para entrar em modo flash. Escolha a variante correta; presets e IRs podem ser substituídos.'}" Style="{StaticResource HelpText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
-      <ComboBox ItemsSource="{Binding Firmwares}" SelectedItem="{Binding SelectedFirmware}" DisplayMemberPath="Name" IsEnabled="{Binding CanChooseFirmware}" ToolTip="{Binding SelectedFirmware.Path}" AutomationProperties.Name="{loc:Translate Text='Firmware do Cube Baby'}" HorizontalAlignment="Stretch"/>
-      <WrapPanel Margin="0,8,0,0">
+      <ComboBox ItemsSource="{Binding Firmwares}" SelectedItem="{Binding SelectedFirmware}" DisplayMemberPath="Name" IsEnabled="{Binding CanChooseFirmware}" ToolTip="{Binding SelectedFirmware.Path}" AutomationProperties.Name="{loc:Translate Text='Firmware do Cube Baby'}" HorizontalAlignment="Left" Width="{Binding ActualWidth, ElementName=FirmwareActions}"/>
+      <WrapPanel x:Name="FirmwareActions" HorizontalAlignment="Left" Margin="0,8,0,0">
        <ui:Button Content="{loc:Translate Text='Escolher arquivo .up'}" Command="{Binding ChooseFirmware}"/>
        <ui:Button Content="{loc:Translate Text='Atualizar lista'}" Command="{Binding RefreshFirmwareList}"/>
        <ui:Button Content="{loc:Translate Text='Reinstalar / atualizar'}" Command="{Binding InstallFirmware}" ToolTip="{loc:Translate Text='Disponível após desconectar o modo normal do pedal. Requer modo flash e permissão de administrador.'}"/>
@@ -876,11 +840,11 @@
     <TextBlock MouseLeftButtonUp="BackingReturnClick" Cursor="Hand" Text="{Binding SelectedTrack.Title}" ToolTip="{Binding SelectedTrack.Title}" MaxWidth="210" TextTrimming="CharacterEllipsis" FontSize="12" Margin="4,0,4,8" Foreground="{DynamicResource CubeText}"/>
     <ProgressBar Minimum="0" Maximum="{Binding Duration}" Value="{Binding Position}" Height="3" Margin="4,0,4,6" IsHitTestVisible="False"/><TextBlock Text="{loc:Translate Value={Binding Status}}" Visibility="{Binding HasError,Converter={StaticResource Visible}}" TextWrapping="Wrap" MaxWidth="220"/>
     <StackPanel Orientation="Horizontal">
-     <StackPanel.Resources><Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Setter Property="Width" Value="44"/><Setter Property="MinWidth" Value="44"/><Setter Property="Height" Value="40"/><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="2,0"/><Setter Property="Appearance" Value="Transparent"/></Style></StackPanel.Resources>
-     <ui:Button Command="{Binding Previous}" ToolTip="{loc:Translate Text='Faixa anterior'}" AutomationProperties.Name="{loc:Translate Text='Faixa anterior'}"><ui:Button.Icon><ui:SymbolIcon Symbol="Previous24" FontSize="20"/></ui:Button.Icon></ui:Button>
-     <ui:Button Command="{Binding PlayPause}" Appearance="Primary" ToolTip="{loc:Translate Value={Binding PlayLabel}}" AutomationProperties.Name="{loc:Translate Value={Binding PlayLabel}}"><ui:Button.Icon><ui:SymbolIcon Symbol="{Binding PlayIcon}" FontSize="20"/></ui:Button.Icon></ui:Button>
-     <ui:Button Command="{Binding Stop}" ToolTip="{loc:Translate Text='Parar'}" AutomationProperties.Name="{loc:Translate Text='Parar'}"><ui:Button.Icon><ui:SymbolIcon Symbol="Stop24" FontSize="20"/></ui:Button.Icon></ui:Button>
-     <ui:Button Command="{Binding Next}" ToolTip="{loc:Translate Text='Próxima faixa'}" AutomationProperties.Name="{loc:Translate Text='Próxima faixa'}"><ui:Button.Icon><ui:SymbolIcon Symbol="Next24" FontSize="20"/></ui:Button.Icon></ui:Button>
+     <StackPanel.Resources><Style TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}"><Setter Property="Margin" Value="2,0"/><Setter Property="Appearance" Value="Transparent"/></Style></StackPanel.Resources>
+     <ui:Button Command="{Binding Previous}" ToolTip="{loc:Translate Text='Faixa anterior'}" AutomationProperties.Name="{loc:Translate Text='Faixa anterior'}"><ui:SymbolIcon Symbol="Previous24" FontSize="16"/></ui:Button>
+     <ui:Button Command="{Binding PlayPause}" Appearance="Primary" ToolTip="{loc:Translate Value={Binding PlayLabel}}" AutomationProperties.Name="{loc:Translate Value={Binding PlayLabel}}"><ui:SymbolIcon Symbol="{Binding PlayIcon}" FontSize="16"/></ui:Button>
+     <ui:Button Command="{Binding Stop}" ToolTip="{loc:Translate Text='Parar'}" AutomationProperties.Name="{loc:Translate Text='Parar'}"><ui:SymbolIcon Symbol="Stop24" FontSize="16"/></ui:Button>
+     <ui:Button Command="{Binding Next}" ToolTip="{loc:Translate Text='Próxima faixa'}" AutomationProperties.Name="{loc:Translate Text='Próxima faixa'}"><ui:SymbolIcon Symbol="Next24" FontSize="16"/></ui:Button>
     </StackPanel>
    </StackPanel>
   </Border>

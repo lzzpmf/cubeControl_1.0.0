@@ -29,6 +29,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public string DataDirectory { get; }
     public ConnectionViewModel Connection { get; } = new();
     public IrViewModel Ir { get; } = new();
+    public IrAuditionViewModel IrAudition { get; }
     public PresetViewModel[] Presets { get; }
     private TaskCompletionSource? operationCompletion;
     public bool Busy
@@ -85,9 +86,11 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public ICommand RestoreIr { get; }
     public ICommand ResetPresets { get; }
     public ICommand ApplyIrPack { get; }
+    public ICommand RestoreOriginalIrs { get; }
 
-    public EditorViewModel(string? dataDirectory = null)
+    public EditorViewModel(string? dataDirectory = null, Cube.Desktop.Services.IIrAuditionService? auditionService = null)
     {
+        IrAudition = new IrAuditionViewModel(this, auditionService);
         DataDirectory = dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl");
 #if CUBE_SIMULATION
         DataDirectory = dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl-Simulation");
@@ -101,7 +104,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Status = "SIMULAÇÃO — conecte o pedal virtual. Sem áudio do equipamento.";
 #endif
         Presets = Enumerable.Range(0, 3).Select(i => new PresetViewModel(i, Change)).ToArray();
-        IrLibrary = new IrLibraryViewModel(() => !Busy);
+        IrLibrary = new IrLibraryViewModel(() => !Busy, importedDirectory: PackStore.ImportedDirectory);
         IrLibrary.SelectionChanged += SelectLibraryIr;
         InitializeVisual();
         Amp.Edited += AmpEdited;
@@ -128,7 +131,8 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Ir.PropertyChanged += (_, _) => RefreshPresentation();
         RestoreIr = Command(RestoreIrAsync, () => CanOperate, changesEffects: true);
         ResetPresets = Command(ResetPresetsAsync, () => CanOperate && factory != null, changesEffects: true);
-        ApplyIrPack = Command(ApplyIrPackAsync, () => CanOperate && !(packEditor?.Dirty ?? false) && SelectedIrPack != null && SelectedIrPack.Problem.Length == 0, changesEffects: true);
+        ApplyIrPack = Command(ApplyIrPackAsync, () => CanOperate && (packEditor?.HasEntries ?? (SelectedIrPack != null)));
+        RestoreOriginalIrs = Command(RestoreOriginalIrsAsync, () => CanOperate && originalPacks.Count > 0, changesEffects: true);
         InitializeFirmware();
         LoadFactory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "CubeSuite", "CubeSuite.exe"));
     }
@@ -536,35 +540,42 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private async Task PreviewAsync()
     {
-        BusyDetail = "Preparando prévia de IR…";
-        if (originalRam == null)
+        var auditionVersion = await IrAudition.SuspendForTransfer();
+        bool auditionSuccess = false;
+        try
         {
-            var snapshot = await session!.ReadIrRam();
-            if (snapshot.Payload.Length != 2052) throw new FormatException("Snapshot RAM inválido.");
-            snapshot = new(snapshot.Flag, snapshot.Payload.ToArray());
-            originalRam = snapshot; ramIdentity = session.IdentityHex;
-        }
-        if (ramIdentity != session!.IdentityHex) throw new InvalidOperationException("O snapshot de prévia pertence a outra identidade de aparelho.");
-        Ir.PreviewActive = true; // Set before mutation so interrupted transfers retain recovery state.
-        Ir.PreviewConfirmed = false;
-        var audio = Ir.Audio!;
-        string sourcePath = Ir.SourcePath, collection = Ir.SourceCollection;
-        int distance = Ir.Distance;
-        var bankContext = confirmed?.ToArray();
-        object group = OperationGroup("IR");
-        await session!.ApplyIrRam(new(1, audio.LivePayload(distance)), Progress());
-        Ir.PreviewConfirmed = true;
-        Ir.State = "Prévia confirmada em RAM. Nenhum slot substituído."; Status = Ir.State; Refresh();
-        RecordOperation("Prévia de IR: " + Ir.File, async () =>
-        {
-            bool done = false;
-            await Execute(async () =>
+            BusyDetail = "Preparando prévia de IR…";
+            if (originalRam == null)
             {
-                IrLibrary.ClearSelection(); Ir.Load(sourcePath, audio, collection.Length == 0 ? null : collection); Ir.Distance = distance;
-                await PreviewAsync(); done = true;
-            });
-            return done;
-        }, () => CanOperate && bankContext != null && confirmed?.SequenceEqual(bankContext) == true, group);
+                var snapshot = await session!.ReadIrRam();
+                if (snapshot.Payload.Length != 2052) throw new FormatException("Snapshot RAM inválido.");
+                snapshot = new(snapshot.Flag, snapshot.Payload.ToArray());
+                originalRam = snapshot; ramIdentity = session.IdentityHex;
+            }
+            if (ramIdentity != session!.IdentityHex) throw new InvalidOperationException("O snapshot de prévia pertence a outra identidade de aparelho.");
+            Ir.PreviewActive = true; // Set before mutation so interrupted transfers retain recovery state.
+            Ir.PreviewConfirmed = false;
+            var audio = Ir.Audio!;
+            string sourcePath = Ir.SourcePath, collection = Ir.SourceCollection;
+            int distance = Ir.Distance;
+            var bankContext = confirmed?.ToArray();
+            object group = OperationGroup("IR");
+            await session!.ApplyIrRam(new(1, audio.LivePayload(distance)), Progress());
+            Ir.PreviewConfirmed = true;
+            Ir.State = "Prévia confirmada em RAM. Nenhum slot substituído."; Status = Ir.State; Refresh();
+            RecordOperation("Prévia de IR: " + Ir.File, async () =>
+            {
+                bool done = false;
+                await Execute(async () =>
+                {
+                    IrLibrary.ClearSelection(); Ir.Load(sourcePath, audio, collection.Length == 0 ? null : collection); Ir.Distance = distance;
+                    await PreviewAsync(); done = true;
+                });
+                return done;
+            }, () => CanOperate && bankContext != null && confirmed?.SequenceEqual(bankContext) == true, group);
+            auditionSuccess = true;
+        }
+        finally { await IrAudition.CompleteTransfer(auditionVersion, auditionSuccess); }
     }
     public async Task EndPreviewAsync()
     {
@@ -577,6 +588,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private async Task RestorePreviewAsync()
     {
+        await IrAudition.StopAsync();
         if (originalRam == null) return;
         BusyDetail = "Restaurando IR anterior…";
         if (session == null) throw new IOException("Reconecte para restaurar o IR anterior. O snapshot foi preservado.");
@@ -690,23 +702,54 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private async Task ApplyIrPackAsync()
     {
-        var pack = SelectedIrPack ?? throw new InvalidOperationException("Selecione um pack de IRs.");
+        IrPack pack;
+        if (packEditor != null && ReferenceEquals(packEditor.Current, SelectedIrPack))
+            pack = PackStore.Resolve(packEditor.ApplicationDraft());
+        else pack = SelectedIrPack ?? throw new InvalidOperationException("Selecione um pack de IRs.");
+        await ApplyPreparedIrPackAsync(pack);
+    }
+    private async Task ApplyPreparedIrPackAsync(IrPack pack, bool restoration = false)
+    {
         if (pack.Definition != null) pack = PackStore.Resolve(pack.Definition);
-        if (pack.Problem.Length > 0) throw new FormatException("Pendências: " + pack.Problem);
-        await RestorePreviewAsync(); var originals = new byte[8][];
-        for (int i = 0; i < 8; i++) { BusyDetail = Status = $"Leitura do IR {i + 1}/8…"; originals[i] = await session!.ReadIrSlot(i, Progress()); await BackupIr(i, originals[i]); }
-        var different = Enumerable.Range(0, 8).Select(i => pack.HasSlot(i) && !originals[i].SequenceEqual(pack.Sectors[i])).ToArray();
-        for (int i = 0; i < 8; i++) UpdateCabinet(i, originals[i]);
-        if (!different.Any(value => value))
+        // Legacy selection hooks are retained for callers/tests; the new review supports per-slot repair states.
+        if (ChoosePackIrSlots != null && pack.Problem.Length > 0) throw new FormatException("Pendências: " + pack.Problem);
+        var originals = new byte[8][];
+        for (int i = 0; i < 8; i++) { BusyDetail = Status = $"Leitura do IR {i + 1}/8…"; originals[i] = await session!.ReadIrSlot(i, Progress()); await BackupIr(i, originals[i]); UpdateCabinet(i, originals[i]); }
+        bool[] Differences(IrPack value) => Enumerable.Range(0, 8).Select(i => value.HasSlot(i) && value.Sectors[i].Length == 4096 && !originals[i].SequenceEqual(value.Sectors[i])).ToArray();
+        var different = Differences(pack);
+        int[]? selection;
+        if (restoration)
         {
-            Status = Ir.State = "Os slots preenchidos já correspondem ao pack selecionado. Nenhuma gravação necessária.";
-            Completed(Status); return;
+            var panel = new System.Windows.Controls.StackPanel();
+            var boxes = Enumerable.Range(0, 8).Select(i => new System.Windows.Controls.CheckBox {
+                Content = $"Slot {i + 1} · {LanguageService.T(pack.SlotName(i))}", IsChecked = different[i], IsEnabled = different[i], Margin = new Thickness(0,4,0,4) }).ToArray();
+            foreach (var box in boxes) panel.Children.Add(box);
+            var dialog = new Controls.PackDialog("Restaurar IRs originais", panel) { IsPrimaryEnabled = boxes.Any(b => b.IsChecked == true) };
+            foreach (var box in boxes) { box.Checked += (_,_) => dialog.IsPrimaryEnabled = boxes.Any(b => b.IsChecked == true); box.Unchecked += (_,_) => dialog.IsPrimaryEnabled = boxes.Any(b => b.IsChecked == true); }
+            selection = await dialog.ShowAsync() == Controls.PackDialogChoice.Primary ? Enumerable.Range(0,8).Where(i => boxes[i].IsChecked == true).ToArray() : null;
         }
-        var selection = ChoosePackIrSlots != null ? await ChoosePackIrSlots(different) : await ShowPackIrSelection(pack, different);
-        var selected = selection?.Distinct().Order().ToArray();
-        if (selected == null || selected.Length == 0) { Status = "Restauração de IRs cancelada."; return; }
-        if (selected.Any(i => i < 0 || i >= 8 || !different[i])) throw new InvalidOperationException("Seleção de IRs inválida.");
+        else if (ChoosePackIrSlots != null)
+        {
+            if (!different.Any(v => v)) { Status = Ir.State = "Os slots preenchidos já correspondem ao pack selecionado. Nenhuma gravação necessária."; Completed(Status); return; }
+            selection = await ChoosePackIrSlots(different);
+        }
+        else
+        {
+            if (pack.Definition == null) throw new InvalidOperationException("Use Restaurar IRs originais para packs binários.");
+            var review = new IrPackReviewViewModel(pack.Definition, PackStore, originals, PackEditor);
+            if (!await ShowPackReview(review)) { Status = "Aplicação de IRs cancelada."; return; }
+            if (!review.CanContinue) throw new InvalidOperationException("Selecione ao menos um IR disponível.");
+            pack = PackStore.Resolve(review.SelectedDefinition());
+            if (pack.Problem.Length > 0) throw new FormatException("Pendências: " + pack.Problem);
+            different = Differences(pack); selection = pack.Definition!.Entries.Select(e => e.Slot).ToArray();
+        }
+        if (selection == null || selection.Length == 0) { Status = "Aplicação de IRs cancelada."; return; }
+        if (selection.Any(i => i < 0 || i >= 8 || !pack.HasSlot(i) || pack.Sectors[i].Length != 4096)) throw new InvalidOperationException("Seleção de IRs inválida.");
+        var selected = selection.Distinct().Order().Where(i => different[i]).ToArray();
+        if (selected.Length == 0) { Status = Ir.State = "Os slots preenchidos já correspondem ao pack selecionado. Nenhuma gravação necessária."; Completed(Status); return; }
         if (!await Ask($"Aplicar {pack.Name} nos slots: {string.Join(", ", selected.Select(i => i + 1))}?\nOs IRs atuais foram preservados em memória nesta sessão. Somente os slots selecionados serão substituídos.")) return;
+        if (!await ConfirmAdvancedPreviewChangeAsync()) return;
+        await RestorePreviewAsync();
         var completedSlots = new List<int>();
         try
         {
@@ -888,5 +931,5 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         catch (Exception ex) { FaultAdvancedPreview(ex, stage); return false; }
         finally { advancedLifecycle.Release(); }
     }
-    public void Dispose() { delayMonitorStop?.Cancel(); Delay.Edited -= DelayEdited; reverbMonitorStop?.Cancel(); Reverb.Edited -= ReverbEdited; chorusMonitorStop?.Cancel(); Chorus.Edited -= ChorusEdited; phaserMonitorStop?.Cancel(); Phaser.Edited -= PhaserEdited; Amp.Edited -= AmpEdited; Amp.PropertyChanged -= AmpPresentationChanged; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
+    public void Dispose() { IrAudition.Dispose(); delayMonitorStop?.Cancel(); Delay.Edited -= DelayEdited; reverbMonitorStop?.Cancel(); Reverb.Edited -= ReverbEdited; chorusMonitorStop?.Cancel(); Chorus.Edited -= ChorusEdited; phaserMonitorStop?.Cancel(); Phaser.Edited -= PhaserEdited; Amp.Edited -= AmpEdited; Amp.PropertyChanged -= AmpPresentationChanged; StopAutomaticConnection(); irSelectionGeneration++; queue?.Stop(); session?.Dispose(); session = null; }
 }

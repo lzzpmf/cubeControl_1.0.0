@@ -80,6 +80,26 @@ internal static class AmpCapacitorTests
         window.Show();
         try
         {
+            var sections = (ListBox)editor.FindName("AmpSections");
+            for (int section = 0; section < sections.Items.Count; section++)
+            {
+                sections.SelectedIndex = section;
+                model.Amp.Load(bytes, "Reloaded amp");
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                window.UpdateLayout();
+                var references = Descendants<TextBlock>(editor).SelectMany(t => t.Inlines.OfType<System.Windows.Documents.Run>())
+                    .Where(r => System.Windows.Data.BindingOperations.GetBinding(r, System.Windows.Documents.Run.TextProperty)?.Path.Path == "ReferenceText").ToArray();
+                foreach (var reference in references)
+                {
+                    Check(System.Windows.Data.BindingOperations.GetBinding(reference, System.Windows.Documents.Run.TextProperty)!.Mode == System.Windows.Data.BindingMode.OneWay,
+                        "Loaded amp reference must use a read-only binding");
+                    Check(reference.DataContext is AmpControl control && reference.Text == control.ReferenceText,
+                        "Reloaded amp reference is displayed correctly");
+                }
+                if (section == 0) Check(references.Length > 0, "Main amp controls render their loaded references");
+            }
+            Console.WriteLine("PASS amp reload renders every editor section with read-only references");
+            sections.SelectedIndex = 3;
             foreach (int width in new[] { 920, 540 })
             {
                 window.Width = width;

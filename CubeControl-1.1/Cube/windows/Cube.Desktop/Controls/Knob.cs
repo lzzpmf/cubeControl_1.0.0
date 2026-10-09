@@ -1,7 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
@@ -12,29 +11,6 @@ namespace Cube.Desktop.Controls;
 
 public sealed class Knob : FrameworkElement
 {
-    private static readonly ImageSource OfficialKnob = LoadOfficialFace("Knobs/knob_oficial_01.png");
-    private static readonly ImageSource OfficialFader = LoadOfficialFace("Faders/fader_oficial_01.png");
-
-    private static ImageSource LoadOfficialFace(string asset)
-    {
-        var bitmap = new BitmapImage(new Uri($"pack://application:,,,/CubeControl;component/Assets/imagens/{asset}"));
-        // Trim transparent canvas margins for consistent sizing and rotation around the cap.
-        var pixels = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
-        int stride = pixels.PixelWidth * 4;
-        var data = new byte[stride * pixels.PixelHeight];
-        pixels.CopyPixels(data, stride, 0);
-        int left = pixels.PixelWidth, top = pixels.PixelHeight, right = 0, bottom = 0;
-        for (int y = 0; y < pixels.PixelHeight; y++)
-            for (int x = 0; x < pixels.PixelWidth; x++)
-                if (data[y * stride + x * 4 + 3] > 16)
-                {
-                    left = Math.Min(left, x); top = Math.Min(top, y);
-                    right = Math.Max(right, x); bottom = Math.Max(bottom, y);
-                }
-        var face = new CroppedBitmap(bitmap, new Int32Rect(left, top, right - left + 1, bottom - top + 1));
-        face.Freeze();
-        return face;
-    }
     public static readonly DependencyProperty StepSizeProperty = DependencyProperty.Register(nameof(StepSize), typeof(double), typeof(Knob),
         new PropertyMetadata(0d, (d, _) => d.CoerceValue(ValueProperty)), value => value is double step && double.IsFinite(step) && step >= 0);
     public double StepSize { get => (double)GetValue(StepSizeProperty); set => SetValue(StepSizeProperty, value); }
@@ -76,6 +52,15 @@ public sealed class Knob : FrameworkElement
     public int WheelStepDelta { get => (int)GetValue(WheelStepDeltaProperty); set => SetValue(WheelStepDeltaProperty, value); }
     public static readonly DependencyProperty AccentProperty = DependencyProperty.Register(nameof(Accent), typeof(Brush), typeof(Knob), new FrameworkPropertyMetadata(new SolidColorBrush(Color.FromRgb(141, 185, 172)), FrameworkPropertyMetadataOptions.AffectsRender));
     public Brush Accent { get => (Brush)GetValue(AccentProperty); set => SetValue(AccentProperty, value); }
+    public static readonly RoutedEvent RestoreRequestedEvent = EventManager.RegisterRoutedEvent(nameof(RestoreRequested), RoutingStrategy.Bubble, typeof(RoutedEventHandler), typeof(Knob));
+    public event RoutedEventHandler RestoreRequested { add => AddHandler(RestoreRequestedEvent, value); remove => RemoveHandler(RestoreRequestedEvent, value); }
+    private void RequestRestore()
+    {
+        wheelDelta = 0;
+        if (IsMouseCaptured) ReleaseMouseCapture();
+        EndGesture();
+        RaiseEvent(new RoutedEventArgs(RestoreRequestedEvent, this));
+    }
     private Point start;
     private double startValue;
     private decimal wheelDelta;
@@ -125,8 +110,9 @@ public sealed class Knob : FrameworkElement
                 {
                     dc.DrawLine(new Pen(accent, 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round }, new(center.X, bottom), new(center.X, handleY));
                     double width = Math.Min(46, ActualWidth - 8);
-                    double height = width * OfficialFader.Height / OfficialFader.Width;
-                    dc.DrawImage(OfficialFader, new Rect(center.X - width / 2, handleY - height / 2, width, height));
+                    var faderFace = ControlArtwork.FaderFace;
+                    double height = width * faderFace.Height / faderFace.Width;
+                    dc.DrawImage(faderFace, new Rect(center.X - width / 2, handleY - height / 2, width, height));
                 }
                 else
                 {
@@ -148,7 +134,15 @@ public sealed class Knob : FrameworkElement
                             new(center.X + Math.Cos(tickAngle) * (radius + 4), center.Y + Math.Sin(tickAngle) * (radius + 4)));
                     }
                 dc.PushTransform(new RotateTransform(-135 + position * 270, center.X, center.Y));
-                dc.DrawImage(OfficialKnob, new Rect(center.X - radius + 4, center.Y - radius + 4, (radius - 4) * 2, (radius - 4) * 2));
+                var knobFace = ControlArtwork.KnobFace;
+                double pivotY = TryFindResource("CubeControlKnobPivotY") is double pivot ? pivot : .5;
+                double faceExtent = Math.Max(knobFace.Width / 2, knobFace.Height * Math.Max(pivotY, 1 - pivotY));
+                double faceScale = (radius - 4) / faceExtent;
+                dc.DrawImage(knobFace, new Rect(center.X - knobFace.Width * faceScale / 2, center.Y - knobFace.Height * pivotY * faceScale,
+                    knobFace.Width * faceScale, knobFace.Height * faceScale));
+                if (TryFindResource("CubeControlExternalKnobMarker") is true)
+                    dc.DrawLine(new Pen(ThemeService.Brush("CubeKnobTrack"), 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round },
+                        new Point(center.X, center.Y - radius + 2), new Point(center.X, center.Y - radius - 3));
                 dc.Pop();
             }
             dc.Pop(); return;
@@ -172,7 +166,7 @@ public sealed class Knob : FrameworkElement
         using (var context = geometry.Open()) { context.BeginFigure(At(135), false, false); context.ArcTo(At(135 + degrees), new(radius, radius), 0, degrees > 180, SweepDirection.Clockwise, true, false); }
         dc.DrawGeometry(null, pen, geometry);
     }
-    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { base.OnMouseLeftButtonDown(e); if (!IsEnabled) return; Focus(); BeginGesture(false); start = e.GetPosition(this); startValue = Value; CaptureMouse(); e.Handled = true; }
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { base.OnMouseLeftButtonDown(e); if (!IsEnabled) return; Focus(); if (e.ClickCount == 2) { RequestRestore(); e.Handled = true; return; } BeginGesture(false); start = e.GetPosition(this); startValue = Value; CaptureMouse(); e.Handled = true; }
     private void Adjust(Point now)
     {
         double delta = (start.Y - now.Y + (IsFader ? 0 : now.X - start.X)) * (Maximum - Minimum) / (IsFader ? Math.Max(1, ActualHeight - 48) : 160);
@@ -208,6 +202,7 @@ public sealed class Knob : FrameworkElement
     protected override void OnKeyDown(KeyEventArgs e)
     {
         if (!IsEnabled) return;
+        if (e.Key == Key.Back) { RequestRestore(); e.Handled = true; return; }
         if (e.Key is Key.Up or Key.Right or Key.Down or Key.Left or Key.Home or Key.End) BeginGesture(true);
         switch (e.Key)
         {

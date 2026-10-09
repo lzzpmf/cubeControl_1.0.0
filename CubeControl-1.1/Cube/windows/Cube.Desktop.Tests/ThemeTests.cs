@@ -14,6 +14,147 @@ using ThemeMode = Cube.Desktop.Appearance.ThemeMode;
 
 internal static class ThemeTests
 {
+    private static async Task CheckPlayerFinishes(ThemeService service)
+    {
+        var actions = new[] { ("play", "▶"), ("pause", "Ⅱ"), ("stop", "■"), ("loop", "↻"),
+            ("previous", "⏮"), ("back", "◀◀"), ("forward", "▶▶"), ("next", "⏭"),
+            ("sound", "♪"), ("mute", "×"), ("pitch-down", "♭"), ("pitch-up", "♯") };
+        var panel = new WrapPanel { Margin = new Thickness(16) };
+        var faces = new List<BackingButtonFace>();
+        foreach (var (art, glyph) in actions)
+        {
+            var face = new BackingButtonFace { Art = art, Glyph = glyph, Width = 56, Height = 56 };
+            faces.Add(face);
+            var group = new StackPanel { Width = 116, Height = 98 };
+            group.Children.Add(face);
+            var label = new TextBlock { Text = art, HorizontalAlignment = HorizontalAlignment.Center };
+            label.SetResourceReference(TextBlock.ForegroundProperty, "CubeText");
+            group.Children.Add(label); panel.Children.Add(group);
+        }
+        panel.Children.Add(new BackingButtonFace { Art = "loop", Glyph = "↻", IsActive = true, Width = 56, Height = 56, Margin = new Thickness(12) });
+        panel.Children.Add(new Button { IsEnabled = false, Content = new BackingButtonFace { Art = "play", Glyph = "▶", Width = 56, Height = 56 }, Margin = new Thickness(12) });
+        var window = new Window { Width = 540, Height = 520, Content = panel, ShowInTaskbar = false, Title = "Player finishes" };
+        window.SetResourceReference(Window.BackgroundProperty, "CubeCanvas");
+        window.Show();
+        string folder = "C:/CubeControl-Build/reports/control-finishes";
+        Directory.CreateDirectory(folder);
+        byte[] Pixels(Visual visual, int width, int height)
+        {
+            var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+            var isolated = new DrawingVisual();
+            using (var dc = isolated.RenderOpen()) dc.DrawRectangle(new VisualBrush(visual) { Stretch = Stretch.Fill }, null, new Rect(0, 0, width, height));
+            bitmap.Render(isolated);
+            var pixels = new byte[width * height * 4]; bitmap.CopyPixels(pixels, width * 4, 0); return pixels;
+        }
+        try
+        {
+            foreach (var mode in new[] { ThemeMode.Light, ThemeMode.Dark })
+            {
+                service.Preview(mode);
+                byte[][]? previous = null;
+                foreach (var finish in Enum.GetValues<ControlFinish>())
+                {
+                    panel.LayoutTransform = Transform.Identity;
+                    window.Width = 540; window.Height = 520;
+                    service.PreviewFinish(finish);
+                    window.UpdateLayout(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                    var images = faces.Select(face => Pixels(face, 56, 56)).ToArray();
+                    if (images.Any(p => !p.Any(b => b != 0)) || previous != null && images.Where((p, i) => p.SequenceEqual(previous[i])).Any())
+                        throw new Exception($"Player faces did not render/update: {mode}/{finish}");
+                    if (images.Select(Convert.ToBase64String).Distinct().Count() != actions.Length)
+                        throw new Exception("Player actions must remain visually distinct: " + string.Join(",", actions.Where((a, i) => images.Where((p, j) => j != i && p.SequenceEqual(images[i])).Any()).Select(a => a.Item1)));
+                    previous = images;
+                    Console.WriteLine($"PASS all twelve existing player faces update and remain distinct in {mode}/{finish}");
+                    foreach (double scale in new[] { 1d, 1.5d })
+                    {
+                        panel.LayoutTransform = new ScaleTransform(scale, scale);
+                        window.Width = 540 * scale; window.Height = 520 * scale;
+                        window.UpdateLayout(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                        var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
+                        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                        using var output = File.Create(Path.Combine(folder, $"player-{mode}-{finish}-{scale * 100:0}.png")); encoder.Save(output);
+                    }
+                }
+            }
+            panel.LayoutTransform = Transform.Identity; window.Width = 540; window.Height = 520;
+            var before = Pixels(faces[0], 56, 56);
+            ApplicationThemeManager.Apply(ApplicationTheme.HighContrast);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            if (before.SequenceEqual(Pixels(faces[0], 56, 56))) throw new Exception("Player must switch to system glyphs in high contrast");
+            Console.WriteLine("PASS player uses system glyphs in high contrast");
+            service.Preview(ThemeMode.Dark);
+        }
+        finally { window.Close(); }
+    }
+    private static async Task CheckControlFinishes(ThemeService service, EditorViewModel model, Knob existingKnob)
+    {
+        void Check(bool valid, string label) { if (!valid) throw new Exception(label); Console.WriteLine("PASS " + label); }
+        string folder = "C:/CubeControl-Build/reports/control-finishes";
+        Directory.CreateDirectory(folder);
+        var panel = new WrapPanel { Margin = new Thickness(20) };
+        var dial = new Knob { Width = 94, Height = 94, Maximum = 127, Value = 64 };
+        var disabled = new Knob { Width = 94, Height = 94, Maximum = 127, Value = 64, IsEnabled = false };
+        var vertical = new Knob { Width = 72, Height = 160, Maximum = 100, Value = 50, IsFader = true };
+        var horizontal = new Slider { Width = 140, Maximum = 100, Value = 50, VerticalAlignment = VerticalAlignment.Center };
+        var on = new Wpf.Ui.Controls.ToggleSwitch { Content = "On", IsChecked = true };
+        var off = new Wpf.Ui.Controls.ToggleSwitch { Content = "Off", IsChecked = false };
+        var foot = new Border { Width = 62, Height = 62 };
+        foot.SetResourceReference(Border.BackgroundProperty, "CubeControlFootswitch");
+        foreach (var control in new FrameworkElement[] { dial, disabled, vertical, horizontal, on, off, foot })
+        {
+            control.Margin = new Thickness(8);
+            panel.Children.Add(control);
+        }
+        foreach (double value in new[] { 0d, 64d, 127d })
+            panel.Children.Add(new Knob { Width = 94, Height = 94, Maximum = 127, Value = value, Margin = new Thickness(8) });
+        var preview = new Window { Width = 640, Height = 420, Content = panel, ShowInTaskbar = false, Title = "Control finishes" };
+        preview.SetResourceReference(Window.BackgroundProperty, "CubeCanvas");
+        preview.Show();
+        try
+        {
+            foreach (var mode in new[] { ThemeMode.Light, ThemeMode.Dark })
+            {
+                service.Preview(mode);
+                ImageSource? previousFace = null;
+                foreach (var finish in Enum.GetValues<ControlFinish>())
+                {
+                    int revision = (int)Application.Current.Resources["CubeThemeRevision"];
+                    service.PreviewFinish(finish);
+                    await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                    var face = (ImageSource)Application.Current.Resources["CubeControlKnobFace"];
+                    Check(face.Width > 0 && !ReferenceEquals(face, previousFace) && (int)Application.Current.Resources["CubeThemeRevision"] > revision, $"{mode}/{finish} replaces faces and invalidates existing controls");
+                    previousFace = face;
+                    var onFace = (Border)on.Template.FindName("SwitchFace", on);
+                    var offFace = (Border)off.Template.FindName("SwitchFace", off);
+                    Check(ReferenceEquals(onFace.Background, Application.Current.Resources["OfficialSwitchOn"]) && ReferenceEquals(offFace.Background, Application.Current.Resources["OfficialSwitchOff"]) && !ReferenceEquals(onFace.Background, offFace.Background), "existing switches update their distinct on/off faces");
+                    Check(ReferenceEquals(foot.Background, Application.Current.Resources["CubeControlFootswitch"]), "existing footswitch updates its face");
+                    Check(existingKnob.Value == 4 && dial.Value == 64 && vertical.Value == 50 && horizontal.Value == 50 && on.IsChecked == true && off.IsChecked == false && model.WriteCommandCount == 0, "finish selection preserves values and sends no MIDI");
+                    var image = new RenderTargetBitmap(94, 94, 96, 96, PixelFormats.Pbgra32);
+                    image.Render(dial);
+                    var bytes = new byte[94 * 94 * 4]; image.CopyPixels(bytes, 94 * 4, 0);
+                    Check(bytes.Any(b => b != 0), "existing knob renders after finish selection");
+                    foreach (double scale in new[] { 1d, 1.5d })
+                    {
+                        panel.LayoutTransform = new ScaleTransform(scale, scale);
+                        preview.Height = scale == 1 ? 540 : 860;
+                        preview.UpdateLayout();
+                        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                        var bitmap = new RenderTargetBitmap((int)preview.ActualWidth, (int)preview.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+                        bitmap.Render(preview);
+                        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                        using var output = File.Create(Path.Combine(folder, $"{mode}-{finish}-{scale * 100:0}.png")); encoder.Save(output);
+                    }
+                }
+            }
+            var savedFinish = service.Finish;
+            ApplicationThemeManager.Apply(ApplicationTheme.HighContrast);
+            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Check(service.Finish == savedFinish && Application.Current.Resources["OfficialSwitchOn"] is DrawingBrush && Application.Current.Resources["CubeControlHorizontalFader"] is DrawingBrush && Application.Current.Resources["CubeControlFootswitch"] is DrawingBrush, "high contrast uses system drawings without losing finish");
+            service.Preview(ThemeMode.Dark);
+            Check(service.Finish == savedFinish && Application.Current.Resources["OfficialSwitchOn"] is ImageBrush, "leaving high contrast restores finish");
+        }
+        finally { preview.Close(); }
+    }
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr SendMessage(IntPtr handle, uint message, IntPtr wParam, string lParam);
     public static async Task Run()
@@ -23,6 +164,7 @@ internal static class ThemeTests
         string folder = Path.Combine(Path.GetTempPath(), "cube-theme-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder); string path = Path.Combine(folder, "appearance-v1.json");
         var service = Cube.Desktop.Appearance.ThemeService.Instance; var previous = service.Mode;
+        var previousFinish = service.Finish;
         var originalWindowsReader = service.ReadWindowsLightTheme;
         bool windowsLight = true;
         service.ReadWindowsLightTheme = () => windowsLight;
@@ -30,6 +172,18 @@ internal static class ThemeTests
         try
         {
             Check(ThemeSettings.Load(path) == ThemeMode.System, "new installations follow the system");
+            Check(ThemeSettings.LoadFinish(path) == ControlFinish.Official, "new installations use the official finish");
+            File.WriteAllText(path, "{\"Version\":1,\"Mode\":\"Light\"}");
+            Check(ThemeSettings.Load(path) == ThemeMode.Light && ThemeSettings.LoadFinish(path) == ControlFinish.Official, "old preferences keep theme and default to official finish");
+            File.WriteAllText(path, "{\"Version\":1,\"Mode\":\"Dark\",\"Finish\":\"unknown\"}");
+            Check(ThemeSettings.Load(path) == ThemeMode.Dark && ThemeSettings.LoadFinish(path) == ControlFinish.Official, "invalid finish preserves valid theme");
+            foreach (var finish in Enum.GetValues<ControlFinish>())
+            {
+                ThemeSettings.Save(path, ThemeMode.Light, finish);
+                Check(ThemeSettings.Load(path) == ThemeMode.Light && ThemeSettings.LoadFinish(path) == finish, $"{finish} survives restart");
+                ThemeSettings.Save(path, ThemeMode.Dark);
+                Check(ThemeSettings.LoadFinish(path) == finish, "saving theme preserves " + finish);
+            }
             foreach (var mode in Enum.GetValues<ThemeMode>()) { ThemeSettings.Save(path, mode); Check(ThemeSettings.Load(path) == mode, $"{mode} preference survives restart"); }
             File.WriteAllText(path, "{broken"); Check(ThemeSettings.Load(path) == ThemeMode.System, "invalid preference falls back to system");
             File.WriteAllText(path, "{\"Version\":1,\"Mode\":\"999\"}"); Check(ThemeSettings.Load(path) == ThemeMode.System, "unknown theme is rejected");
@@ -62,6 +216,8 @@ internal static class ThemeTests
             service.Preview(ThemeMode.Dark);
             Check(ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Dark && ((SolidColorBrush)text.Foreground).Color.R > 200, "dark theme refreshes existing resources");
             Check(knob.Value == 4 && model.WriteCommandCount == 0 && model.Current.Parameters[0].Value == 0, "theme switch preserves knob and preset values without MIDI writes");
+            await CheckControlFinishes(service, model, knob);
+            await CheckPlayerFinishes(service);
             double Contrast(string foreground, string background)
             {
                 Color fg = ((SolidColorBrush)Cube.Desktop.Appearance.ThemeService.Brush(foreground)).Color;
@@ -105,7 +261,7 @@ internal static class ThemeTests
         }
         finally
         {
-            service.Detach(); window?.Close(); service.ReadWindowsLightTheme = originalWindowsReader; service.Preview(previous);
+            service.Detach(); window?.Close(); service.ReadWindowsLightTheme = originalWindowsReader; service.PreviewFinish(previousFinish); service.Preview(previous);
             string resolved = Path.GetFullPath(folder);
             if (!resolved.StartsWith(Path.GetFullPath(Path.GetTempPath()), StringComparison.OrdinalIgnoreCase) || !Path.GetFileName(resolved).StartsWith("cube-theme-tests-")) throw new IOException("Unexpected test directory");
             Directory.Delete(resolved, true);

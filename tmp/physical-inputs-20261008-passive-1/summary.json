@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-09T02:45:40.9495387+00:00",
+  "finished": "2026-10-09T02:46:40.9506023+00:00",
+  "seconds": 60,
+  "identity": "SINCO-CubeBaby",
+  "identityHex": "53494E434F2D437562654261627920202020200113141516171819",
+  "rawMessages": 0,
+  "writes": 0,
+  "requestsDuringObservation": 0,
+  "limitation": "Physical actions and operating modes must be confirmed by the participant. Silence only applies to this observation window."
+}

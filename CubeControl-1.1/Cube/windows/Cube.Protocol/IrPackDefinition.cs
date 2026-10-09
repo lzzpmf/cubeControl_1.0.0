@@ -14,11 +14,12 @@ public sealed record IrPackDefinition
     public IrPackEntry[] Entries { get; init; } = [];
 }
 
-public sealed class IrPackStore(string libraryDirectory, string dataDirectory)
+public sealed partial class IrPackStore(string libraryDirectory, string dataDirectory)
 {
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
     public string DirectoryPath => Path.Combine(dataDirectory, "IrPacks");
     public string LibraryDirectory => libraryDirectory;
+    public string ImportedDirectory => Path.Combine(dataDirectory, "ImportedIrs");
     public static void Validate(IrPackDefinition pack)
     {
         if (pack.Version != 1 || !Guid.TryParseExact(pack.Id, "N", out _) || string.IsNullOrWhiteSpace(pack.Name)
@@ -37,14 +38,16 @@ public sealed class IrPackStore(string libraryDirectory, string dataDirectory)
     public IrPackEntry Reference(int slot, string relativePath, string name, int distance = 50)
     {
         string path = ResolvePath(relativePath);
+        if (new FileInfo(path).Length > 32 * 1024 * 1024) throw new FormatException("WAV excede 32 MB.");
         return new(slot, relativePath.Replace('\\', '/'), Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))), name, distance);
     }
     private string ResolvePath(string relative)
     {
-        string root = Path.GetFullPath(libraryDirectory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        string path = Path.GetFullPath(Path.Combine(root, relative.Replace('/', Path.DirectorySeparatorChar)));
+        bool imported = relative.StartsWith("Imported/", StringComparison.Ordinal);
+        string root = Path.GetFullPath(imported ? ImportedDirectory : libraryDirectory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        string path = Path.GetFullPath(Path.Combine(root, (imported ? relative[9..] : relative).Replace('/', Path.DirectorySeparatorChar)));
         if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new FormatException("Referência fora da biblioteca.");
-        for (var item = new FileInfo(path) as FileSystemInfo; item != null && item.FullName.Length >= root.Length; item = item is FileInfo f ? f.Directory : ((DirectoryInfo)item).Parent)
+        for (var item = new FileInfo(path) as FileSystemInfo; item != null && item.FullName.Length >= root.TrimEnd(Path.DirectorySeparatorChar).Length; item = item is FileInfo f ? f.Directory : ((DirectoryInfo)item).Parent)
             if (item.Exists && (item.Attributes & FileAttributes.ReparsePoint) != 0) throw new FormatException("Referência fora da biblioteca.");
         return path;
     }
@@ -58,6 +61,7 @@ public sealed class IrPackStore(string libraryDirectory, string dataDirectory)
             try
             {
                 string path = ResolvePath(entry.RelativePath);
+                if (!File.Exists(path)) throw new FormatException("IR ausente na biblioteca.");
                 if (new FileInfo(path).Length > 32 * 1024 * 1024) throw new FormatException("WAV excede 32 MB.");
                 byte[] bytes = File.ReadAllBytes(path);
                 if (!Convert.ToHexString(SHA256.HashData(bytes)).Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase))

@@ -10,7 +10,7 @@ public sealed class GearItem(string id, int value, string name, string category,
     public string Id => id;
     public int Value => value;
     public string Name => name;
-    // Model specifications, not an analysis of the recorded IR. Sources: docs/cabinet-characteristics.md.
+    // Model specifications, not an analysis of the recorded IR. Sources: docs/referencias/cabinet-characteristics.md.
     public string Category => kind == "cab" ? cabinetId switch
     {
         "pack-bfi-cab-0" => "2×12 · Traseira aberta · Celestion customizados",
@@ -24,13 +24,15 @@ public sealed class GearItem(string id, int value, string name, string category,
         _ => category
     } : category;
     public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindCabinet(cabinetId) != null
-        ? "Características do modelo de referência; a captura do IR pode variar." : null;
+        ? "Características do modelo de referência; a captura do IR pode variar."
+        : kind == "cab" && CabinetArtwork.ForIr(null, name) != null
+            ? "Arte ilustrativa baseada no nome do IR; não confirma o gabinete da captura." : null;
     public string Kind => kind;
     public string Color => Appearance.ThemeService.ModuleColor(color);
     public void RefreshColor() => Notify(nameof(Color));
     public string Description => description;
     public string Alias => alias;
-    public ImageSource? DefaultImage => ReadImage(Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", (cabinetId ?? id) switch
+    public ImageSource? DefaultImage => ReadImage(AssetPaths.Image((cabinetId ?? id) switch
     {
         "amp-0" => "Koch Powertone.png",
         "amp-1" => "Friedman BE-100.png",
@@ -54,10 +56,11 @@ public sealed class GearItem(string id, int value, string name, string category,
         "pack-bfi-cab-5" => "Peavey 5150 + Mesa Oversized.png",
         "pack-bfi-cab-6" => "JSX KT77 + Mesa Stiletto AKG C1000.png",
         "pack-bfi-cab-7" => "Diezel V30 SM57 (Soldano HR PowerAmp).png",
-        string key when key.StartsWith("pack-bfin-cab-", StringComparison.Ordinal) => "gabineteGenerico.png",
+        string key when key.StartsWith("pack-bfin-cab-", StringComparison.Ordinal) => CabinetArtwork.Generic,
+        _ when kind == "cab" => CabinetArtwork.ForIr(null, name) ?? CabinetArtwork.Generic,
         _ => "not-provided.png"
     }));
-    // Brief effect explanations; sources in docs/effect-descriptions.md.
+    // Brief effect explanations; sources in docs/referencias/effect-descriptions.md.
     public string Subtitle => kind switch
     {
         "chorus" => "Mistura o som original com uma cópia levemente desafinada, criando corpo e movimento.",

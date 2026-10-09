@@ -1,11 +1,11 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
 namespace Cube.Desktop.Controls;
 
-// The same art is decorative on effects without a picker and an action on amp/cabinet.
+// IsInteractive controls carousel feedback; every image offers customization.
 public sealed class GearImageButton : Wpf.Ui.Controls.Button
 {
     public static readonly DependencyProperty IsInteractiveProperty = DependencyProperty.Register(
@@ -57,7 +57,7 @@ public sealed class GearImageButton : Wpf.Ui.Controls.Button
     protected override AutomationPeer OnCreateAutomationPeer() => new ImageButtonPeer(this);
     private sealed class ImageButtonPeer(GearImageButton owner) : ButtonAutomationPeer(owner)
     {
-        protected override bool IsControlElementCore() => owner.IsInteractive && base.IsControlElementCore();
-        protected override bool IsContentElementCore() => owner.IsInteractive && base.IsContentElementCore();
+        protected override bool IsControlElementCore() => base.IsControlElementCore();
+        protected override bool IsContentElementCore() => base.IsContentElementCore();
     }
 }

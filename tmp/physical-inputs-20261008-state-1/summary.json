@@ -1,0 +1,9 @@
+{
+  "firmware": "cubebaby_B_20220706",
+  "captures": 37,
+  "transitions": 3,
+  "writes": 0,
+  "initialPhysical": "0000",
+  "finalPhysical": "0200",
+  "bankUnchanged": true
+}

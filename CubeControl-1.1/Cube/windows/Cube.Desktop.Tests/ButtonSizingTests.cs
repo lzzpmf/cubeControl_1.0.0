@@ -60,14 +60,26 @@ internal static class ButtonSizingTests
             }
             ThemeService.Instance.Preview(ThemeMode.Dark);
             var message = new Wpf.Ui.Controls.MessageBox { Owner = window, Title = "Confirmation", Content = "Button layout check", PrimaryButtonText = "Confirm", CloseButtonText = "Cancel" };
-            var shown = message.ShowDialogAsync(); await Task.Delay(120); message.UpdateLayout();
+            // Non-modal mode lets this layout test reach its assertions and close action.
+            var shown = message.ShowDialogAsync(showAsDialog: false); await Task.Delay(120); message.UpdateLayout();
             try
             {
                 var actions = Find<Button>(message).Where(b => b.Content is string text && (text == "Confirm" || text == "Cancel")).ToArray();
                 Check(actions.Length == 2 && actions.All(b => b.ActualHeight >= 40 && b.Padding.Top >= 8 && b.Padding.Bottom >= 8), "Confirmation actions must share command sizing");
                 Check(Math.Abs(actions[0].ActualHeight - actions[1].ActualHeight) < 1, "Confirmation actions must have equal heights");
             }
-            finally { Find<Button>(message).Single(b => b.Content?.ToString() == "Cancel").RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent)); await shown; }
+            finally
+            {
+                try
+                {
+                    var cancel = Find<Button>(message).Single(b => b.Content?.ToString() == "Cancel");
+                    // Raising Click alone skips Button.OnClick and its bound command.
+                    var peer = new System.Windows.Automation.Peers.ButtonAutomationPeer(cancel);
+                    ((System.Windows.Automation.Provider.IInvokeProvider)peer.GetPattern(System.Windows.Automation.Peers.PatternInterface.Invoke)).Invoke();
+                    await shown.WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                finally { ((Window)message).Close(); }
+            }
             Console.WriteLine("PASS button sizing: native templates, primary/secondary/transparent/disabled, icon and text, light/dark/high contrast, equal 40-DIP height, balanced padding and confirmation actions.");
         }
         finally { window.Close(); ThemeService.Instance.Preview(previous); }

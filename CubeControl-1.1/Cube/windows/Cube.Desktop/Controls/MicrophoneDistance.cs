@@ -134,7 +134,7 @@ public sealed class MicrophoneDistance : Viewbox
         var image = new BitmapImage();
         image.BeginInit();
         image.CacheOption = BitmapCacheOption.OnLoad;
-        image.UriSource = new Uri(Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", name));
+        image.UriSource = new Uri(AssetPaths.Image(name));
         image.EndInit(); image.Freeze();
         return image;
     }

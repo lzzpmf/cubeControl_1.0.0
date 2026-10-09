@@ -1,8 +1,7 @@
-using Cube.Desktop.Localization;
+﻿using Cube.Desktop.Localization;
 using System.IO;
 using System.Windows.Input;
 using Cube.Protocol;
-using Microsoft.Win32;
 
 namespace Cube.Desktop.ViewModels;
 
@@ -32,6 +31,7 @@ public sealed partial class EditorViewModel
     public bool IsDelay => stage == 3;
     public bool IsReverb => stage == 4;
     public bool IsCabinet => stage == 5;
+    public string EquipmentImageLabel => HasGallery ? GalleryLabel : "Personalizar imagem";
     public bool HasGallery => IsAmp || IsCabinet;
     public GearItem[] Amps { get; private set; } = [];
     public GearItem[] Cabinets { get; private set; } = [];
@@ -117,7 +117,7 @@ public sealed partial class EditorViewModel
         Undo = Command(UndoAsync, () => CanEdit && history.CanUndo, changesEffects: true);
         MatchCabinet = new UiCommand(() => QueueAmpMatch(null), () => CanMatch);
         RefreshInventory = Command(RefreshInventoryAsync, () => CanOperate);
-        ChangeImage = new UiCommand(ImportImage, () => !Busy && (!IsCabinet || inventory.Complete));
+        ChangeImage = new UiCommand(() => ImageSelectionRequested?.Invoke(FocusedGear), () => !Busy && (!IsCabinet || inventory.Complete));
         ResetImage = new UiCommand(() => { preferences.Images.Remove(FocusedGear.Id); FocusedGear.Image = FocusedGear.DefaultImage; SaveImages(); }, () => !Busy);
         foreach (var preset in Presets)
         {
@@ -147,7 +147,7 @@ public sealed partial class EditorViewModel
         if (Amps.Length == 0 || Cabinets.Length == 0 || Presets == null) return;
         Notify(nameof(DelayGraphState)); Notify(nameof(ChorusGraphState));
         Notify(nameof(PhaserGraphState)); Notify(nameof(ReverbGraphState));
-        Notify(nameof(GalleryLabel));
+        Notify(nameof(GalleryLabel)); Notify(nameof(EquipmentImageLabel));
         Notify(nameof(ModulationLabel)); Notify(nameof(DelayLabel)); Notify(nameof(ReverbLabel)); Notify(nameof(CabinetLabel)); Notify(nameof(ToneLabel));
         foreach (string name in new[] { nameof(Stage), nameof(IsAmp), nameof(IsModulation), nameof(IsDelay), nameof(IsReverb), nameof(IsCabinet), nameof(HasGallery), nameof(CanOpenGearGallery), nameof(FocusedGear), nameof(SelectedAmp), nameof(SelectedCabinet), nameof(EditorDials), nameof(EffectHint), nameof(MatchDescription), nameof(InventoryStatus) }) Notify(name);
         Stages[0].State = SelectedAmp.Name;
@@ -334,19 +334,39 @@ public sealed partial class EditorViewModel
         RefreshEditor();
         Status = "Associações mantidas nesta sessão. Nenhum comando enviado."; Completed(Status);
     }
-    private void ImportImage()
+    public event Action<GearItem>? ImageSelectionRequested;
+
+    public bool ApplyGearImage(GearItem target, string path)
     {
-        var dialog = new OpenFileDialog { Filter = LanguageService.T("Imagens PNG/JPEG|*.png;*.jpg;*.jpeg") };
-        if (dialog.ShowDialog() != true) return;
+        string? destination = null;
         try
         {
-            if (new FileInfo(dialog.FileName).Length > 20 * 1024 * 1024) throw new FormatException("Imagem maior que 20 MB.");
-            var image = GearItem.ReadImage(dialog.FileName) ?? throw new FormatException("Imagem inválida. Use PNG ou JPEG.");
-            string name = Guid.NewGuid().ToString("N") + Path.GetExtension(dialog.FileName).ToLowerInvariant();
-            Directory.CreateDirectory(Path.Combine(DataDirectory, "Images")); File.Copy(dialog.FileName, Path.Combine(DataDirectory, "Images", name));
-            preferences.Images[FocusedGear.Id] = name; FocusedGear.Image = image;
-            if (SaveImages()) { Status = "Imagem local atualizada."; Completed(Status); }
+            var image = ValidateGearImage(path);
+            string name = Guid.NewGuid().ToString("N") + Path.GetExtension(path).ToLowerInvariant();
+            Directory.CreateDirectory(Path.Combine(DataDirectory, "Images"));
+            destination = Path.Combine(DataDirectory, "Images", name);
+            File.Copy(path, destination);
+            var updated = new Dictionary<string, string>(preferences.Images) { [target.Id] = name };
+            GearImagePreferences.Save(ImagePreferencesPath, updated);
+            preferences.Images = updated;
+            target.Image = image;
+            if (ErrorMessage.StartsWith("Não foi possível importar a imagem:", StringComparison.Ordinal)) ErrorMessage = "";
+            Status = "Imagem local atualizada."; Completed(Status);
+            return true;
         }
-        catch (Exception ex) { ErrorMessage = Status = "Não foi possível importar a imagem: " + ex.Message; NotifyFailure(Status); }
+        catch (Exception ex)
+        {
+            if (destination != null) { try { File.Delete(destination); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+            ErrorMessage = Status = "Não foi possível importar a imagem: " + ex.Message; NotifyFailure(Status);
+            return false;
+        }
+    }
+
+    public static System.Windows.Media.ImageSource ValidateGearImage(string path)
+    {
+        if (Path.GetExtension(path).ToLowerInvariant() is not (".png" or ".jpg" or ".jpeg"))
+            throw new FormatException("Imagem inválida. Use PNG ou JPEG.");
+        if (new FileInfo(path).Length > 20 * 1024 * 1024) throw new FormatException("Imagem maior que 20 MB.");
+        return GearItem.ReadImage(path) ?? throw new FormatException("Imagem inválida. Use PNG ou JPEG.");
     }
 }

@@ -1,67 +1,70 @@
 # Documentação do cubeControl
 
-[Repositório](../../../README.md) · Revisão: 01/10/2026
+## Para usuários
 
-Este índice organiza toda a documentação Markdown do repositório. A aplicação permanece em `CubeControl-1.1/`; o acervo do APK e os relatórios/artefatos de pesquisa ficam em [engenharia-reversa/](../../../engenharia-reversa/README.md). Comece pelos guias; consulte registros históricos para entender a origem e os limites das descobertas.
+Os guias publicados têm fontes únicas em `usuario/pt-BR` e `usuario/en-US`. A opção **Documentação**, em Dispositivo e ajuda, oferece leitura offline, categorias, busca e sumário. O build copia somente o catálogo, guias e manuais para o pacote; não edite cópias no pacote.
 
-## Uso do aplicativo
-
-| Documento | Conteúdo |
+| Português | English |
 | --- | --- |
-| [Guia de uso](guia-de-uso.md) | Conexão, A/B/C, gravação, importação/exportação, IRs e problemas comuns |
-| [Editores gráficos dos efeitos](editores-graficos-de-efeitos.md) | Gestos, contrato dos 22 parâmetros, escalas, prévia RAM e limitações |
-| [Criador de amps](criador-de-amps.md) | Arquivos de amp, prévia em RAM, controles, flash e limitações |
-| [Criador de phaser](../../../engenharia-reversa/cube-baby/CUBE_BABY_PHASER.md) | Controles internos, prévia RAM, arquivos locais e validação sem guitarra |
-| [Criador de chorus](../../../engenharia-reversa/cube-baby/CUBE_BABY_CHORUS.md) | Sete controles, prévia RAM, arquivos locais, recuperação e evidências USB |
-| [Criador de reverb](../../../engenharia-reversa/cube-baby/CUBE_BABY_REVERB.md) | Cinco ajustes independentes, prévia RAM, recuperação, modelo e evidências USB |
-| [Criador de delay](../../../engenharia-reversa/cube-baby/CUBE_BABY_DELAY.md) | Profundidade/velocidade de modulação, controles finos, prévia RAM e recuperação |
-| [Backing Tracks](backing-tracks.md) | MP3/WAV, saídas de áudio, trechos, sequência e exportação |
-| [Simulação](simulacao-temporaria.md) | Preparação, memória virtual e recursos não simulados |
-| [Privacidade](POLITICA-DE-PRIVACIDADE.md) | Responsável, contato, dados locais e exclusão |
+| [Primeiros passos](usuario/pt-BR/primeiros-passos.md) | [Getting started](usuario/en-US/primeiros-passos.md) |
+| [Presets, gravação e arquivos](usuario/pt-BR/presets.md) | [Presets, saving and files](usuario/en-US/presets.md) |
+| [Pedaleira e efeitos](usuario/pt-BR/pedaleira.md) | [Pedalboard and effects](usuario/en-US/pedaleira.md) |
+| [IRs, gabinetes e associações](usuario/pt-BR/irs.md) | [IRs, cabinets and associations](usuario/en-US/irs.md) |
+| [Criador de amps](usuario/pt-BR/criador-amps.md) | [Amp creator](usuario/en-US/criador-amps.md) |
+| [Usar os criadores de efeitos](usuario/pt-BR/criadores-efeitos.md) | [Using effect creators](usuario/en-US/criadores-efeitos.md) |
+| [Criador de chorus](usuario/pt-BR/criador-chorus.md) | [Chorus creator](usuario/en-US/criador-chorus.md) |
+| [Criador de phaser](usuario/pt-BR/criador-phaser.md) | [Phaser creator](usuario/en-US/criador-phaser.md) |
+| [Criador de delay](usuario/pt-BR/criador-delay.md) | [Delay creator](usuario/en-US/criador-delay.md) |
+| [Criador de reverb](usuario/pt-BR/criador-reverb.md) | [Reverb creator](usuario/en-US/criador-reverb.md) |
+| [Backing Tracks](usuario/pt-BR/backing-tracks.md) | [Backing Tracks](usuario/en-US/backing-tracks.md) |
+| [Simulação](usuario/pt-BR/simulacao.md) | [Simulation](usuario/en-US/simulacao.md) |
+| [Problemas comuns](usuario/pt-BR/problemas.md) | [Troubleshooting](usuario/en-US/problemas.md) |
+| [Backups e recuperação](usuario/pt-BR/recuperacao.md) | [Backups and recovery](usuario/en-US/recuperacao.md) |
+| [Privacidade](usuario/pt-BR/privacidade.md) | [Privacy](usuario/en-US/privacidade.md) |
 
-## Desenvolvimento e manutenção
+## Desenvolvimento, referências e histórico
 
-| Documento | Conteúdo |
-| --- | --- |
-| [Guia Windows](../windows/README.md) | SDK, build único, opções, destinos externos e testes |
-| [Arquitetura](arquitetura.md) | Projetos, comunicação, persistência, recursos e formatos |
-| [Design system](DESIGN_SYSTEM.md) | Padrões atuais de interface e critérios de revisão |
-| [Integrações WPF UI](wpf-ui-integracoes.md) | Componentes utilizados e propostas ainda não implementadas |
-| [Interação no Windows](windows-interaction.md) | Zoom, rolagem, animação, Mica e validação |
-| [Notificações](snackbars.md) | Eventos, severidade e duração dos snackbars |
-| [Localização](../windows/Cube.Desktop/Localization/README.md) | Catálogos e inclusão de traduções |
-| [Imagens de equipamentos](../windows/Cube.Desktop/Assets/Equipment/README.md) | Arquivos padrão, identidades e personalização |
-| [Revisão e manutenção documental](revisao-documental.md) | Cobertura dos arquivos, fontes, verificações e pendências |
+### Desenvolvimento
 
-## Referências técnicas e de apresentação
+- [arquitetura](desenvolvimento/arquitetura.md)
+- [wpf-ui-integracoes](desenvolvimento/wpf-ui-integracoes.md)
+- [windows-interaction](desenvolvimento/windows-interaction.md)
+- [snackbars](desenvolvimento/snackbars.md)
+- [revisao-documental](desenvolvimento/revisao-documental.md)
+### Referencias
 
-| Documento | Como usar |
-| --- | --- |
-| [Protocolo e comandos](../../../engenharia-reversa/cube-baby/CUBE_BABY_COMANDOS.md) | Distingue capturas, implementação e comandos genéricos não comprovados |
-| [IR e recursos de fábrica](cubecontrol-ir-e-fabrica.md) | Endereços, formato WAV/IR, backups e origem dos recursos |
-| [Catálogo de amps e gabinetes](ampsEirs.md) | Índices, aliases e referências visuais; não certifica modelos comerciais |
-| [Características dos gabinetes](cabinet-characteristics.md) | Referências dos fabricantes, separadas da identidade do IR |
-| [Descrições dos efeitos](effect-descriptions.md) | Textos explicativos da interface e seu alcance |
-| [Tabelas originais dos nove amps](../../../engenharia-reversa/cube-baby/CUBE_BABY_AMPS_FABRICA.md) | Dados binários completos, decimais float32 e hashes |
-| [Controles de amp e escuta](../../../engenharia-reversa/cube-baby/CUBE_BABY_AMPS_CONTROLES_E_ESCUTA.md) | Grupos, limites implementados e observações musicais |
+- [editores-graficos-de-efeitos](referencias/editores-graficos-de-efeitos.md)
+- [criador-de-amps](referencias/criador-de-amps.md)
+- [cubecontrol-ir-e-fabrica](referencias/cubecontrol-ir-e-fabrica.md)
+- [ampsEirs](referencias/ampsEirs.md)
+- [cabinet-characteristics](referencias/cabinet-characteristics.md)
+- [effect-descriptions](referencias/effect-descriptions.md)
+### Historico
 
-## Pesquisa e histórico
+- [physical-switch-investigation](historico/physical-switch-investigation.md)
+- [analise-protocolo-windows](historico/analise-protocolo-windows.md)
+- [historico-interface](historico/historico-interface.md)
+- [guia-de-uso](usuario/pt-BR/primeiros-passos.md)
+- [backing-tracks](historico/backing-tracks.md)
+- [simulacao-temporaria](historico/simulacao-temporaria.md)
+- [Plano de QA](desenvolvimento/qa-test-plan.md)
 
-| Documento | Situação |
-| --- | --- |
-| [Investigação dos amps](../../../engenharia-reversa/cube-baby/CUBE_BABY_AMPS.md) | Diário de ensaios, substituição/restauração e protótipos RV01–RV06 |
-| [Investigação dos footswitches](physical-switch-investigation.md) | Experimento não validado; monitoramento não iniciado no aplicativo atual |
-| [Análise inicial Android/BLE](analise-protocolo-windows.md) | Registro anterior à aplicação WPF/USB; inclui outros produtos |
-| [Histórico de interface](historico-interface.md) | Diretrizes antigas, inclusive alternativas substituídas |
-| [README do jsoup](../../../engenharia-reversa/apk-cubesuite/resources/META-INF/README.md) | Documento de terceiro, preservado sem reescrita |
+[Design system](DESIGN_SYSTEM.md) permanece no caminho normativo. [Guia Windows](../windows/README.md) contém build e testes.
 
-Os [README da raiz](../../../README.md) e [da aplicação](../../README.md) são pontos de entrada. Resultados antigos de testes são evidências históricas, não verificações executadas nesta revisão. Caminhos de capturas e ferramentas ausentes estão identificados nos registros.
+## Pesquisa, terceiros e manuais
 
-## Convenções
+[Engenharia reversa](../../../engenharia-reversa/README.md) conserva relatórios, fontes Android e artefatos. Documentos de terceiros, licenças e READMEs de componentes permanecem junto às fontes que descrevem. Arquivos em `tmp` e `output` são artefatos de trabalho, não documentos publicados.
 
-- **Atual:** conferido no código desta árvore em 01/10/2026.
-- **Histórico:** descreve uma versão, ensaio ou máquina anterior.
-- **Hipótese:** interpretação ainda sem comprovação suficiente.
-- **Pendente:** divergência no produto ou validação necessária; editar documentação não implica corrigir o código.
+Manuais originais e adaptados, PDFs e fontes Markdown, ficam em [Assets/Documents](../windows/Cube.Desktop/Assets/Documents/README.md), separados por origem e idioma.
 
-O código define o comportamento implementado; dumps confirmam bytes; relatos de escuta descrevem a percepção naquela condição. Nenhuma dessas fontes, isoladamente, comprova todo o funcionamento do DSP.
+[Inventário e classificação](inventario-documental.md) registra os destinos e as regras de preservação.
+
+[Validação da central](desenvolvimento/validacao-documentacao.md) registra os testes e seu alcance.
+
+## Manutenção
+
+1. Atualize os guias pt-BR e en-US junto com mudanças observáveis no produto. Preserve a distinção entre edição local, prévia RAM e gravação persistente.
+2. Cadastre documentos publicáveis em `usuario/catalogo.v1.json`, com ID estável, categoria e versões por idioma. A central exibe somente esse catálogo.
+3. Use links relativos entre guias e âncoras de títulos; não ligue um guia publicado a caminhos exclusivos do checkout.
+4. Preserve evidências de pesquisa, autoria e documentos de terceiros. Não transforme ensaios antigos em validações atuais.
+5. Confira links do acervo e execute a validação documental e de pacote antes de distribuir.

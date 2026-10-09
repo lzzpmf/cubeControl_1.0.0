@@ -19,7 +19,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $windows = Join-Path $repo 'CubeControl-1.1\Cube\windows'
-$plan = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $repo 'QA_TEST_PLAN.md')
+$plan = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $repo 'CubeControl-1.1\Cube\docs\desenvolvimento\qa-test-plan.md')
 $catalog = @{}
 foreach ($line in ($plan -split '\r?\n')) {
     if ($line -match '^\| \[ \] \| (QA-[A-Z]+-\d{3}) \|') {

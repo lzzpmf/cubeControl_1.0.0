@@ -1,6 +1,6 @@
 # CubeSuite Android — acervo extraído do APK
 
-[Engenharia reversa](../README.md) · [Análise de protocolo](../../CubeControl-1.1/Cube/docs/analise-protocolo-windows.md)
+[Engenharia reversa](../README.md) · [Análise de protocolo](../../CubeControl-1.1/Cube/docs/historico/analise-protocolo-windows.md)
 
 Esta pasta identifica o material Android usado na engenharia reversa: código descompilado e recursos extraídos do CubeSuite, pacote `com.cubeSuite`. O arquivo APK original e um projeto Android compilável não estão incluídos neste acervo.
 

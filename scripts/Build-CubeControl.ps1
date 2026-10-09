@@ -59,6 +59,11 @@ function Get-SourceHashes {
     foreach ($file in $files) {
         $hashes[$file.FullName.Substring($workspace.Length + 1)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
     }
+    $guidesRoot = Join-Path (Split-Path -Parent $workspace) 'docs\usuario'
+    foreach ($file in Get-ChildItem -LiteralPath $guidesRoot -File -Recurse) {
+        $hashes['docs\usuario\' + $file.FullName.Substring($guidesRoot.Length + 1)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+    }
+    $hashes['Validate-Documentation.ps1'] = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'Validate-Documentation.ps1') -Algorithm SHA256).Hash
     foreach ($helper in 'Prepare-YouTubeTools.ps1', 'youtube-tools.json') { $hashes[$helper] = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot $helper) -Algorithm SHA256).Hash }
     $hashes['build-script'] = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash
     return $hashes
@@ -137,17 +142,26 @@ try {
     if ($assembly.Version -ne [version]"$version.0") { throw 'Versao da DLL diferente da versao do projeto.' }
     $desktop = Join-Path $workspace 'Cube.Desktop'
     $resources = @{}
-    foreach ($folder in 'Assets\Equipment', 'Assets\ImpulseResponses', 'Localization') {
+    foreach ($folder in 'Assets\Images\Equipment', 'Assets\Images\Controls\Knobs', 'Assets\Images\Controls\Faders', 'Assets\ImpulseResponses', 'Localization') {
         foreach ($file in Get-ChildItem -LiteralPath (Join-Path $desktop $folder) -File -Recurse) {
-            if (($folder -eq 'Assets\Equipment' -and $file.Extension -eq '.png') -or
+            if (($folder.StartsWith('Assets\Images\') -and $file.Extension -in '.png', '.jpg', '.jpeg' -and $file.Name -notmatch '_oficial_') -or
                 ($folder -eq 'Assets\ImpulseResponses' -and $file.Extension -eq '.wav') -or
                 ($folder -eq 'Localization' -and ($file.Extension -eq '.json' -or $file.Name -eq 'README.md'))) {
                 $resources[$file.FullName.Substring($desktop.Length + 1)] = $file.FullName
             }
         }
     }
+    $catalogSource = Join-Path $desktop 'Assets\Archive\Images'
+    foreach ($category in 'Cabeçotes', 'Caixas', 'Pedais', 'Guitarras', 'Dispositivos', 'Equipment', 'Racks') {
+        foreach ($file in Get-ChildItem -LiteralPath (Join-Path $catalogSource $category) -File -Recurse) {
+            if ($file.Extension -in '.png', '.jpg', '.jpeg' -and $file.BaseName -notmatch '^(Botão|Botao|Fader|footswitch|knob|switch|interruptor)') {
+                $relative = 'Assets\Images\Catalog\' + $file.FullName.Substring($catalogSource.Length + 1)
+                $resources[$relative] = $file.FullName
+            }
+        }
+    }
     $resources['Assets\IrPacks.v1.json'] = Join-Path $desktop 'Assets\IrPacks.v1.json'
-    $resources['Assets\Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf'] = Join-Path $desktop 'Assets\Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf'
+    & (Join-Path $PSScriptRoot 'Validate-Documentation.ps1') -PackageRoot $staging
     $resources['LEIA-ME.md'] = Join-Path $workspace 'README.md'
     $resources['THIRD-PARTY-NOTICES.txt'] = Join-Path $workspace 'THIRD-PARTY-NOTICES.txt'
     foreach ($relative in $resources.Keys) {
@@ -155,6 +169,9 @@ try {
             (Get-FileHash -LiteralPath (Join-Path $staging $relative) -Algorithm SHA256).Hash) {
             throw "Recurso diferente da fonte: $relative"
         }
+    }
+    if (Test-Path -LiteralPath (Join-Path $staging 'Assets\Archive')) {
+        throw 'O acervo de alternativas nao deve acompanhar o pacote.'
     }
     $package = @{}
     foreach ($file in Get-ChildItem -LiteralPath $staging -File -Recurse) {

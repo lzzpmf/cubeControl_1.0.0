@@ -19,20 +19,22 @@ internal static class YouTubeTests
         string folder = Path.Combine(Path.GetTempPath(), "cube-youtube-tests-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         try
         {
+            await YouTubePreviewTests.Run(folder);
+            await YouTubeDownloadTests.Run(folder);
             using var model = new BackingTracksViewModel(folder);
             var fake = new Fake(); model.YouTubeService = fake;
-            model.Search = "ab"; await Task.Delay(650); Check(fake.Calls.Count == 0, "short query stays local");
-            model.Search = "blues"; await Task.Delay(200); model.Search = "jazz"; await Task.Delay(650);
+            model.YouTubeQuery = "ab"; await Task.Delay(650); Check(fake.Calls.Count == 0, "short query stays local");
+            model.YouTubeQuery = "blues"; await Task.Delay(200); model.YouTubeQuery = "jazz"; await Task.Delay(650);
             Check(fake.Calls.Count == 1 && fake.Calls[0].Query == "jazz", "600ms debounce cancels previous query");
-            model.Search = "rock"; await Task.Delay(650);
+            model.YouTubeQuery = "rock"; await Task.Delay(650);
             var video = new YouTubeResult("abcdefghijk", "Track", "Channel", 60, null);
             fake.Calls[1].Result.SetResult([video]); await Task.Delay(30);
             fake.Calls[0].Result.SetResult([]); await Task.Delay(30);
             Check(model.YouTubeResults.Count == 1, "stale response cannot replace current results");
-            model.Search = ""; Check(model.YouTubeResults.Count == 0 && !model.ShowYouTube, "clearing search removes online results");
-            model.Search = "offline"; await Task.Delay(650); fake.Calls[2].Result.SetException(new IOException("offline")); await Task.Delay(30);
+            model.YouTubeQuery = ""; Check(model.YouTubeResults.Count == 0 && !model.ShowYouTube, "clearing search removes online results");
+            model.YouTubeQuery = "offline"; await Task.Delay(650); fake.Calls[2].Result.SetException(new IOException("offline")); await Task.Delay(30);
             Check(!model.YouTubeSearching && model.YouTubeStatus.Length > 0, "offline search ends with a recoverable message");
-            model.Search = "";
+            model.YouTubeQuery = "";
             foreach (string tool in new[] { "yt-dlp", "ffmpeg", "ffprobe", "deno" }) File.WriteAllText(Path.Combine(folder, tool + ".exe"), "fixture");
             var service = new YouTubeAudioService(folder);
             service.ProcessRunner = (_, _, _, _) => Task.FromResult("{\"entries\":[{\"id\":\"abcdefghijk\",\"title\":\"Unknown duration\",\"duration\":null},{\"id\":\"12345678901\",\"live_status\":\"is_live\"}]}");
@@ -56,8 +58,13 @@ internal static class YouTubeTests
             fail = false; cancel = true;
             try { await service.DownloadAsync(video, destination, new Progress<YouTubeProgress>(), CancellationToken.None); } catch (OperationCanceledException) { }
             Check(File.ReadAllText(destination) == "original" && !Directory.EnumerateDirectories(folder, ".cube-youtube-*").Any(), "cancellation preserves destination and cleans temporary files");
-            cancel = false; await service.DownloadAsync(video, destination, new Progress<YouTubeProgress>(), CancellationToken.None);
-            Check(File.ReadAllText(destination) == "converted", "successful validation replaces destination with special characters");
+            cancel = false;
+            try { await service.DownloadAsync(video, destination, new Progress<YouTubeProgress>(), CancellationToken.None); throw new Exception("overwrote destination"); } catch (IOException) { }
+            Check(File.ReadAllText(destination) == "original", "successful conversion never overwrites an existing destination");
+            File.Delete(destination);
+            await service.DownloadAsync(video, destination, new Progress<YouTubeProgress>(), CancellationToken.None);
+            Check(File.ReadAllText(destination) == "converted", "successful validation saves destination with special characters");
+            File.Delete(destination);
             model.YouTubeService = service;
             await model.DownloadYouTubeTo(video, destination); await model.DownloadYouTubeTo(video, destination);
             Check(model.Tracks.Count == 1 && !model.IsPlaying, "download imports once without autoplay");
@@ -67,10 +74,10 @@ internal static class YouTubeTests
             try
             {
                 ((System.Windows.Controls.TabControl)window.FindName("Tabs")).SelectedIndex = 2;
+                for (int i = 0; i < 12; i++) window.BackingTracks.Tracks.Add(new BackingTrack(Path.Combine(folder, $"Practice track {i + 1:00}.mp3")) { Length = 180 });
                 var uiFake = new Fake(); window.BackingTracks.YouTubeService = uiFake;
-                window.BackingTracks.Search = "blues"; await Task.Delay(650);
-                uiFake.Calls[0].Result.SetResult([video with { Title = "Backing track with a long title for responsive layout verification", Channel = "Test channel" }]);
-                ((System.Windows.Controls.Expander)window.FindName("BackingPlaylistToggle")).IsExpanded = true;
+                window.BackingTracks.YouTubeQuery = "blues"; await Task.Delay(650);
+                uiFake.Calls[0].Result.SetResult(Enumerable.Range(0, 10).Select(i => video with { Id = $"testvideo{i:00}", Title = $"{i + 1}. Backing track with a long title for responsive layout verification", Channel = "Test channel" }).ToArray());
                 string reports = "C:/CubeControl-Build/youtube-validation/reports"; Directory.CreateDirectory(reports);
                 foreach (var theme in new[] { "Dark", "Light", "HighContrast" })
                     foreach (int width in new[] { 1280, 640 })
@@ -83,11 +90,69 @@ internal static class YouTubeTests
                         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
                         bitmap.Render(window); var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
                         using var image = File.Create(Path.Combine(reports, $"youtube-{theme}-{width}.png")); encoder.Save(image);
-                        Check(window.BackingTracks.YouTubeResults.Count == 1, $"results survive {theme} at {width} DIPs");
+                        Check(window.BackingTracks.YouTubeResults.Count == 10, $"results survive {theme} at {width} DIPs");
                     }
+                await CheckMosaic(window);
+                await YouTubePreviewTests.RunUi(window);
             }
             finally { window.Close(); }
         }
         finally { Directory.Delete(folder, true); }
     }
+    private static IEnumerable<T> Children<T>(System.Windows.DependencyObject root) where T : System.Windows.DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T match) yield return match;
+            foreach (var descendant in Children<T>(child)) yield return descendant;
+        }
+    }
+    private static async Task CheckMosaic(Cube.Desktop.MainWindow window)
+    {
+        var zoomService = Cube.Desktop.Appearance.ZoomService.Instance;
+        var languageService = Cube.Desktop.Localization.LanguageService.Instance;
+        int originalZoom = zoomService.Percent;
+        string originalLanguage = languageService.Language;
+        try
+        {
+            foreach (string language in new[] { "pt-BR", "en-US" })
+            foreach (int zoom in new[] { 50, 100, 200 })
+            foreach (int width in new[] { 640, 1280 })
+            {
+                zoomService.Preview(zoom); languageService.Preview(language); window.Width = width;
+                await Task.Delay(100); window.UpdateLayout();
+                var library = (System.Windows.Controls.Grid)window.FindName("BackingLibraryLayout");
+                var playlist = (System.Windows.Controls.Border)window.FindName("BackingPlaylistPanel");
+                var youtube = (System.Windows.Controls.Border)window.FindName("BackingYouTubePanel");
+                var list = (System.Windows.Controls.ListBox)window.FindName("BackingTrackList");
+                var resultsScroll = (System.Windows.Controls.ScrollViewer)window.FindName("BackingYouTubeScroll");
+                bool columns = library.ActualWidth >= 860;
+                var playlistBounds = playlist.TransformToAncestor(library).TransformBounds(new System.Windows.Rect(playlist.RenderSize));
+                var youtubeBounds = youtube.TransformToAncestor(library).TransformBounds(new System.Windows.Rect(youtube.RenderSize));
+                Check(playlist.IsVisible && (columns ? Math.Abs(playlistBounds.Top - youtubeBounds.Top) < 1 && youtubeBounds.Left >= playlistBounds.Right + 15 : youtubeBounds.Top >= playlistBounds.Bottom + 15), "playlist stays open and cards adapt without overlap");
+                Check(columns ? list.ActualHeight <= 481 && resultsScroll.ActualHeight <= 481 : double.IsPositiveInfinity(list.MaxHeight) && resultsScroll.VerticalScrollBarVisibility == System.Windows.Controls.ScrollBarVisibility.Disabled, "wide lists scroll internally; compact layout uses page scrolling");
+                Check(list.Items.Count == 12 && window.BackingTracks.Search.Length == 0, "YouTube query preserves all playlist rows");
+                var mosaic = (System.Windows.Controls.ItemsControl)window.FindName("YouTubeMosaic");
+                var cards = Children<Cube.Desktop.Controls.YouTubeResultCard>(mosaic).ToArray();
+                Check(cards.Length == 10 && cards.All(c => c.ActualWidth <= mosaic.ActualWidth + 1 && c.ActualWidth > 0), $"mosaic fits {width}/{zoom}%/{language}");
+                bool contained = true, proportional = true;
+                foreach (var card in cards)
+                {
+                    var position = card.TransformToAncestor(mosaic).Transform(new System.Windows.Point());
+                    contained &= position.X >= -1 && position.X + card.ActualWidth <= mosaic.ActualWidth + 1;
+                    var thumbnail = Children<Cube.Desktop.Controls.VideoThumbnailPanel>(card).Single();
+                    proportional &= Math.Abs(thumbnail.ActualWidth / thumbnail.ActualHeight - 16d / 9) < .02;
+                }
+                Check(contained && proportional, "all cards stay inside mosaic with 16:9 thumbnails");
+                var button = (Wpf.Ui.Controls.Button)cards[0].FindName("DownloadButton");
+                button.Focus(); await Task.Delay(20);
+                Check(button.IsKeyboardFocused && button.ActualWidth >= 40 && button.ActualHeight >= 40 && ((System.Windows.Controls.Grid)button.Parent).Opacity == 1, "keyboard reveals accessible download action");
+                var preview = (Wpf.Ui.Controls.Button)cards[0].FindName("PreviewButton");
+                Check(preview.ToolTip?.ToString() == (language == "en-US" ? "Preview audio" : "Pré-ouvir"), "preview action is translated");
+            }
+        }
+        finally { zoomService.Preview(originalZoom); languageService.Preview(originalLanguage); }
+    }
+
 }

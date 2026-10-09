@@ -42,7 +42,7 @@ public sealed class AmpControl(string label, string detail, string asset, double
     public bool CanRestoreIndividually => RestoreAction == null;
     public string Label { get; } = label;
     public string Detail { get; } = detail;
-    public string Asset { get; } = Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", asset);
+    public string Asset { get; } = AssetPaths.Image(asset);
     public double Position
     {
         get => 1000 * (logarithmic ? Math.Log(number / Minimum) / Math.Log(Maximum / Minimum) : (number - Minimum) / (Maximum - Minimum));

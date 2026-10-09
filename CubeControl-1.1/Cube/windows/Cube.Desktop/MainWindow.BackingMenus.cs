@@ -53,8 +53,8 @@ public partial class MainWindow
         if (backingOpenMenu != null) backingOpenMenu.IsOpen = false;
         var model = BackingTracks;
         var menu = new ContextMenu { PlacementTarget = owner, Placement = atMouse || time != null ? PlacementMode.MousePoint : PlacementMode.Bottom };
-        void Command(string title, ICommand command) => menu.Items.Add(new MenuItem { Header = LanguageService.T(title), Command = command });
-        void Action(string title, Action execute, Func<bool>? enabled = null) => Command(title, new UiCommand(execute, enabled));
+        void Command(string title, ICommand command, bool external = false) => menu.Items.Add(new MenuItem { Header = LanguageService.T(title), Command = command, Icon = external ? new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Open24, FontSize = 16 } : null });
+        void Action(string title, Action execute, Func<bool>? enabled = null, bool external = false) => Command(title, new UiCommand(execute, enabled), external);
         void Separator() => menu.Items.Add(new Separator());
         switch (kind)
         {
@@ -70,7 +70,7 @@ public partial class MainWindow
                 Action("Mover faixa para cima", () => model.MoveTrack(target, model.Tracks.IndexOf(target) - 1), () => Exists() && model.Tracks.IndexOf(target) > 0);
                 Action("Mover faixa para baixo", () => model.MoveTrack(target, model.Tracks.IndexOf(target) + 1), () => Exists() && model.Tracks.IndexOf(target) < model.Tracks.Count - 1);
                 Separator();
-                Action("Mostrar no Explorer", () => model.ShowTrackFile(target), Exists);
+                Action("Mostrar no Explorer", () => model.ShowTrackFile(target), Exists, external: true);
                 Action("Localizar novamente", () => model.LocateTrackFile(target), Exists);
                 Action("Informações", () => ShowBackingTrackDetails(target), Exists);
                 Separator();
@@ -107,7 +107,7 @@ public partial class MainWindow
                 break;
             case "audio":
                 Command("Atualizar saídas", model.RefreshOutputs); Command("Atualizar entradas", model.RefreshInputs);
-                Command("Bluetooth", model.BluetoothSettings); break;
+                Command("Bluetooth", model.BluetoothSettings, external: true); break;
             case "pitch": Command("Restaurar tom", model.ResetPitch); break;
             case "player":
                 var sequence = new MenuItem { Header = LanguageService.T("Continuar sequência"), IsCheckable = true, IsChecked = model.ContinueSequence };

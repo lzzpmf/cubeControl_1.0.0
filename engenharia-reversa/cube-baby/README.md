@@ -1,6 +1,6 @@
 # Cube Baby — relatórios e artefatos
 
-[Engenharia reversa](../README.md) · [Criador de amps](../../CubeControl-1.1/Cube/docs/criador-de-amps.md)
+[Engenharia reversa](../README.md) · [Criador de amps](../../CubeControl-1.1/Cube/docs/referencias/criador-de-amps.md)
 
 Esta pasta reúne a investigação do Cube Baby de guitarra. Os relatórios combinam evidências do CubeSuite, leituras do pedal e ensaios registrados; o acervo Android fica separadamente em [apk-cubesuite/](../apk-cubesuite/README.md).
 

@@ -7,6 +7,7 @@ public static class GearImagePreferences
 {
     private sealed record Store(int Version, Dictionary<string, string> Images);
     private static bool Allowed(string key) => key.StartsWith("amp-", StringComparison.Ordinal)
+        || key is "chorus" or "phaser" or "delay" or "reverb"
         || key == "cab-off" || (key.Length == 64 && key.All(Uri.IsHexDigit));
     public static Dictionary<string, string> Load(string path, string legacyPath)
     {

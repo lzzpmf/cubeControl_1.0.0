@@ -25,6 +25,8 @@ internal static class LocalizationTests
             var language = new LanguageService(folder, preference);
             Check(language.Language == "pt-BR" && language.Languages.Count == 3, "Portuguese default and discovery of additional valid language packs");
             language.Select("en-US");
+            Check(language.Translate("Aço Texturizado") == "Textured Steel" && language.Translate("Crânio Azul") == "Blue Skull" && language.Translate("Marfim Dourado") == "Golden Ivory", "archive finish names are translated");
+            Check(language.Translate("Acabamento dos controles") == "Control finish" && language.Translate("Marfim Retrô") == "Retro Ivory" && language.Translate("Oficial — acompanha o tema") == "Official — follows theme", "control finish names are translated");
             Check(language.Translate("Salvar A/B/C no aparelho") == "Save A/B/C to device", "English actions and confirmations");
             Check(language.Translate("IR personalizado — slot 7") == "Custom IR — slot 7" && language.Translate("Lendo · 113/4096 bytes") == "Reading · 113/4096 bytes", "dynamic status retains numbers and translates surrounding text");
             Check(language.Translate("Mesa/Boogie JP-2C") == "Mesa/Boogie JP-2C", "equipment names preserved");

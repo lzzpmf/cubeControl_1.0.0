@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -120,7 +120,7 @@ internal static class UiAuditTests
             await Task.Delay(150); await Settle();
             Check(!Find<Cube.Desktop.Views.GearGallery>(window).Any() && fake.Writes == 0, "native cancel closes without applying equipment");
             model.SelectedStage = 2; await Settle();
-            Check(!imagePeer.IsControlElement() && !image.IsTabStop && !image.IsHitTestVisible, "effect illustration is decorative, not a dead button");
+            Check(imagePeer.IsControlElement() && image.IsTabStop && image.IsHitTestVisible && ContextMenuService.GetIsEnabled(image), "effect image supports keyboard customization and context menu");
             model.SelectedStage = 0; await Settle();
             var quick = (Wpf.Ui.Controls.CardAction)window.FindName("EquipmentPickerCard");
             var defaultStyle = (Style)Application.Current.FindResource(typeof(Wpf.Ui.Controls.CardAction));

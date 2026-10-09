@@ -56,14 +56,13 @@ internal static class BackingUiReviewTests
         var model = window.BackingTracks;
         var client = Named<FrameworkElement>(window, "ClientArea");
         var scroll = Named<ScrollViewer>(window, "BackingTracksScroll");
-        var audio = Named<Expander>(window, "BackingAudioToggle");
-        var playlist = Named<Expander>(window, "BackingPlaylistToggle");
+        var audio = Named<FrameworkElement>(window, "BackingAudioPanel");
         var wave = Named<BackingWaveform>(window, "BackingMainWave");
         Cube.Desktop.Appearance.ThemeService.Instance.Preview(Cube.Desktop.Appearance.ThemeMode.Dark);
         Cube.Desktop.Localization.LanguageService.Instance.Preview("pt-BR");
         client.LayoutTransform = Transform.Identity;
         window.Width = 1280; window.Height = 720;
-        playlist.IsExpanded = false;  audio.IsExpanded = false;
+        Check(audio.IsVisible, "audio selectors remain open");
         await Task.Delay(250); window.UpdateLayout();
         var current = model.SelectedTrack!;
         model.IsLooping = false; model.Position = 24;
@@ -93,7 +92,7 @@ internal static class BackingUiReviewTests
         menu = (ContextMenu)typeof(MainWindow).GetField("backingOpenMenu", Private)!.GetValue(window)!;
         Check(menu.Items.OfType<MenuItem>().Any(i => i.Header.ToString() == "Adicionar seção"), "waveform keyboard menu exposes section creation");
         Capture(menu, Path.Combine(reports, "menu-wave.png")); menu.IsOpen = false;
-        playlist.IsExpanded = true;  await Task.Delay(150); window.UpdateLayout();
+        await Task.Delay(150); window.UpdateLayout();
         var list = Named<ListBox>(window, "BackingTrackList");
         var row = (ListBoxItem)list.ItemContainerGenerator.ContainerFromItem(other);
         row.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, Environment.TickCount, MouseButton.Right) { RoutedEvent = Mouse.PreviewMouseDownEvent });
@@ -110,27 +109,15 @@ internal static class BackingUiReviewTests
         {
             window.Width = width; window.Height = height; client.LayoutTransform = new ScaleTransform(scale, scale);
             await Task.Delay(250); window.UpdateLayout();
-            foreach (bool show in new[] { false, true })
+            Check(Named<FrameworkElement>(window, "BackingPlaylistPanel").IsVisible, "playlist stays open");
+            Check(audio.IsVisible, "audio selectors remain open");
+            foreach (var control in Find<FrameworkElement>(audio).Where(c => c is ButtonBase or Slider or ComboBox))
             {
-                playlist.IsExpanded = show; 
-                audio.IsExpanded = show; 
-                await Task.Delay(250); window.UpdateLayout();
-                var pane = Named<FrameworkElement>(window, "BackingAudioPanel");
-                Check(pane.IsVisible == show, "audio panel follows its toggle");
-                if (show)
-                {
-                    var audioBounds = pane.TransformToAncestor(scroll).TransformBounds(new Rect(pane.RenderSize));
-                    Check(audioBounds.Top < scroll.ViewportHeight && audioBounds.Top >= -1, "opening audio reveals the selectors in the viewport");
-                    foreach (var control in Find<FrameworkElement>(pane).Where(c => c is ButtonBase or Slider or ComboBox))
-                    {
-                        var box = control.TransformToAncestor(pane).TransformBounds(new Rect(control.RenderSize));
-                        Check(box.Left >= -1 && box.Right <= pane.ActualWidth + 1, "audio controls fit the panel");
-                    }
-                    Capture(pane, Path.Combine(reports, $"audio-{width}-{scale}.png"));
-                }
-                Capture(window, Path.Combine(reports, $"state-{width}-{scale}-{show}.png"));
+                var box = control.TransformToAncestor(audio).TransformBounds(new Rect(control.RenderSize));
+                Check(box.Left >= -1 && box.Right <= audio.ActualWidth + 1, "audio controls fit the panel");
             }
-            audio.IsExpanded = false;
+            Capture(audio, Path.Combine(reports, $"audio-{width}-{scale}.png"));
+            Capture(window, Path.Combine(reports, $"state-{width}-{scale}.png"));
             Invoke(window, "EditBackingTrack", current); await Task.Delay(250); window.UpdateLayout();
             var dialog = Find<Wpf.Ui.Controls.ContentDialog>(window).First(d => d.IsVisible);
             Check(dialog.ActualWidth <= Named<FrameworkElement>(window, "DialogHost").ActualWidth + 1, "metadata dialog fits available width");
@@ -147,14 +134,14 @@ internal static class BackingUiReviewTests
             else { dialog.Hide(); await Task.Delay(100); }
         }
         client.LayoutTransform = Transform.Identity; window.Width = 1280; window.Height = 1000;
-        playlist.IsExpanded = false;  audio.IsExpanded = false;
+        Check(audio.IsVisible, "audio selectors remain open");
         await Task.Delay(250);
         var dock = Named<ContentControl>(window, "BackingTransportHost");
-        Check(dock.IsVisible, "tall window docks transport");
+        Check(dock.IsVisible, "transport is present in tall windows");
         window.Height = 480; await Task.Delay(250);
-        Check(!dock.IsVisible, "height-only resize releases transport for scrolling");
+        Check(dock.IsVisible && dock.Parent == window.FindName("BackingRacks"), "short windows keep transport in the scrolling player");
         window.Height = 1000; await Task.Delay(250);
-        Check(dock.IsVisible, "height-only resize restores dock");
+        Check(dock.IsVisible, "height-only resize preserves transport");
         window.Height = 720; await Task.Delay(250);
         scroll.ScrollToTop(); await Task.Delay(80);
         Capture(window, Path.Combine(reports, "final-desktop.png"));

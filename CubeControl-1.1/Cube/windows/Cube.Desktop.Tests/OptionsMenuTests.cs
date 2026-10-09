@@ -33,6 +33,7 @@ internal static class OptionsMenuTests
         int initialZoom = ZoomService.Instance.Percent;
         ZoomService.Instance.Preview(100);
         var initialTheme = ThemeService.Instance.Mode;
+        var initialFinish = ThemeService.Instance.Finish;
         var initialLanguage = LanguageService.Instance.Language;
         using var fake = new FakeConnection();
         using var session = new CubeSession(fake); await session.Identify();
@@ -40,6 +41,7 @@ internal static class OptionsMenuTests
         await model.Execute(() => model.AttachSession(session));
         var window = new MainWindow(model) { ShowInTaskbar = false };
         window.SelectZoom = ZoomService.Instance.Preview;
+        window.SelectControlFinish = ThemeService.Instance.PreviewFinish;
         window.Show(); await Task.Delay(150); while (model.Busy) await Task.Delay(30);
         var button = (Wpf.Ui.Controls.Button)window.FindName("MoreOptionsButton");
         var header = (Grid)window.FindName("HeaderGrid");
@@ -80,12 +82,15 @@ internal static class OptionsMenuTests
                 var menuSurface = (Border)menu.Template.FindName("Border", menu);
                 Check(menuSurface.Effect == null && TextOptions.GetTextFormattingMode(menuSurface) == TextFormattingMode.Display, "menu text is rendered outside the shadow effect");
                 Check(VisualTreeHelper.GetParent(menuSurface) is Grid layers && layers.Children.OfType<Border>().Any(b => b.Name == "PopupShadowLayer" && b.Child == null && !b.IsHitTestVisible), "menu shadow is a separate noninteractive background");
-                Check(menu.IsOpen && menu.Items.Count == 6 && menu.Items[2] is Separator, "ellipsis opens preferences, zoom and connection details");
+                Check(menu.IsOpen && menu.Items.Count == 5 && menu.Items[3] is Separator, "ellipsis opens theme, language, finish and zoom preferences");
                 var themeItem = (MenuItem)menu.Items[0]; var languageItem = (MenuItem)menu.Items[1];
+                var finishItem = (MenuItem)menu.Items[2];
+                Check(finishItem.Header?.ToString() == LanguageService.T("Acabamento dos controles") && finishItem.Items.Count == 11, "localized finish submenu contains all eleven finishes");
+                Check(finishItem.Items.OfType<MenuItem>().Count(i => i.Tag is true) == 1, "exactly one finish is highlighted");
                 Check(themeItem.Header?.ToString() == LanguageService.T("Tema") && languageItem.Header?.ToString() == LanguageService.T("Idioma"), "menu labels follow current language");
                 Check(themeItem.Items.OfType<MenuItem>().Count(i => i.Tag is true) == 1 && languageItem.Items.OfType<MenuItem>().Count(i => i.Tag is true) == 1, "exactly one theme and one language are highlighted");
-                Check(themeItem.Items.OfType<MenuItem>().Concat(languageItem.Items.OfType<MenuItem>()).All(i => !i.IsCheckable && !i.IsChecked), "preferences have no checkboxes");
-                Check(themeItem.Items.OfType<MenuItem>().Concat(languageItem.Items.OfType<MenuItem>()).Where(i => i.Tag is true).All(i => i.FontWeight == FontWeights.SemiBold), "active preferences use visible emphasis");
+                Check(themeItem.Items.OfType<MenuItem>().Concat(languageItem.Items.OfType<MenuItem>()).Concat(finishItem.Items.OfType<MenuItem>()).All(i => !i.IsCheckable && !i.IsChecked), "preferences have no checkboxes");
+                Check(themeItem.Items.OfType<MenuItem>().Concat(languageItem.Items.OfType<MenuItem>()).Concat(finishItem.Items.OfType<MenuItem>()).Where(i => i.Tag is true).All(i => i.FontWeight == FontWeights.SemiBold), "active preferences use visible emphasis");
                 Check(model.Ir.Slot == 0, "destination defaults to slot 1");
                 Check(menu.LayoutTransform is ScaleTransform { ScaleX: .9, ScaleY: .9 }, "menu keeps existing 90 percent density");
                 Capture(window, $"header-{theme}-{language}");
@@ -102,13 +107,41 @@ internal static class OptionsMenuTests
                 var submenuRight = popupRoot.PointToScreen(new Point(popupRoot.ActualWidth, 0)).X;
                 Check(submenuRight <= window.PointToScreen(new Point(window.ActualWidth, 0)).X + 1, "submenu stays inside window right edge");
                 Capture(popupRoot, $"theme-submenu-{theme}-{language}");
-                themeItem.IsSubmenuOpen = false; menu.IsOpen = false; await Settle();
-                Check(button.IsKeyboardFocused, "closing menu returns focus to ellipsis");
+                themeItem.IsSubmenuOpen = false;
+                finishItem.IsSubmenuOpen = true;
+                await Task.Delay(200); await Settle();
+                var firstFinish = (MenuItem)finishItem.Items[0];
+                Check(PresentationSource.FromVisual(firstFinish) != null, "finish submenu opens through keyboard navigation");
+                var finishRoot = (FrameworkElement)PresentationSource.FromVisual(firstFinish)!.RootVisual;
+                Check(finishRoot.PointToScreen(new Point(finishRoot.ActualWidth, 0)).X <= window.PointToScreen(new Point(window.ActualWidth, 0)).X + 1, "finish submenu stays inside window right edge");
+                Capture(finishRoot, $"finish-submenu-{theme}-{language}");
+                finishItem.IsSubmenuOpen = false; menu.IsOpen = false; await Settle();
+            Check(button.IsKeyboardFocused, "closing menu returns focus to ellipsis");
             }
+            model.SelectedStage = 0;
+            foreach (var mode in new[] { Cube.Desktop.Appearance.ThemeMode.Light, Cube.Desktop.Appearance.ThemeMode.Dark })
+            foreach (var finish in Enum.GetValues<ControlFinish>())
+            foreach (var (width, zoom) in new[] { (640, 100), (1280, 150) })
+            {
+                ThemeService.Instance.Preview(mode); ThemeService.Instance.PreviewFinish(finish);
+                window.Width = width; ZoomService.Instance.Preview(zoom);
+                await Settle();
+                Capture(window, $"controls-{mode}-{finish}-{width}-{zoom}");
+            }
+            ZoomService.Instance.Preview(100);
             // Preview updates selections without changing the user's preference files.
             ThemeService.Instance.Preview(Cube.Desktop.Appearance.ThemeMode.Light);
             LanguageService.Instance.Preview("en-US");
+            var finishSelection = await Open();
+            var finishParent = (MenuItem)finishSelection.Items[2];
+            finishParent.IsSubmenuOpen = true; await Task.Delay(200); await Settle();
+            var skull = (MenuItem)finishParent.Items[10];
+            ((IInvokeProvider)UIElementAutomationPeer.CreatePeerForElement(skull)!.GetPattern(PatternInterface.Invoke)!).Invoke();
+            await Task.Delay(200); await Settle();
+            Check(ThemeService.Instance.Finish == ControlFinish.ChromeSkullBlue, "new archive finish menu action updates the existing controls");
+            finishSelection.IsOpen = false;
             var reopened = await Open();
+            Check(((MenuItem)((MenuItem)reopened.Items[2]).Items[10]).Tag is true, "reopening refreshes selected archive finish");
             Check(((MenuItem)((MenuItem)reopened.Items[0]).Items[1]).Tag is true, "reopening refreshes selected theme");
             Check(((MenuItem)reopened.Items[1]).Items.OfType<MenuItem>().Single(i => i.Tag is true).Header?.ToString() == "English", "reopening refreshes selected language");
             reopened.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(reopened), 0, Key.Escape) { RoutedEvent = Keyboard.KeyDownEvent });
@@ -136,7 +169,7 @@ internal static class OptionsMenuTests
             File.WriteAllText(zoomPath, "{broken"); Check(ZoomSettings.Load(zoomPath) == 100, "invalid zoom preference recovers");
             window.Width = 1280;
             var zoomMenu = await Open();
-            var zoomRow = (MenuItem)zoomMenu.Items[3];
+            var zoomRow = (MenuItem)zoomMenu.Items[4];
             var zoomButtons = Find<Wpf.Ui.Controls.Button>(zoomRow).ToArray();
             var less = zoomButtons.Single(b => b.Name == "ZoomOutButton");
             var more = zoomButtons.Single(b => b.Name == "ZoomInButton");
@@ -174,21 +207,13 @@ internal static class OptionsMenuTests
                 Check(!service.UsesBackdrop && ((SolidColorBrush)window.Background).Color.A == 255, "high contrast always uses solid background");
             }
             finally { service.ReadWindowsTransparency = transparencyReader; service.Preview(initialTheme); }
-            var detailsMenu = await Open();
-            var details = (MenuItem)detailsMenu.Items[5];
-            ((IInvokeProvider)UIElementAutomationPeer.CreatePeerForElement(details)!.GetPattern(PatternInterface.Invoke)!).Invoke();
-            await Task.Delay(150); await Settle();
-            var dialog = Find<Wpf.Ui.Controls.ContentDialog>(window).Single();
-            Check(!detailsMenu.IsOpen && dialog.Content is Cube.Desktop.Views.ConnectionDetails, "connection menu opens existing USB details dialog");
-            dialog.Hide(); await Task.Delay(100); await Settle();
-            Check(button.IsKeyboardFocused, "USB dialog returns focus to ellipsis");
             Check(fake.Writes == 0, "options navigation, themes and language previews send no MIDI");
         }
         finally
         {
             ZoomService.Instance.Preview(initialZoom);
             if (button.ContextMenu != null) button.ContextMenu.IsOpen = false;
-            ThemeService.Instance.Preview(initialTheme); LanguageService.Instance.Preview(initialLanguage);
+            ThemeService.Instance.PreviewFinish(initialFinish); ThemeService.Instance.Preview(initialTheme); LanguageService.Instance.Preview(initialLanguage);
             window.Close(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             string resolved = Path.GetFullPath(temporary);
             if (resolved.StartsWith(Path.GetFullPath(Path.GetTempPath()), StringComparison.OrdinalIgnoreCase) && Path.GetFileName(resolved).StartsWith("cube-options-")) Directory.Delete(resolved, true);

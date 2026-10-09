@@ -15,7 +15,9 @@ public sealed partial class BackingTracksViewModel
     private bool youtubeSearching, youtubeDownloading;
     private double youtubePercent;
     public ObservableCollection<YouTubeResult> YouTubeResults { get; } = [];
-    public bool ShowYouTube => Search.Trim().Length >= 3;
+    private string youtubeQuery = "";
+    public string YouTubeQuery { get => youtubeQuery; set { if (Set(ref youtubeQuery, value)) SearchYouTube(); } }
+    public bool ShowYouTube => YouTubeQuery.Trim().Length >= 3;
     public bool YouTubeSearching { get => youtubeSearching; private set => Set(ref youtubeSearching, value); }
     public bool YouTubeDownloading { get => youtubeDownloading; private set { Set(ref youtubeDownloading, value); CommandManager.InvalidateRequerySuggested(); } }
     public string YouTubeStatus { get => youtubeStatus; private set => Set(ref youtubeStatus, value); }
@@ -24,11 +26,12 @@ public sealed partial class BackingTracksViewModel
     public ICommand CancelYouTubeDownload => new UiCommand(() => youtubeDownload?.Cancel(), () => YouTubeDownloading);
     private async void SearchYouTube()
     {
+        StopYouTubePreview();
         youtubeSearch?.Cancel();
         var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         youtubeSearch = request;
         var token = request.Token;
-        string query = Search.Trim();
+        string query = YouTubeQuery.Trim();
         Notify(nameof(ShowYouTube)); YouTubeResults.Clear(); YouTubeStatus = ""; YouTubeSearching = false;
         try
         {
@@ -48,6 +51,7 @@ public sealed partial class BackingTracksViewModel
     }
     private static string YouTubeError(Exception ex) => ex switch
     {
+        DirectoryNotFoundException => "Pasta de downloads indisponível. Use Alterar pasta.",
         FileNotFoundException => "Ferramentas do YouTube ausentes. Reinstale o aplicativo.",
         UnauthorizedAccessException => "Sem permissão para salvar o MP3. Escolha outra pasta.",
         IOException io when (io.HResult & 0xffff) is 39 or 112 => "Espaço insuficiente para salvar o MP3.",
@@ -56,17 +60,21 @@ public sealed partial class BackingTracksViewModel
     };
     public async Task DownloadYouTube(YouTubeResult result)
     {
-        if (YouTubeDownloading || disposed) return;
-        string name = string.Concat(result.Title.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)).Trim().TrimEnd('.');
-        if (name.Length > 120) name = name[..120];
-        var dialog = new SaveFileDialog { FileName = (name.Length == 0 ? result.Id : name) + ".mp3", Filter = "MP3|*.mp3", DefaultExt = ".mp3", AddExtension = true, OverwritePrompt = true };
-        if (dialog.ShowDialog() != true) return;
-        await DownloadYouTubeTo(result, dialog.FileName);
+        if (YouTubeDownloading || choosingDownloadFolder || disposed) return;
+        StopYouTubePreview();
+        if (YouTubeDownloadFolder.Length == 0 && !ChooseDownloadFolder()) return;
+        try { VerifyDownloadFolder(YouTubeDownloadFolder); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { YouTubeDownloadStatus = "Pasta de downloads indisponível. Use Alterar pasta."; return; }
+        await DownloadYouTubeTo(result, AvailableDownloadPath(YouTubeDownloadFolder, result.Title, result.Id));
     }
     internal async Task DownloadYouTubeTo(YouTubeResult result, string destination)
     {
         if (YouTubeDownloading || disposed) return;
         using var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+        StopYouTubePreview();
+        YouTubeDownloadId = result.Id;
+        YouTubeDownloadTitle = result.Title;
         youtubeDownload = request; YouTubeDownloading = true; YouTubePercent = 0; YouTubeDownloadStatus = "Baixando áudio…";
         try
         {
@@ -76,6 +84,6 @@ public sealed partial class BackingTracksViewModel
         }
         catch (OperationCanceledException) { if (!disposed) YouTubeDownloadStatus = "Download cancelado."; }
         catch (Exception ex) { if (!disposed) YouTubeDownloadStatus = YouTubeError(ex); }
-        finally { youtubeDownload = null; if (!disposed) YouTubeDownloading = false; }
+        finally { YouTubeDownloadId = null; youtubeDownload = null; if (!disposed) YouTubeDownloading = false; }
     }
 }

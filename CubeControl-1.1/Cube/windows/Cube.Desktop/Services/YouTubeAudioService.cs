@@ -8,7 +8,7 @@ namespace Cube.Desktop.Services;
 public sealed record YouTubeResult(string Id, string Title, string Channel, double Duration, string? Thumbnail)
 {
     public string Url => "https://www.youtube.com/watch?v=" + Id;
-    public string DurationLabel => TimeSpan.FromSeconds(Duration).ToString(Duration >= 3600 ? @"h\:mm\:ss" : @"m\:ss");
+    public string DurationLabel => Duration <= 0 ? "—" : TimeSpan.FromSeconds(Duration).ToString(Duration >= 3600 ? @"h\:mm\:ss" : @"m\:ss");
 }
 public sealed record YouTubeProgress(string Stage, double Percent);
 public interface IYouTubeAudioService
@@ -28,6 +28,8 @@ public sealed class YouTubeAudioService(string? toolsDirectory = null) : IYouTub
         return path;
     }
     private IEnumerable<string> Common() => new[] { "--ignore-config", "--no-plugin-dirs", "--no-remote-components", "--no-update", "--no-playlist", "--no-warnings", "--socket-timeout", "20", "--retries", "2", "--js-runtimes", "deno:" + Tool("deno"), "--ffmpeg-location", tools };
+    internal Task<string> ResolvePreviewAsync(YouTubeResult video, CancellationToken cancellation)
+        => ProcessRunner(Tool("yt-dlp"), Common().Concat(new[] { "--skip-download", "--dump-single-json", "--match-filters", "!is_live & !is_upcoming", "-f", "bestaudio/best", "--", video.Url }), cancellation, null);
     public async Task<IReadOnlyList<YouTubeResult>> SearchAsync(string query, CancellationToken cancellation)
     {
         var json = await ProcessRunner(Tool("yt-dlp"), Common().Concat(new[] { "--flat-playlist", "--dump-single-json", "--", "ytsearch10:" + query }), cancellation, null);
@@ -40,7 +42,9 @@ public sealed class YouTubeAudioService(string? toolsDirectory = null) : IYouTub
             if (!System.Text.RegularExpressions.Regex.IsMatch(id, "^[A-Za-z0-9_-]{11}$")) continue;
             string? thumbnail = null;
             if (item.TryGetProperty("thumbnails", out var thumbs) && thumbs.ValueKind == JsonValueKind.Array)
-                thumbnail = thumbs.EnumerateArray().Select(t => Text(t, "url")).FirstOrDefault(u => u.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+                thumbnail = thumbs.EnumerateArray().Where(t => t.ValueKind == JsonValueKind.Object)
+                    .OrderByDescending(t => t.TryGetProperty("width", out var width) && width.ValueKind == JsonValueKind.Number && width.TryGetDouble(out double pixels) ? Math.Min(pixels, 1280) : 0)
+                    .Select(t => Text(t, "url")).FirstOrDefault(u => u.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
             results.Add(new(id, Text(item, "title"), Text(item, "channel") is { Length: > 0 } channel ? channel : Text(item, "uploader"),
                 item.TryGetProperty("duration", out var duration) && duration.ValueKind == JsonValueKind.Number && duration.TryGetDouble(out var seconds) ? Math.Max(0, seconds) : 0, thumbnail));
         }
@@ -63,13 +67,14 @@ public sealed class YouTubeAudioService(string? toolsDirectory = null) : IYouTub
             });
             string file = Path.Combine(temporary, "audio.mp3");
             if (!File.Exists(file) || new FileInfo(file).Length == 0) throw new IOException("Não foi possível converter o áudio para MP3.");
+            progress.Report(new("Validando MP3…", 100));
             var metadata = await ProcessRunner(Tool("ffprobe"), new[] { "-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name,bit_rate:format=duration", "-of", "json", file }, cancellation, null);
             using var probe = JsonDocument.Parse(metadata);
             var stream = probe.RootElement.GetProperty("streams")[0];
             if (Text(stream, "codec_name") != "mp3" || !int.TryParse(Text(stream, "bit_rate"), out int bitrate) || bitrate != 320000 || !double.TryParse(Text(probe.RootElement.GetProperty("format"), "duration"), CultureInfo.InvariantCulture, out double length) || length <= 0)
                 throw new IOException("Não foi possível converter o áudio para MP3.");
             cancellation.ThrowIfCancellationRequested();
-            if (File.Exists(destination)) File.Replace(file, destination, null); else File.Move(file, destination);
+            File.Move(file, destination); // Never overwrite a file created while the download was running.
         }
         finally { try { Directory.Delete(temporary, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
     }

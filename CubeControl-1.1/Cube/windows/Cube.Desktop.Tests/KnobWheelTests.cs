@@ -35,6 +35,19 @@ internal static class KnobWheelTests
             faster.IsEnabled = false; Wheel(faster, 120);
             Check(faster.Value == 1, "disabled accelerated knob does not change");
         }
+        foreach (bool isFader in new[] { false, true })
+        {
+            var control = new Knob { Value = 60, IsFader = isFader };
+            int restores = 0;
+            control.RestoreRequested += (_, _) => { restores++; control.Value = 25; };
+            Wheel(control, 30);
+            typeof(Knob).GetMethod("RequestRestore", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.Invoke(control, null);
+            Check(restores == 1 && control.Value == 25, "restore requests use caller reference for " + (isFader ? "fader" : "knob"));
+            Wheel(control, 90);
+            Check(control.Value == 25, "restore clears partial wheel input");
+            Wheel(control, 30);
+            Check(control.Value == 26, "wheel continues after restore");
+        }
         await Task.Delay(500);
     }
 }

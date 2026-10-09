@@ -1,6 +1,6 @@
 # Design system do cubeControl
 
-[Documentação](README.md) · Revisão: 04/10/2026 · [Decisões históricas](historico-interface.md)
+[Documentação](README.md) · Revisão: 04/10/2026 · [Decisões históricas](historico/historico-interface.md)
 
 Referência para manutenção da interface WPF/.NET 10 com WPF UI 4.3.0. Esta revisão separa o comportamento atual das decisões antigas, que incluíam regras posteriormente substituídas. Critérios de acessibilidade são metas de verificação, não uma declaração de conformidade já comprovada.
 
@@ -93,7 +93,7 @@ Diagramas de efeito acompanham os ajustes e são ilustrativos. Preservar a disti
 
 ## Estrutura atual
 
-A navegação reúne **Pedaleira**, **IRs**, **Dispositivo e ajuda**, **Backing Tracks** e **Criador de amps**. O [histórico](historico-interface.md) descreve fases com apenas três áreas; essa contagem não representa o produto atual.
+A navegação reúne **Pedaleira**, **IRs**, **Dispositivo e ajuda**, **Backing Tracks** e **Criador de amps**. O [histórico](historico/historico-interface.md) descreve fases com apenas três áreas; essa contagem não representa o produto atual.
 
 A/B/C escolhem o preset em edição, sem confirmar o footswitch ativo. A cadeia visual apresenta Amp, Chorus, Phaser, Delay, Reverb e Cabinet. Chorus/Phaser compartilham o parâmetro de modulação. Selecionar um card abre o editor; o switch é uma ação distinta. No Amp, Tone não significa bypass geral.
 
@@ -112,7 +112,7 @@ A navegação superior usa seletores locais; não há integração de páginas p
 
 Superfícies claras/escuras usam fundos e espaçamento sem contornos permanentes. O tratamento de alto contraste segue os recursos atuais, incluindo contorno em cards; regras antigas de remover qualquer contorno foram substituídas. Foco precisa permanecer identificável nos controles nativos e musicais.
 
-Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](windows-interaction.md). Os callbacks de renderização não garantem FPS apresentados pelo monitor.
+Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](desenvolvimento/windows-interaction.md). Os callbacks de renderização não garantem FPS apresentados pelo monitor.
 
 ## Componentes
 
@@ -121,14 +121,14 @@ Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](
 | Botões | Reutilizar `CubeButtonStyle` e templates WPF UI; texto indica a ação |
 | Seletores de equipamento | Imagem abre galeria; destaque preliminar, aplicar/clique duplo confirma, cancelamento não aplica |
 | Knobs da Pedaleira | Valor por tooltip/automação, sem restabelecer campos numéricos permanentes das versões antigas |
-| Controles do criador de amps | Faders/knobs, edição numérica por Enter, referência visível e ajuste fino com Shift; respeitar faixas individuais |
+| Controles do criador de amps | Faders/knobs, edição numérica por Enter, referência visível e ajuste fino com Shift; duplo clique ou Backspace restaura o ajuste inicial, sem setas de retorno; respeitar faixas individuais |
 | Microfone de IR | Aplica ao concluir o gesto; 0–100 não significa centímetros |
 | Gráfico dos EQs | Representa os coeficientes do filtro, sem alegar medição acústica |
 | Galeria e associações | Identidades estáveis; gabinete reconhecido pelo conteúdo, não pelo slot |
 | Notificações | Snackbar para resultado breve; erro ou orientação importante permanece consultável no editor |
 | Confirmações | Manter destino, consequência e backup definidos pelo fluxo; arquivo/slot não pode ficar ambíguo |
 
-O criador possui limites específicos em cinco grupos de coeficientes; o limite atual de ganho interno é 100 e aceita os nove amps originais; veja [Criador de amps](criador-de-amps.md). Não converta os nomes musicais dos grupos em bandas de frequência comprovadas. Os códigos A/B preservam a rastreabilidade. Resposta usa dois painéis com chave discreta, visor seletor e intensidade, reaproveitando PNGs vintage transparentes e cards WPF UI. Os 16 trechos internos ficam ocultos e limitados a 67–133%; os perfis são propostas de escuta, não uma curva de palhetada ou equivalência elétrica comprovada. Em alto contraste os knobs usam desenho vetorial e cores do sistema. A EQ distingue A/B por cor, letra e traço, com reset da banda. Estados locais, prévia RAM e gravação verificada ficam separados. A página usa recursos locais e uma única rolagem por modo de layout.
+O criador possui limites específicos em cinco grupos de coeficientes; o limite atual de ganho interno é 100 e aceita os nove amps originais; veja [Criador de amps](referencias/criador-de-amps.md). Não converta os nomes musicais dos grupos em bandas de frequência comprovadas. Os códigos A/B preservam a rastreabilidade. Resposta usa dois painéis com chave discreta, visor seletor e intensidade, reaproveitando PNGs vintage transparentes e cards WPF UI. Os 16 trechos internos ficam ocultos e limitados a 67–133%; os perfis são propostas de escuta, não uma curva de palhetada ou equivalência elétrica comprovada. Em alto contraste os knobs usam desenho vetorial e cores do sistema. A EQ distingue A/B por cor, letra e traço, com reset da banda. Estados locais, prévia RAM e gravação verificada ficam separados. A página usa recursos locais e uma única rolagem por modo de layout.
 
 ## Progresso e mensagens
 
@@ -142,7 +142,7 @@ Mensagens devem informar o resultado, a pendência e a próxima ação disponív
 - Referência visual de equipamento e conteúdo identificado.
 - Resultado de leitura e retenção após desligamento.
 
-Evite notificações por movimento de knob ou monitoramento automático. Eventos e durações: [Notificações](snackbars.md).
+Evite notificações por movimento de knob ou monitoramento automático. Eventos e durações: [Notificações](desenvolvimento/snackbars.md).
 
 ## Localização e acessibilidade
 
@@ -177,4 +177,4 @@ Registre novas decisões neste guia e mantenha histórico separado. Não altere 
 
 ## Criadores gráficos de efeitos
 
-Chorus, Phaser, Delay e Reverb usam manipulação direta de contornos, sem sliders, faders ou knobs internos. Os comandos usam botões e ícones WPF UI; os detalhes numéricos aparecem junto ao elemento selecionado. Alvos de 36 DIPs, foco visível e UI Automation compartilham as propriedades do modelo. Desenhos são ilustrativos e não animados; não representam medições. Os controles normais dos pedais permanecem separados. Consulte [mapeamentos e limitações](editores-graficos-de-efeitos.md).
+Chorus, Phaser, Delay e Reverb usam manipulação direta de contornos, sem sliders, faders ou knobs internos. Os comandos usam botões e ícones WPF UI; os detalhes numéricos aparecem junto ao elemento selecionado. Alvos de 36 DIPs, foco visível e UI Automation compartilham as propriedades do modelo. Desenhos são ilustrativos e não animados; não representam medições. Os controles normais dos pedais permanecem separados. Consulte [mapeamentos e limitações](referencias/editores-graficos-de-efeitos.md).

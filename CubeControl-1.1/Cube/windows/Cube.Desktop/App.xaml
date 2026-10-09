@@ -14,7 +14,7 @@
       <Thumb Width="20" Height="32" Focusable="False" RenderOptions.BitmapScalingMode="HighQuality">
        <Thumb.Template><ControlTemplate TargetType="Thumb">
         <Border Background="Transparent">
-         <Border Margin="1"><Border.Background><ImageBrush ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Faders/fader_horizontal_oficial_01.png" Viewbox="0.30,0.18,0.38,0.62" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/></Border.Background></Border>
+         <Border Margin="1" Background="{DynamicResource CubeControlHorizontalFader}"/>
         </Border>
        </ControlTemplate></Thumb.Template>
       </Thumb>
@@ -34,8 +34,8 @@
    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Style.Triggers><Trigger Property="Orientation" Value="Horizontal"><Setter Property="Template" Value="{StaticResource OfficialHorizontalFaderTemplate}"/></Trigger></Style.Triggers>
   </Style>
-  <ImageBrush x:Key="OfficialSwitchOn" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_on.png" Viewbox="0.24,0.37,0.50,0.225" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
-  <ImageBrush x:Key="OfficialSwitchOff" ImageSource="pack://application:,,,/CubeControl;component/Assets/imagens/Interruptores/chave_seletora_oficial_01_off.png" Viewbox="0.24,0.37,0.50,0.225" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
+  <ImageBrush x:Key="OfficialSwitchOn" ImageSource="pack://application:,,,/CubeControl;component/Assets/Images/Controls/Switches/chave_seletora_oficial_01_on.png" Viewbox="0.24,0.37,0.50,0.225" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
+  <ImageBrush x:Key="OfficialSwitchOff" ImageSource="pack://application:,,,/CubeControl;component/Assets/Images/Controls/Switches/chave_seletora_oficial_01_off.png" Viewbox="0.24,0.37,0.50,0.225" ViewboxUnits="RelativeToBoundingBox" Stretch="Uniform"/>
   <Style TargetType="ui:ToggleSwitch" BasedOn="{StaticResource {x:Type ui:ToggleSwitch}}">
    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Setter Property="MinHeight" Value="32"/>
@@ -44,12 +44,12 @@
      <Border x:Name="SwitchRoot" Background="Transparent" Padding="{TemplateBinding Padding}">
       <Grid>
        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-       <Border x:Name="SwitchFace" Width="56" Height="26" VerticalAlignment="Center" Background="{StaticResource OfficialSwitchOff}" RenderOptions.BitmapScalingMode="HighQuality"/>
+       <Border x:Name="SwitchFace" Width="56" Height="26" VerticalAlignment="Center" Background="{DynamicResource OfficialSwitchOff}" RenderOptions.BitmapScalingMode="HighQuality"/>
        <ContentPresenter Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" TextElement.Foreground="{DynamicResource CubeText}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" RecognizesAccessKey="True"/>
       </Grid>
      </Border>
      <ControlTemplate.Triggers>
-      <Trigger Property="IsChecked" Value="True"><Setter TargetName="SwitchFace" Property="Background" Value="{StaticResource OfficialSwitchOn}"/></Trigger>
+      <Trigger Property="IsChecked" Value="True"><Setter TargetName="SwitchFace" Property="Background" Value="{DynamicResource OfficialSwitchOn}"/></Trigger>
       <Trigger Property="IsEnabled" Value="False"><Setter TargetName="SwitchRoot" Property="Opacity" Value="0.4"/></Trigger>
      </ControlTemplate.Triggers>
     </ControlTemplate>

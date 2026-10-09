@@ -1,3 +1,4 @@
+using Cube.Desktop;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,8 +29,25 @@ internal static class GearArtworkTests
         string folder = Path.GetFullPath("C:/CubeControl-Build/reports/gear-artwork"); Directory.CreateDirectory(folder);
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-artwork-" + Guid.NewGuid().ToString("N")));
         var amps = model.Amps;
+        var library = model.IrLibrary.Entries.ToArray();
+        Check(library.Length > 0, "IR library is available for artwork coverage");
+        foreach (var entry in library)
+        {
+            string? asset = CabinetArtwork.ForIr(entry.RelativePath, entry.Name);
+            Check(asset != null && File.Exists(AssetPaths.Image(asset)), "Library IR has an illustration: " + entry.RelativePath);
+        }
+        Check(CabinetArtwork.ForIr("unknown.wav", "Unknown custom IR") == null, "Unknown names keep the generic fallback");
+        Check(CabinetArtwork.ForIr(@"FENDER\IRs WAV\1x12\Deluxe Reverb Oxford\Big.wav", null) == "fender-deluxe-oxford-1x12.png", "Artwork matching tolerates path separators and casing");
+        var inferred = library.GroupBy(e => CabinetArtwork.ForIr(e.RelativePath, e.Name)).Select(g =>
+            new GearItem("illustration-" + g.Key, 0, IrViewModel.DisplayName(g.First().FullPath, g.First().Collection), "", "cab", "#C5B77F")).ToArray();
+        Check(inferred.Length == 10, "Ten named cabinet families share art across microphone variants");
+        var vertical = new[] {
+            new GearItem("vertical-neutral", 0, "Gabinete 2×12 Vertical", "", "cab", "#C5B77F"),
+            new GearItem("vertical-orange", 0, "Orange 2x12 Vertical Vintage 30", "", "cab", "#C5B77F") };
+        Check(CabinetArtwork.ForIr(null, vertical[0].Name) == "cabinet-vertical-2x12.png", "Vertical geometry follows the explicit name and multiplication sign");
+        Check(CabinetArtwork.ForIr(null, vertical[1].Name) == "orange-v30-vertical-2x12.png", "Orange vertical name chooses the matching enclosure");
         var cabinets = Enumerable.Range(0, 8).Select(i => new GearItem("cab-" + i, i + 1, Cube.Protocol.EquipmentCatalog.Cabinets[i].Name, "", "cab", "#C5B77F", cabinetId: "pack-bfi-cab-" + i)).ToArray();
-        foreach (var group in new[] { amps, cabinets })
+        foreach (var group in new[] { amps, cabinets, inferred, vertical })
         {
             var sheet = new WrapPanel { Width = 720, Background = new SolidColorBrush(Color.FromRgb(37, 37, 37)) };
             foreach (var item in group)
@@ -46,7 +64,7 @@ internal static class GearArtworkTests
                     Check(Math.Abs(scale - placed.Height / source.Height) < .0001, "Aspect ratio distorted: " + item.Name);
                     Check(Math.Abs(occupied.X + occupied.Width / 2 - size.Width / 2) < .001, "Horizontal centering failed");
                     double area = occupied.Width * occupied.Height;
-                    Check(area / (GearArtworkLayout.Frame(size).Width * GearArtworkLayout.Frame(size).Height) > .43, "Equipment looks disproportionately small: " + item.Name);
+                    Check(area / (GearArtworkLayout.Frame(size).Width * GearArtworkLayout.Frame(size).Height) > (group == vertical ? .28 : .43), "Equipment looks disproportionately small: " + item.Name);
                 }
                 var tile = new StackPanel { Width = 240, Height = 190 };
                 tile.Children.Add(new GearArt { Kind = item.Kind, Image = source, Height = 135 });
@@ -56,9 +74,9 @@ internal static class GearArtworkTests
             sheet.Measure(new Size(720, double.PositiveInfinity)); sheet.Arrange(new Rect(sheet.DesiredSize)); sheet.UpdateLayout();
             var bitmap = new RenderTargetBitmap(720, (int)sheet.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(sheet);
             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
-            using var output = File.Create(Path.Combine(folder, group == amps ? "amps.png" : "cabinets.png")); png.Save(output);
+            using var output = File.Create(Path.Combine(folder, group == amps ? "amps.png" : group == cabinets ? "cabinets.png" : group == vertical ? "vertical-2x12.png" : "ir-illustrations.png")); png.Save(output);
         }
-        Console.WriteLine("PASS artwork: transparent margins, centering, empty images, collapsed layout, all 17 amp/cabinet assets, proportional scaling and common visual occupancy at editor/gallery/compact sizes.");
+        Console.WriteLine("PASS artwork: transparent margins, centering, empty images, collapsed layout, factory amp/cabinet assets, all library families and vertical 2x12 variants, proportional scaling and common visual occupancy at editor/gallery/compact sizes.");
         return Task.CompletedTask;
     }
 }

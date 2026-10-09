@@ -1,8 +1,8 @@
-﻿# Scripts de QA offline
+# Scripts de QA offline
 
 Para testes focados em **janelas, ações do usuário, navegação e erros visíveis**, use a [suíte de usabilidade](USABILITY.md): `.\scripts\Invoke-UsabilityQA.ps1`. Ela abre janelas reais com dispositivos simulados e gera capturas e passos por jornada.
 
-A suíte combina **C#** para protocolo, estado da aplicação e componentes WPF, **PowerShell** para execução e relatórios e **Python** para medições independentes de áudio. São 38 casos vinculados a subconjuntos de 39 das 57 baterias de `QA_TEST_PLAN.md`. Essa associação não significa cobertura integral de uma bateria.
+A suíte combina **C#** para protocolo, estado da aplicação e componentes WPF, **PowerShell** para execução e relatórios e **Python** para medições independentes de áudio. São 38 casos vinculados a subconjuntos de 39 das 57 baterias de `CubeControl-1.1/Cube/docs/desenvolvimento/qa-test-plan.md`. Essa associação não significa cobertura integral de uma bateria.
 
 ## Executar
 

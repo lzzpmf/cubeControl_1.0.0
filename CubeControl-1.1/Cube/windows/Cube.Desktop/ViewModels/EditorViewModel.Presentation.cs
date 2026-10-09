@@ -1,4 +1,4 @@
-﻿namespace Cube.Desktop.ViewModels;
+namespace Cube.Desktop.ViewModels;
 
 public sealed partial class EditorViewModel
 {
@@ -76,7 +76,7 @@ public sealed partial class EditorViewModel
     private bool readingInventory;
     private bool searchingPorts;
     public bool SearchingPorts { get => searchingPorts; private set { if (Set(ref searchingPorts, value)) RefreshPresentation(); } }
-    public bool ShowBusyPanel => Busy && !liveParameterOperation && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
+    public bool ShowBusyPanel => Busy && !awaitingPackReview && !liveParameterOperation && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
     public bool ShowBusyRing => ShowBusyPanel && !ReadingInventory && !ShowTransferProgress;
     public bool ShowTransferProgress => Busy && !ReadingInventory && Ir.TransferActive && Ir.HasMeasuredProgress;
     public string BusyDetail { get => busyDetail; private set { if (Set(ref busyDetail, value)) Notify(nameof(HeaderConnectionStatus)); } }
@@ -95,7 +95,7 @@ public sealed partial class EditorViewModel
     public System.Windows.Media.ImageSource? ConnectedDeviceImage { get; } = ReadConnectedDeviceImage();
     private static System.Windows.Media.ImageSource? ReadConnectedDeviceImage()
     {
-        var source = GearItem.ReadImage(System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "imagens", "Dispositivos", "SINCO-CubeBaby.png"));
+        var source = GearItem.ReadImage(AssetPaths.Device("SINCO-CubeBaby.png"));
         if (source is not System.Windows.Media.Imaging.BitmapSource bitmap) return source;
         var pixels = new System.Windows.Media.Imaging.FormatConvertedBitmap(bitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
         int width = pixels.PixelWidth, height = pixels.PixelHeight;

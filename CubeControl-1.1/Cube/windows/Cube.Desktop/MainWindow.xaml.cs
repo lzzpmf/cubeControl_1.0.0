@@ -1,4 +1,4 @@
-﻿using Cube.Desktop.Localization;
+using Cube.Desktop.Localization;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -26,45 +26,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }));
     }
 
-    private void IrLibraryFolderClick(object sender, MouseButtonEventArgs e)
-    {
-        if (sender is FrameworkElement { DataContext: IrLibraryNode { IsFolder: true, IsBrand: false } node })
-        {
-            node.IsSelected = true;
-            node.IsExpanded = !node.IsExpanded;
-            e.Handled = true;
-        }
-    }
+    // Compatibility names also keep automation clients pointed at the shared browser.
+    private TreeView IrLibraryTree => SingleIrLibrary.Tree;
     protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
     {
         base.OnPreviewMouseDown(e);
-        if (IrLibraryTree == null) return;
-        bool clickedChevron = false;
-        TreeViewItem? clickedItem = null;
-        for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null;)
+        DependencyObject? node = e.OriginalSource as DependencyObject;
+        while (node != null)
         {
-            if (ReferenceEquals(node, IrLibraryTree))
-            {
-                if (e.ChangedButton == MouseButton.Left && clickedItem != null)
-                {
-                    if (clickedItem.DataContext is IrLibraryNode { IsBrand: true })
-                    {
-                        // Handle the whole brand row before the native chevron or selection handler.
-                        // The nearest item owns the click, so descendants keep their own behavior.
-                        clickedItem.Focus();
-                        clickedItem.SetCurrentValue(TreeViewItem.IsSelectedProperty, true);
-                        clickedItem.SetCurrentValue(TreeViewItem.IsExpandedProperty, !clickedItem.IsExpanded);
-                        e.Handled = true;
-                    }
-                    else if (clickedChevron)
-                        clickedItem.SetCurrentValue(TreeViewItem.IsSelectedProperty, true);
-                }
-                return;
-            }
-            if (node is System.Windows.Controls.Primitives.ToggleButton) clickedChevron = true;
-            if (node is TreeViewItem item) clickedItem ??= item;
-            node = node is Visual or System.Windows.Media.Media3D.Visual3D
-                ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
+            if (ReferenceEquals(node, IrLibraryTree) || node is Controls.IrPackEditor or Controls.IrPackReview) return;
+            node = node is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
         }
         Model.IrLibrary.ClearSelection();
     }
@@ -104,11 +75,18 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     internal MainWindow(EditorViewModel model, bool initializeDevices = true)
     {
         Model = model;
+        Model.ImageSelectionRequested += ShowImageSelection;
+        Closed += (_, _) => Model.ImageSelectionRequested -= ShowImageSelection;
         BackingTracks = new BackingTracksViewModel(Model.DataDirectory);
+        Model.IrAudition.BeforePlayback = BackingTracks.StopForIrAudition;
+        BackingTracks.BeforePlayback = Model.IrAudition.StopAsync;
         BackingTracks.ChooseExportMode = ChooseBackingExportMode;
         PreviewKeyDown += BackingKeyDown;
+        Deactivated += (_, _) => BackingTracks.StopYouTubePreview();
         Appearance.UiDensity.Initialize();
-        InitializeComponent(); DataContext = Model;
+        InitializeComponent();
+        RegisterName("IrLibraryTree", SingleIrLibrary.Tree);
+        RegisterName("IrLibrarySearch", SingleIrLibrary.SearchBox); DataContext = Model;
         BackingPage.Loaded += (_, _) =>
         {
             var host = VisualTreeHelper.GetParent(BackingPage) as FrameworkElement;
@@ -171,6 +149,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             {
                 await Model.Initialize();
                 await BackingTracks.Initialize();
+                await Model.IrAudition.RefreshDevices();
             }
             string[] args = Environment.GetCommandLineArgs(); int smoke = Array.IndexOf(args, "--smoke");
             if (automaticConnectionEnabled && smoke < 0 && !args.Contains("--offline")) Model.StartAutomaticConnection();
@@ -236,6 +215,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         };
         Closing += async (_, e) =>
         {
+            _ = Model.IrAudition.StopAsync();
             if (closing) return;
             e.Cancel = true;
             if (Model.Busy) { await ShowNoticeAsync("Aguarde a operação terminar antes de fechar."); return; }
@@ -269,7 +249,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         content.Children.Add(new TextBlock { Text = LanguageService.T("Imagem do gabinete (opcional)"), Margin = new Thickness(0, 16, 0, 8) });
         var images = new ComboBox { HorizontalContentAlignment = HorizontalAlignment.Stretch, MaxDropDownHeight = 320 };
         images.Items.Add(new ComboBoxItem { Content = LanguageService.T("Manter imagem atual ou padrão"), Tag = null });
-        string directory = Path.Combine(AppContext.BaseDirectory, "Assets", "imagens", "Gabinetes");
+        string directory = AssetPaths.CabinetSelection;
         if (Directory.Exists(directory))
             foreach (string path in Directory.EnumerateFiles(directory, "*.png").OrderBy(Path.GetFileName))
             {
@@ -318,6 +298,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             Tabs.SelectedIndex = Navigation.SelectedIndex;
         }
     }
+    internal Action<Appearance.ControlFinish> SelectControlFinish { get; set; } = Appearance.ThemeService.Instance.SelectFinish;
     private void MoreOptionsClick(object sender, RoutedEventArgs e)
     {
         if (MoreOptionsButton.ContextMenu is { IsOpen: true } opened) { opened.IsOpen = false; return; }
@@ -380,6 +361,20 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             };
             themeMenu.Items.Add(item);
         }
+        var finishMenu = Entry("Acabamento dos controles", Wpf.Ui.Controls.SymbolRegular.Color24);
+        foreach (var definition in Appearance.ControlFinishCatalog.All)
+        {
+            var finish = definition.Finish;
+            var label = definition.Label;
+            var item = new MenuItem { Header = LanguageService.T(label), Style = (Style)FindResource("PreferenceMenuItem"), Template = (ControlTemplate)FindResource("PreferenceMenuItemTemplate"), Tag = Appearance.ThemeService.Instance.Finish == finish };
+            item.Click += async (_, args) =>
+            {
+                args.Handled = true;
+                try { SelectControlFinish(finish); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { await ShowNoticeAsync(LanguageService.T("Não foi possível salvar as preferências locais: ") + ex.Message); }
+            };
+            finishMenu.Items.Add(item);
+        }
         var languageMenu = Entry("Idioma", Wpf.Ui.Controls.SymbolRegular.LocalLanguage24);
         foreach (var language in LanguageService.Instance.Languages)
         {
@@ -395,11 +390,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
         menu.Items.Add(themeMenu);
         menu.Items.Add(languageMenu);
+        menu.Items.Add(finishMenu);
         menu.Items.Add(new Separator());
         menu.Items.Add(CreateZoomMenu(AlignMenu));
         // WPF UI 4.3 names its submenu popup "Popup". Open toward the workspace,
         // since this menu is anchored at the window's right edge.
-        foreach (var submenu in new[] { themeMenu, languageMenu })
+        foreach (var submenu in new[] { themeMenu, languageMenu, finishMenu })
             submenu.Loaded += (_, _) =>
             {
                 submenu.ApplyTemplate();
@@ -427,6 +423,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         Navigation.SelectedIndex = Tabs.SelectedIndex;
         BackingTracks.PageVisible = Tabs.SelectedIndex == 2;
+        if (Tabs.SelectedIndex != 1) _ = Model.IrAudition.StopAsync();
         UpdateWorkspaceLayout();
         Workspace.MaxWidth = 1440;
         MoveFooterToPage();
@@ -616,23 +613,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = "Conexão USB", Content = new Views.ConnectionDetails { DataContext = Model }, CloseButtonText = "Fechar" };
         await dialog.ShowLocalizedAsync();
     }
-    private async void UserManualClick(object sender, RoutedEventArgs e)
+    private Views.DocumentationWindow? documentationWindow;
+    private void DocumentationClick(object sender, RoutedEventArgs e)
     {
-        try
+        if (documentationWindow == null)
         {
-            string path = Path.Combine(AppContext.BaseDirectory, "Assets", "Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pdf");
-            if (!File.Exists(path)) throw new FileNotFoundException();
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+            documentationWindow = new Views.DocumentationWindow { Owner = this };
+            documentationWindow.Closed += (_, _) => documentationWindow = null;
+            documentationWindow.Show();
         }
-        catch (Exception error) when (error is IOException or System.ComponentModel.Win32Exception or UnauthorizedAccessException)
+        else
         {
-            var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost)
-            {
-                Title = "Manual do usuário",
-                Content = "Não foi possível abrir o manual. Verifique se o PDF está na pasta Assets do aplicativo e se há um leitor de PDF instalado.",
-                CloseButtonText = "Fechar"
-            };
-            await dialog.ShowLocalizedAsync();
+            if (documentationWindow.WindowState == WindowState.Minimized) documentationWindow.WindowState = WindowState.Normal;
+            documentationWindow.Activate();
         }
     }
     private int gearWheelDelta;
@@ -665,7 +658,88 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Model.SelectedStage = 0;
         GalleryClick(sender, e);
     }
+    private async void ShowImageSelection(GearItem target)
+    {
+        if (galleryOpen || Model.Busy) return;
+        galleryOpen = true;
+        var picker = new Views.GearImagePicker(target);
+        var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost)
+        {
+            Title = LanguageService.T("Personalizar imagem"), Content = picker,
+            CloseButtonText = "", DialogMaxWidth = 960, DialogMaxHeight = 900
+        };
+        var title = new DockPanel { LastChildFill = true };
+        var close = new Wpf.Ui.Controls.Button
+        {
+            Icon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Dismiss24, FontSize = 16 },
+            Appearance = Wpf.Ui.Controls.ControlAppearance.Transparent, Width = 40, Height = 40,
+            Padding = new Thickness(0), ToolTip = LanguageService.T("Fechar")
+        };
+        System.Windows.Automation.AutomationProperties.SetName(close, LanguageService.T("Fechar"));
+        DockPanel.SetDock(close, Dock.Right); title.Children.Add(close);
+        title.Children.Add(new TextBlock { Text = LanguageService.T("Personalizar imagem"), VerticalAlignment = VerticalAlignment.Center });
+        dialog.Title = title;
+        close.Click += (_, _) => dialog.Hide(Wpf.Ui.Controls.ContentDialogResult.None);
+        picker.ApplyRequested += () =>
+        {
+            if (picker.SelectedPath is { } path)
+            {
+                if (Model.ApplyGearImage(target, path)) dialog.Hide(Wpf.Ui.Controls.ContentDialogResult.Primary);
+                else picker.ShowError(Model.ErrorMessage);
+            }
+        };
+        picker.CancelRequested += () => dialog.Hide(Wpf.Ui.Controls.ContentDialogResult.None);
+        System.Windows.Input.KeyEventHandler escape = (_, args) =>
+        {
+            if (args.Key == Key.Escape) { args.Handled = true; dialog.Hide(Wpf.Ui.Controls.ContentDialogResult.None); }
+        };
+        dialog.PreviewKeyDown += escape;
+        void SizeSurface()
+        {
+            if (Controls.GalleryDialogDismissal.Surface(dialog) is not Border surface) return;
+            var margin = dialog.DialogMargin;
+            surface.Width = Math.Max(0, Math.Min(960, DialogHost.ActualWidth - margin.Left - margin.Right));
+            surface.Height = Math.Max(0, Math.Min(750, DialogHost.ActualHeight - margin.Top - margin.Bottom));
+        }
+        void ResizePicker(object? sender, SizeChangedEventArgs args) => SizeSurface();
+        DialogHost.SizeChanged += ResizePicker;
+        dialog.Loaded += (_, _) =>
+        {
+            SizeSurface();
+            // This picker owns its fixed actions; hide WPF UI's otherwise empty footer.
+            if (dialog.Template.FindName("CloseButton", dialog) is DependencyObject nativeClose &&
+                System.Windows.Media.VisualTreeHelper.GetParent(nativeClose) is Grid nativeActions &&
+                System.Windows.Media.VisualTreeHelper.GetParent(nativeActions) is Border nativeFooter)
+                nativeFooter.Visibility = Visibility.Collapsed;
+            if (dialog.Template.FindName("PART_ContentScroll", dialog) is ScrollViewer body)
+            {
+                body.Padding = new Thickness(0);
+                body.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+                body.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+                picker.SetBinding(FrameworkElement.HeightProperty, new System.Windows.Data.Binding(nameof(FrameworkElement.ActualHeight)) { Source = body });
+                picker.SetBinding(FrameworkElement.WidthProperty, new System.Windows.Data.Binding(nameof(FrameworkElement.ActualWidth)) { Source = body });
+            }
+        };
+        using var dismissal = new Controls.GalleryDialogDismissal(this, dialog);
+        var previousFocus = Keyboard.FocusedElement;
+        using var adaptive = Appearance.AdaptiveDialogs.Attach(dialog);
+        dialog.PreviewMouseWheel += Controls.SmoothScroll.RouteWheel;
+        try { await dialog.ShowAsync(); }
+        finally
+        {
+            DialogHost.SizeChanged -= ResizePicker; dialog.PreviewKeyDown -= escape;
+            dialog.PreviewMouseWheel -= Controls.SmoothScroll.RouteWheel;
+            galleryOpen = false;
+            if (previousFocus is UIElement { IsVisible: true, IsEnabled: true } element) element.Focus();
+        }
+    }
     private bool galleryOpen;
+    private void EquipmentImageClick(object sender, RoutedEventArgs e)
+    {
+        if (Model.HasGallery) GalleryClick(sender, e);
+        else if (Model.ChangeImage.CanExecute(null)) Model.ChangeImage.Execute(null);
+    }
+
     private async void GalleryClick(object sender, RoutedEventArgs e)
     {
         if (galleryOpen || !Model.HasGallery || Model.Busy || (!Model.IsAmp && !Model.CanEdit)) return;
@@ -751,23 +825,22 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     }
     private FrameworkElement? backingViewportHost;
     private void BackingViewportSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(BackingPage.ActualWidth);
-    private bool? backingSidebarExpanded;
-    private bool backingApplyingLayout;
-    private void BackingPlaylistToggleClick(object sender, RoutedEventArgs e)
-    {
-        if (BackingPlaylistToggle == null || backingApplyingLayout) return;
-        backingSidebarExpanded = BackingPlaylistToggle.IsExpanded;
-        ApplyBackingLayout(BackingPage.ActualWidth);
-    }
     private void BackingPageSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(e.NewSize.Width);
+    private void BackingLibrarySizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(e.NewSize.Width);
     private void ApplyBackingLayout(double width)
     {
-        if (BackingPlaylistToggle == null || BackingTrackList == null) return;
-        bool sidebar = backingSidebarExpanded ?? (ActualWidth >= 1200 && width >= 1120);
-        backingApplyingLayout = true;
-        try { BackingPlaylistToggle.IsExpanded = sidebar; }
-        finally { backingApplyingLayout = false; }
-        BackingTrackList.MaxHeight = 240;
+        if (BackingLibraryLayout == null || BackingTrackList == null || BackingYouTubeScroll == null) return;
+        bool columns = width >= 860;
+        BackingPlaylistColumn.Width = new GridLength(columns ? 300 : 0);
+        BackingLibraryGap.Width = new GridLength(columns ? 16 : 0);
+        Grid.SetColumnSpan(BackingPlaylistPanel, columns ? 1 : 3);
+        Grid.SetColumn(BackingYouTubePanel, columns ? 2 : 0);
+        Grid.SetColumnSpan(BackingYouTubePanel, columns ? 1 : 3);
+        Grid.SetRow(BackingYouTubePanel, columns ? 0 : 1);
+        BackingYouTubePanel.Margin = new Thickness(0, columns ? 0 : 16, 0, 0);
+        BackingTrackList.MaxHeight = BackingYouTubeScroll.MaxHeight = columns ? 480 : double.PositiveInfinity;
+        ScrollViewer.SetVerticalScrollBarVisibility(BackingTrackList, columns ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled);
+        BackingYouTubeScroll.VerticalScrollBarVisibility = columns ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
     }
     private void BackingSectionClick(object sender, RoutedEventArgs e)
     {
@@ -804,6 +877,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void BackingKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Handled || backingDialogOpen) return;
+        if (e.Key == Key.Escape && BackingTracks.YouTubePreviewId != null)
+        { BackingTracks.StopYouTubePreview(); e.Handled = true; return; }
+        if (Tabs.SelectedIndex == 1) return;
+        for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
+            if (node is Controls.YouTubeResultCard) return;
         bool backingPage = Tabs.SelectedIndex == 2;
         if (!backingPage && (BackingTracks.SelectedTrack == null || e.Key is not (Key.Space or Key.L or Key.Left or Key.Right or Key.Up or Key.Down))) return;
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))

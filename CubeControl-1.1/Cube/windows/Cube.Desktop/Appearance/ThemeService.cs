@@ -11,11 +11,27 @@ using Wpf.Ui.Controls;
 namespace Cube.Desktop.Appearance;
 
 public enum ThemeMode { System, Light, Dark }
+public enum ControlFinish
+{
+    Official, BrushedSilver, RetroIvory, GraphiteCopper,
+    BlackIvory, IndustrialBlack, TexturedSteel, MarconiBlack, VintageBrass, IvoryGold, ChromeSkullBlue
+}
 
 public sealed class ThemeSettings
 {
     public int Version { get; set; } = 1;
     public string Mode { get; set; } = "System";
+    public string Finish { get; set; } = "Official";
+    public static ControlFinish LoadFinish(string path)
+    {
+        try
+        {
+            var settings = JsonSerializer.Deserialize<ThemeSettings>(File.ReadAllText(path));
+            if (settings?.Version == 1 && Enum.TryParse<ControlFinish>(settings.Finish, out var finish) && Enum.IsDefined(finish)) return finish;
+        }
+        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException) { }
+        return ControlFinish.Official;
+    }
     public static ThemeMode Load(string path)
     {
         try
@@ -26,11 +42,13 @@ public sealed class ThemeSettings
         catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException) { }
         return ThemeMode.System;
     }
-    public static void Save(string path, ThemeMode mode)
+    public static void Save(string path, ThemeMode mode) => Save(path, mode, LoadFinish(path));
+    public static void Save(string path, ThemeMode mode, ControlFinish finish)
     {
         if (!Enum.IsDefined(mode)) throw new ArgumentOutOfRangeException(nameof(mode));
+        if (!Enum.IsDefined(finish)) throw new ArgumentOutOfRangeException(nameof(finish));
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
-        File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(new ThemeSettings { Mode = mode.ToString() }));
+        File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(new ThemeSettings { Mode = mode.ToString(), Finish = finish.ToString() }));
         File.Move(path + ".tmp", path, true);
     }
 }
@@ -89,11 +107,12 @@ public sealed class ThemeService
     private static readonly ImageSource WhiteIcon = LoadIcon("cubeBabyWhite.png");
     private static ImageSource LoadIcon(string name)
     {
-        var image = new BitmapImage(new Uri($"pack://application:,,,/CubeControl;component/Assets/Icons/{name}"));
+        var image = new BitmapImage(new Uri($"pack://application:,,,/CubeControl;component/Assets/Images/Icons/{name}"));
         image.Freeze();
         return image;
     }
     public ThemeMode Mode { get; private set; }
+    public ControlFinish Finish { get; private set; }
     public bool IsLight { get; private set; }
     public bool IsHighContrast { get; private set; }
     public event Action? Changed;
@@ -101,6 +120,7 @@ public sealed class ThemeService
     private ThemeService()
     {
         Mode = ThemeSettings.Load(settingsPath);
+        Finish = ThemeSettings.LoadFinish(settingsPath);
         ApplicationThemeManager.Changed += OnThemeChanged;
     }
     public void Initialize() => Apply();
@@ -128,8 +148,19 @@ public sealed class ThemeService
     }
     public void Select(ThemeMode mode)
     {
-        ThemeSettings.Save(settingsPath, mode);
+        ThemeSettings.Save(settingsPath, mode, Finish);
         Preview(mode);
+    }
+    public void SelectFinish(ControlFinish finish)
+    {
+        ThemeSettings.Save(settingsPath, Mode, finish);
+        PreviewFinish(finish);
+    }
+    internal void PreviewFinish(ControlFinish finish)
+    {
+        if (!Enum.IsDefined(finish)) throw new ArgumentOutOfRangeException(nameof(finish));
+        Finish = finish;
+        OnThemeChanged(ApplicationThemeManager.GetAppTheme(), default);
     }
     internal void Preview(ThemeMode mode)
     {
@@ -208,6 +239,7 @@ public sealed class ThemeService
         Set("CubeKnobTop", "#555555", "#FFFFFF", SystemColors.WindowBrush);
         Set("CubeKnobBottom", "#292929", "#C6D0D8", SystemColors.WindowBrush);
         Set("CubeKnobTrack", "#666666", "#8798A3", SystemColors.WindowTextBrush);
+        ControlArtwork.Apply(resources, Finish, IsLight, IsHighContrast);
         RefreshBackdrop();
         resources["CubeThemeRevision"] = ++revision;
         Changed?.Invoke();

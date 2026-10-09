@@ -1,6 +1,6 @@
 # cubeControl — desenvolvimento Windows
 
-[Documentação](../docs/README.md) · [Guia de uso](../docs/guia-de-uso.md) · Revisão: 01/10/2026
+[Documentação](../docs/README.md) · [Guia de uso](../docs/usuario/pt-BR/primeiros-passos.md) · Revisão: 01/10/2026
 
 O código está em `CubeControl-1.1/Cube/windows/`. Existe um único fluxo de geração do aplicativo: [scripts/Build-CubeControl.ps1](../../../scripts/Build-CubeControl.ps1).
 
@@ -27,6 +27,8 @@ O comando restaura dependências, compila, prepara um pacote completo, verifica 
 | `-Start` | Executa o mesmo build e abre o pacote após sucesso |
 | `-Simulation` | Gera a edição simulada, com configuração e transporte próprios |
 | `-OutputRoot 'D:\CubeControl-Build'` | Escolhe outra pasta absoluta de saída, externa ao repositório |
+
+As ferramentas do YouTube ficam em `C:\CubeControl-Build\youtube-tools` (ou em `youtube-tools` dentro do `OutputRoot` escolhido). Os próximos builds verificam e reutilizam os arquivos preparados, sem baixar ou descompactar novamente. A preparação é refeita quando o manifesto `scripts/youtube-tools.json` muda ou algum arquivo preparado está ausente ou alterado; os downloads existentes também são reutilizados quando seu SHA256 corresponde ao manifesto. Preserve essa pasta para manter o cache.
 
 Exemplos do mesmo fluxo:
 
@@ -74,7 +76,7 @@ O pacote anterior é preservado durante a compilação e verificação. Somente 
 
 ## Simulação
 
-Use `-Simulation` no mesmo script. Ele inclui `FakeConnection.cs` e define `CUBE_SIMULATION` por meio de `CubeSimulation=true`. Os limites e os dados locais estão no [guia de simulação](../docs/simulacao-temporaria.md).
+Use `-Simulation` no mesmo script. Ele inclui `FakeConnection.cs` e define `CUBE_SIMULATION` por meio de `CubeSimulation=true`. Os limites e os dados locais estão no [guia de simulação](../docs/historico/simulacao-temporaria.md).
 
 ## Testes existentes
 
@@ -98,14 +100,31 @@ O modo `--effects-firmware-b-only` está disponível nos dois projetos e testa o
 | Interação | `--motion-only`, `--wheel-only`, `--knob-wheel-only`, `--microphone-only`, `--chain-only` |
 | Equipamentos e feedback | `--carousel-only`, `--artwork-only`, `--buttons-only`, `--effects-only`, `--chevrons-only`, `--snackbar-only`, `--progress-only` |
 | Sessão e biblioteca | `--auto-connect-only`, `--save-presets-only`, `--ir-library-only` (alias `--ir-catalog-only`), `--ir-library-ui` |
+| YouTube | `--youtube-only` (busca/download simulados, ciclo de prévia e mosaico), `--youtube-preview-live` (rede, FFmpeg e saída WASAPI reais, com volume zero) |
 | Outros | `--editor-only`, `--presentation-render`, `--scroll-profile` |
 
 O despacho dos modos está em [Cube.Desktop.Tests/Program.cs](Cube.Desktop.Tests/Program.cs). Testes simulados não certificam áudio, USB físico ou persistência após desligar. `Cube.Diagnostics` acessa hardware e não integra a verificação offline da documentação.
 
 ## Recursos e manutenção
 
-[Arquitetura](../docs/arquitetura.md) descreve os seis projetos. O pacote inclui 276 WAVs de biblioteca, manual PDF, idiomas, imagens e `FactoryAmps.bin` embutido. Não inclui modelos NAM nem exige checkout externo do WPF UI.
+O modo `--youtube-preview-live` exige as ferramentas preparadas por `scripts/Prepare-YouTubeTools.ps1 -OutputRoot C:\CubeControl-Build` antes da compilação e uma saída de áudio disponível. Ele verifica início e cancelamento do stream real; a escuta audível continua sendo uma verificação manual.
+
+[Arquitetura](../docs/desenvolvimento/arquitetura.md) descreve os seis projetos. O pacote inclui 276 WAVs de biblioteca, manual PDF, idiomas, imagens e `FactoryAmps.bin` embutido. Não inclui modelos NAM nem exige checkout externo do WPF UI.
 
 Este arquivo é copiado como `LEIA-ME.md` para o pacote; seus links de desenvolvimento pressupõem a árvore do repositório. Os avisos ficam em [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt). Dados e backups do usuário ficam fora da pasta de build.
 
 Os antigos scripts de publicação separada foram removidos. As cópias anteriores em `builds/` e `*-dev-build` foram arquivadas uma única vez em `C:\CubeControl-Build\legacy\`; essa pasta não participa do novo fluxo.
+
+### Personalização de imagens
+
+`Personalizar imagem` abre o acervo de equipamentos na categoria atual. O rodapé mantém `Escolher do computador`, `Aplicar imagem` e `Cancelar` disponíveis durante a rolagem. A seleção é provisória até aplicar ou dar duplo clique; Escape e fechar cancelam. PNG/JPEG de até 20 MB são copiados para o armazenamento local apenas após confirmar. As imagens não alteram o som nem enviam comandos ao pedal.
+
+O catálogo usa uma grade de três ou mais colunas em largura normal e se adapta a uma ou duas em janela compacta ou zoom elevado. O filtro picklist inclui Guitarras e Racks; setas navegam entre cartões. As linhas são virtualizadas e as miniaturas carregadas sob demanda. Além de `Assets/Images/Equipment`, o build distribui as alternativas de Cabeçotes, Caixas, Pedais, Guitarras, Dispositivos, Equipment e Racks do Archive em `Assets/Images/Catalog`, preservando as subpastas e excluindo controles. Os arquivos originais permanecem no Archive, que não acompanha o pacote. A publicação confere os hashes de todas as imagens distribuídas.
+
+Verificação direcionada: `dotnet run --project .\CubeControl-1.1\Cube\windows\Cube.Desktop.Tests -c Release -- --image-picker-only`. As capturas ficam em `C:/CubeControl-Build/reports/gear-image-picker`.
+
+## Central de documentação
+
+Guias pt-BR/en-US têm fontes únicas em `../docs/usuario`. O projeto publica o catálogo e esses arquivos em `Assets/Documents/guias`, junto aos PDFs preservados em `Assets/Documents/manuais`. O build executa `scripts/Validate-Documentation.ps1 -PackageRoot` antes de aceitar o pacote.
+
+Na raiz, use `python scripts/qa/validate_document_links.py` para links do acervo e `dotnet run --project CubeControl-1.1/Cube/windows/Cube.Desktop.Tests -c Release -- --documentation-only` para catálogo, leitura, busca, erros, idiomas e renderizações. As capturas ficam em `C:/CubeControl-Build/documentation-qa`. A central abre em janela não modal a partir de Dispositivo e ajuda e não depende do pedal.

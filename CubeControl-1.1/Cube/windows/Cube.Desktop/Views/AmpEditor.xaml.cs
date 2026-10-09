@@ -131,10 +131,16 @@ public partial class AmpEditor : UserControl
     }
     private async void ExportClick(object sender, RoutedEventArgs e) => await model.ExportAmpAsync();
     private async Task ApplyControls() => await model.PreviewAmpAsync();
-    private void ResetControlClick(object sender, RoutedEventArgs e)
+    private void RestoreControlRequested(object sender, RoutedEventArgs e)
     {
         if (!model.CanAdjustAmp || sender is not FrameworkElement { DataContext: AmpControl control }) return;
         control.Restore();
+    }
+    private void RestoreCapacitorRequested(object sender, RoutedEventArgs e)
+    {
+        if (!model.CanAdjustAmp || sender is not FrameworkElement { DataContext: CapacitorBank bank }) return;
+        if (bank.RestoreOriginal.CanExecute(null)) bank.RestoreOriginal.Execute(null);
+        e.Handled = true;
     }
     private async void RestoreClick(object sender, RoutedEventArgs e) => await model.RestoreAmpAsync();
     private async void WriteClick(object sender, RoutedEventArgs e) => await model.WriteAmpAsync(async message =>

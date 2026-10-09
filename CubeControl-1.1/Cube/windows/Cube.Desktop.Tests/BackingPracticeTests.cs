@@ -91,13 +91,8 @@ internal static class BackingPracticeTests
                 model.Speed = 95;
                 var search = Find<TextBox>((DependencyObject)window.FindName("BackingPlaylistPanel")).First();
                 Key(search, System.Windows.Input.Key.Up); Check(model.Speed == 95, "text fields retain their editing keys");
-                var drawer = (Expander)window.FindName("BackingPlaylistToggle");
-                drawer.IsExpanded = false; await Task.Delay(80); window.UpdateLayout(); 
-                Check(drawer.IsVisible && !drawer.IsExpanded, "playlist chevron preserves its header when collapsed");
-                drawer.IsExpanded = true; await Task.Delay(80); window.UpdateLayout(); 
-                Check(((FrameworkElement)window.FindName("BackingPlaylistPanel")).Visibility == Visibility.Visible, "playlist toggle reopens the sidebar");
-                // Return to automatic breakpoint behavior for the resize fixtures.
-                typeof(MainWindow).GetField("backingSidebarExpanded", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.SetValue(window, null);
+                await Task.Delay(80); window.UpdateLayout();
+                Check(((FrameworkElement)window.FindName("BackingPlaylistPanel")).IsVisible, "playlist remains expanded");
                 model.LinkedPreset = 2; Check(model.PresetHint.Contains("B") && model.PresetHint.Contains("footswitch"), "preset association explicitly requires physical selection");
                 Check(!model.IsMonitoring && model.MonitorVolume == 0 && !model.ToggleMonitor.CanExecute(null), "monitor is off and silent without explicitly selected endpoints");
                 model.MonitorVolume = 200; Check(model.MonitorVolume == 100, "monitor volume is independently clamped"); model.MonitorVolume = 0;
@@ -110,7 +105,6 @@ internal static class BackingPracticeTests
                 Check(model.Position == 40, "arrangement shortcut seeks to the existing named section");
                 model.Position = 24; model.IsLooping = true;
                 string reports = "C:/CubeControl-Build/backing-ui-review/compact-analysis"; Directory.CreateDirectory(reports);
-                ((Expander)window.FindName("BackingAudioToggle")).IsExpanded = false;
                 foreach (var expander in Find<Expander>((DependencyObject)window.FindName("BackingRacks"))) expander.IsExpanded = false;
                 foreach (var (theme, language) in new[] { ("Dark", "pt-BR"), ("Light", "en-US"), ("HighContrast", "en-US") })
                 {
@@ -124,20 +118,12 @@ internal static class BackingPracticeTests
                     await Task.Delay(500); window.UpdateLayout();
                     BackingUiReviewTests.CheckTransport(window);
                     Check(((FrameworkElement)window.FindName("Workspace")).ActualWidth <= 1441, "workspace is bounded on ultrawide screens");
-                    if (width == 640 && scale == 1) Check(!((Expander)window.FindName("BackingPlaylistToggle")).IsExpanded, "small windows collapse the playlist by default");
+                    if (width == 640 && scale == 1) Check(((FrameworkElement)window.FindName("BackingPlaylistPanel")).IsVisible, "small windows keep the playlist open");
                     var player = (FrameworkElement)window.FindName("BackingPlayerPanel");
                     var transport = (FrameworkElement)window.FindName("BackingTransportRack");
                     var transportHost = (ContentControl)window.FindName("BackingTransportHost");
-                    if (transportHost.IsVisible)
-                    {
-                        var before = transport.TransformToAncestor(window).TransformBounds(new Rect(transport.RenderSize));
-                        var scroll = (ScrollViewer)window.FindName("BackingTracksScroll");
-                        scroll.ScrollToEnd(); window.UpdateLayout();
-                        var after = transport.TransformToAncestor(window).TransformBounds(new Rect(transport.RenderSize));
-                        Check(before == after && after.Bottom <= window.ActualHeight, $"docked transport remains visible while the workspace scrolls: before={before}, after={after}, window={window.ActualHeight}");
-                        scroll.ScrollToTop(); window.UpdateLayout();
-                    }
-                    else Check(transport.Parent == window.FindName("BackingRacks"), "compact transport stays in the scrollable workspace");
+                    Check(transportHost.IsVisible && transportHost.Parent == window.FindName("BackingRacks"), "transport remains inside the scrollable player");
+                    Check(transport.ActualWidth <= player.ActualWidth + 1, "transport fits the player at every scale");
                     foreach (string name in new[] { "BackingAudioPanel" })
                         Check(!((FrameworkElement)window.FindName(name)).IsVisible || ((FrameworkElement)window.FindName(name)).ActualWidth <= ((FrameworkElement)window.FindName("BackingPage")).ActualWidth + 1, $"{name} fits at {width}, scale {scale}");
                     foreach (string name in new[] { "BackingTransportRack", "BackingArrangement", "BackingAudioPanel" })

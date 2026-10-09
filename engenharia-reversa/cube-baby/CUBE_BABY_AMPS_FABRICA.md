@@ -1,6 +1,6 @@
 # Cube Baby — tabelas e configurações originais dos nove amps
 
-[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Criador de amps](../../CubeControl-1.1/Cube/docs/criador-de-amps.md)
+[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Criador de amps](../../CubeControl-1.1/Cube/docs/referencias/criador-de-amps.md)
 
 Extração local dos dados preservados antes das modificações. Nenhum comando foi enviado ao pedal nesta extração.
 

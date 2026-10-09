@@ -70,13 +70,22 @@ internal static class CuratedPackTests
         int writes = fake.Writes;
         model.ReloadIrPacks(partial.Id);
         var editor = model.PackEditor;
+        var grid = new IrPackGridPanel();
+        for (int i = 0; i < 8; i++) grid.Children.Add(new Border { Height = 100 });
+        foreach (var (width, columns) in new[] { (1076d, 4), (800d, 2), (532d, 2), (400d, 1) })
+        {
+            grid.Measure(new Size(width, double.PositiveInfinity)); grid.Arrange(new Rect(0, 0, width, grid.DesiredSize.Height));
+            Check(grid.Children.Cast<UIElement>().All(c => c.RenderSize.Width >= 260), "grid preserves usable card width at " + width);
+            var nextRow = System.Windows.Controls.Primitives.LayoutInformation.GetLayoutSlot((FrameworkElement)grid.Children[columns]);
+            Check(nextRow.Left == 0 && nextRow.Top == 112, "grid wraps in reading order at " + width);
+        }
         var control = new IrPackEditor { DataContext = editor };
         Window Host(IrPackEditor content, double width = 1100) {
             var host = new Window { Width = width, Height = 800, Content = new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled } };
             host.SetResourceReference(Window.BackgroundProperty, "CubeCanvas");
             return host;
         }
-        var window = Host(control);
+        var window = Host(control, 1700);
         window.Show(); await System.Windows.Threading.Dispatcher.Yield();
         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(window);
@@ -85,30 +94,53 @@ internal static class CuratedPackTests
         using (var file = File.Create(screenshot)) encoder.Save(file);
         Console.WriteLine("SCREENSHOT " + screenshot);
         void Click(string label, int index = 0) { var button = Find<Button>(window).Where(b => Equals(b.Content, LanguageService.T(label))).ElementAt(index); Check(button.Command.CanExecute(null), "action available: " + label); button.Command.Execute(null); }
-        Click("Novo pack");
+        editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
+        Click("Criar pack");
+        await System.Windows.Threading.Dispatcher.Yield();
+        Check(!editor.DetailsExpanded, "new pack starts with the cabinet grid rather than a form");
+        editor.DetailsExpanded = true; window.UpdateLayout();
         ((TextBox)control.FindName("PackName")).Text = "UI personal";
-        ((ListBox)control.FindName("PackLibrary")).SelectedIndex = 0;
-        Click("Usar IR", 2); Click("Usar IR", 5);
+        editor.PackLibrary.Selected = editor.PackLibrary.Entries[0];
+        var previewFile = model.Ir.File;
+        editor.Search = "no-results-unique-token";
+        Check(editor.LibraryEmpty && !editor.Library.Any(), "empty library search is explicit");
+        editor.Search = "";
+        editor.PackLibrary.Selected = editor.PackLibrary.Entries[0];
+        Check(model.Ir.File == previewFile, "pack selection leaves the preview IR unchanged");
+        Click("Usar neste slot", 2); Click("Usar neste slot", 5);
         await System.Windows.Threading.Dispatcher.Yield();
         Check(editor.Slots.Count(s => s.Entry != null) == 2, "inline actions assign the selected library IR");
         Check(Find<TextBlock>(window).Any(t => t.Text == LanguageService.T("Este pack contém IRs repetidos.")), "editor warns about repeated IRs");
-        Find<Button>(window).Where(b => System.Windows.Automation.AutomationProperties.GetName(b) == LanguageService.T("Mover para cima")).ElementAt(2).Command.Execute(null); Click("Remover", 5); Click("Salvar pack");
+        void SlotMenu(int index, string label)
+        {
+            var button = Find<Button>(window).Where(b => System.Windows.Automation.AutomationProperties.GetName(b) == LanguageService.T("Ações do slot")).ElementAt(index);
+            button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            button.ContextMenu.UpdateLayout();
+            var item = button.ContextMenu.Items.OfType<MenuItem>().Single(m => Equals(m.Header, LanguageService.T(label)));
+            Check(item.Command.CanExecute(null), "slot menu command available: " + label);
+            item.Command.Execute(null); button.ContextMenu.IsOpen = false;
+        }
+        editor.Slots[2].DistanceValue = 23;
+        Check(editor.Slots[2].Distance == "23" && editor.Dirty, "distance edits only the local slot draft");
+        SlotMenu(2, "Mover para o slot anterior"); SlotMenu(5, "Remover"); Click("Salvar pack");
         Check(model.IrPacks.Single(p => p.Name == "UI personal").Definition!.Entries.Single().Slot == 1, "editor assigns, moves, removes and saves a partial pack");
         Check(model.SelectedIrPack?.Name == "UI personal" && !editor.Dirty, "saving synchronizes the pack used for application");
         editor.Slots[1].Distance = "99";
-        Check(editor.Dirty && !model.ApplyIrPack.CanExecute(null), "unsaved distance blocks applying the pack");
+        Check(editor.Dirty && model.ApplyIrPack.CanExecute(null), "unsaved draft can be reviewed and applied");
         editor.Slots[1].Distance = "100";
         Check(editor.Slots[1].Distance == "99" && editor.Message == "Use uma distância de 0 a 99.", "invalid distance is rejected without losing the valid value");
+        editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Cancel);
         model.Ask = _ => Task.FromResult(false);
         Check(!await editor.SelectAsync(curated[0]) && editor.Dirty && editor.Name == "UI personal", "cancelled selection preserves the draft");
         Check(!await editor.ConfirmDiscard(), "closing confirmation can preserve the draft");
+        editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
         model.Ask = _ => Task.FromResult(true);
         editor.Save();
         Check(model.SelectedIrPack!.Definition!.Entries.Single().Distance == 99, "distance persists when saved");
         await editor.SelectAsync(curated[0]);
         Check(editor.ReadOnly && !editor.SavePack.CanExecute(null) && !editor.Slots[0].UseIr.CanExecute(null), "catalog packs stay read-only");
         editor.DuplicatePack.Execute(null);
-        Check(editor.Dirty && !editor.ReadOnly && !model.ApplyIrPack.CanExecute(null), "duplicating creates an editable unsaved draft");
+        Check(editor.Dirty && !editor.ReadOnly && model.ApplyIrPack.CanExecute(null), "duplicating creates an editable unsaved draft");
         editor.Save();
         Check(model.SelectedIrPack!.Id != curated[0].Id && model.SelectedIrPack.Group == "Meus packs", "duplicate saves as a separate personal pack");
         string sourceId = model.SelectedIrPack.Id;
@@ -116,9 +148,10 @@ internal static class CuratedPackTests
         Check(model.IrPacks.Any(p => p.Id == sourceId), "deleting an unsaved duplicate cannot delete its source");
         editor.DiscardChanges.Execute(null);
         Check(!editor.Dirty && model.IrPacks.Contains(editor.Current!), "discarding an unsaved duplicate selects a persisted pack");
-        string uiExport = Path.Combine(data, "ui-export.cubeirpack.json");
+        string uiExport = Path.Combine(data, "ui-export.cubeirpack.zip");
         editor.Export(uiExport); editor.Import(uiExport);
-        Check(editor.Current == model.SelectedIrPack && !editor.Dirty && editor.Slots.All(s => s.Entry != null), "editor import and export preserve and select the pack");
+        Check(editor.Current == model.SelectedIrPack && editor.Dirty && editor.Slots.All(s => s.Entry != null), "import stages the portable pack without saving");
+        editor.Save();
         string deletedId = editor.Current!.Id;
         editor.DeletePack.Execute(null);
         Check(model.IrPacks.All(p => p.Id != deletedId), "editor deletes the selected personal pack");
@@ -127,15 +160,19 @@ internal static class CuratedPackTests
         var originalTheme = ThemeService.Instance.Mode;
         try
         {
-            foreach (var (lang, zoom, theme) in new[] { ("en-US", 200, ThemeMode.Light), ("pt-BR", 50, ThemeMode.Dark) })
+            foreach (var (lang, zoom, theme, width, highContrast) in new[] {
+                ("en-US", 200, ThemeMode.Light, 640, false), ("pt-BR", 50, ThemeMode.Dark, 640, false),
+                ("pt-BR", 100, ThemeMode.Dark, 1700, false), ("en-US", 100, ThemeMode.Light, 1700, false),
+                ("pt-BR", 100, ThemeMode.Dark, 1700, true) })
             {
                 LanguageService.Instance.Preview(lang); ZoomService.Instance.Preview(zoom); ThemeService.Instance.Preview(theme);
                 var layoutControl = new IrPackEditor { DataContext = editor, LayoutTransform = new ScaleTransform(UiDensity.Factor, UiDensity.Factor) };
-                var layout = Host(layoutControl, 640);
+                if (highContrast) Wpf.Ui.Appearance.ApplicationThemeManager.Apply(Wpf.Ui.Appearance.ApplicationTheme.HighContrast);
+                var layout = Host(layoutControl, width);
                 layout.Show(); await System.Windows.Threading.Dispatcher.Yield(); layout.UpdateLayout();
                 Check(Find<Button>(layout).Any(b => Equals(b.Content, LanguageService.T("Salvar pack"))), $"save action present at {lang}/{zoom}/{theme}");
                 Check(Find<ScrollViewer>(layout).First().ScrollableWidth == 0, "compact editor needs no horizontal page scrolling");
-                foreach (var action in Find<Button>(layoutControl))
+                foreach (var action in Find<Wpf.Ui.Controls.Button>(layoutControl).Where(b => b.IsVisible))
                 {
                     var bounds = action.TransformToAncestor(layoutControl).TransformBounds(new Rect(action.RenderSize));
                     Check(bounds.Left >= 0 && bounds.Right <= layoutControl.ActualWidth + 1 && action.ActualHeight >= 39.5,
@@ -147,7 +184,7 @@ internal static class CuratedPackTests
                 Check(editor.Current?.Id == curated[1].Id && model.SelectedIrPack?.Id == curated[1].Id, "inline selector synchronizes editor and apply target");
                 var capture = new System.Windows.Media.Imaging.RenderTargetBitmap((int)layout.ActualWidth, (int)layout.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                 capture.Render(layout); var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(capture));
-                string target = Path.Combine(data, $"manager-{lang}-{zoom}.png"); using (var file = File.Create(target)) png.Save(file);
+                string target = Path.Combine(data, $"manager-{lang}-{zoom}-{theme}-{highContrast}.png"); using (var file = File.Create(target)) png.Save(file);
                 Console.WriteLine("SCREENSHOT " + target); layout.Close();
             }
         }
@@ -164,11 +201,15 @@ internal static class CuratedPackTests
             tabs.SelectedIndex = 0; tabs.SelectedIndex = 1;
             page.UpdateLayout(); await System.Windows.Threading.Dispatcher.Yield();
             Check(pageModel.PackEditor.Dirty && pageModel.PackEditor.Name == "Navigation draft", "switching sections preserves the draft");
+            pageModel.PackEditor.DetailsExpanded = true; page.UpdateLayout();
             var nameField = (TextBox)card.FindName("PackName");
+            nameField.BringIntoView(); await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             nameField.Focus();
             Check(nameField.IsKeyboardFocusWithin, "inline editor accepts keyboard focus");
+            pageModel.PackEditor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Cancel);
             pageModel.Ask = _ => Task.FromResult(false); page.Close();
             Check(page.IsVisible && pageModel.PackEditor.Dirty, "closing the application respects cancelled discard");
+            pageModel.PackEditor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
             pageModel.Ask = _ => Task.FromResult(true); pageModel.PackEditor.DiscardChanges.Execute(null);
             await pageModel.PackEditor.SelectAsync(pageModel.IrPacks.First());
             var scroll = Find<ScrollViewer>(page).First(v => ReferenceEquals(v.Content, VisualTreeHelper.GetParent(card)));
@@ -176,7 +217,7 @@ internal static class CuratedPackTests
             {
                 ThemeService.Instance.Preview(theme); ZoomService.Instance.Preview(100);
                 scroll.ScrollToEnd(); page.UpdateLayout(); await System.Windows.Threading.Dispatcher.Yield();
-                Check(Find<Button>(card).Any(b => Equals(b.Content, LanguageService.T("Aplicar pack de IRs…")) && b.IsVisible), "apply remains reachable at page end");
+                Check(Find<Button>(card).Any(b => Equals(b.Content, LanguageService.T("3 · Revisar e aplicar")) && b.IsVisible), "apply remains reachable at page end");
                 var capture = new System.Windows.Media.Imaging.RenderTargetBitmap((int)page.ActualWidth, (int)page.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                 capture.Render(page); var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(capture));
                 string target = Path.Combine(data, $"ir-page-{theme}.png"); using (var file = File.Create(target)) png.Save(file);
@@ -185,6 +226,8 @@ internal static class CuratedPackTests
             page.Close(); await System.Windows.Threading.Dispatcher.Yield();
             ThemeService.Instance.Preview(originalTheme); ZoomService.Instance.Preview(originalZoom);
         }
+        await PackWorkflowTests.Run();
+        await PackReviewUiTests.Run();
         Check(fake.Writes == writes, "opening manager and browsing packs sends no device commands");
         byte[] original = fake.Flash.ToArray(), bank = fake.Bank.ToArray();
         async Task Apply() => await (Task)typeof(EditorViewModel).GetMethod("ApplyIrPackAsync", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(model, null)!;

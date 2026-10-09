@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
@@ -71,6 +71,16 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public Func<Task<bool?>>? ChooseExportMode { get; set; }
     public ICommand AddFiles { get; }
     public ICommand RemoveTrack { get; }
+    public Func<Task>? BeforePlayback { get; set; }
+    public async Task StopForIrAudition()
+    {
+        selectionGeneration++; opening = false;
+        await StopYouTubePreviewAndWait();
+        UpdatePosition(); await engine.ReleaseOutput();
+        positionTimer.Stop(); StopMonitor();
+        State = SelectedTrack == null ? BackingPlaybackState.Empty : BackingPlaybackState.Paused;
+        if (SelectedTrack != null) SelectedTrack.State = "Pausada";
+    }
     public ICommand PlayPause { get; }
     public ICommand Stop { get; }
     public ICommand RefreshOutputs { get; }
@@ -96,7 +106,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public bool IsPlaying => State == BackingPlaybackState.Playing;
     public bool IsLoading => opening || State == BackingPlaybackState.Loading;
     public bool HasActivePlayback => engine.Snapshot.Source == SelectedTrack?.Source && State is BackingPlaybackState.Playing or BackingPlaybackState.Paused or BackingPlaybackState.Ended;
-    public bool PageVisible { get => pageVisible; set { if (Set(ref pageVisible, value)) Notify(nameof(ShowMiniPlayer)); } }
+    public bool PageVisible { get => pageVisible; set { if (Set(ref pageVisible, value)) { if (!value) StopYouTubePreview(); Notify(nameof(ShowMiniPlayer)); } } }
     public bool ShowMiniPlayer => !PageVisible && (HasActivePlayback || HasError && SelectedTrack != null);
     public bool HasTracks => Tracks.Count > 0;
     public bool HasRange => SelectedTrack?.Start is double a && SelectedTrack.End is double b && b - a >= .1 - 1e-9;
@@ -129,6 +139,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public BackingTracksViewModel(string dataDirectory)
     {
         InitializePractice();
+        InitializeYouTubeDownloads(dataDirectory);
         AddFiles = new UiCommand(() => Run(() => { var dialog = new OpenFileDialog { Multiselect = true, Filter = LanguageService.T("Áudio MP3 ou WAV") + "|*.mp3;*.wav" }; if (dialog.ShowDialog() == true) AddPaths(dialog.FileNames); }));
         RemoveTrack = new UiCommand(RemoveSelected, () => SelectedTrack != null);
         PlayPause = new UiCommand(() => Start(TogglePlayback()), () => !IsLoading && SelectedTrack != null && SelectedOutput != null);
@@ -176,7 +187,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         set
         {
             if (!Set(ref selectedOutput, value)) return;
-            StopMonitor(); UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
+            StopYouTubePreview(); StopMonitor(); UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
             if (HasActivePlayback) State = BackingPlaybackState.Paused;
             if (!restoring) { preferredOutputId = value?.Id; Changed(); }
             Notify(nameof(OutputName)); Notify(nameof(OutputState)); CommandManager.InvalidateRequerySuggested();
@@ -186,8 +197,8 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public bool IsLooping { get => looping; set { if (value && !CanLoop) return; if (Set(ref looping, value)) { if (value && (Position < RangeStart || Position >= RangeEnd)) position = RangeStart; Start(ApplyParameters()); Notify(nameof(Position)); Notify(nameof(TimeLabel)); } } }
     public double Speed { get => SelectedTrack?.Speed ?? 100; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Speed = Math.Clamp(Math.Round(value), 50, 150); Notify(); Notify(nameof(HasModifiedSpeed)); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); ScheduleParameters(); Changed(); } }
     public double Pitch { get => SelectedTrack?.Pitch ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Pitch = Math.Clamp(Math.Round(value), -6, 6); Notify(); Notify(nameof(HasModifiedPitch)); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); ScheduleParameters(); Changed(); } }
-    public double Volume { get => volume; set { if (double.IsFinite(value) && Set(ref volume, Math.Clamp(value, 0, 100))) { Start(engine.SetVolume(volume / 100, IsMuted)); Changed(); } } }
-    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
+    public double Volume { get => volume; set { if (double.IsFinite(value) && Set(ref volume, Math.Clamp(value, 0, 100))) { UpdateYouTubePreviewVolume(); Start(engine.SetVolume(volume / 100, IsMuted)); Changed(); } } }
+    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { UpdateYouTubePreviewVolume(); Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
     public double RangeStart
     {
         get => SelectedTrack?.Start ?? double.NaN;
@@ -257,18 +268,22 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     private async Task TogglePlayback()
     {
         if (disposed || opening || SelectedTrack is not { } track || SelectedOutput is not { } output) return;
+        StopYouTubePreview();
         if (IsPlaying) { await engine.Pause(); return; }
         int version = selectionGeneration; opening = true; RefreshPresentation();
         try
         {
+            if (BeforePlayback != null) await BeforePlayback();
+            await StopYouTubePreviewAndWait();
+            if (disposed || version != selectionGeneration || output != SelectedOutput) return;
             if (engine.Snapshot.Source != track.Source || engine.Snapshot.OutputId != output.Id || State == BackingPlaybackState.Error)
                 await engine.Open(track.Source, output.Id, Position, Speed / 100, Pitch, IsLooping && HasRange, HasRange ? RangeStart : 0, HasRange ? RangeEnd : Duration, Volume / 100, IsMuted);
             if (!disposed && version == selectionGeneration && output == SelectedOutput) await engine.Play();
         }
         finally { if (version == selectionGeneration) { opening = false; RefreshPresentation(); } }
     }
-    public void PlaySelected() { if (!IsPlaying) Start(TogglePlayback()); }
-    private async Task StopPlayback() { await engine.Stop(); position = IsLooping && HasRange ? RangeStart : 0; Notify(nameof(Position)); Notify(nameof(TimeLabel)); }
+    public void PlaySelected() { StopYouTubePreview(); if (!IsPlaying) Start(TogglePlayback()); }
+    private async Task StopPlayback() { await StopYouTubePreviewAndWait(); await engine.Stop(); position = IsLooping && HasRange ? RangeStart : 0; Notify(nameof(Position)); Notify(nameof(TimeLabel)); }
     private async Task SelectAdjacent(int step)
     {
         int index = SelectedTrack == null ? -1 : Tracks.IndexOf(SelectedTrack) + step;
@@ -438,7 +453,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public void Dispose()
     {
         if (disposed) return;
-        StopMonitor(); meterTimer.Stop(); disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); parameterTimer.Stop();
+        StopYouTubePreview(); StopMonitor(); meterTimer.Stop(); disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); parameterTimer.Stop();
         LanguageService.Instance.PropertyChanged -= MusicLanguageChanged;
         engine.Changed -= EngineChanged; engine.Dispose();
         try { Task.WhenAll(backgroundWork.ToArray()).GetAwaiter().GetResult(); } catch (Exception ex) { if (ex is not OperationCanceledException) Log(ex); }

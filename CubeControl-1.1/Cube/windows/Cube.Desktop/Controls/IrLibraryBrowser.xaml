@@ -1,0 +1,62 @@
+<UserControl x:Class="Cube.Desktop.Controls.IrLibraryBrowser"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+ xmlns:loc="clr-namespace:Cube.Desktop.Localization">
+ <StackPanel>
+        <ui:AutoSuggestBox x:Name="IrLibrarySearch" Loaded="SearchLoaded" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar IR ou coleção'}" ToolTip="{loc:Translate Text='Buscar IR ou coleção'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Buscar IR ou coleção'}">
+         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="Search24" FontSize="18" Width="20" Height="20" VerticalAlignment="Center" Margin="0,2,0,0"/></ui:AutoSuggestBox.Icon>
+         <ui:AutoSuggestBox.Resources>
+          <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
+          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="Transparent"/>
+          <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
+         </ui:AutoSuggestBox.Resources>
+        </ui:AutoSuggestBox>
+        <TreeView x:Name="IrLibraryTree" ItemsSource="{Binding Roots}" MinHeight="320" MaxHeight="420" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Biblioteca'}">
+         <TreeView.Resources>
+          <Style TargetType="TreeViewItem" BasedOn="{StaticResource DefaultTreeViewItemStyle}">
+           <Setter Property="Template" Value="{StaticResource IrLibraryItemTemplate}"/>
+           <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+           <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+           <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+           <Setter Property="Padding" Value="4,6"/>
+           <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+           <Setter Property="ToolTip" Value="{Binding ToolTip}"/>
+           <Style.Triggers><DataTrigger Binding="{Binding IsBrand}" Value="True">
+            <Setter Property="Padding" Value="8,7"/><Setter Property="Margin" Value="0,1,0,1"/><Setter Property="Background" Value="Transparent"/>
+            <Setter Property="ToolTip" Value="{loc:Translate Text='Abra uma marca e explore as pastas por gabinete e microfone. Abrir outra marca recolhe a anterior; as subpastas podem ficar abertas.'}"/>
+           </DataTrigger></Style.Triggers>
+          </Style>
+         </TreeView.Resources>
+         <TreeView.ItemTemplate>
+          <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+           <StackPanel Orientation="Horizontal" Background="Transparent" MouseLeftButtonUp="FolderClick">
+            <ui:SymbolIcon Symbol="Library24" FontSize="22" Margin="0,0,12,0" VerticalAlignment="Center">
+             <ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon">
+              <Setter Property="Visibility" Value="Collapsed"/><Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+              <Style.Triggers>
+               <DataTrigger Binding="{Binding IsBrand}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+               <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
+               <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="False"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
+              </Style.Triggers>
+             </Style></ui:SymbolIcon.Style>
+            </ui:SymbolIcon>
+            <StackPanel VerticalAlignment="Center">
+             <TextBlock TextTrimming="CharacterEllipsis" LineHeight="20"><TextBlock.Style><Style TargetType="TextBlock">
+              <Setter Property="Text" Value="{loc:Translate Value={Binding DisplayName}}"/><Setter Property="FontWeight" Value="Normal"/>
+              <Style.Triggers><DataTrigger Binding="{Binding IsBrand}" Value="True"><Setter Property="Text" Value="{loc:Translate Value={Binding Name}}"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="FontSize" Value="14"/></DataTrigger></Style.Triggers>
+             </Style></TextBlock.Style></TextBlock>
+             <TextBlock Text="{Binding EntryCount, StringFormat={}{0} IRs}" Margin="0,3,0,0" LineHeight="20"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource HelpText}">
+              <Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsBrand}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+              <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
+              <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="False"><Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}"/></DataTrigger>
+             </Style.Triggers>
+             </Style></TextBlock.Style></TextBlock>
+            </StackPanel>
+           </StackPanel>
+          </HierarchicalDataTemplate>
+         </TreeView.ItemTemplate>
+        </TreeView>
+        <TextBlock Text="{loc:Translate Value={Binding Message}}" Style="{StaticResource HelpText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+ </StackPanel>
+</UserControl>

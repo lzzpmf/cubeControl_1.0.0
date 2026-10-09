@@ -1,0 +1,621 @@
+{
+  "version": 1,
+  "documents": [
+    {
+      "id": "primeiros-passos",
+      "category": "comecar",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Primeiros passos",
+          "summary": "Instalação, conexão USB e primeiro timbre.",
+          "keywords": [
+            "usb",
+            "MIDI",
+            "instalação",
+            "installation",
+            "conexão",
+            "connection"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/primeiros-passos.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Getting started",
+          "summary": "Installation, USB connection and your first tone.",
+          "keywords": [
+            "usb",
+            "MIDI",
+            "instalação",
+            "installation",
+            "conexão",
+            "connection"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/primeiros-passos.md"
+        }
+      ]
+    },
+    {
+      "id": "presets",
+      "category": "comecar",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Presets, gravação e arquivos",
+          "summary": "A/B/C, edição ao vivo, banco JSON e desfazer.",
+          "keywords": [
+            "A/B/C",
+            "JSON",
+            "salvar",
+            "save",
+            "export",
+            "import",
+            "desfazer",
+            "undo"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/presets.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Presets, saving and files",
+          "summary": "A/B/C, live editing, JSON banks and undo.",
+          "keywords": [
+            "A/B/C",
+            "JSON",
+            "salvar",
+            "save",
+            "export",
+            "import",
+            "desfazer",
+            "undo"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/presets.md"
+        }
+      ]
+    },
+    {
+      "id": "pedaleira",
+      "category": "timbres",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Pedaleira e efeitos",
+          "summary": "Seleção de módulos, switches e controles de timbre.",
+          "keywords": [
+            "tone",
+            "chorus",
+            "phaser",
+            "delay",
+            "reverb",
+            "cabinet",
+            "efeitos",
+            "effects"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/pedaleira.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Pedalboard and effects",
+          "summary": "Module selection, switches and tone controls.",
+          "keywords": [
+            "tone",
+            "chorus",
+            "phaser",
+            "delay",
+            "reverb",
+            "cabinet",
+            "efeitos",
+            "effects"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/pedaleira.md"
+        }
+      ]
+    },
+    {
+      "id": "irs",
+      "category": "timbres",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "IRs, gabinetes e associações",
+          "summary": "Biblioteca, slots, prévia e associação com amps.",
+          "keywords": [
+            "IR",
+            "WAV",
+            "cabinet",
+            "gabinete",
+            "associação",
+            "association",
+            "biblioteca",
+            "library"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/irs.md"
+        },
+        {
+          "language": "en-US",
+          "title": "IRs, cabinets and associations",
+          "summary": "Library, slots, preview and amp associations.",
+          "keywords": [
+            "IR",
+            "WAV",
+            "cabinet",
+            "gabinete",
+            "associação",
+            "association",
+            "biblioteca",
+            "library"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/irs.md"
+        }
+      ]
+    },
+    {
+      "id": "criador-amps",
+      "category": "criadores",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Criador de amps",
+          "summary": "Modelos BIN, prévia em RAM e gravação em slot.",
+          "keywords": [
+            "amp",
+            "BIN",
+            "RAM",
+            "gain",
+            "EQ",
+            "flash"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/criador-amps.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Amp creator",
+          "summary": "BIN models, RAM preview and slot writes.",
+          "keywords": [
+            "amp",
+            "BIN",
+            "RAM",
+            "gain",
+            "EQ",
+            "flash"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/criador-amps.md"
+        }
+      ]
+    },
+    {
+      "id": "criadores-efeitos",
+      "category": "criadores",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Usar os criadores de efeitos",
+          "summary": "Gestos, arquivos locais e limites das prévias.",
+          "keywords": [
+            "criador",
+            "creator",
+            "RAM",
+            "gráfico",
+            "graph",
+            "preview",
+            "prévia"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/criadores-efeitos.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Using effect creators",
+          "summary": "Gestures, local files and preview limitations.",
+          "keywords": [
+            "criador",
+            "creator",
+            "RAM",
+            "gráfico",
+            "graph",
+            "preview",
+            "prévia"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/criadores-efeitos.md"
+        }
+      ]
+    },
+    {
+      "id": "criador-chorus",
+      "category": "criadores",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Criador de chorus",
+          "summary": "Preparação, controles e recuperação da prévia de chorus.",
+          "keywords": [
+            "chorus",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/criador-chorus.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Chorus creator",
+          "summary": "Setup, controls and recovery for chorus preview.",
+          "keywords": [
+            "chorus",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/criador-chorus.md"
+        }
+      ]
+    },
+    {
+      "id": "criador-phaser",
+      "category": "criadores",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Criador de phaser",
+          "summary": "Preparação, controles e recuperação da prévia de phaser.",
+          "keywords": [
+            "phaser",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/criador-phaser.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Phaser creator",
+          "summary": "Setup, controls and recovery for phaser preview.",
+          "keywords": [
+            "phaser",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/criador-phaser.md"
+        }
+      ]
+    },
+    {
+      "id": "criador-delay",
+      "category": "criadores",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Criador de delay",
+          "summary": "Preparação, controles e recuperação da prévia de delay.",
+          "keywords": [
+            "delay",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/criador-delay.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Delay creator",
+          "summary": "Setup, controls and recovery for delay preview.",
+          "keywords": [
+            "delay",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/criador-delay.md"
+        }
+      ]
+    },
+    {
+      "id": "criador-reverb",
+      "category": "criadores",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Criador de reverb",
+          "summary": "Preparação, controles e recuperação da prévia de reverb.",
+          "keywords": [
+            "reverb",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/criador-reverb.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Reverb creator",
+          "summary": "Setup, controls and recovery for reverb preview.",
+          "keywords": [
+            "reverb",
+            "RAM",
+            "prévia",
+            "preview",
+            "restaurar",
+            "restore"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/criador-reverb.md"
+        }
+      ]
+    },
+    {
+      "id": "backing-tracks",
+      "category": "praticar",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Backing Tracks",
+          "summary": "Áudio local, trechos, velocidade, tom e YouTube.",
+          "keywords": [
+            "MP3",
+            "WAV",
+            "YouTube",
+            "BPM",
+            "loop",
+            "Bluetooth",
+            "áudio",
+            "audio"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/backing-tracks.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Backing Tracks",
+          "summary": "Local audio, loops, speed, pitch and YouTube.",
+          "keywords": [
+            "MP3",
+            "WAV",
+            "YouTube",
+            "BPM",
+            "loop",
+            "Bluetooth",
+            "áudio",
+            "audio"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/backing-tracks.md"
+        }
+      ]
+    },
+    {
+      "id": "simulacao",
+      "category": "praticar",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Simulação",
+          "summary": "Conhecer a interface com um pedal virtual.",
+          "keywords": [
+            "simulação",
+            "simulation",
+            "offline",
+            "virtual"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/simulacao.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Simulation",
+          "summary": "Explore the interface with a virtual pedal.",
+          "keywords": [
+            "simulação",
+            "simulation",
+            "offline",
+            "virtual"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/simulacao.md"
+        }
+      ]
+    },
+    {
+      "id": "problemas",
+      "category": "ajuda",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Problemas comuns",
+          "summary": "Conexão, som, arquivos e documentação.",
+          "keywords": [
+            "erro",
+            "error",
+            "conexão",
+            "connection",
+            "som",
+            "sound",
+            "suporte",
+            "support"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/problemas.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Troubleshooting",
+          "summary": "Connection, sound, files and documentation.",
+          "keywords": [
+            "erro",
+            "error",
+            "conexão",
+            "connection",
+            "som",
+            "sound",
+            "suporte",
+            "support"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/problemas.md"
+        }
+      ]
+    },
+    {
+      "id": "recuperacao",
+      "category": "ajuda",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Backups e recuperação",
+          "summary": "Guardar arquivos e resolver prévias interrompidas.",
+          "keywords": [
+            "backup",
+            "restaurar",
+            "restore",
+            "fábrica",
+            "factory",
+            "RAM",
+            "flash",
+            "recovery"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/recuperacao.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Backups and recovery",
+          "summary": "Keep files and recover interrupted previews.",
+          "keywords": [
+            "backup",
+            "restaurar",
+            "restore",
+            "fábrica",
+            "factory",
+            "RAM",
+            "flash",
+            "recovery"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/recuperacao.md"
+        }
+      ]
+    },
+    {
+      "id": "privacidade",
+      "category": "ajuda",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Privacidade",
+          "summary": "Dados locais, serviços externos e exclusão.",
+          "keywords": [
+            "privacidade",
+            "privacy",
+            "dados",
+            "data",
+            "LGPD",
+            "YouTube"
+          ],
+          "format": "markdown",
+          "path": "guias/pt-BR/privacidade.md"
+        },
+        {
+          "language": "en-US",
+          "title": "Privacy",
+          "summary": "Local data, external services and deletion.",
+          "keywords": [
+            "privacidade",
+            "privacy",
+            "dados",
+            "data",
+            "LGPD",
+            "YouTube"
+          ],
+          "format": "markdown",
+          "path": "guias/en-US/privacidade.md"
+        }
+      ]
+    },
+    {
+      "id": "manual-oficial",
+      "category": "manuais",
+      "versions": [
+        {
+          "language": "en-US",
+          "title": "Manual oficial do Cube Baby · en-US",
+          "summary": "PDF original preservado.",
+          "keywords": [
+            "manual",
+            "Cube Baby",
+            "PDF"
+          ],
+          "format": "pdf",
+          "path": "manuais/oficial/en-US/Cube-Baby-M-Vave-Guitar-Pedal-User-Manual-Oficial.pdf"
+        }
+      ]
+    },
+    {
+      "id": "manual-en-us",
+      "category": "manuais",
+      "versions": [
+        {
+          "language": "en-US",
+          "title": "Manual adaptado do Cube Baby · en-US",
+          "summary": "Versão adaptada; não é o documento oficial do fabricante.",
+          "keywords": [
+            "manual",
+            "Cube Baby",
+            "PDF"
+          ],
+          "format": "pdf",
+          "path": "manuais/adaptado/en-US/Cube-Baby-M-Vave-Guitar-Pedal-User-Manual-v2.pdf"
+        }
+      ]
+    },
+    {
+      "id": "manual-pt-br",
+      "category": "manuais",
+      "versions": [
+        {
+          "language": "pt-BR",
+          "title": "Manual adaptado do Cube Baby · pt-BR",
+          "summary": "Versão adaptada; não é o documento oficial do fabricante.",
+          "keywords": [
+            "manual",
+            "Cube Baby",
+            "PDF"
+          ],
+          "format": "pdf",
+          "path": "manuais/adaptado/pt-BR/Cube-Baby-M-Vave-Guitar-Pedal-User-Manual.pt-BR-v2.pdf"
+        }
+      ]
+    }
+  ]
+}

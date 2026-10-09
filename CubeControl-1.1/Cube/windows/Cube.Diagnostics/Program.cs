@@ -2,6 +2,17 @@ using Cube.Protocol;
 using Cube.Usb;
 using System.Text.Json;
 
+if (args.Length > 0 && args[0] == "observe-physical-inputs")
+{
+    await PhysicalInputsResearch.Run(args);
+    return;
+}
+if (args.Length > 0 && args[0] == "observe-physical-state")
+{
+    await PhysicalInputsResearch.RunState(args);
+    return;
+}
+
 if (args.Length > 0 && args[0] == "compare-factory-irs")
 {
     if (args.Length != 2) throw new ArgumentException("Uso: compare-factory-irs PASTA-NOVA");

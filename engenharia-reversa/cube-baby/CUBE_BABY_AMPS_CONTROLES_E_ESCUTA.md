@@ -1,6 +1,6 @@
 # Cube Baby — controles de amp: documentação técnica e de escuta
 
-[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Uso do criador](../../CubeControl-1.1/Cube/docs/criador-de-amps.md)
+[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Uso do criador](../../CubeControl-1.1/Cube/docs/referencias/criador-de-amps.md)
 
 Relatos consolidados em 30/09/2026; implementação reconferida em 01/10/2026. As observações musicais foram preservadas. As seções de código abaixo descrevem esta árvore, incluindo os limites individuais e as apresentações de EQ já implementadas. Isso não estabelece novos limites de operação comprovadamente estáveis.
 
@@ -262,4 +262,4 @@ Para uma futura rodada de confirmação, registrar: amp/arquivo e hash, versão 
 
 As divisões de índices e os intervalos de bytes foram conferidos pelas fórmulas de quatro bytes por float. Os oito grupos cobrem exatamente 50 elementos por conjunto; os dezesseis grupos cobrem exatamente os 256 pontos da curva, sem lacunas nem sobreposição. As hipóteses sobre organização interna e causa das falhas permanecem explicitamente abertas.
 
-A consolidação original produziu somente este documento, sem modificação do aplicativo ou comando ao pedal. A revisão de 01/10/2026 faz parte da [revisão documental do projeto](../../CubeControl-1.1/Cube/docs/revisao-documental.md), com verificações offline próprias; não repete os ensaios de escuta.
+A consolidação original produziu somente este documento, sem modificação do aplicativo ou comando ao pedal. A revisão de 01/10/2026 faz parte da [revisão documental do projeto](../../CubeControl-1.1/Cube/docs/desenvolvimento/revisao-documental.md), com verificações offline próprias; não repete os ensaios de escuta.

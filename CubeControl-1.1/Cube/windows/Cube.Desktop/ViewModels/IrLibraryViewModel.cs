@@ -39,7 +39,10 @@ public sealed class IrLibraryViewModel : Observable
     private IrLibraryEntry? selected;
     private bool synchronizingSelection;
     public IReadOnlyList<IrLibraryNode> Roots { get; private set; } = [];
-    public IReadOnlyList<IrLibraryEntry> Entries { get; }
+    public IReadOnlyList<IrLibraryEntry> Entries { get; private set; } = [];
+    private readonly string directory;
+    private readonly string? importedDirectory;
+    private readonly bool packPicker;
     public IReadOnlyList<IrLibraryEntry> VisibleEntries { get; private set; } = [];
     public string Message { get; private set; } = "";
     public event Action<IrLibraryEntry?>? SelectionChanged;
@@ -60,22 +63,36 @@ public sealed class IrLibraryViewModel : Observable
         SynchronizeSelection();
         if (changed) SelectionChanged?.Invoke(null);
     }
-    public IrLibraryViewModel(Func<bool> canSelect, string? directory = null)
+    public IrLibraryViewModel(Func<bool> canSelect, string? directory = null, string? importedDirectory = null, bool packPicker = false)
     {
         this.canSelect = canSelect;
-        directory ??= Path.Combine(AppContext.BaseDirectory, "Assets", "ImpulseResponses");
-        try
+        this.directory = directory ?? Path.Combine(AppContext.BaseDirectory, "Assets", "ImpulseResponses");
+        this.importedDirectory = importedDirectory;
+        this.packPicker = packPicker;
+        Reload();
+    }
+    public void Reload()
+    {
+        var entries = new List<IrLibraryEntry>();
+        void Scan(string folder, string prefix)
         {
-            Entries = Directory.Exists(directory) ? Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
-                .Where(p => string.Equals(Path.GetExtension(p), ".wav", StringComparison.OrdinalIgnoreCase))
-                .Select(p => new IrLibraryEntry(Path.GetRelativePath(directory, p), p,
-                    Path.GetDirectoryName(Path.GetRelativePath(directory, p)) is { Length: > 0 } folder ? folder : "ImpulseResponses",
-                    Path.GetFileNameWithoutExtension(p)))
-                .OrderBy(e => e.Collection, StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToArray() : [];
+            try
+            {
+                if (!Directory.Exists(folder)) return;
+                foreach (var p in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories)
+                    .Where(p => string.Equals(Path.GetExtension(p), ".wav", StringComparison.OrdinalIgnoreCase)))
+                {
+                    string relative = prefix + Path.GetRelativePath(folder, p);
+                    string collection = prefix.Length > 0 ? "IRs importados" : Path.GetDirectoryName(relative) ?? "ImpulseResponses";
+                    entries.Add(new(relative, p, collection, Path.GetFileNameWithoutExtension(p)));
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        { Entries = []; }
-        Filter();
+        Scan(directory, "");
+        if (importedDirectory != null) Scan(importedDirectory, "Imported/");
+        Entries = entries.OrderBy(e => e.Collection, StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+        Notify(nameof(Entries)); Filter();
     }
     private void Filter()
     {
@@ -87,7 +104,7 @@ public sealed class IrLibraryViewModel : Observable
         foreach (var entry in VisibleEntries)
         {
             var children = roots;
-            string? directory = Path.GetDirectoryName(entry.RelativePath);
+            string? directory = entry.RelativePath.StartsWith("Imported/") ? "IRs importados" : Path.GetDirectoryName(entry.RelativePath);
             string[] parts = (directory ?? "").Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
             // The disk separates WAV/NAM assets; the WAV-only picker does not need that extra level.
             if (parts.Length > 1 && parts[1].Equals("IRs WAV", StringComparison.OrdinalIgnoreCase))
@@ -119,8 +136,8 @@ public sealed class IrLibraryViewModel : Observable
                 level = folder.Children;
             }
         }
-        Message = Entries.Count == 0 ? "Biblioteca indisponível ou vazia. Você pode selecionar um WAV externo."
-            : VisibleEntries.Count == 0 ? "Nenhum IR encontrado." : "Selecione um IR para ouvir no pedal conectado. A gravação no slot é separada.";
+        Message = Entries.Count == 0 ? packPicker ? "Biblioteca vazia. Importe um pack com WAVs para montar seus IRs." : "Biblioteca indisponível ou vazia. Você pode selecionar um WAV externo."
+            : VisibleEntries.Count == 0 ? "Nenhum IR encontrado." : packPicker ? "Selecione um IR e use-o no slot desejado. Nenhum áudio é enviado ao pedal." : "Selecione um IR para ouvir no pedal conectado. A gravação no slot é separada.";
         Notify(nameof(Roots)); Notify(nameof(VisibleEntries)); Notify(nameof(Message));
     }
     private void SelectNode(IrLibraryNode node)

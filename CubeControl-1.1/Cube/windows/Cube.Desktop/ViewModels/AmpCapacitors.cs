@@ -13,8 +13,8 @@ public sealed class CapacitorBank : Observable
     public string Title { get; }
     public string Subtitle { get; }
     public IReadOnlyList<CapacitorProfile> Profiles { get; }
-    public string SelectorFace => Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", "Botão Rotativo Vintage Preto Marconi.png");
-    public string IntensityFace => Path.Combine(AppContext.BaseDirectory, "Assets", "Equipment", "Botão Vintage de Metal Dourado.png");
+    public string SelectorFace => AssetPaths.Image("Botão Rotativo Vintage Preto Marconi.png");
+    public string IntensityFace => AssetPaths.Image("Botão Vintage de Metal Dourado.png");
     public UiCommand RestoreOriginal { get; }
     public CapacitorBank(bool coupling, Action changed)
     {

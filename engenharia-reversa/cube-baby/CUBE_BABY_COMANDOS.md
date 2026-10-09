@@ -1,6 +1,6 @@
 # Cube Baby — comandos enviados e recebidos
 
-[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Arquitetura atual](../../CubeControl-1.1/Cube/docs/arquitetura.md)
+[Documentação](../../CubeControl-1.1/Cube/docs/README.md) · [Arquitetura atual](../../CubeControl-1.1/Cube/docs/desenvolvimento/arquitetura.md)
 
 Pesquisa iniciada em 26/09/2026, com verificação Bluetooth em 30/09/2026 e revisão documental em 01/10/2026. Modelo: CUVAVE/M-VAVE **Cube Baby de guitarra**. Não extrapolar para Cube Baby Bass, AC, CubeTurner, Chocolate ou Blackbox.
 
