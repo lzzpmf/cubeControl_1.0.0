@@ -15,9 +15,11 @@ internal static class MarkdownDocument
     private static readonly Regex InlinePattern = new(@"\[([^\]]+)\]\(([^)]+)\)|\*\*(.+?)\*\*|`([^`]+)`|\*(.+?)\*", RegexOptions.CultureInvariant);
     internal static RenderedDocument Render(string text, Action<string> navigate)
     {
-        var document = new FlowDocument { FontSize = 14, LineHeight = 20, TextAlignment = TextAlignment.Left, PagePadding = new Thickness(0), ColumnWidth = double.PositiveInfinity };
+        var document = new FlowDocument { TextAlignment = TextAlignment.Left, PagePadding = new Thickness(0), ColumnWidth = double.PositiveInfinity };
         document.SetResourceReference(FlowDocument.ForegroundProperty, "CubeText");
         document.SetResourceReference(FlowDocument.FontFamilyProperty, "CubeUiFont");
+        document.SetResourceReference(FlowDocument.FontSizeProperty, "CubeFontSizeBody");
+        document.SetResourceReference(FlowDocument.LineHeightProperty, "CubeLineHeightBody");
         var headings = new List<DocumentHeading>();
         var anchors = new Dictionary<string, int>();
         var lines = text.Replace("\r", "").Split('\n');
@@ -38,8 +40,8 @@ internal static class MarkdownDocument
                 int level = heading.Groups[1].Length;
                 var title = heading.Groups[2].Value;
                 var p = Paragraph(title, navigate);
-                p.FontSize = level == 1 ? 28 : level == 2 ? 20 : 14;
-                p.LineHeight = level == 1 ? 36 : level == 2 ? 28 : 20;
+                p.SetResourceReference(TextElement.FontSizeProperty, level == 1 ? "CubeFontSizeTitle" : level == 2 ? "CubeFontSizeSubtitle" : "CubeFontSizeBody");
+                p.SetResourceReference(Block.LineHeightProperty, level == 1 ? "CubeLineHeightTitle" : level == 2 ? "CubeLineHeightSubtitle" : "CubeLineHeightBody");
                 p.FontWeight = FontWeights.SemiBold;
                 p.Margin = new Thickness(0, level == 1 ? 0 : 16, 0, 8);
                 var anchor = Anchor(title);
@@ -106,7 +108,9 @@ internal static class MarkdownDocument
                 var link = new Hyperlink(new Run(match.Groups[1].Value)) { ToolTip = match.Groups[2].Value, Focusable = true };
                 if (Uri.TryCreate(match.Groups[2].Value, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" or "mailto")
                 {
-                    var icon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Open24, FontSize = 12, Margin = new Thickness(4, 0, 0, 0), IsHitTestVisible = false };
+                    var icon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Open24);
+                    icon.Margin = new Thickness(4, 0, 0, 0);
+                    icon.IsHitTestVisible = false;
                     icon.SetResourceReference(Wpf.Ui.Controls.SymbolIcon.ForegroundProperty, "CubeText");
                     link.Inlines.Add(new InlineUIContainer(icon) { BaselineAlignment = BaselineAlignment.Center });
                 }

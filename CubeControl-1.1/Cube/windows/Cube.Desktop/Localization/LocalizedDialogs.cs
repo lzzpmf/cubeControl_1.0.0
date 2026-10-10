@@ -4,13 +4,9 @@ public static class LocalizedDialogs
 {
     public static async Task<Wpf.Ui.Controls.ContentDialogResult> ShowLocalizedAsync(this Wpf.Ui.Controls.ContentDialog dialog)
     {
-        dialog.PrimaryButtonIcon ??= new Wpf.Ui.Controls.SymbolIcon
-        {
-            Symbol = dialog.PrimaryButtonText == "Salvar associações" ? Wpf.Ui.Controls.SymbolRegular.Save24 : Wpf.Ui.Controls.SymbolRegular.Checkmark24,
-            FontSize = 16
-        };
-        dialog.SecondaryButtonIcon ??= new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Lightbulb24, FontSize = 16 };
-        dialog.CloseButtonIcon ??= new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Dismiss24, FontSize = 16 };
+        dialog.PrimaryButtonIcon ??= Cube.Desktop.Appearance.AppIcons.Create(dialog.PrimaryButtonText == "Salvar associações" ? Wpf.Ui.Controls.SymbolRegular.Save24 : Wpf.Ui.Controls.SymbolRegular.Checkmark24);
+        dialog.SecondaryButtonIcon ??= Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Lightbulb24);
+        dialog.CloseButtonIcon ??= Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24);
         if (dialog.Title is string title) dialog.Title = LanguageService.T(title);
         if (dialog.Content is string content) dialog.Content = LanguageService.T(content);
         dialog.PrimaryButtonText = LanguageService.T(dialog.PrimaryButtonText ?? "");

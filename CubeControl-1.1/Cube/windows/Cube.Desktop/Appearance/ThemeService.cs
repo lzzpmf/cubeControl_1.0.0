@@ -182,63 +182,41 @@ public sealed class ThemeService
         IsHighContrast = theme == ApplicationTheme.HighContrast;
         IsLight = theme == ApplicationTheme.Light;
         var resources = Application.Current.Resources;
-        // Keep native WPF UI button templates and state transitions. Only the light
-        // secondary palette needs stronger separation from the near-white cards.
-        foreach (string key in new[] { "ButtonBackground", "ButtonBackgroundPointerOver", "ButtonBackgroundPressed", "ButtonForeground", "ButtonForegroundPressed" })
-            resources.Remove(key);
-        if (IsLight)
-        {
-            resources["ButtonBackground"] = new SolidColorBrush(Color.FromRgb(226, 226, 226));
-            resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(Color.FromRgb(211, 211, 211));
-            resources["ButtonBackgroundPressed"] = new SolidColorBrush(Color.FromRgb(196, 196, 196));
-        }
-        resources["CubeSurfaceBorderThickness"] = new Thickness(IsHighContrast ? 1 : 0);
-        Brush controlBorder = IsHighContrast ? SystemColors.WindowTextBrush : Brushes.Transparent;
-        static IEnumerable<string> BorderResources(ResourceDictionary dictionary)
-        {
-            foreach (var merged in dictionary.MergedDictionaries)
-                foreach (string key in BorderResources(merged)) yield return key;
-            foreach (string key in dictionary.Keys.OfType<string>())
-                if (key.Contains("BorderBrush", StringComparison.Ordinal)) yield return key;
-        }
-        foreach (string key in BorderResources(resources).Distinct().ToArray()) resources[key] = controlBorder;
-        // Normal themes use fills; high contrast retains visible system-colored outlines.
-        foreach (string key in new[] { "ControlElevationBorderBrush", "AccentControlElevationBorderBrush", "ButtonBorderBrushDisabled", "ButtonBorderBrushPressed", "CardBorderBrush", "CardBorderBrushDisabled", "CardBorderBrushPressed", "ComboBoxBorderBrushDisabled", "ComboBoxBorderBrushFocused", "ComboBoxDropDownBorderBrush", "TextControlBorderBrush", "TextControlBorderBrushPointerOver", "TextControlBorderBrushFocused", "TextControlBorderBrushDisabled", "ControlStrokeColorDefaultBrush", "ControlStrokeColorSecondaryBrush", "ControlStrongStrokeColorDefaultBrush", "ControlStrongStrokeColorDisabledBrush" })
-            resources[key] = controlBorder;
+        resources["CubeSurfaceBorderThickness"] = new Thickness(1);
         bool lightBackground = IsHighContrast
             ? SystemColors.WindowColor.R * 0.299 + SystemColors.WindowColor.G * 0.587 + SystemColors.WindowColor.B * 0.114 >= 128
             : IsLight;
         resources["CubeAppIcon"] = lightBackground ? BlackIcon : WhiteIcon;
         RefreshWindowIcon();
-        void Set(string key, string dark, string light, Brush? highContrast = null)
-            => resources[key] = IsHighContrast && highContrast != null ? highContrast : new SolidColorBrush((Color)ColorConverter.ConvertFromString(IsLight ? light : dark));
-        Set("CubeCanvas", "#202020", "#F3F3F3", SystemColors.WindowBrush);
-        resources["CubeText"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("TextFillColorPrimaryBrush");
-        Set("CubeCard", "#2B2B2B", "#FBFBFB", SystemColors.WindowBrush);
-        Set("CubeFloatingSurface", "#333333", "#FFFFFF", SystemColors.WindowBrush);
+        void Set(string key, Brush highContrast)
+            => resources[key] = IsHighContrast ? highContrast : new SolidColorBrush((Color)resources[key + (IsLight ? ".Light" : ".Dark")]);
         resources["CubeFloatingShadowOpacity"] = IsHighContrast ? 0d : IsLight ? .22d : .48d;
-        Set("CubeInset", "#252525", "#F5F5F5", SystemColors.WindowBrush);
-        Set("CubeWell", "#1C1C1C", "#EFEFEF", SystemColors.WindowBrush);
-        Set("CubeBorder", "#404040", "#E0E0E0", SystemColors.WindowTextBrush);
-        Set("CubeSelected", "#3B3B3B", "#E9E9E9", SystemColors.HighlightBrush);
-        Set("CubeSelectedText", "#FFFFFF", "#1B1B1B", SystemColors.HighlightTextBrush);
-        Set("CubeFocus", "#FFFFFF", "#1A1A1A", SystemColors.HighlightBrush);
-        Set("BackingCard", "#292D31", "#FFFFFF", SystemColors.WindowBrush);
-        Set("BackingBorder", "#4C545C", "#BBC3CB", SystemColors.WindowTextBrush);
-        Set("BackingSecondary", "#D4DAE0", "#3C4650", SystemColors.WindowTextBrush);
-        Set("BackingPlayhead", "#FFD280", "#815000", SystemColors.HighlightBrush);
-        Set("BackingPlayed", "#80B8A8", "#226E59", SystemColors.HighlightBrush);
-        Set("BackingFuture", "#82ACD2", "#2D638B", SystemColors.WindowTextBrush);
-        Set("CubeAccent", "#BDBDBD", "#626262", SystemColors.HighlightBrush);
-        resources["Muted"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("TextFillColorSecondaryBrush");
-        resources["CubeDisabledText"] = IsHighContrast ? SystemColors.GrayTextBrush : Brush("TextFillColorDisabledBrush");
-        resources["CubeWarning"] = IsHighContrast ? SystemColors.WindowTextBrush : Brush("SystemFillColorCautionBrush");
-        Set("CubePhaserGraph", "#D9A071", "#965622", SystemColors.WindowTextBrush);
-        Set("CubePurple", "#B4A4D6", "#67508F", SystemColors.WindowTextBrush);
-        Set("CubeKnobBase", "#202020", "#DCE3E8", SystemColors.WindowBrush);
-        Set("CubeKnobTop", "#555555", "#FFFFFF", SystemColors.WindowBrush);
-        Set("CubeKnobBottom", "#292929", "#C6D0D8", SystemColors.WindowBrush);
-        Set("CubeKnobTrack", "#666666", "#8798A3", SystemColors.WindowTextBrush);
+        Set("BackingCard", SystemColors.WindowBrush);
+        Set("BackingBorder", SystemColors.WindowTextBrush);
+        Set("BackingSecondary", SystemColors.WindowTextBrush);
+        Set("BackingPlayhead", SystemColors.HighlightBrush);
+        Set("BackingPlayed", SystemColors.HighlightBrush);
+        Set("BackingFuture", SystemColors.WindowTextBrush);
+        Set("CubePhaserGraph", SystemColors.WindowTextBrush);
+        Set("CubePurple", SystemColors.WindowTextBrush);
+        Set("CubeKnobBase", SystemColors.WindowBrush);
+        Set("CubeKnobTop", SystemColors.WindowBrush);
+        Set("CubeKnobBottom", SystemColors.WindowBrush);
+        Set("CubeKnobTrack", SystemColors.WindowTextBrush);
+        // Keep the library palette intact; only adapt the app's own semantic keys.
+        foreach (var alias in new[] { "CubeCanvas", "CubeText", "CubeCard", "CubeFloatingSurface", "CubeInset", "CubeWell", "CubeBorder", "CubeSelected", "CubeSelectedText", "CubeFocus", "CubeAccent", "Muted", "CubeDisabledText", "CubeWarning" })
+        {
+            string source = (string)resources["CubePalette." + alias];
+            resources[alias] = Brush(source);
+        }
+        if (IsHighContrast)
+        {
+            foreach (string key in new[] { "CubeCanvas", "CubeCard", "CubeFloatingSurface", "CubeInset", "CubeWell" }) resources[key] = SystemColors.WindowBrush;
+            foreach (string key in new[] { "CubeText", "Muted", "CubeWarning", "CubeBorder" }) resources[key] = SystemColors.WindowTextBrush;
+            resources["CubeSelected"] = resources["CubeFocus"] = resources["CubeAccent"] = SystemColors.HighlightBrush;
+            resources["CubeSelectedText"] = SystemColors.HighlightTextBrush;
+            resources["CubeDisabledText"] = SystemColors.GrayTextBrush;
+        }
         ControlArtwork.Apply(resources, Finish, IsLight, IsHighContrast);
         RefreshBackdrop();
         resources["CubeThemeRevision"] = ++revision;

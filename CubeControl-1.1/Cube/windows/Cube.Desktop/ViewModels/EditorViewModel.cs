@@ -777,7 +777,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     public Func<string, Task<bool>> Ask { get; set; } = async message =>
     {
-        var dialog = new Wpf.Ui.Controls.MessageBox { PrimaryButtonIcon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Checkmark24, FontSize = 16 }, CloseButtonIcon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Dismiss24, FontSize = 16 }, Title = "CubeControl", Content = LanguageService.T(message), PrimaryButtonText = LanguageService.T("Confirmar"), CloseButtonText = LanguageService.T("Cancelar"), Owner = Application.Current.MainWindow };
+        var dialog = new Wpf.Ui.Controls.MessageBox { PrimaryButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Checkmark24), CloseButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24), Title = "CubeControl", Content = LanguageService.T(message), PrimaryButtonText = LanguageService.T("Confirmar"), CloseButtonText = LanguageService.T("Cancelar"), Owner = Application.Current.MainWindow };
         return await dialog.ShowDialogAsync() == Wpf.Ui.Controls.MessageBoxResult.Primary;
     };
     public async Task Flush() { if (queue != null) await queue.Flush(); }

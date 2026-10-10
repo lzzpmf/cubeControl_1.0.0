@@ -8,7 +8,27 @@ namespace Cube.Desktop.ViewModels;
 
 public sealed partial class BackingTracksViewModel
 {
-    private sealed record DownloadSettings(int Version, string Folder);
+    private sealed record DownloadSettings(int Version, string Folder, Dictionary<string, string>? Completed = null);
+    private readonly Dictionary<string, string> completedYouTubeDownloads = new(StringComparer.Ordinal);
+    public bool IsYouTubeDownloaded(string id) => completedYouTubeDownloads.TryGetValue(id, out string? path) && File.Exists(path);
+    private void RememberYouTubeDownload(string id, string path)
+    {
+        completedYouTubeDownloads[id] = path;
+        Notify("YouTubeCompletedDownloads");
+        try { SaveYouTubeDownloadSettings(YouTubeDownloadFolder); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Log(ex); }
+    }
+    private void SaveYouTubeDownloadSettings(string folder)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(downloadSettingsPath)!);
+        string temporary = downloadSettingsPath + ".tmp";
+        try
+        {
+            File.WriteAllText(temporary, JsonSerializer.Serialize(new DownloadSettings(1, folder, completedYouTubeDownloads)));
+            File.Move(temporary, downloadSettingsPath, overwrite: true);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+    }
     private string downloadSettingsPath = "", downloadFolder = "";
     private bool choosingDownloadFolder;
     public string YouTubeDownloadFolder { get => downloadFolder; private set { Set(ref downloadFolder, value); Notify(nameof(YouTubeDownloadFolderLabel)); } }
@@ -22,10 +42,13 @@ public sealed partial class BackingTracksViewModel
     };
     private void InitializeYouTubeDownloads(string dataDirectory)
     {
+        YouTubeResults.CollectionChanged += (_, _) => RefreshYouTubePresentation();
         downloadSettingsPath = Path.Combine(dataDirectory, "youtube-downloads-v1.json");
         try
         {
             var settings = JsonSerializer.Deserialize<DownloadSettings>(File.ReadAllText(downloadSettingsPath));
+            if (settings?.Version == 1 && settings.Completed != null)
+                foreach (var entry in settings.Completed) completedYouTubeDownloads[entry.Key] = entry.Value;
             if (settings?.Version == 1 && !string.IsNullOrWhiteSpace(settings.Folder) && Path.IsPathFullyQualified(settings.Folder))
                 YouTubeDownloadFolder = settings.Folder;
         }
@@ -34,6 +57,7 @@ public sealed partial class BackingTracksViewModel
     private bool ChooseDownloadFolder()
     {
         if (YouTubeDownloading || choosingDownloadFolder || disposed) return false;
+        YouTubeFolderStatus = "";
         StopYouTubePreview(); choosingDownloadFolder = true; CommandManager.InvalidateRequerySuggested();
         try
         {
@@ -41,20 +65,17 @@ public sealed partial class BackingTracksViewModel
             if (selected == null) return false;
             selected = Path.GetFullPath(selected);
             VerifyDownloadFolder(selected);
-            Directory.CreateDirectory(Path.GetDirectoryName(downloadSettingsPath)!);
-            string temporary = downloadSettingsPath + ".tmp";
-            try
-            {
-                File.WriteAllText(temporary, JsonSerializer.Serialize(new DownloadSettings(1, selected)));
-                File.Move(temporary, downloadSettingsPath, overwrite: true);
-            }
-            finally { if (File.Exists(temporary)) File.Delete(temporary); }
+            SaveYouTubeDownloadSettings(selected);
             YouTubeDownloadFolder = selected;
-            YouTubeDownloadStatus = "";
+            if (YouTubeDownloadMessageId == null) YouTubeDownloadStatus = "";
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        { YouTubeDownloadStatus = "Não foi possível usar ou lembrar esta pasta. Escolha outra pasta."; Log(ex); return false; }
+        {
+            YouTubeFolderStatus = "Não foi possível usar ou lembrar esta pasta. Escolha outra pasta.";
+            if (YouTubeDownloadMessageId == null) YouTubeDownloadStatus = YouTubeFolderStatus;
+            Log(ex); return false;
+        }
         finally { choosingDownloadFolder = false; CommandManager.InvalidateRequerySuggested(); }
     }
     private static void VerifyDownloadFolder(string folder)

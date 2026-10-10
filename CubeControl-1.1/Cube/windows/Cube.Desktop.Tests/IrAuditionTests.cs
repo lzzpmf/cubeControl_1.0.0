@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using Cube.Desktop.Services;
 using Cube.Desktop.ViewModels;
 using Cube.Protocol;
@@ -22,6 +22,7 @@ internal static class IrAuditionTests
             }
             Check(player.Tracks.Count == 5 && player.Loop && player.Volume == 30, "five clips and agreed defaults");
             player.SelectedOutput = new("fake-output", "Pedal");
+            Check(player.OutputStateLabel == "Saída selecionada" && player.ConnectionLabel == "Pedal desconectado", "output selection does not imply pedal connection");
             await player.ToggleAsync(); Check(!player.IsPlaying, "no playback without operational MIDI and RAM preview");
             using var connection = new FakeConnection(); using var session = new CubeSession(connection); await session.Identify();
             await owner.Execute(() => owner.AttachSession(session));
@@ -42,7 +43,8 @@ internal static class IrAuditionTests
             Check(!player.IsPlaying, "failed transfer never resumes");
             await player.ToggleAsync(); token = await player.SuspendForTransfer(); await player.StopAsync(); await player.CompleteTransfer(token, true);
             Check(!player.IsPlaying && audio.Snapshot.Position == 0, "stop cancels transfer resume");
-            await player.ToggleAsync(); player.SelectedTrack = player.Tracks[1]; await player.PendingOperation;
+            player.Volume = 42; await player.ToggleAsync(); player.SelectedTrack = player.Tracks[1]; await player.PendingOperation;
+            Check(player.Volume == 42, "clip change preserves audition volume");
             Check(audio.Snapshot.Source == player.Tracks[1].Path && audio.Snapshot.Position == 0, "clip change opens new raw clip at zero");
             player.SelectedOutput = null; await player.StopAsync(); Check(!player.IsPlaying && !player.CanStart, "output loss stops and disables playback");
             player.SelectedOutput = new("fake-output", "Pedal"); await player.ToggleAsync();
@@ -51,6 +53,8 @@ internal static class IrAuditionTests
             var after = await session.ReadIrRam();
             Check(before.Flag == after.Flag && before.Payload.SequenceEqual(after.Payload), "ending preview restores original RAM");
             Check(owner.WriteCommandCount == writes, "audition does not save slots or presets");
+            if (player.SelectedOutput is { } fixtureOutput) player.Outputs.Add(fixtureOutput);
+            int originalZoom = Cube.Desktop.Appearance.ZoomService.Instance.Percent;
             var window = new Cube.Desktop.MainWindow(owner, initializeDevices: false) { ShowInTaskbar = false, Height = 900 };
             window.Show();
             try
@@ -61,9 +65,11 @@ internal static class IrAuditionTests
                 foreach (var language in new[] { "pt-BR", "en-US" })
                 foreach (var theme in new[] { Cube.Desktop.Appearance.ThemeMode.Light, Cube.Desktop.Appearance.ThemeMode.Dark })
                 foreach (int width in new[] { 640, 1280 })
+                foreach (int zoom in new[] { 100, 200 })
                 {
                     Cube.Desktop.Localization.LanguageService.Instance.Preview(language);
                     Cube.Desktop.Appearance.ThemeService.Instance.Preview(theme);
+                    Cube.Desktop.Appearance.ZoomService.Instance.Preview(zoom);
                     window.Width = width; await Task.Delay(150); window.UpdateLayout(); card.BringIntoView();
                     await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
                     window.UpdateLayout();
@@ -71,13 +77,18 @@ internal static class IrAuditionTests
                     Check(card.ActualWidth > 0 && bounds.Width <= window.ActualWidth, "audition card fits " + language + "/" + theme + "/" + width + " (actual " + card.ActualWidth + ")");
                     var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)card.ActualWidth, (int)card.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
                     var visual = new System.Windows.Media.DrawingVisual();
-                    using (var drawing = visual.RenderOpen()) drawing.DrawRectangle(new System.Windows.Media.VisualBrush(card), null, new System.Windows.Rect(0, 0, card.ActualWidth, card.ActualHeight));
+                    using (var drawing = visual.RenderOpen())
+                    {
+                        var rect = new System.Windows.Rect(card.RenderSize);
+                        drawing.DrawRectangle((System.Windows.Media.Brush)window.FindResource("CubeCanvas"), null, rect);
+                        drawing.DrawRectangle(new System.Windows.Media.VisualBrush(card), null, rect);
+                    }
                     bitmap.Render(visual);
                     var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                    using var image = File.Create(Path.Combine(reports, $"{language}-{theme}-{width}.png")); encoder.Save(image);
+                    using var image = File.Create(Path.Combine(reports, $"{language}-{theme}-{width}-{zoom}.png")); encoder.Save(image);
                 }
             }
-            finally { Cube.Desktop.Localization.LanguageService.Instance.Preview("pt-BR"); Cube.Desktop.Appearance.ThemeService.Instance.Preview(Cube.Desktop.Appearance.ThemeMode.Dark); window.Close(); }
+            finally { Cube.Desktop.Appearance.ZoomService.Instance.Preview(originalZoom); Cube.Desktop.Localization.LanguageService.Instance.Preview("pt-BR"); Cube.Desktop.Appearance.ThemeService.Instance.Preview(Cube.Desktop.Appearance.ThemeMode.Dark); window.Close(); }
 
         }
         finally { Directory.Delete(folder, true); }

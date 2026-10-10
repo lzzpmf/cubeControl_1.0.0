@@ -89,6 +89,8 @@ internal static class YouTubeTests
                 var uiFake = new Fake(); window.BackingTracks.YouTubeService = uiFake;
                 window.BackingTracks.YouTubeQuery = "blues"; await Task.Delay(650);
                 uiFake.Calls[0].Result.SetResult(Enumerable.Range(0, 10).Select(i => video with { Id = $"testvideo{i:00}", Title = $"{i + 1}. Backing track with a long title for responsive layout verification", Channel = "Test channel" }).ToArray());
+                await Task.Delay(30);
+                await YouTubePreviewTests.PrepareWaveFixture(window.BackingTracks);
                 string reports = "C:/CubeControl-Build/youtube-validation/reports"; Directory.CreateDirectory(reports);
                 foreach (var theme in new[] { "Dark", "Light", "HighContrast" })
                     foreach (int width in new[] { 1280, 640 })
@@ -99,7 +101,16 @@ internal static class YouTubeTests
                         await Task.Delay(150); window.UpdateLayout();
                         ((System.Windows.Controls.ScrollViewer)window.FindName("BackingTracksScroll")).ScrollToEnd(); await Task.Delay(100);
                         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
-                        bitmap.Render(window); var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                        bitmap.Render(window);
+                        // Window/Mica render targets contain transparency: composite on the actual canvas.
+                        var composition = new System.Windows.Media.DrawingVisual();
+                        using (var drawing = composition.RenderOpen())
+                        {
+                            drawing.DrawRectangle((System.Windows.Media.Brush)window.FindResource("CubeCanvas"), null, new System.Windows.Rect(0, 0, window.ActualWidth, window.ActualHeight));
+                            drawing.DrawImage(bitmap, new System.Windows.Rect(0, 0, window.ActualWidth, window.ActualHeight));
+                        }
+                        bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                        bitmap.Render(composition); var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
                         using var image = File.Create(Path.Combine(reports, $"youtube-{theme}-{width}.png")); encoder.Save(image);
                         Check(window.BackingTracks.YouTubeResults.Count == 10, $"results survive {theme} at {width} DIPs");
                     }
@@ -143,6 +154,8 @@ internal static class YouTubeTests
                 var youtubeBounds = youtube.TransformToAncestor(library).TransformBounds(new System.Windows.Rect(youtube.RenderSize));
                 Check(playlist.IsVisible && (columns ? Math.Abs(playlistBounds.Top - youtubeBounds.Top) < 1 && youtubeBounds.Left >= playlistBounds.Right + 15 : youtubeBounds.Top >= playlistBounds.Bottom + 15), "playlist stays open and cards adapt without overlap");
                 Check(columns ? list.ActualHeight <= 481 && resultsScroll.ActualHeight <= 481 : double.IsPositiveInfinity(list.MaxHeight) && resultsScroll.VerticalScrollBarVisibility == System.Windows.Controls.ScrollBarVisibility.Disabled, "wide lists scroll internally; compact layout uses page scrolling");
+                Check(!columns || Math.Abs(playlist.ActualWidth / (playlist.ActualWidth + youtube.ActualWidth) - .45) < .005, "wide panels allocate 45 percent to playlist");
+                Check(Cube.Desktop.Localization.LanguageService.T("Passe o mouse ou clique para pr\u00e9-ouvir at\u00e9 30 s") == (language == "en-US" ? "Hover or click to preview up to 30 s" : "Passe o mouse ou clique para pr\u00e9-ouvir at\u00e9 30 s"), "preview guidance is translated");
                 Check(list.Items.Count == 12 && window.BackingTracks.Search.Length == 0, "YouTube query preserves all playlist rows");
                 Check(Cube.Desktop.Localization.LanguageService.T("Buscando faixas\u2026") == (language == "en-US" ? "Searching tracks\u2026" : "Buscando faixas\u2026"), "search progress is translated");
                 Check(!Children<System.Windows.Controls.TextBlock>(youtube).Any(t => t.Text.Contains("YouTube") || t.Text.Contains("v\u00eddeo")), "search presentation uses musical language");
@@ -164,11 +177,35 @@ internal static class YouTubeTests
                     contained &= position.Y >= previousBottom - 1;
                     previousBottom = position.Y + card.ActualHeight;
                     Check(!Children<System.Windows.Controls.Image>(card).Any(), "track rows have no video artwork");
+                    var wave = Children<Cube.Desktop.Controls.BackingWaveform>(card).Single();
+                    Check(wave.ActualHeight == 30 && !wave.IsHitTestVisible && !wave.Focusable, "preview waveform stays compact and read-only");
+                    foreach (string action in new[] { "PreviewButton", "DownloadButton" })
+                    {
+                        var control = (System.Windows.FrameworkElement)card.FindName(action);
+                        var bounds = control.TransformToAncestor(card).TransformBounds(new System.Windows.Rect(control.RenderSize));
+                        Check(bounds.Left >= 0 && bounds.Right <= card.ActualWidth + 1 && bounds.Bottom <= card.ActualHeight + 1, "preview and download actions are contained");
+                    }
                 }
                 Check(contained, "track rows fit full width in a single vertical list");
                 var button = (Wpf.Ui.Controls.Button)cards[0].FindName("DownloadButton");
                 button.Focus(); await Task.Delay(20);
                 Check(button.IsKeyboardFocused && button.ActualWidth >= 40 && button.ActualHeight >= 40 && button.IsVisible, "keyboard reaches always visible download action");
+                if (language == "en-US" && zoom == 200 && width == 640)
+                {
+                    cards[0].BringIntoView(); await Task.Delay(100);
+                    var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    bitmap.Render(window);
+                    var composition = new System.Windows.Media.DrawingVisual();
+                    using (var drawing = composition.RenderOpen())
+                    {
+                        drawing.DrawRectangle((System.Windows.Media.Brush)window.FindResource("CubeCanvas"), null, new System.Windows.Rect(window.RenderSize));
+                        drawing.DrawImage(bitmap, new System.Windows.Rect(window.RenderSize));
+                    }
+                    bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+                    bitmap.Render(composition);
+                    var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+                    using var screenshot = File.Create("C:/CubeControl-Build/youtube-validation/reports/youtube-English-200.png"); encoder.Save(screenshot);
+                }
                 var preview = (Wpf.Ui.Controls.Button)cards[0].FindName("PreviewButton");
                 Check(preview.ToolTip?.ToString() == (language == "en-US" ? "Preview audio" : "Pré-ouvir"), "preview action is translated");
             }

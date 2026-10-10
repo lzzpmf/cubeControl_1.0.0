@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="Cube.Desktop.Views.DelayEditor"
+<UserControl x:Class="Cube.Desktop.Views.DelayEditor"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -7,15 +7,15 @@
   <Grid Margin="0" MaxWidth="900" HorizontalAlignment="Stretch">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <WrapPanel>
-    <ui:Button Content="Ler efeito atual" Click="ReadClick" IsEnabled="{Binding CanOperate}" Margin="0,0,8,8"/>
-    <ui:Button Content="{loc:Translate Text='Restaurar delay'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreDelay}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="16" Symbol="ArrowUndo24"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Ler efeito atual'}" ToolTip="{loc:Translate Text='Lê os parâmetros do efeito no pedal para iniciar a edição em RAM.'}" Click="ReadClick" IsEnabled="{Binding CanOperate}" Margin="0,0,8,8"/>
+    <ui:Button Content="{loc:Translate Text='Restaurar delay'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreDelay}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconArrowUndo24}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Grid.Row="2" Text="{loc:Translate Value={Binding DelayGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
    <graph:EffectGraphEditor Grid.Row="3" EffectKind="Delay" Accent="{DynamicResource AccentTextFillColorPrimaryBrush}" DataContext="{Binding Delay}" IsEnabled="{Binding DataContext.CanEditDelay,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
    <WrapPanel Grid.Row="4" Margin="0,8,0,0" IsEnabled="{Binding CanUseDelayFiles}">
-    <ui:Button Content="{loc:Translate Text='Importar delay'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="16" Symbol="FolderOpen24"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Exportar delay'}" Click="ExportClick" IsEnabled="{Binding Delay.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="16" Symbol="Save24"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Importar delay'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconFolderOpen24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Exportar delay'}" Click="ExportClick" IsEnabled="{Binding Delay.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconSave24}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Grid.Row="5" Text="{loc:Translate Value={Binding Delay.Message}}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </Grid>

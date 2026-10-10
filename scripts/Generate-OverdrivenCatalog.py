@@ -1,4 +1,4 @@
-"""Rebuild the local Overdriven library; no network or audio processing.
+"""Rebuild metadata from versioned Overdriven WAVs/readmes; never modify audio.
 
 Run with Python 3 from any directory. --check verifies without writing.
 """
@@ -7,12 +7,16 @@ import hashlib
 import json
 from pathlib import Path
 import re
-import shutil
 import struct
+import sys
+
+# Keep --check read-only, including Python's import cache.
+sys.dont_write_bytecode = True
+from overdriven_metadata import MICROPHONES, MICROPHONE_OVERRIDES, classification
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / 'irsNovos'
 DEST = ROOT / 'CubeControl-1.1/Cube/windows/Cube.Desktop/Assets/ImpulseResponses'
+SOURCE = DEST / 'Overdriven.fr'
 EXPECTED = {
     '212-GOV': ('FB / GOV', 82), 'DE-112-T75-G4-CLASSD': ('DE-112 / T75', 32),
     'E112-BVV': ('E112 / BVV', 40), 'E112-CV-CLASSD': ('E112 / CV', 40),
@@ -60,9 +64,7 @@ def wav_info(data):
 
 
 def generate(check):
-    convention = (SOURCE / 'convensaoMicrofones.md').read_text(encoding='utf-8-sig')
-    models = dict(re.findall(r'^((?:DYN|CND|RBN)-\S+)\s+(.+)$', convention, re.M))
-    entries, copies, seen = [], [], set()
+    entries, seen = [], set()
     for folder in sorted(SOURCE.iterdir()):
         if not folder.is_dir():
             continue
@@ -77,7 +79,9 @@ def generate(check):
         waves = sorted(folder.rglob('*.wav'))
         if len(waves) != expected:
             raise ValueError(f'{key}: expected {expected}, found {len(waves)}')
-        copies.append((readme, DEST / 'Overdriven.fr' / folder.name / 'SSP2/readme.txt'))
+        models = MICROPHONES | MICROPHONE_OVERRIDES.get(key, {})
+        naming = classification(key)
+        naming['Sources'] = [readme.relative_to(DEST).as_posix()] + naming['Sources']
         for wave in waves:
             preview = 'SP1-PREVIEW' in wave.parts
             # Preview IRs describe other captures: retain their full prefix as provenance.
@@ -102,8 +106,7 @@ def generate(check):
                 PowerAmp=fields['Power amp'], MicPreamp=fields['Mic preamp'], Microphone=mic,
                 MicrophoneModel=models.get(mic), Position=pos, CaptureDistanceMm=int(match['mm']),
                 Variants=match['variants'].lstrip('-').split('-') if match['variants'] else [],
-                IsPreview=preview, CapturePrefix=match[1], OriginalName=wave.name, **wav_info(data)))
-            copies.append((wave, DEST / relative))
+                IsPreview=preview, CapturePrefix=match[1], OriginalName=wave.name, **naming, **wav_info(data)))
     if seen != set(EXPECTED) or len(entries) != 682:
         raise ValueError('Incomplete collection inventory')
     result = json.dumps(dict(Version=1, Provider='Overdriven.fr', Entries=entries), ensure_ascii=False, indent=2) + '\n'
@@ -111,13 +114,7 @@ def generate(check):
     if check:
         if manifest.read_text(encoding='utf-8') != result:
             raise ValueError('Catalog is stale')
-        for source, dest in copies:
-            if source.read_bytes() != dest.read_bytes():
-                raise ValueError(f'Missing or modified asset: {dest}')
     else:
-        for source, dest in copies:
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source, dest)
         manifest.write_text(result, encoding='utf-8')
     print(f'{"Verified" if check else "Generated"} 13 collections, {len(entries)} unchanged WAVs and readmes')
 

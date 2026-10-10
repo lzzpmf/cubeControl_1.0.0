@@ -30,12 +30,12 @@ public sealed class EffectGraphEditor : Grid
     private readonly Dictionary<string, GraphNode> nodes = [];
     private readonly StackPanel inspector = new() { Margin = new Thickness(24, 12, 24, 0), MinHeight = 148 };
     private readonly WrapPanel choices = new() { MinHeight = 36 };
-    private readonly TextBlock footer = new() { Margin = new Thickness(24, 8, 24, 12), FontSize = 11, TextWrapping = TextWrapping.Wrap };
-    private readonly TextBlock caption = new() { TextWrapping = TextWrapping.Wrap, FontSize = 14, FontWeight = FontWeights.SemiBold };
+    private readonly TextBlock footer = new() { Margin = new Thickness(24, 8, 24, 12), TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock caption = new() { TextWrapping = TextWrapping.Wrap };
     private readonly Wpf.Ui.Controls.Button number = new() { HorizontalAlignment = HorizontalAlignment.Left };
     private readonly TextBlock numberText = new() { TextWrapping = TextWrapping.Wrap, MinHeight = 34, VerticalAlignment = VerticalAlignment.Center };
     private readonly TextBox entry = new() { Visibility = Visibility.Collapsed, MinWidth = 100 };
-    private readonly TextBlock help = new() { FontSize = 12, TextWrapping = TextWrapping.Wrap, MinHeight = 44 };
+    private readonly TextBlock help = new() { TextWrapping = TextWrapping.Wrap, MinHeight = 44 };
     private GraphNode? selected;
     private readonly ComboBox parameterPicker = new() { MinHeight = 32, Margin = new Thickness(0, 0, 0, 8) };
     private readonly Slider adjustment = new() { MinHeight = 32, Margin = new Thickness(0, 4, 0, 4), IsMoveToPointEnabled = true };
@@ -59,6 +59,9 @@ public sealed class EffectGraphEditor : Grid
 
     public EffectGraphEditor()
     {
+        footer.SetResourceReference(StyleProperty, "CaptionText");
+        caption.SetResourceReference(StyleProperty, "BodyStrongText");
+        help.SetResourceReference(StyleProperty, "CaptionText");
         ClipToBounds = false;
         MinWidth = 308;
         SetResourceReference(BackgroundProperty, "CubeInset");

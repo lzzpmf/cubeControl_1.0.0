@@ -20,7 +20,7 @@ internal static class IrLibraryTests
         Check(Array.IndexOf(response, response.Max()) == 15 && Math.Abs(response[15]) < 1e-8, "1500 Hz reference peaks at its measured frequency bin");
         Check(Cube.Desktop.Controls.Waveform.Spectrum(new float[512]).All(db => db == -60), "silent response remains finite at display floor");
         var library = new IrLibraryViewModel(() => true);
-        Check(library.Entries.Count == 958 && library.Roots.Count == 6, "958 WAVs across six providers; NAM models excluded");
+        Check(library.Entries.Count == 958 && library.Roots.Count == 7, "958 WAVs across seven cabinet brands; NAM models excluded");
         Check(library.Roots.All(n => !n.IsExpanded && n.EntryCount > 0), "brand folders start collapsed and report their IR counts");
         Check(library.Roots.Sum(n => n.EntryCount) == library.Entries.Count, "tree contains every WAV exactly once");
         Check(library.Roots.Single(n => n.Name == "Fender").Children.Select(n => n.Name).SequenceEqual(new[] { "1x12", "2x12" }), "brand leads directly to speaker configuration without redundant format level");
@@ -76,14 +76,9 @@ internal static class IrLibraryTests
         Check(fake.Writes == 0 && model.IrLibrary.Selected == null, "filtering does not preview");
         model.IrLibrary.Search = "";
         var capture = model.IrLibrary.Entries.First(e => e.Metadata != null).Metadata!;
-        model.IrLibrary.CollectionFilter = capture.CollectionId;
-        model.IrLibrary.CabinetFilter = capture.Cabinet;
-        model.IrLibrary.SpeakerFilter = capture.Speaker;
-        model.IrLibrary.MicrophoneFilter = capture.Microphone;
-        model.IrLibrary.PositionFilter = capture.Position;
-        model.IrLibrary.DistanceFilter = capture.CaptureDistanceMm.ToString();
-        model.IrLibrary.ClearFilters.Execute(null);
-        Check(fake.Writes == 0 && model.IrLibrary.Selected == null, "all capture filters and clear send no commands to connected pedal");
+        model.IrLibrary.Search = capture.Brand + " " + capture.SpeakerConfiguration + " " + capture.Microphone;
+        model.IrLibrary.Search = "";
+        Check(fake.Writes == 0 && model.IrLibrary.Selected == null, "capture search and clearing search send no commands to connected pedal");
         model.IrLibrary.Selected = first; await model.PendingLibraryLoad;
         Check(model.Ir.PreviewConfirmed && fake.Writes > 0 && fake.FlashWrites == 0, "library selection previews in RAM only");
         var active = model.Ir.Audio; int writes = fake.Writes;

@@ -196,7 +196,7 @@ internal static class ThemeTests
             using var model = new EditorViewModel(Path.Combine(folder, "model"));
             service.Preview(ThemeMode.Light); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             var light = ((SolidColorBrush)text.Foreground).Color;
-            foreach (string key in new[] { "CubeSelected", "CubeInset", "CubeFocus", "CubeAccent" })
+            foreach (string key in new[] { "CubeSelected", "CubeInset" })
             {
                 var color = ((SolidColorBrush)Application.Current.Resources[key]).Color;
                 Check(color.R == color.G && color.G == color.B, key + " is neutral in light theme");
@@ -222,6 +222,12 @@ internal static class ThemeTests
             {
                 Color fg = ((SolidColorBrush)Cube.Desktop.Appearance.ThemeService.Brush(foreground)).Color;
                 Color bg = ((SolidColorBrush)Cube.Desktop.Appearance.ThemeService.Brush(background)).Color;
+                // WPF UI layers are translucent; composite over the window canvas first.
+                var canvas = ((SolidColorBrush)Cube.Desktop.Appearance.ThemeService.Brush("CubeCanvas")).Color;
+                double backgroundAlpha = bg.A / 255d;
+                bg = Color.FromRgb((byte)Math.Round(bg.R * backgroundAlpha + canvas.R * (1 - backgroundAlpha)),
+                    (byte)Math.Round(bg.G * backgroundAlpha + canvas.G * (1 - backgroundAlpha)),
+                    (byte)Math.Round(bg.B * backgroundAlpha + canvas.B * (1 - backgroundAlpha)));
                 double alpha = fg.A / 255d;
                 double Linear(double channel) => channel <= .04045 ? channel / 12.92 : Math.Pow((channel + .055) / 1.055, 2.4);
                 double Lum(double r, double g, double b) => .2126 * Linear(r / 255) + .7152 * Linear(g / 255) + .0722 * Linear(b / 255);
@@ -232,6 +238,12 @@ internal static class ThemeTests
             foreach (var mode in new[] { ThemeMode.Light, ThemeMode.Dark })
             {
                 service.Preview(mode);
+                foreach (string key in new[] { "CubeCanvas", "CubeCard", "CubeInset", "CubeWell", "CubeFloatingSurface", "CubeBorder", "CubeFocus", "CubeAccent", "CubeSelected" })
+                {
+                    string source = (string)Application.Current.Resources["CubePalette." + key];
+                    Check(Application.Current.TryFindResource(source) is Brush, mode + " resolves " + source);
+                    Check(ReferenceEquals(Application.Current.Resources[key], Application.Current.TryFindResource(source)), mode + " semantic alias " + key);
+                }
                 foreach (var pair in new[] { ("CubeText", "TextFillColorPrimaryBrush"), ("Muted", "TextFillColorSecondaryBrush"),
                     ("CubeDisabledText", "TextFillColorDisabledBrush"), ("CubeWarning", "SystemFillColorCautionBrush") })
                     Check(ReferenceEquals(Cube.Desktop.Appearance.ThemeService.Brush(pair.Item1), Cube.Desktop.Appearance.ThemeService.Brush(pair.Item2)), mode + " semantic resource " + pair.Item1);
@@ -240,12 +252,12 @@ internal static class ThemeTests
                         Check(Contrast(label, surface) >= 4.5, mode + " text contrast >= 4.5: " + label + "/" + surface);
             }
             ApplicationThemeManager.Apply(ApplicationTheme.HighContrast);
-            Check(((SolidColorBrush)Application.Current.Resources["ButtonBorderBrushDisabled"]).Color == SystemColors.WindowTextColor,
-                "high contrast restores system-colored control outlines");
+            Check(ReferenceEquals(Application.Current.Resources["CubeBorder"], SystemColors.WindowTextBrush),
+                "high contrast restores system-colored custom control outlines");
             Check((Thickness)Application.Current.Resources["CubeSurfaceBorderThickness"] == new Thickness(1), "high contrast cards have visible outlines");
             Check(ReferenceEquals(Application.Current.Resources["CubeDisabledText"], SystemColors.GrayTextBrush), "high contrast disabled text uses Windows palette");
             service.Preview(ThemeMode.Dark);
-            Check(((SolidColorBrush)Application.Current.Resources["ButtonBorderBrushDisabled"]).Color.A == 0, "leaving high contrast restores normal borderless appearance");
+            Check(!Application.Current.Resources.Keys.Cast<object>().Contains("ButtonBorderBrushDisabled"), "theme service leaves native control borders to WPF UI");
             // Notify only this test window; do not change global Windows personalization settings.
             SendMessage(new WindowInteropHelper(window).Handle, 0x001A, IntPtr.Zero, "ImmersiveColorSet");
             Check(ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Dark, "manual dark mode ignores system-change notifications");

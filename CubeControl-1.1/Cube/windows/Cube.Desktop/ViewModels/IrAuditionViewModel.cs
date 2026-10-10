@@ -34,20 +34,38 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
     public string Status { get => status; private set => Set(ref status, value); }
     public string TimeLabel => $"{TimeSpan.FromSeconds(audio.Snapshot.Position):mm\\:ss} / {TimeSpan.FromSeconds(duration):mm\\:ss}";
     public bool CanStart => !disposed && !suspended && owner.CanOperate && owner.Ir.PreviewActive && owner.Ir.PreviewConfirmed && selected != null && output != null;
+    private bool opening, hasError;
+    private double outputLevel;
+    public double OutputLevel { get => outputLevel; private set => Set(ref outputLevel, value); }
+    public double Progress => duration > 0 ? Math.Clamp(audio.Snapshot.Position / duration * 100, 0, 100) : 0;
+    public string ConnectionLabel => owner.Connected ? "Pedal conectado" : "Pedal desconectado";
+    public string OutputStateLabel => hasError || audio.Snapshot.State == BackingPlaybackState.Error ? "Erro de áudio"
+        : opening ? "Abrindo saída…" : output == null ? "Sem saída selecionada" : "Saída selecionada";
+    public string ContextStatus => hasError || audio.Snapshot.State == BackingPlaybackState.Error ? Status
+        : !owner.Connected ? "Conecte o pedal para iniciar a pré-escuta."
+        : output == null ? "Selecione a saída USB de áudio do pedal."
+        : suspended ? "Pré-escuta pausada durante a transferência do IR."
+        : !owner.CanOperate ? "Aguarde o pedal ficar disponível."
+        : !owner.Ir.PreviewActive || !owner.Ir.PreviewConfirmed ? "Confirme a prévia do IR em RAM para iniciar."
+        : selected == null ? "Selecione uma gravação."
+        : opening ? "Abrindo a saída de áudio…"
+        : IsPlaying ? "Pré-escuta pelo pedal · efeitos atuais mantidos"
+        : audio.Snapshot.State == BackingPlaybackState.Paused ? "Pré-escuta pausada."
+        : "Pronto para iniciar a pré-escuta.";
     public RawGuitar? SelectedTrack
     {
         get => selected;
         set
         {
             if (!Set(ref selected, value)) return;
-            bool resume = IsPlaying; int version = ++generation;
+            hasError = false; bool resume = IsPlaying; int version = ++generation;
             _ = Queue(async () => { await audio.Clear(); duration = 0; if (resume && version == generation && CanStart) await StartCore(version); });
         }
     }
     public BackingOutput? SelectedOutput
     {
         get => output;
-        set { if (Set(ref output, value)) _ = StopAsync(); }
+        set { if (Set(ref output, value)) { hasError = false; _ = StopAsync(); } }
     }
     public double Volume
     {
@@ -64,8 +82,8 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
         this.owner = owner; audio = service ?? new IrAuditionService();
         for (int i = 1; i <= 5; i++) Tracks.Add(new($"Guitarra {i}", Path.Combine(AppContext.BaseDirectory, "Assets", "RawWaves", $"raw_guitar_{i}.wav")));
         selected = Tracks[0];
-        PlayPause = new UiCommand(() => _ = ToggleAsync(), () => IsPlaying || CanStart);
-        Stop = new UiCommand(() => _ = StopAsync());
+        PlayPause = new UiCommand(() => _ = ToggleAsync(), () => !opening && (IsPlaying || CanStart));
+        Stop = new UiCommand(() => _ = StopAsync(), () => opening || audio.Snapshot.State is BackingPlaybackState.Playing or BackingPlaybackState.Paused);
         RefreshOutputs = new UiCommand(() => _ = RefreshDevices());
         owner.PropertyChanged += OwnerChanged;
         owner.Ir.PropertyChanged += IrChanged;
@@ -81,6 +99,8 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
     {
         Notify(nameof(IsPlaying)); Notify(nameof(PlayLabel)); Notify(nameof(TimeLabel)); Notify(nameof(CanStart));
         if (audio.Snapshot.State == BackingPlaybackState.Error) Status = "Saída de áudio indisponível. Selecione a saída e tente novamente.";
+        OutputLevel = IsPlaying ? Math.Max(OutputLevel * .65, Math.Clamp(audio.ConsumePeak(), 0, 1) * 100) : 0;
+        Notify(nameof(Progress)); Notify(nameof(ConnectionLabel)); Notify(nameof(OutputStateLabel)); Notify(nameof(ContextStatus));
         CommandManager.InvalidateRequerySuggested();
     }
     private Task Queue(Func<Task> operation)
@@ -92,28 +112,34 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
         await previous;
         if (disposed) return;
         try { await operation(); }
-        catch (Exception) { ++generation; try { await audio.Clear(); } catch { } Status = "Não foi possível reproduzir a pré-escuta. Confira o WAV e a saída de áudio."; }
+        catch (Exception) { hasError = true; ++generation; try { await audio.Clear(); } catch { } Status = "Não foi possível reproduzir a pré-escuta. Confira o WAV e a saída de áudio."; }
         Refresh();
     }
     public Task ToggleAsync() => Queue(async () =>
     {
         if (IsPlaying) { await audio.Pause(); return; }
         if (!CanStart) return;
-        await StartCore(generation);
+        hasError = false; await StartCore(generation);
     });
     private async Task StartCore(int version)
     {
-        var track = selected!; var endpoint = output!;
-        if (BeforePlayback != null) await BeforePlayback();
-        if (version != generation || !CanStart) return;
-        if (audio.Snapshot.Source != track.Path || audio.Snapshot.OutputId != endpoint.Id || audio.Snapshot.State == BackingPlaybackState.Error)
+        opening = true; Refresh();
+        try
         {
-            duration = IrAudio.Decode(await File.ReadAllBytesAsync(track.Path)).Duration;
-            await audio.Open(track.Path, endpoint.Id, duration, looping, volume / 100);
+            var track = selected!; var endpoint = output!;
+            if (BeforePlayback != null) await BeforePlayback();
+            if (version != generation || !CanStart) return;
+            if (audio.Snapshot.Source != track.Path || audio.Snapshot.OutputId != endpoint.Id || audio.Snapshot.State == BackingPlaybackState.Error)
+            {
+                duration = IrAudio.Decode(await File.ReadAllBytesAsync(track.Path)).Duration;
+                await audio.Open(track.Path, endpoint.Id, duration, looping, volume / 100);
+            }
+            if (version != generation || !CanStart) { await audio.Clear(); return; }
+            await audio.Play(); Status = "Pré-escuta pelo pedal · efeitos atuais mantidos";
         }
-        if (version != generation || !CanStart) { await audio.Clear(); return; }
-        await audio.Play(); Status = "Pré-escuta pelo pedal · efeitos atuais mantidos";
+        finally { opening = false; Refresh(); }
     }
+
     public Task StopAsync()
     {
         ++generation;
@@ -131,7 +157,7 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
         await audio.Volume(volume / 100, false);
         if (success && version == generation && owner.Connected && owner.Ir.PreviewConfirmed && owner.Ir.PreviewActive)
             await audio.Play();
-        else if (!success) Status = "Pré-escuta pausada: a transferência do IR não foi confirmada.";
+        else if (!success) { hasError = true; Status = "Pré-escuta pausada: a transferência do IR não foi confirmada."; }
     });
     public Task RefreshDevices() => Queue(async () =>
     {

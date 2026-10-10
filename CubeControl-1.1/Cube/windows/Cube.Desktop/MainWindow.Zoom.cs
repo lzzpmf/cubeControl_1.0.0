@@ -59,7 +59,7 @@ public partial class MainWindow
             {
                 Name = name, Width = 40, Height = 40, Padding = new Thickness(0), Margin = new Thickness(0),
                 Appearance = Wpf.Ui.Controls.ControlAppearance.Transparent,
-                Icon = new Wpf.Ui.Controls.SymbolIcon(symbol) { FontSize = 20 }, ToolTip = LanguageService.T(hint)
+                Icon = Cube.Desktop.Appearance.AppIcons.Create(symbol, navigation: true), ToolTip = LanguageService.T(hint)
             };
             AutomationProperties.SetName(button, LanguageService.T(hint));
             Grid.SetColumn(button, column); row.Children.Add(button); return button;

@@ -30,8 +30,8 @@ internal static class OverdrivenLibraryTests
         Check(entries.Length == 682 && entries.Select(e => e.Metadata!.CollectionId).Distinct().Count() == 13, "13 Overdriven collections and 682 catalog entries");
         Check(Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "Assets", "ImpulseResponses", "Overdriven.fr"), "readme.txt", SearchOption.AllDirectories).Count() == 13,
             "all original collection readmes copied to build output");
-        Check(entries.Select(e => e.RelativePath).Distinct().Count() == 682 && library.Roots.Single(n => n.Name == "Overdriven.fr").EntryCount == 682,
-            "each catalog entry occurs once in collection/microphone tree");
+        Check(entries.Select(e => e.RelativePath).Distinct().Count() == 682 && library.Roots.All(n => n.Name != "Overdriven.fr") && Leaves(library.Roots).Count(n => n.Entry!.Metadata != null) == 682,
+            "each catalog entry occurs once under cabinet brands");
         foreach (var entry in entries)
         {
             var m = entry.Metadata!;
@@ -51,31 +51,43 @@ internal static class OverdrivenLibraryTests
         Check(entries.Any(e => e.Metadata!.Variants.SequenceEqual(new[] { "LC", "P0" }))
             && entries.Any(e => e.Metadata!.Variants.SequenceEqual(new[] { "LC", "L" })), "combined suffixes retained");
         Check(entries.Any(e => e.Metadata!.CaptureDistanceMm == 0) && entries.Any(e => e.Metadata!.CaptureDistanceMm == 150), "physical distances include zero and values over pedal parameter range");
-        Check(entries.Where(e => e.Metadata!.Microphone == "LD-103").All(e => e.Metadata!.MicrophoneModel == null), "undocumented microphone models are not inferred");
+        Check(entries.Where(e => e.Metadata is { Microphone: "LD-103", Brand: "Zilla" or "Mesa Boogie" }).All(e => e.Metadata!.MicrophoneModel == "Neumann TLM 103")
+            && entries.Where(e => e.Metadata is { Microphone: "LD-103", Brand: "Marshall" }).All(e => e.Metadata!.MicrophoneModel == null), "modeled microphone identity is scoped to the documenting collection pages");
+        Check(entries.Where(e => e.Metadata!.Microphone == "RBN-CN-2").All(e => e.Metadata!.MicrophoneModel == null), "undocumented microphone models are not inferred");
         var cv = entries.First(e => e.Metadata!.Collection == "E112 / CV").Metadata!;
         var vt = entries.First(e => e.Metadata!.Collection == "E112 / VT").Metadata!;
         Check(cv.CollectionId != vt.CollectionId && cv.Cabinet == "DE-112" && vt.Cabinet == "DE-112", "CV and VT keep separate identities and documented cabinet descriptions");
 
         var candidate = entries.First(e => e.Metadata is { Collection: "FB / GOV", Microphone: "DYN-57", Position: "P10" });
         var selected = candidate.Metadata!;
-        library.CollectionFilter = selected.CollectionId;
-        library.CabinetFilter = selected.Cabinet;
-        library.SpeakerFilter = selected.Speaker;
-        library.MicrophoneFilter = selected.Microphone;
-        library.PositionFilter = selected.Position;
-        library.DistanceFilter = selected.CaptureDistanceMm.ToString();
-        library.Search = "Shure SM57";
-        Check(library.VisibleEntries.Count > 0 && library.VisibleEntries.All(e => e.Metadata is { Microphone: "DYN-57", Position: "P10" } m
-            && m.CollectionId == selected.CollectionId && m.Cabinet == selected.Cabinet && m.Speaker == selected.Speaker && m.CaptureDistanceMm == selected.CaptureDistanceMm), "all six filters intersect with model-name search");
+        library.Search = "Zilla 2x12 Governor Shure SM57 P10";
+        Check(library.VisibleEntries.Count > 0 && library.VisibleEntries.All(e => e.Metadata is { Brand: "Zilla", Microphone: "DYN-57", Position: "P10" }), "search combines friendly brand, speaker and capture names");
         library.Selected = candidate;
         Check(library.SelectedDetails.Contains("mm") && library.SelectedDetails.Contains("512") && library.SelectedDetails.Contains(candidate.Name), "capture details preserve original name and conversion limit");
         library.Search = "no-such-overdriven-ir";
         Check(library.VisibleEntries.Count == 0 && library.Selected == null, "filtering clears selection with empty results");
-        library.ClearFilters.Execute(null);
-        Check(library.VisibleEntries.Count == 958 && library.CollectionFilter == "" && library.Search == "", "clear restores all legacy and Overdriven entries");
-        library.MicrophoneFilter = "?";
-        Check(library.VisibleEntries.Count == 276 && library.VisibleEntries.All(e => e.Metadata == null), "not-provided option preserves legacy library");
-        library.ClearFilters.Execute(null);
+        library.Search = "";
+        Check(library.VisibleEntries.Count == 958, "empty search restores all legacy and Overdriven entries");
+        Check(library.Roots.Select(n => n.Name).SequenceEqual(new[] { "Engl", "Fender", "Marshall", "Mesa Boogie", "Orange", "Vox", "Zilla" }), "existing brands merged; new cabinet brands sorted");
+        foreach (var entry in entries)
+        {
+            var m = entry.Metadata!;
+            var brand = library.Roots.Single(n => n.Name == m.Brand);
+            var layout = brand.Children.Single(n => n.Name == m.SpeakerConfiguration);
+            var model = layout.Children.Single(n => n.Name == m.ModelLabel);
+            CheckFile(model.Children.Count(n => n.Entry == entry) == 1 && model.Children.All(n => !n.IsFolder), entry.RelativePath);
+        }
+        Check(Leaves(library.Roots).Select(n => n.Entry!.RelativePath).Distinct().Count() == 958, "unified hierarchy preserves every WAV identity");
+        Check(entries.All(e => e.Metadata!.Sources.Length >= 3 && e.Metadata.IdentificationEvidence.Length > 0), "all 13 collections retain evidence and sources");
+        Check(cv.ModelLabel != vt.ModelLabel && cv.SpeakerLabel == "CV", "conflicting CV readme does not merge CV and VT");
+        Check(entries.Where(e => e.Metadata!.Identification == "probable").All(e => e.Metadata!.ModelLabel.Contains("identificação provável")), "inferred brands are marked at the model level");
+        Check(library.Roots.SelectMany(r => r.Children).SelectMany(n => n.Children).Where(n => n.Children.Any(c => c.Entry?.Metadata != null))
+            .All(n => n.Children.Select(c => c.Name).Distinct().Count() == n.Children.Count), "capture labels are unambiguous within each model");
+        library.Search = candidate.Name;
+        Check(library.VisibleEntries.Contains(candidate), "original filename search remains available");
+        library.Search = "Overdriven";
+        Check(library.VisibleEntries.Count == 682, "provider search finds all Overdriven captures without a provider root");
+        library.Search = "";
 
         string temp = Path.Combine(Path.GetTempPath(), "cube-overdriven-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(temp);
@@ -91,21 +103,62 @@ internal static class OverdrivenLibraryTests
                 "pack hashes and paths resolve; physical 150 mm never initializes pedal Distance");
             File.Copy(candidate.FullPath, Path.Combine(temp, "external.wav"));
             var imported = new IrLibraryViewModel(() => true, root, temp, packPicker: true);
-            imported.PositionFilter = "?";
-            Check(imported.VisibleEntries.Any(e => e.RelativePath.StartsWith("Imported/")), "imported WAV remains accessible through unknown metadata filter");
+            imported.Search = "external";
+            Check(imported.VisibleEntries.Any(e => e.RelativePath.StartsWith("Imported/")), "imported WAV remains accessible through search");
             File.WriteAllText(Path.Combine(temp, "Overdriven.catalog.v1.json"), "{}");
             var invalid = new IrLibraryViewModel(() => true, temp);
             Check(invalid.Entries.Count == 1 && invalid.Entries[0].Metadata == null && invalid.Message.Contains("Metadados indisponíveis"), "malformed manifest falls back to physical WAV tree");
             File.WriteAllText(Path.Combine(temp, "Overdriven.catalog.v1.json"), JsonSerializer.Serialize(new { Version = 1, Provider = "Overdriven.fr", Entries = new[] { selected with { RelativePath = "Overdriven.fr/../outside.wav" } } }));
             Check(new IrLibraryViewModel(() => true, temp).Entries.All(e => e.Metadata == null), "unsafe manifest paths rejected without hiding WAVs");
+            var duplicates = new[] { "Overdriven.fr/a/same.wav", "Overdriven.fr/b/same.wav" }
+                .Select(path => selected with { RelativePath = path, OriginalName = "same.wav" }).ToArray();
+            foreach (var duplicate in duplicates)
+            {
+                string path = Path.Combine(temp, duplicate.RelativePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                File.Copy(candidate.FullPath, path);
+            }
+            File.WriteAllText(Path.Combine(temp, "Overdriven.catalog.v1.json"), JsonSerializer.Serialize(new { Version = 1, Provider = "Overdriven.fr", Entries = duplicates }));
+            var collision = new IrLibraryViewModel(() => true, temp);
+            var duplicateLeaves = Leaves(collision.Roots).Where(n => n.Entry!.Metadata != null).ToArray();
+            Check(duplicateLeaves.Length == 2 && duplicateLeaves.Select(n => n.Name).Distinct().Count() == 2,
+                "same capture and original filename in different folders remain distinguishable");
+            var oldCatalog = duplicates.Select(m => m with { Brand = "Marca não identificada", SpeakerConfiguration = "Configuração não informada", CabinetModel = "", SpeakerLabel = "", Identification = "unknown", Sources = [] });
+            File.WriteAllText(Path.Combine(temp, "Overdriven.catalog.v1.json"), JsonSerializer.Serialize(new { Version = 1, Provider = "Overdriven.fr", Entries = oldCatalog }));
+            Check(new IrLibraryViewModel(() => true, temp).Roots.Any(n => n.Name == "Marca não identificada" && n.EntryCount == 2),
+                "unidentified captures remain browsable without inventing a brand");
         }
         finally { Directory.Delete(temp, recursive: true); }
         await CheckUi(candidate);
     }
 
+    private static IEnumerable<IrLibraryNode> Leaves(IEnumerable<IrLibraryNode> nodes)
+    {
+        foreach (var node in nodes)
+            if (node.Entry != null) yield return node;
+            else foreach (var leaf in Leaves(node.Children)) yield return leaf;
+    }
+
     private static void CheckFile(bool condition, string path)
     {
         if (!condition) throw new Exception("Catalog/hash/decode mismatch: " + path);
+    }
+
+    private static void Capture(Window window, string path)
+    {
+        // RenderTargetBitmap omits the compositor's Mica backdrop. Composite onto
+        // the current solid app canvas so translucent cards can be inspected.
+        var visual = new DrawingVisual();
+        using (var drawing = visual.RenderOpen())
+        {
+            var bounds = new Rect(0, 0, window.ActualWidth, window.ActualHeight);
+            drawing.DrawRectangle(ThemeService.Brush("CubeCanvas"), null, bounds);
+        }
+        var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+        bitmap.Render(visual);
+        bitmap.Render(window);
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using var output = File.Create(path); encoder.Save(output);
     }
 
     private static async Task CheckUi(IrLibraryEntry candidate)
@@ -125,13 +178,11 @@ internal static class OverdrivenLibraryTests
             DependencyObject? parent = tree;
             while (parent is not IrLibraryBrowser && parent != null) parent = VisualTreeHelper.GetParent(parent);
             var browser = (IrLibraryBrowser)parent!;
-            var collection = (ComboBox)browser.FindName("IrCollectionFilter");
-            collection.SelectedValue = candidate.Metadata!.CollectionId;
+            foreach (string filter in new[] { "IrCollectionFilter", "IrCabinetFilter", "IrSpeakerFilter", "IrMicrophoneFilter", "IrPositionFilter", "IrDistanceFilter" })
+                Check(browser.FindName(filter) == null, "removed picklist " + filter);
+            model.IrLibrary.Search = "Zilla Governor DYN-57";
             await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-            Check(model.IrLibrary.CollectionFilter == candidate.Metadata.CollectionId && model.IrLibrary.VisibleEntries.Count == 82, "collection ComboBox updates shared viewmodel");
-            ((ComboBox)browser.FindName("IrMicrophoneFilter")).SelectedValue = "DYN-57";
-            await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-            Check(model.IrLibrary.VisibleEntries.All(e => e.Metadata!.Microphone == "DYN-57") && model.WriteCommandCount == 0, "microphone ComboBox filters without sending MIDI");
+            Check(model.IrLibrary.VisibleEntries.All(e => e.Metadata is { Brand: "Zilla", Microphone: "DYN-57" }) && model.WriteCommandCount == 0, "unified search works without sending MIDI");
             model.IrLibrary.Selected = candidate;
             await model.PendingLibraryLoad;
             var details = (Expander)browser.FindName("IrCaptureDetails");
@@ -149,24 +200,18 @@ internal static class OverdrivenLibraryTests
                 browser.SearchBox.BringIntoView();
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout();
                 var scroll = (ScrollViewer)window.FindName("WorkspaceScroll");
-                Check(scroll.ExtentWidth <= scroll.ViewportWidth + 1, $"Overdriven filters responsive {language}/{theme}/{width}/{zoom}");
-                var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-                bitmap.Render(window);
-                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-                using var output = File.Create(Path.Combine(report, $"{language}-{theme}-{width}-{zoom}.png")); encoder.Save(output);
+                Check(scroll.ExtentWidth <= scroll.ViewportWidth + 1, $"Unified library responsive {language}/{theme}/{width}/{zoom}");
+                Capture(window, Path.Combine(report, $"{language}-{theme}-{width}-{zoom}.png"));
             }
             ZoomService.Instance.Preview(100); window.Width = 1280;
             foreach (string language in new[] { "pt-BR", "en-US" })
             {
                 LanguageService.Instance.Preview(language); window.UpdateLayout(); details.BringIntoView();
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout();
-                var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-                bitmap.Render(window);
-                var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-                using var output = File.Create(Path.Combine(report, $"{language}-capture-details.png")); encoder.Save(output);
+                Capture(window, Path.Combine(report, $"{language}-capture-details.png"));
             }
             LanguageService.Instance.Preview("en-US");
-            Check(LanguageService.T(model.IrLibrary.SelectedDetails).Contains("Approximate capture distance:") && LanguageService.T("Limpar filtros") == "Clear filters", "capture details and filters localized");
+            Check(LanguageService.T(model.IrLibrary.SelectedDetails).Contains("Approximate capture distance:") && LanguageService.T("identificação provável") == "probable identification", "capture details and identification localized");
         }
         finally
         {

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -27,7 +27,7 @@ public sealed partial class BackingTracksViewModel
         bool active = IsPlaying || IsMonitoring;
         if (active) meterTimer.Start(); else meterTimer.Stop();
         if (!IsPlaying) { TrackLevel = 0; engine.ConsumeOutputPeak(); }
-        if (!IsMonitoring) InputLevel = 0;
+        if (!IsMonitoring) { InputLevel = 0; InputClipping = false; }
     }
     private string search = "", sectionName = "Intro";
     private double zoom = 1, viewportStart, monitorVolume = 0;
@@ -64,6 +64,14 @@ public sealed partial class BackingTracksViewModel
     public double Zoom { get => zoom; set { if (!double.IsFinite(value)) return; if (Set(ref zoom, Math.Clamp(value, 1, 16))) { Notify(nameof(ViewportDuration)); ViewportStart = viewportStart; } } }
     public double ViewportDuration => Duration / Zoom;
     public double ViewportStart { get => viewportStart; set { if (double.IsFinite(value)) Set(ref viewportStart, Math.Clamp(value, 0, Math.Max(0, Duration - ViewportDuration))); } }
+    private void FollowWaveformPlayback()
+    {
+        if (!IsPlaying || Zoom <= 1 || ViewportDuration <= 0) return;
+        // Advance in overlapping pages before the playhead reaches the edge.
+        // Keeping the viewport still within a page avoids rebuilding wave geometry every tick.
+        if (Position < ViewportStart || Position >= ViewportStart + ViewportDuration * .8)
+            ViewportStart = Position - ViewportDuration * .2;
+    }
     public ObservableCollection<BackingSection>? Sections => SelectedTrack?.Sections;
     private BackingSection? selectedSection;
     public BackingSection? SelectedSection { get => selectedSection; set { if (Set(ref selectedSection, value)) CommandManager.InvalidateRequerySuggested(); } }
@@ -76,7 +84,7 @@ public sealed partial class BackingTracksViewModel
     public ICommand RefreshInputs { get; private set; } = null!;
     public BackingOutput? SelectedInput { get => selectedInput; set { if (Set(ref selectedInput, value)) StopMonitor(); } }
     public bool IsMonitoring => monitorCapture != null;
-    public double MonitorVolume { get => monitorVolume; set { if (!double.IsFinite(value)) return; Set(ref monitorVolume, Math.Clamp(value, 0, 100)); if (monitorGain != null) monitorGain.Volume = (float)(monitorVolume / 100); } }
+    public double MonitorVolume { get => monitorVolume; set { if (!double.IsFinite(value)) return; Set(ref monitorVolume, Math.Clamp(value, 0, 100)); if (monitorGain != null) monitorGain.Volume = MonitorMuted ? 0 : (float)(monitorVolume / 100); } }
     public void SelectRange(double start, double end)
     {
         if (SelectedTrack == null || !double.IsFinite(start) || !double.IsFinite(end) || start < 0 || end > Duration || end - start < .1 - 1e-9) return;
@@ -89,7 +97,7 @@ public sealed partial class BackingTracksViewModel
         meterTimer.Tick += (_, _) =>
         {
             TrackLevel = IsPlaying ? Math.Max((int)(TrackLevel * .65), (int)(Math.Clamp(engine.ConsumeOutputPeak(), 0, 1) * 100)) : 0;
-            InputLevel = IsMonitoring ? Math.Max((int)(InputLevel * .65), (int)(Math.Clamp(inputMeter?.ConsumePeak() ?? 0, 0, 1) * 100)) : 0;
+            UpdateMixerInputPeak();
         };
         PropertyChanged += (_, e) => { if (e.PropertyName is nameof(IsPlaying) or nameof(IsMonitoring)) RefreshMeters(); };
         LowerPitch = new UiCommand(() => Pitch--, () => SelectedTrack != null && Pitch > -6);
@@ -105,7 +113,11 @@ public sealed partial class BackingTracksViewModel
         GoToSection = new UiCommand(() => { if (SelectedSection != null) Position = SelectedSection.Position; }, () => SelectedSection != null);
         ToggleMonitor = new UiCommand(() => { if (IsMonitoring) StopMonitor(); else StartMonitor(); }, () => !IsRecordingMix && !recordingFinalizing && (IsMonitoring || SelectedInput != null && SelectedOutput != null));
         RefreshInputs = new UiCommand(LoadInputs);
-        PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Duration)) { Notify(nameof(ViewportDuration)); ViewportStart = viewportStart; } };
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Duration)) { Notify(nameof(ViewportDuration)); ViewportStart = viewportStart; }
+            if (e.PropertyName is nameof(Position) or nameof(Zoom) or nameof(IsPlaying)) FollowWaveformPlayback();
+        };
     }
     private void RefreshPractice()
     {
@@ -137,10 +149,10 @@ public sealed partial class BackingTracksViewModel
             monitorCapture = new WasapiRecorderBuilder().WithDevice(monitorInputDevice).Build();
             var capture = monitorCapture;
             var buffer = new BufferedWaveProvider(capture.WaveFormat, TimeSpan.FromMilliseconds(200)) { DiscardOnBufferOverflow = true };
-            monitorGain = new VolumeSampleProvider(buffer.ToSampleProvider()) { Volume = (float)(MonitorVolume / 100) };
+            inputMeter = new BackingLevelMeter(buffer.ToSampleProvider());
+            monitorGain = new VolumeSampleProvider(inputMeter) { Volume = MonitorMuted ? 0 : (float)(MonitorVolume / 100) };
             monitorOutput = new WasapiPlayerBuilder().WithDevice(monitorOutputDevice).WithSharedMode().WithLatency(40).Build();
-            inputMeter = new BackingLevelMeter(monitorGain);
-            monitorOutput.Init(new SampleToWaveProvider(inputMeter));
+            monitorOutput.Init(new SampleToWaveProvider(monitorGain));
             byte[] silence = [];
             capture.DataAvailable += (data, flags, devicePosition, qpcPosition) =>
             {

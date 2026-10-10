@@ -13,7 +13,7 @@ public sealed class BackingTransportPanel : Panel
     {
         for (int i = 0; i < InternalChildren.Count; i++) InternalChildren[i].Measure(new Size(Cell(i), Row));
         bool compact = availableSize.Width < 344;
-        return new Size(compact ? 200 : 344, compact ? Row + 56 : Row);
+        return new Size(compact ? 200 : 344, compact ? 2 * Row + Gap : Row);
     }
     protected override Size ArrangeOverride(Size finalSize)
     {
@@ -27,7 +27,7 @@ public sealed class BackingTransportPanel : Panel
             }
         }
         if (finalSize.Width >= 344) ArrangeRow([0, 1, 2, 3, 4, 5, 6], 0);
-        else { ArrangeRow([1, 2, 3, 4], 0); ArrangeRow([0, 5, 6], Row); }
+        else { ArrangeRow([1, 2, 3, 4], 0); ArrangeRow([0, 5, 6], Row + Gap); }
         return finalSize;
     }
 }

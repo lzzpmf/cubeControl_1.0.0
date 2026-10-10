@@ -7,6 +7,23 @@ public sealed partial class BackingTracksViewModel
     internal IYouTubePreviewService YouTubePreviewService { get; set; } = new YouTubePreviewService();
     private CancellationTokenSource? youtubePreview;
     private Task? previewWorker;
+    private TaskCompletionSource? previewPromotion;
+    private readonly Dictionary<string, YouTubePreviewFrame> previewWaves = [];
+    private readonly LinkedList<string> previewWaveOrder = new();
+    internal YouTubePreviewFrame? GetYouTubeWave(string? id) => id != null && previewWaves.TryGetValue(id, out var frame) ? frame : null;
+    internal Action<string, double>? PreviewTiming { get; set; }
+    private void UpdatePreviewWave(string id, YouTubePreviewFrame frame)
+    {
+        // Retain already decoded peaks when replaying the same excerpt.
+        if (previewWaves.TryGetValue(id, out var previous) && previous.Peaks.Length == frame.Peaks.Length)
+            for (int i = 0; i < frame.Peaks.Length; i++)
+                if (float.IsNaN(frame.Peaks[i])) frame.Peaks[i] = previous.Peaks[i];
+        previewWaves[id] = frame;
+        previewWaveOrder.Remove(id); previewWaveOrder.AddLast(id);
+        if (previewWaveOrder.Count > 20)
+        { previewWaves.Remove(previewWaveOrder.First!.Value); previewWaveOrder.RemoveFirst(); }
+        Notify("YouTubeWave");
+    }
     private string? youtubePreviewId, youtubeDownloadId;
     private string youtubeDownloadTitle = "";
     private string youtubePreviewStatus = "";
@@ -37,16 +54,23 @@ public sealed partial class BackingTracksViewModel
 
     public async Task PreviewYouTube(YouTubeResult video, bool immediate = false)
     {
+        if (immediate && youtubePreview != null && YouTubePreviewId == video.Id)
+        { previewPromotion?.TrySetResult(); return; }
         StopYouTubePreview();
         if (disposed || !PageVisible || YouTubeDownloading) return;
+        ClearCompletedYouTubeDownload(keepRow: true);
         YouTubePreviewId = video.Id;
         if (SelectedOutput == null) { YouTubePreviewStatus = "Escolha a saída de áudio"; return; }
         using var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         youtubePreview = request;
+        var promotion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        previewPromotion = promotion;
+        var dwell = System.Diagnostics.Stopwatch.StartNew();
         Task? worker = null;
         try
         {
-            if (!immediate) await Task.Delay(800, request.Token);
+            if (!immediate) await Task.WhenAny(Task.Delay(250, request.Token), promotion.Task).WaitAsync(request.Token);
+            PreviewTiming?.Invoke("hover", dwell.Elapsed.TotalMilliseconds);
             request.Token.ThrowIfCancellationRequested();
             if (IsLoading || !PageVisible || SelectedOutput == null) return;
             YouTubePreviewActive = true;
@@ -73,7 +97,11 @@ public sealed partial class BackingTracksViewModel
                 {
                     if (youtubePreview == request && !request.IsCancellationRequested)
                         YouTubePreviewStatus = "Pré-escuta · até 30 s";
-                }), request.Token);
+                }), request.Token, frame => Dispatch(() =>
+                {
+                    if (youtubePreview == request && !request.IsCancellationRequested)
+                        UpdatePreviewWave(video.Id, frame);
+                }));
             previewWorker = worker;
             backgroundWork.Add(worker);
             await worker;
@@ -89,7 +117,7 @@ public sealed partial class BackingTracksViewModel
         {
             if (worker != null) backgroundWork.Remove(worker);
             if (previewWorker == worker) previewWorker = null;
-            if (youtubePreview == request) { youtubePreview = null; YouTubePreviewActive = false; }
+            if (youtubePreview == request) { previewPromotion = null; youtubePreview = null; YouTubePreviewActive = false; }
         }
     }
 }

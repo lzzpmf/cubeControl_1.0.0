@@ -12,6 +12,18 @@ internal static class LocalizationTests
     {
         int passed = 0;
         void Check(bool condition, string name) { if (!condition) throw new Exception(name); Console.WriteLine("PASS " + name); passed++; }
+        var catalogs = new Dictionary<string, Dictionary<string, string>>();
+        foreach (string code in new[] { "pt-BR", "en-US" })
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Localization", code + ".json")));
+            var root = document.RootElement;
+            Check(root.EnumerateObject().Select(p => p.Name).Order().SequenceEqual(new[] { "Code", "Name", "Strings", "Version" }), code + " has no ignored translations outside Strings");
+            var entries = root.GetProperty("Strings").EnumerateObject().ToArray();
+            Check(entries.Select(p => p.Name).Distinct(StringComparer.Ordinal).Count() == entries.Length, code + " has no duplicate translation keys");
+            Check(entries.All(p => p.Value.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(p.Value.GetString())), code + " has no empty translations");
+            catalogs[code] = entries.ToDictionary(p => p.Name, p => p.Value.GetString()!);
+        }
+        Check(catalogs["pt-BR"].Keys.Order().SequenceEqual(catalogs["en-US"].Keys.Order()), "Portuguese and English cover the same source keys");
         string folder = Path.Combine(Path.GetTempPath(), "cube-language-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         string original = LanguageService.Instance.Language;
@@ -25,6 +37,10 @@ internal static class LocalizationTests
             var language = new LanguageService(folder, preference);
             Check(language.Language == "pt-BR" && language.Languages.Count == 3, "Portuguese default and discovery of additional valid language packs");
             language.Select("en-US");
+            Check(language.Translate("Pausar") == "Pause" && language.Translate("Ler efeito atual") == "Read current effect", "playback and effect actions are translated");
+            Check(language.Translate("Opções do metrônomo") == "Metronome options" && language.Translate("Desativar loop") == "Disable loop", "formerly misplaced hints are loaded from Strings");
+            Check(language.Translate("Gravando firmware: 42% — não desconecte o pedal.") == "Writing firmware: 42% — do not disconnect the pedal.", "composed firmware progress preserves the percentage");
+            Check(language.Translate("Destino: 3\nO conteúdo anterior será mantido em memória durante esta sessão.") == "Destination: 3\nThe previous content will be held in memory for this session.", "IR confirmation translates recovery scope and preserves slot number");
             Check(language.Translate("Aço Texturizado") == "Textured Steel" && language.Translate("Crânio Azul") == "Blue Skull" && language.Translate("Marfim Dourado") == "Golden Ivory", "archive finish names are translated");
             Check(language.Translate("Acabamento dos controles") == "Control finish" && language.Translate("Marfim Retrô") == "Retro Ivory" && language.Translate("Oficial — acompanha o tema") == "Official — follows theme", "control finish names are translated");
             Check(language.Translate("Salvar A/B/C no aparelho") == "Save A/B/C to device", "English actions and confirmations");
@@ -50,6 +66,7 @@ internal static class LocalizationTests
             Check((string)converter.Convert(["Desligado.wav", "en-US"], typeof(string), true, System.Globalization.CultureInfo.InvariantCulture) == "Desligado.wav", "user filenames are not translated");
             LanguageService.Instance.Preview("pt-BR"); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             Check(text.Text == "Conectar", "switch back to Portuguese updates existing controls");
+            Check(LanguageService.T("Resetar volumes") == "Restaurar volumes" && LanguageService.T("Cabinet") == "Gabinete", "Portuguese catalog applies reviewed wording without changing source keys");
         }
         finally
         {

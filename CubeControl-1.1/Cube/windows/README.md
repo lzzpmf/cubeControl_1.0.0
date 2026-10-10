@@ -95,7 +95,7 @@ O modo `--effects-firmware-b-only` está disponível nos dois projetos e testa o
 
 | Área | Argumentos disponíveis |
 | --- | --- |
-| Layout e zoom | `--responsive-only`, `--zoom-only`, `--zoom-compact-only`, `--zoom-dialogs-only`, `--density-only`, `--volume-only` |
+| Layout e zoom | `--responsive-only`, `--zoom-only`, `--zoom-compact-only`, `--zoom-dialogs-only`, `--density-only`, `--volume-only`, `--player-layout-only` |
 | Idioma e aparência | `--localization-only`, `--theme-only`, `--options-menu-only`, `--ui-audit` |
 | Interação | `--motion-only`, `--wheel-only`, `--knob-wheel-only`, `--microphone-only`, `--chain-only` |
 | Equipamentos e feedback | `--carousel-only`, `--artwork-only`, `--buttons-only`, `--effects-only`, `--chevrons-only`, `--snackbar-only`, `--progress-only` |

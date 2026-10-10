@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Buffers;
 using System.Windows;
 using System.Windows.Controls;
@@ -208,7 +208,10 @@ public sealed class BackingWaveform : FrameworkElement
                 int first = Math.Clamp((int)((VisibleStart + i * VisibleDuration / bars) / Duration * peaks.Length), 0, peaks.Length - 1);
                 int last = Math.Min(peaks.Length, Math.Max(first + 1, (int)((VisibleStart + (i + 1) * VisibleDuration / bars) / Duration * peaks.Length)));
                 float peak = 0;
-                for (int j = first; j < last; j++) peak = Math.Max(peak, peaks[j]);
+                bool available = false;
+                for (int j = first; j < last; j++)
+                    if (float.IsFinite(peaks[j])) { peak = Math.Max(peak, peaks[j]); available = true; }
+                if (!available) continue;
                 double x = (12 + i * (ActualWidth - 24) / bars) * sx;
                 double y = Math.Max(.5, Math.Min(1, peak) * amplitude);
                 double left = x - .7 * sx, right = x + .7 * sx, top = (center - y) * sy, bottom = (center + y) * sy;

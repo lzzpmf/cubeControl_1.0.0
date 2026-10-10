@@ -9,7 +9,7 @@ namespace Cube.Desktop.Services;
 
 internal interface IYouTubePreviewService
 {
-    Task PlayAsync(YouTubeResult video, string outputId, Func<float> volume, Func<CancellationToken, Task> beforeStart, Action started, CancellationToken cancellation);
+    Task PlayAsync(YouTubeResult video, string outputId, Func<float> volume, Func<CancellationToken, Task> beforeStart, Action started, CancellationToken cancellation, Action<YouTubePreviewFrame>? progress = null);
 }
 
 // One worker owns the decoder and audio endpoint until both have been released.
@@ -18,22 +18,57 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly string tools = toolsDirectory ?? Path.Combine(AppContext.BaseDirectory, "Tools", "YouTube");
-    public Task PlayAsync(YouTubeResult video, string outputId, Func<float> volume, Func<CancellationToken, Task> beforeStart, Action started, CancellationToken cancellation)
+    private readonly YouTubePreviewCache cache = new();
+    internal Action<string, double>? Timing { get; set; }
+    internal Action<string>? Diagnostic { get; set; }
+    internal Func<YouTubeResult, CancellationToken, Task<string>>? Resolve { get; set; }
+    internal Func<string, Action, CancellationToken, Task>? DecodeForTest { get; set; }
+    public Task PlayAsync(YouTubeResult video, string outputId, Func<float> volume, Func<CancellationToken, Task> beforeStart, Action started, CancellationToken cancellation, Action<YouTubePreviewFrame>? progress = null)
         => Task.Run(async () =>
         {
             await gate.WaitAsync(cancellation);
-            try { await Play(video, outputId, volume, beforeStart, started, cancellation); }
+            try
+            {
+                bool cached = cache.TryGet(video.Id, out string metadata);
+                bool didStart = false;
+                void OnStarted() { didStart = true; started(); }
+                for (int attempt = 0; ; attempt++)
+                {
+                    var resolveTime = Stopwatch.StartNew();
+                    if (!cached)
+                    {
+                        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+                        timeout.CancelAfter(TimeSpan.FromSeconds(20));
+                        try { metadata = await (Resolve?.Invoke(video, timeout.Token) ?? new YouTubeAudioService(tools).ResolvePreviewAsync(video, timeout.Token)); }
+                        catch (OperationCanceledException) when (!cancellation.IsCancellationRequested) { throw new TimeoutException("Preview resolution timed out"); }
+                        cache.Store(video.Id, metadata);
+                    }
+                    Timing?.Invoke(cached ? "resolve-cache" : "resolve", resolveTime.Elapsed.TotalMilliseconds);
+                    try
+                    {
+                        if (DecodeForTest != null) await DecodeForTest(metadata, OnStarted, cancellation);
+                        else await Play(video, metadata, outputId, volume, beforeStart, OnStarted, cancellation, progress);
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (!cancellation.IsCancellationRequested) Diagnostic?.Invoke($"preview decoder: {ex.GetType().Name}");
+                        if (!cached || attempt != 0 || didStart || cancellation.IsCancellationRequested || ex is OperationCanceledException) throw;
+                        cache.Remove(video.Id); cached = false;
+                    }
+                }
+            }
             finally { gate.Release(); }
         }, cancellation);
 
-    private async Task Play(YouTubeResult video, string outputId, Func<float> volume, Func<CancellationToken, Task> beforeStart, Action started, CancellationToken cancellation)
+    private async Task Play(YouTubeResult video, string metadata, string outputId, Func<float> volume, Func<CancellationToken, Task> beforeStart, Action started, CancellationToken cancellation, Action<YouTubePreviewFrame>? progress = null)
     {
         using var preparation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
         preparation.CancelAfter(TimeSpan.FromSeconds(20));
         var token = preparation.Token;
         try
         {
-            var metadata = await new YouTubeAudioService(tools).ResolvePreviewAsync(video, token);
+            var decodeTime = Stopwatch.StartNew();
             using var json = JsonDocument.Parse(metadata);
             string url = json.RootElement.GetProperty("url").GetString() ?? throw new IOException("Missing stream");
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != "https") throw new IOException("Invalid stream");
@@ -66,6 +101,23 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                 byte[] block = new byte[8192];
                 bool playing = false;
                 long total = 0;
+                var peaks = new YouTubePreviewPeaks();
+                double duration = video.Duration > 0 ? Math.Min(30, video.Duration) : 30;
+                using var reporting = CancellationTokenSource.CreateLinkedTokenSource(token);
+                // Separate timer keeps the playhead moving even if the network read stalls.
+                var reporter = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(100));
+                        while (await timer.WaitForNextTickAsync(reporting.Token))
+                        {
+                            double position = Math.Max(0, (Interlocked.Read(ref total) - buffer.BufferedBytes) / 176400d - .08);
+                            progress?.Invoke(peaks.Snapshot(duration, position));
+                        }
+                    }
+                    catch (OperationCanceledException) when (reporting.IsCancellationRequested) { }
+                });
                 try
                 {
                     while (true)
@@ -76,7 +128,8 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                         { await Task.Delay(20, token); continue; }
                         int count = await process.StandardOutput.BaseStream.ReadAsync(block, token);
                         if (count == 0) break;
-                        buffer.AddSamples(block.AsSpan(0, count)); total += count;
+                        if (total == 0) Timing?.Invoke("first-pcm", decodeTime.Elapsed.TotalMilliseconds);
+                        buffer.AddSamples(block.AsSpan(0, count)); Interlocked.Add(ref total, count);
                         if (!playing && buffer.BufferedDuration.TotalMilliseconds >= 200)
                         {
                             token.ThrowIfCancellationRequested();
@@ -84,16 +137,25 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                             token.ThrowIfCancellationRequested();
                             output.Play(); playing = true;
                             preparation.CancelAfter(TimeSpan.FromSeconds(35));
+                            Timing?.Invoke("output-start", decodeTime.Elapsed.TotalMilliseconds);
                             started();
                         }
+                        peaks.Append(block.AsSpan(0, count));
                     }
                     await process.WaitForExitAsync(token);
-                    await errors;
-                    if (process.ExitCode != 0 || total == 0) throw new IOException("Preview decoding failed");
+                    string decoderErrors = await errors;
+                    if (process.ExitCode != 0 || total == 0)
+                    {
+                        // Only report status codes, never signed URLs or HTTP headers.
+                        var http = System.Text.RegularExpressions.Regex.Match(decoderErrors, @"(?:HTTP error|Server returned)\s+\d{3}");
+                        Diagnostic?.Invoke($"FFmpeg exit={process.ExitCode}; bytes={total}; {http.Value}");
+                        throw new IOException("Preview decoding failed");
+                    }
                     if (!playing)
                     {
                         await beforeStart(token).WaitAsync(token);
-                        token.ThrowIfCancellationRequested(); output.Play(); started();
+                        token.ThrowIfCancellationRequested(); output.Play();
+                        Timing?.Invoke("output-start", decodeTime.Elapsed.TotalMilliseconds); started();
                         preparation.CancelAfter(TimeSpan.FromSeconds(35));
                     }
                     while (buffer.BufferedBytes > 0)
@@ -103,7 +165,12 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                     }
                     await Task.Delay(100, token);
                 }
-                finally { output.Stop(); }
+                finally
+                {
+                    reporting.Cancel();
+                    try { await reporter; }
+                    finally { output.Stop(); }
+                }
             }
             finally
             {

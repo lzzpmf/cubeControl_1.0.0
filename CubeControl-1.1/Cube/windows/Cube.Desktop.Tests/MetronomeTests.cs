@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -73,6 +73,18 @@ internal static class MetronomeTests
             using (var model = new BackingTracksViewModel(folder))
             {
                 Check(!model.FollowTrack && !model.MetronomeEnabled && model.MetronomeBpm == 120 && model.MetronomeVolume == 30, "fresh defaults and no autoplay");
+                var indicators = model.MetronomeBeatMarkers;
+                var changes = new List<string?>();
+                model.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
+                for (int bpm = 121; bpm <= 140; bpm++) model.MetronomeBpm = bpm;
+                Check(ReferenceEquals(indicators, model.MetronomeBeatMarkers) && !changes.Contains(nameof(model.MetronomeBeatMarkers)), "tempo sweep retains beat indicators without rebuilding player layout");
+                Check(changes.Count(name => name == nameof(model.MetronomeBpm)) == 20, "tempo changes refresh once per value");
+                changes.Clear(); model.MetronomeBpm = 140;
+                Check(changes.Count == 0, "unchanged tempo does not refresh or persist");
+                model.MetronomeVolume = 31;
+                Check(ReferenceEquals(indicators, model.MetronomeBeatMarkers), "volume retains beat indicators");
+                model.MetronomeMeter = "3/4";
+                Check(model.MetronomeBeatMarkers.Length == 3, "meter updates indicator count");
                 await model.ImportMetronomeSound(clickFile);
                 Check(model.CustomMetronomeFiles.Count == 1 && model.MetronomeSound != clickFile && File.Exists(model.MetronomeSound), "import copies and selects WAV");
                 string selectedSound = model.MetronomeSound;
@@ -108,7 +120,7 @@ internal static class MetronomeTests
         string? endpoint = await Task.Run(() => { using var devices = new MMDeviceEnumerator(); foreach (var device in devices.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active)) { using (device) return device.ID; } return null; });
         if (endpoint == null) { Console.WriteLine("NOT VALIDATED: no WASAPI endpoint"); return; }
         using var engine = new BackingAudioEngine();
-        await engine.ConfigureMetronome(new(true, 300, 2, CountInBars: 1));
+        await engine.ConfigureMetronome(new(true, 300, 2, Volume: 0, CountInBars: 1));
         await engine.Open(source, endpoint, 0, 1, 0, false, 0, 3, 0, true);
         await engine.Play(true); await Task.Delay(180);
         Check(engine.IsCountingIn && engine.Snapshot.Position == 0, "count-in holds source position using output clock");
@@ -123,14 +135,14 @@ internal static class MetronomeTests
         Check(engine.Snapshot.Repetitions >= 2 && !engine.IsCountingIn, "speed and A/B loops do not repeat count-in");
         await engine.ReleaseOutput(); Check(!engine.IsCountingIn && engine.Snapshot.OutputId == null, "release cancels audio/count-in");
         if (Environment.GetCommandLineArgs().Contains("--metronome-loopback")) await Loopback(endpoint, folder);
-        using var independent = new BackingTracksViewModel(Path.Combine(folder, "independent")) { IsMuted = true, SelectedOutput = new(endpoint, "Fixture") };
+        using var independent = new BackingTracksViewModel(Path.Combine(folder, "independent")) { IsMuted = true, MetronomeMuted = true, SelectedOutput = new(endpoint, "Fixture") };
         independent.ToggleMetronome.Execute(null); await Wait(() => independent.MetronomeEnabled); await Task.Delay(180);
         Check(independent.Tracks.Count == 0 && independent.MetronomeBeat > 0, "independent WASAPI plays without a track");
         independent.FollowTrack = true; Check(!independent.MetronomeEnabled, "mode switch stops metronome");
         independent.ToggleMetronome.Execute(null); await Task.Delay(50); Check(!independent.MetronomeEnabled, "follow without track requires manual BPM");
         independent.FollowTrack = false; independent.ToggleMetronome.Execute(null); await Wait(() => independent.MetronomeEnabled);
         independent.SelectedOutput = null; Check(!independent.MetronomeEnabled, "output loss stops independent metronome");
-        using var follow = new BackingTracksViewModel(Path.Combine(folder, "follow")) { IsMuted = true, SelectedOutput = new(endpoint, "Fixture"), FollowTrack = true };
+        using var follow = new BackingTracksViewModel(Path.Combine(folder, "follow")) { IsMuted = true, MetronomeMuted = true, SelectedOutput = new(endpoint, "Fixture"), FollowTrack = true };
         follow.AddPaths([source]); await Wait(() => follow.Duration > 0);
         follow.MetronomeBpm = 300; follow.MetronomeMeter = "2/4"; follow.CountInBars = 1;
         follow.ToggleMetronome.Execute(null); await Wait(() => follow.MetronomeEnabled);
@@ -214,9 +226,19 @@ internal static class MetronomeTests
                 var metronomePanel = (FrameworkElement)window.FindName("BackingMetronomePanel");
                 Check(Descendants(panel).Contains(metronomePanel), "metronome belongs to player");
                 var faders = Descendants(panel).OfType<Cube.Desktop.Controls.BackingFader>().ToArray();
-                Check(faders.Length == 3 && faders.All(f => f.Orientation == Orientation.Vertical), "player mixer contains three vertical faders");
+                Check(faders.Length == 3 && faders.All(f => f.Orientation == Orientation.Horizontal), "player mixer contains three horizontal faders");
                 Check(panel.ActualWidth > 0 && panel.ActualHeight > 0, $"panel without track {theme}/{language}/{width}/{scale}");
-                foreach (var control in Descendants(panel).OfType<FrameworkElement>().Where(x => x is ButtonBase or ComboBox or TextBox or Cube.Desktop.Controls.Knob))
+                var bpmButton = (FrameworkElement)window.FindName("BackingBpmButton");
+                var bpmPosition = bpmButton.TranslatePoint(new Point(), panel);
+                var panelSize = panel.RenderSize;
+                foreach (double bpm in new[] { 99d, 100, 100.1, 299, 20, 120 })
+                {
+                    window.BackingTracks.MetronomeBpm = bpm;
+                    window.UpdateLayout();
+                    CheckBeat(bpmButton.TranslatePoint(new Point(), panel) == bpmPosition && panel.RenderSize == panelSize);
+                }
+                Check(true, "tempo sweep preserves BPM position and player size");
+                foreach (var control in Descendants(panel).OfType<FrameworkElement>().Where(x => x.IsVisible && x is ButtonBase or ComboBox or TextBox or Cube.Desktop.Controls.Knob))
                 {
                     var bounds = control.TransformToAncestor(panel).TransformBounds(new Rect(0, 0, control.ActualWidth, control.ActualHeight));
                     CheckBeat(bounds.Left >= -1 && bounds.Right <= panel.ActualWidth + 1);

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
@@ -207,7 +207,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public double Speed { get => SelectedTrack?.Speed ?? 100; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Speed = Math.Clamp(Math.Round(value), 50, 150); Notify(); Notify(nameof(HasModifiedSpeed)); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); RefreshMetronome(); ScheduleParameters(); Changed(); } }
     public double Pitch { get => SelectedTrack?.Pitch ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Pitch = Math.Clamp(Math.Round(value), -6, 6); Notify(); Notify(nameof(HasModifiedPitch)); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); ScheduleParameters(); Changed(); } }
     public double Volume { get => volume; set { if (double.IsFinite(value) && Set(ref volume, Math.Clamp(value, 0, 100))) { UpdateYouTubePreviewVolume(); Start(engine.SetVolume(volume / 100, IsMuted)); Changed(); } } }
-    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { UpdateYouTubePreviewVolume(); metronomeProvider?.Configure(MetronomeConfiguration(true), value); Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
+    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { UpdateYouTubePreviewVolume(); Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
     public double RangeStart
     {
         get => SelectedTrack?.Start ?? double.NaN;

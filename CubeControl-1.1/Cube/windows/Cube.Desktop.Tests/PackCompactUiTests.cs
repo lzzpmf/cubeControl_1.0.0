@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -76,8 +76,8 @@ internal static class PackCompactUiTests
                 }
                 var audition = (Border)window.FindName("IrAuditionCard");
                 var fader = Find<BackingFader>(audition).Single();
-                Check(fader.Orientation == Orientation.Vertical && fader.ActualHeight == 120 && fader.Template.FindName("PART_Track", fader) is System.Windows.Controls.Primitives.Track { Orientation: Orientation.Vertical }, "audition uses a real vertical themed fader");
-                Check(Find<BackingButtonFace>(audition).Any(f => f.Art == "play") && Find<BackingButtonFace>(audition).Any(f => f.Art == "stop"), "audition reuses player artwork for transport controls");
+                Check(fader.Orientation == Orientation.Horizontal && fader.ActualHeight >= 32 && fader.Template.FindName("PART_Track", fader) is System.Windows.Controls.Primitives.Track { Orientation: Orientation.Horizontal }, "audition uses a real horizontal themed fader");
+                Check(Find<Wpf.Ui.Controls.SymbolIcon>(audition).Any(f => f.Symbol == Wpf.Ui.Controls.SymbolRegular.Play24) && Find<Wpf.Ui.Controls.SymbolIcon>(audition).Any(f => f.Symbol == Wpf.Ui.Controls.SymbolRegular.Stop24), "audition uses Fluent transport icons");
                 cards[0].BringIntoView(); window.Activate(); cards[0].Focus(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var trash = Find<Wpf.Ui.Controls.Button>(cards[0]).Single();
                 Check(trash.IsVisible && trash.IsEnabled, $"focused card exposes accessible trash action (focus={cards[0].IsKeyboardFocusWithin}, visibility={trash.Visibility}, enabled={trash.IsEnabled}, editable={editor.CanEdit})");
@@ -132,7 +132,7 @@ internal static class PackCompactUiTests
             var volumeFader = (BackingFader)window.FindName("IrAuditionVolume");
             double beforeVolume = model.IrAudition.Volume;
             volumeFader.RaiseEvent(new MouseWheelEventArgs(Mouse.PrimaryDevice, 0, 120) { RoutedEvent = Mouse.MouseWheelEvent });
-            Check(model.IrAudition.Volume == beforeVolume + 1, "vertical fader wheel updates audition volume through its existing binding");
+            Check(model.IrAudition.Volume == beforeVolume + 1, "horizontal fader wheel updates audition volume through its existing binding");
             editor.Name = "Existing name"; editor.Description = "Existing notes";
             var pending = editor.EnsureDetailsAsync(true);
             var host = (Wpf.Ui.Controls.ContentDialogHost)window.FindName("DialogHost");

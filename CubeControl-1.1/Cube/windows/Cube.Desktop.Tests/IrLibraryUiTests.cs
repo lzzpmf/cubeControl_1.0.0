@@ -25,7 +25,7 @@ internal static class IrLibraryUiTests
         try
         {
             await Settle();
-            if (tree.SelectedItem != null || tree.Items.Count != 6) throw new Exception("Library must open with six collapsed groups and no selection.");
+            if (tree.SelectedItem != null || tree.Items.Count != 7) throw new Exception("Library must open with seven collapsed brands and no selection.");
             var collection = (TreeViewItem)tree.ItemContainerGenerator.ContainerFromIndex(0);
             collection.IsExpanded = true; collection.IsSelected = true; await Settle();
             if (model.Ir.Audio != null) throw new Exception("Opening or selecting a collection must not load audio.");

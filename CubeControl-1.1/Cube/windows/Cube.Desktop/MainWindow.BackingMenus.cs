@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -11,6 +11,63 @@ namespace Cube.Desktop;
 
 public partial class MainWindow
 {
+    private void BackingNumberKey(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && sender is TextBox field)
+        { field.GetBindingExpression(TextBox.TextProperty)?.UpdateSource(); e.Handled = true; }
+    }
+    private void BackingBpmClick(object sender, RoutedEventArgs e) => EditMetronomeNumber(false);
+    private int backingBpmWheelDelta;
+    private int backingSpeedWheelDelta;
+    private int backingPitchWheelDelta;
+    private void BackingTempoLeave(object sender, MouseEventArgs e)
+    {
+        if (sender == BackingSpeedOptions) backingSpeedWheelDelta = 0;
+        else backingPitchWheelDelta = 0;
+    }
+    private void BackingTempoWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        bool speed = sender == BackingSpeedOptions;
+        ref int remainder = ref (speed ? ref backingSpeedWheelDelta : ref backingPitchWheelDelta);
+        if (BackingTracks.SelectedTrack == null) { remainder = 0; return; }
+        remainder += e.Delta;
+        int steps = remainder / 120;
+        remainder %= 120;
+        if (steps == 0) return;
+        if (speed) BackingTracks.Speed += steps;
+        else BackingTracks.Pitch += steps;
+    }
+    private void BackingBpmLeave(object sender, MouseEventArgs e) => backingBpmWheelDelta = 0;
+    private void BackingBpmWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        backingBpmWheelDelta += e.Delta;
+        int steps = backingBpmWheelDelta / 120;
+        backingBpmWheelDelta %= 120;
+        if (steps != 0) BackingTracks.MetronomeBpm += steps;
+    }
+    private void BackingMixerClick(object sender, RoutedEventArgs e)
+    {
+        BackingVolumesPanel.Visibility = BackingVolumesPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+    }
+    private void BackingMixerModeClick(object sender, RoutedEventArgs e) => BackingTracks.MixerExpanded = (sender as FrameworkElement)?.Tag as string == "expanded";
+    private void BackingMixerResetClick(object sender, RoutedEventArgs e) => BackingTracks.ResetMixerVolumes();
+    private void BackingMixerMuteClick(object sender, RoutedEventArgs e)
+    {
+        switch ((sender as FrameworkElement)?.Tag as string)
+        {
+            case "track": BackingTracks.IsMuted = !BackingTracks.IsMuted; break;
+            case "guitar": BackingTracks.MonitorMuted = !BackingTracks.MonitorMuted; break;
+            case "click": BackingTracks.MetronomeMuted = !BackingTracks.MetronomeMuted; break;
+        }
+    }
+    private void BackingMixerFaderReset(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2 || sender is not Controls.BackingFader fader) return;
+        fader.SetCurrentValue(System.Windows.Controls.Primitives.RangeBase.ValueProperty, fader.Tag as string == "guitar" ? 0d : 30d);
+        e.Handled = true;
+    }
     private bool backingDialogOpen;
     private ContextMenu? backingOpenMenu;
     private static DependencyObject? BackingParent(DependencyObject node) => node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
@@ -53,7 +110,7 @@ public partial class MainWindow
         if (backingOpenMenu != null) backingOpenMenu.IsOpen = false;
         var model = BackingTracks;
         var menu = new ContextMenu { PlacementTarget = owner, Placement = atMouse || time != null ? PlacementMode.MousePoint : PlacementMode.Bottom };
-        void Command(string title, ICommand command, bool external = false) => menu.Items.Add(new MenuItem { Header = LanguageService.T(title), Command = command, Icon = external ? new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Open24, FontSize = 16 } : null });
+        void Command(string title, ICommand command, bool external = false) => menu.Items.Add(new MenuItem { Header = LanguageService.T(title), Command = command, Icon = external ? Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Open24) : null });
         void Action(string title, Action execute, Func<bool>? enabled = null, bool external = false) => Command(title, new UiCommand(execute, enabled), external);
         void Separator() => menu.Items.Add(new Separator());
         switch (kind)
@@ -133,6 +190,16 @@ public partial class MainWindow
                 Action("Remover seção", () => { sectionTrack.Sections.Remove(marker); if (model.SelectedSection == marker) model.SelectedSection = null; }, HasSection);
                 break;
             case "speed":
+                var speedEditor = new TextBox { Width = 96, IsEnabled = model.HasTracks };
+                speedEditor.SetBinding(TextBox.TextProperty, new System.Windows.Data.Binding(nameof(model.Speed))
+                { Source = model, Mode = System.Windows.Data.BindingMode.TwoWay, UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.LostFocus, StringFormat = "0" });
+                speedEditor.KeyDown += BackingNumberKey;
+                System.Windows.Automation.AutomationProperties.SetName(speedEditor, LanguageService.T("Velocidade"));
+                var speedFields = new StackPanel { Orientation = Orientation.Horizontal };
+                speedFields.Children.Add(speedEditor);
+                speedFields.Children.Add(new TextBlock { Text = "%", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) });
+                menu.Items.Add(new MenuItem { Header = speedFields, StaysOpenOnClick = true });
+                Separator();
                 foreach (int rate in new[] { 50, 75, 90, 100 })
                 {
                     var item = new MenuItem { Header = rate + "%", IsCheckable = true, IsChecked = model.Speed == rate, Command = new UiCommand(() => model.Speed = rate, () => model.SelectedTrack != null) };
@@ -143,7 +210,16 @@ public partial class MainWindow
             case "audio":
                 Command("Atualizar saídas", model.RefreshOutputs); Command("Atualizar entradas", model.RefreshInputs);
                 Command("Bluetooth", model.BluetoothSettings, external: true); break;
-            case "pitch": Command("Restaurar tom", model.ResetPitch); break;
+            case "pitch":
+                Command("Descer um semitom", model.LowerPitch);
+                ((MenuItem)menu.Items[^1]).Icon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Subtract24);
+                ((MenuItem)menu.Items[^1]).StaysOpenOnClick = true;
+                Command("Subir um semitom", model.RaisePitch);
+                ((MenuItem)menu.Items[^1]).Icon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Add24);
+                ((MenuItem)menu.Items[^1]).StaysOpenOnClick = true;
+                Separator();
+                Command("Restaurar tom", model.ResetPitch);
+                break;
             case "player":
                 var sequence = new MenuItem { Header = LanguageService.T("Continuar sequência"), IsCheckable = true, IsChecked = model.ContinueSequence };
                 sequence.Click += (_, _) => model.ContinueSequence = sequence.IsChecked; menu.Items.Add(sequence);

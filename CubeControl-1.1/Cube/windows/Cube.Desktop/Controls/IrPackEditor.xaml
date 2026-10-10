@@ -24,7 +24,7 @@
    <ui:Button Content="{loc:Translate Text='Importar'}" Click="ImportClick" IsEnabled="{Binding Owner.CanChooseIr}" Margin="0,0,8,8"/>
    <ui:Button Content="{loc:Translate Text='Exportar'}" Click="ExportClick" IsEnabled="{Binding CanExport}" Margin="0,0,8,8"/>
    <ui:Button Content="{loc:Translate Text='Ações do pack'}" Click="OpenMenuClick" Appearance="Transparent" Margin="0,0,0,8" Visibility="{Binding CanDelete,Converter={StaticResource Visible}}" IsEnabled="{Binding Owner.CanChooseIr}">
-    <ui:Button.Icon><ui:SymbolIcon Symbol="MoreHorizontal24" FontSize="16"/></ui:Button.Icon>
+    <ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconMoreHorizontal24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon>
     <ui:Button.ContextMenu><ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
      <MenuItem Header="{loc:Translate Text='Excluir pack'}" Command="{Binding DeletePack}"/>
     </ContextMenu></ui:Button.ContextMenu>
@@ -40,11 +40,11 @@
   <ui:InfoBar x:Name="PackCreationNotice" Severity="Warning" IsClosable="False" IsOpen="{Binding HasDraftNotice}" Visibility="{Binding HasDraftNotice,Converter={StaticResource Visible}}" Title="{loc:Translate Value={Binding DraftNoticeTitle}}" Message="{loc:Translate Value={Binding DraftNotice}}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
   <WrapPanel x:Name="PackActions" Margin="0,0,0,4">
    <WrapPanel Margin="0,0,16,8">
-    <ui:Button x:Name="ReviewPackButton" Content="{loc:Translate Text='Revisar e aplicar'}" Command="{Binding Owner.ApplyIrPack}" Appearance="Primary" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Compara os oito slots com o pack escolhido e aplica somente os selecionados.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="ArrowReset24" FontSize="16"/></ui:Button.Icon></ui:Button>
+    <ui:Button x:Name="ReviewPackButton" Content="{loc:Translate Text='Revisar e aplicar'}" Command="{Binding Owner.ApplyIrPack}" Appearance="Primary" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Compara os oito slots com o pack escolhido e aplica somente os selecionados.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
     <ui:Button x:Name="RestorePackButton" Content="{loc:Translate Text='Restaurar IRs originais'}" Command="{Binding Owner.RestoreOriginalIrs}" Margin="0,0,0,8" ToolTip="{loc:Translate Text='Disponível quando os arquivos originais BFI/BFIN estão instalados.'}" ToolTipService.ShowOnDisabled="True"/>
    </WrapPanel>
    <WrapPanel Margin="0,0,0,8">
-    <ui:Button Content="{loc:Translate Text='Salvar pack'}" Command="{Binding SavePack}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Save24" FontSize="16"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Salvar pack'}" Command="{Binding SavePack}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSave24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Descartar alterações'}" Command="{Binding DiscardChanges}" Visibility="{Binding Dirty,Converter={StaticResource Visible}}" Margin="0,0,0,8"/>
    </WrapPanel>
   </WrapPanel>
@@ -97,7 +97,7 @@
            <DataTrigger Binding="{Binding ShowRemove}" Value="False"><Setter Property="Visibility" Value="Hidden"/></DataTrigger>
           </Style.Triggers>
          </Style></ui:Button.Style>
-         <ui:Button.Icon><ui:SymbolIcon Symbol="Delete24" FontSize="16"/></ui:Button.Icon>
+         <ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconDelete24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon>
         </ui:Button>
         <Border Background="{DynamicResource CubeSelected}" CornerRadius="8" VerticalAlignment="Center" Padding="8" IsHitTestVisible="False">
          <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Tag,ElementName=SlotCard}" Value="Drop"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>

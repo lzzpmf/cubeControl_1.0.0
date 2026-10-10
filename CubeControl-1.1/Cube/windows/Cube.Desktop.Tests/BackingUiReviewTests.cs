@@ -71,7 +71,9 @@ internal static class BackingUiReviewTests
         model.AddPaths([otherPath]); var other = model.Tracks.Last();
         for (int i = 0; i < 5; i++) model.AddSectionAt(current, 45 + i * 10, "Seção de prática " + (i + 1));
         await Task.Delay(200);
-        var speedText = Find<TextBlock>(Named<FrameworkElement>(window, "BackingTransportRack")).Any(t => t.Text.Contains('%') && t.Text.Contains('▾'));
+        var speedButton = Named<Button>(window, "BackingSpeedOptions");
+        var speedText = Find<TextBlock>(speedButton).Any(t => t.Text.Contains('%'))
+            && Find<Wpf.Ui.Controls.SymbolIcon>(speedButton).Any(i => i.Symbol == Wpf.Ui.Controls.SymbolRegular.ChevronDown24);
         Check(speedText, "speed presents both percentage and menu affordance");
 
         ContextMenu OpenMenu(FrameworkElement owner, string kind, BackingTrack? track = null)
@@ -79,6 +81,20 @@ internal static class BackingUiReviewTests
             Invoke(window, "OpenBackingMenu", owner, kind, track, null, null, false);
             return (ContextMenu)typeof(MainWindow).GetField("backingOpenMenu", Private)!.GetValue(window)!;
         }
+        var speedMenu = OpenMenu(speedButton, "speed");
+        var speedFields = (StackPanel)((MenuItem)speedMenu.Items[0]).Header;
+        var speedEditor = speedFields.Children.OfType<TextBox>().Single();
+        speedEditor.Text = "83";
+        Invoke(window, "BackingNumberKey", speedEditor, new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window), 0, System.Windows.Input.Key.Enter) { RoutedEvent = Keyboard.KeyDownEvent });
+        Check(model.Speed == 83, "speed menu commits custom percentage with Enter");
+        speedMenu.IsOpen = false;
+        var pitchMenu = OpenMenu(Named<FrameworkElement>(window, "BackingPitchOptions"), "pitch");
+        model.Pitch = 0;
+        var raise = pitchMenu.Items.OfType<MenuItem>().Single(i => i.Command == model.RaisePitch);
+        raise.Command.Execute(null);
+        Check(model.Pitch == 1 && raise.StaysOpenOnClick, "pitch menu supports repeated semitone adjustments");
+        model.ResetPitch.Execute(null); model.ResetSpeed.Execute(null);
+        pitchMenu.IsOpen = false;
         var owner = Named<FrameworkElement>(window, "BackingTrackHeader");
         int cache = wave.WaveCacheBuildCount;
         var menu = OpenMenu(owner, "track", other); await Task.Delay(100);

@@ -137,7 +137,7 @@ public sealed class BackingAudioEngine : IDisposable
                 gain += Math.Clamp(target - gain, -step, step);
                 double sourceTime = prelude ? metronome.Offset + renderedFrames * speed / provider.WaveFormat.SampleRate
                     : MetronomeClick.SourcePosition(renderedFrames - countInFrames, provider.WaveFormat.SampleRate, start, speed, looping, loopStart, loopEnd);
-                float click = muted ? 0 : MetronomeClick.Sample(metronome, sourceTime, speed);
+                float click = MetronomeClick.Sample(metronome, sourceTime, speed);
                 for (int c = 0; c < channels; c++)
                 {
                     float mixed = block[i + c] * gain + click;

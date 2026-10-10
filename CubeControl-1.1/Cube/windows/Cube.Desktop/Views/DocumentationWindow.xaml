@@ -38,7 +38,7 @@
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
      <WrapPanel Margin="0,0,0,12">
       <ui:Button x:Name="BackButton" Content="{loc:Translate Text='Voltar aos documentos'}" Click="BackClick" Margin="0,0,12,8"/>
-      <ui:Button x:Name="PdfButton" Content="{loc:Translate Text='Abrir PDF'}" Click="PdfClick" Visibility="Collapsed" Margin="0,0,0,8"><ui:Button.Icon><ui:SymbolIcon Symbol="Open24" FontSize="16"/></ui:Button.Icon></ui:Button>
+      <ui:Button x:Name="PdfButton" Content="{loc:Translate Text='Abrir PDF'}" Click="PdfClick" Visibility="Collapsed" Margin="0,0,0,8"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconOpen24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
      </WrapPanel>
      <ComboBox x:Name="ContentsBox" Grid.Row="1" Margin="0,0,0,12" DisplayMemberPath="Title" SelectionChanged="HeadingSelected" AutomationProperties.Name="{loc:Translate Text='Sumário do documento'}" Visibility="Collapsed"/>
      <TextBlock x:Name="ReadingStatus" Grid.Row="2" Style="{StaticResource HelpText}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>

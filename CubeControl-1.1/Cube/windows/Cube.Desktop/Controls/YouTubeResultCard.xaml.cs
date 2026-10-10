@@ -15,11 +15,23 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
     private YouTubeResult? Video => DataContext as YouTubeResult;
     private BackingTracksViewModel? subscribed;
     public bool IsPreviewActive => Model?.YouTubePreviewId == Video?.Id && Model?.YouTubePreviewActive == true;
-    public bool CanDownload => Model?.YouTubeDownloading == false;
+    public bool IsDownloading => Model?.YouTubeDownloading == true && Model.YouTubeDownloadId == Video?.Id;
+    public bool HasDownloadMessage => Video != null && Model?.YouTubeDownloadMessageId == Video.Id && !string.IsNullOrEmpty(Model.YouTubeDownloadStatus);
+    public bool CanDownload => IsDownloading || Model?.YouTubeDownloading == false;
+    public bool IsDownloaded => Video != null && Model?.IsYouTubeDownloaded(Video.Id) == true;
+    public string DownloadLabel => IsDownloading ? "Cancelar download" : IsDownloaded ? "Download realizado — baixar novamente" : "Baixar MP3";
+    public SymbolRegular DownloadIcon => IsDownloading ? SymbolRegular.Dismiss24 : IsDownloaded ? SymbolRegular.CheckmarkCircle24 : SymbolRegular.ArrowDownload24;
+    public Visibility DownloadProgressVisibility => IsDownloading ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility WaveVisibility => HasDownloadMessage ? Visibility.Hidden : Visibility.Visible;
     public string PreviewLabel => IsPreviewActive ? "Parar prévia" : "Pré-ouvir";
     public SymbolRegular PreviewIcon => IsPreviewActive ? SymbolRegular.Stop24 : SymbolRegular.Play24;
-    public string StatusText => Model?.YouTubeDownloadId == Video?.Id && Model?.YouTubeDownloading == true ? Model.YouTubeDownloadStatus
-        : Model?.YouTubePreviewId == Video?.Id ? Model?.YouTubePreviewStatus ?? "" : "Passe o mouse para pré-ouvir";
+    public string StatusText => HasDownloadMessage ? Model!.YouTubeDownloadStatus
+        : Model?.YouTubePreviewId != Video?.Id ? ""
+        : Model?.YouTubePreviewStatus is "Pré-escuta · até 30 s" or "Prévia concluída" ? "" : Model?.YouTubePreviewStatus ?? "";
+    private YouTubePreviewFrame? Wave => Model?.GetYouTubeWave(Video?.Id);
+    public float[] PreviewPeaks => Wave?.Peaks ?? [];
+    public double PreviewDuration => Wave?.Duration ?? (Video?.Duration > 0 ? Math.Min(30, Video.Duration) : 30);
+    public double PreviewPosition => Model?.YouTubePreviewId == Video?.Id ? Wave?.Position ?? 0 : 0;
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public YouTubeResultCard()
@@ -43,7 +55,7 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
     }
     private void Refresh()
     {
-        foreach (string name in new[] { nameof(IsPreviewActive), nameof(CanDownload), nameof(PreviewLabel), nameof(PreviewIcon), nameof(StatusText) })
+        foreach (string name in new[] { nameof(IsPreviewActive), nameof(CanDownload), nameof(IsDownloading), nameof(DownloadLabel), nameof(DownloadIcon), nameof(DownloadProgressVisibility), nameof(WaveVisibility), nameof(PreviewLabel), nameof(PreviewIcon), nameof(StatusText), nameof(PreviewPeaks), nameof(PreviewDuration), nameof(PreviewPosition) })
             PropertyChanged?.Invoke(this, new(name));
     }
     private void ModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -67,5 +79,9 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
         e.Handled = true;
     }
     private async void DownloadClick(object sender, RoutedEventArgs e)
-    { if (Video is { } video && Model != null) await Model.DownloadYouTube(video); e.Handled = true; }
+    {
+        e.Handled = true;
+        if (IsDownloading) Model?.CancelYouTubeDownload.Execute(null);
+        else if (Video is { } video && Model != null) await Model.DownloadYouTube(video);
+    }
 }

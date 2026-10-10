@@ -1,4 +1,4 @@
-using Cube.Desktop.Localization;
+﻿using Cube.Desktop.Localization;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -118,8 +118,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             BackingTracks.ViewportStart = anchor - fraction * BackingTracks.ViewportDuration;
         };
         BackingOverview.MenuRequested = (wave, time) => OpenBackingMenu(wave, "wave", time: time);
-        BackingSpeedKnob.AddHandler(Controls.Knob.GestureStartedEvent, new RoutedEventHandler(BackingKnobStart));
-        BackingSpeedKnob.AddHandler(Controls.Knob.GestureEndedEvent, new RoutedEventHandler(BackingKnobEnd));
 
         Model.ConfirmIrWrite = ConfirmIrWriteAsync;
         InitializeZoom();
@@ -289,7 +287,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var previousFocus = Keyboard.FocusedElement;
         try
         {
-            var dialog = new Wpf.Ui.Controls.MessageBox { PrimaryButtonIcon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Checkmark24, FontSize = 16 }, CloseButtonIcon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Dismiss24, FontSize = 16 },
+            var dialog = new Wpf.Ui.Controls.MessageBox { PrimaryButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Checkmark24), CloseButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24),
                 Owner = this, Title = "CubeControl", Content = LanguageService.T(message),
                 CloseButtonText = LanguageService.T("Fechar")
             };
@@ -358,7 +356,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         MenuItem Entry(string label, Wpf.Ui.Controls.SymbolRegular symbol) => new()
         {
             Header = LanguageService.T(label),
-            Icon = new Wpf.Ui.Controls.SymbolIcon { Symbol = symbol, FontSize = 20 }
+            Icon = Cube.Desktop.Appearance.AppIcons.Create(symbol, navigation: true)
         };
         var themeMenu = Entry("Tema", Wpf.Ui.Controls.SymbolRegular.Color24);
         foreach (var (mode, label) in new[] { (Appearance.ThemeMode.System, "Sistema"), (Appearance.ThemeMode.Light, "Claro"), (Appearance.ThemeMode.Dark, "Escuro") })
@@ -459,6 +457,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             if (node is Controls.AmpEqGraph eq && eq.FilterAt(e.GetPosition(eq)) >= 0) return;
             if (node is Controls.BackingFader { IsEnabled: true } or Controls.BackingWaveform { IsOverview: false }
                 || node is Controls.Knob { IsEnabled: true }
+                || node == BackingBpmButton
+                || node == BackingSpeedOptions || node == BackingPitchOptions
                 || (node == EffectChain && Model.HasBank)
                 || (node == FocusedArt && Model.HasGallery)) return;
             node = node is Visual || node is System.Windows.Media.Media3D.Visual3D
@@ -572,7 +572,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             row.Children[0].Visibility = shortViewport ? Visibility.Collapsed : Visibility.Visible;
             if (row.Children[1] is StackPanel labels)
                 labels.Children[1].Visibility = shortViewport ? Visibility.Collapsed : Visibility.Visible;
-            if (Tabs.SelectedIndex == 2 && shortViewport) item.MinHeight = 40; else item.ClearValue(FrameworkElement.MinHeightProperty);
+            if (shortViewport) item.MinHeight = 32; else item.ClearValue(FrameworkElement.MinHeightProperty);
             if (shortViewport) item.Padding = new Thickness(10, 6, 10, 6);
             else item.ClearValue(Control.PaddingProperty);
         }
@@ -600,7 +600,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             _ => Wpf.Ui.Controls.SymbolRegular.CheckmarkCircle24
         };
         snackbarService.Show(LanguageService.T(notification.Title), LanguageService.T(notification.Message),
-            notification.Appearance, new Wpf.Ui.Controls.SymbolIcon(symbol), notification.Duration);
+            notification.Appearance, Cube.Desktop.Appearance.AppIcons.Create(symbol), notification.Duration);
         if (Notifications.Content is { } snackbar)
         {
             System.Windows.Automation.AutomationProperties.SetName(snackbar,
@@ -682,7 +682,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var title = new DockPanel { LastChildFill = true };
         var close = new Wpf.Ui.Controls.Button
         {
-            Icon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Dismiss24, FontSize = 16 },
+            Icon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24),
             Appearance = Wpf.Ui.Controls.ControlAppearance.Transparent, Width = 40, Height = 40,
             Padding = new Thickness(0), ToolTip = LanguageService.T("Fechar")
         };
@@ -758,7 +758,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var gallery = new Views.GearGallery(Model.IsAmp ? Model.Amps : Model.Cabinets, Model.FocusedGear, Model.IsAmp);
         var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Content = gallery, PrimaryButtonText = "Aplicar seleção", CloseButtonText = "Cancelar", DialogMaxWidth = 900 };
         var title = new DockPanel { LastChildFill = true };
-        var close = new Wpf.Ui.Controls.Button { Icon = new Wpf.Ui.Controls.SymbolIcon { Symbol = Wpf.Ui.Controls.SymbolRegular.Dismiss24, FontSize = 16 }, Width = 40, Height = 40, MinHeight = 40, BorderThickness = new Thickness(0), Padding = new Thickness(0), Margin = new Thickness(16, 0, 0, 0), Appearance = Wpf.Ui.Controls.ControlAppearance.Transparent, ToolTip = LanguageService.T("Fechar") };
+        var close = new Wpf.Ui.Controls.Button { Icon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24), Width = 40, Height = 40, MinHeight = 40, BorderThickness = new Thickness(0), Padding = new Thickness(0), Margin = new Thickness(16, 0, 0, 0), Appearance = Wpf.Ui.Controls.ControlAppearance.Transparent, ToolTip = LanguageService.T("Fechar") };
         System.Windows.Automation.AutomationProperties.SetName(close, LanguageService.T("Fechar"));
         DockPanel.SetDock(close, Dock.Right); title.Children.Add(close);
         title.Children.Add(new TextBlock { Text = LanguageService.T(Model.IsAmp ? "Escolha seu amplificador" : "Escolha seu cabinet"), VerticalAlignment = VerticalAlignment.Center });
@@ -842,7 +842,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         if (BackingLibraryLayout == null || BackingTrackList == null || BackingYouTubeScroll == null) return;
         bool columns = width >= 860;
-        BackingPlaylistColumn.Width = new GridLength(columns ? 300 : 0);
+        BackingPlaylistColumn.Width = columns ? new GridLength(45, GridUnitType.Star) : new GridLength(0);
+        BackingSearchColumn.Width = new GridLength(columns ? 55 : 1, GridUnitType.Star);
         BackingLibraryGap.Width = new GridLength(columns ? 16 : 0);
         Grid.SetColumnSpan(BackingPlaylistPanel, columns ? 1 : 3);
         Grid.SetColumn(BackingYouTubePanel, columns ? 2 : 0);

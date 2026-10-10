@@ -70,7 +70,7 @@ internal static class PresentationTests
             var filter = (ListBox)picker.FindName("Filter");
             if ((filter.Visibility == Visibility.Visible) != (stage == 0)) throw new Exception("Amp filter must be preserved and cabinet filter hidden.");
             var dialog = Find<Wpf.Ui.Controls.ContentDialog>(window).Single();
-            var close = Find<Wpf.Ui.Controls.Button>(dialog).Single(b => b.Icon is Wpf.Ui.Controls.SymbolIcon icon && icon.Symbol == Wpf.Ui.Controls.SymbolRegular.Dismiss24);
+            var close = Find<Wpf.Ui.Controls.Button>(dialog).Single(b => b.IsVisible && b.ToolTip?.ToString() == Cube.Desktop.Localization.LanguageService.T("Fechar") && b.Icon is Wpf.Ui.Controls.SymbolIcon icon && icon.Symbol == Wpf.Ui.Controls.SymbolRegular.Dismiss24);
             close.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             await Task.Delay(250);
             if (Find<Cube.Desktop.Views.GearGallery>(window).Any()) throw new Exception("X must close the equipment picker.");
@@ -89,19 +89,19 @@ internal static class PresentationTests
         var chain = (ListBox)window.FindName("EffectChain");
         model.SelectedStage = 2;
         void ChainWheel(int delta) => chain.RaiseEvent(new MouseWheelEventArgs(Mouse.PrimaryDevice, 0, delta) { RoutedEvent = UIElement.PreviewMouseWheelEvent });
-        ChainWheel(-120);
-        if (model.SelectedStage != 1) throw new Exception("Wheel down must select left card.");
-        ChainWheel(60);
+        ChainWheel(120);
+        if (model.SelectedStage != 1) throw new Exception("Wheel up must select previous card.");
+        ChainWheel(-60);
         if (model.SelectedStage != 1) throw new Exception("Partial wheel must accumulate.");
-        ChainWheel(60);
-        if (model.SelectedStage != 2) throw new Exception("Wheel up must select right card.");
-        ChainWheel(1200);
-        if (model.SelectedStage != 5) throw new Exception("Chain must stop at last card.");
+        ChainWheel(-60);
+        if (model.SelectedStage != 2) throw new Exception("Wheel down must select next card.");
         ChainWheel(-1200);
+        if (model.SelectedStage != 5) throw new Exception("Chain must stop at last card.");
+        ChainWheel(1200);
         if (model.SelectedStage != 0) throw new Exception("Chain must stop at first card.");
         await model.Flush();
         if (fake.Writes != writesAfterPicker) throw new Exception("Chain wheel sent MIDI edits.");
-        Console.WriteLine("PASS chain wheel selects left/down and right/up, accumulates deltas, clamps and sends no MIDI.");
+        Console.WriteLine("PASS chain wheel selects previous/up and next/down, accumulates deltas, clamps and sends no MIDI.");
 
         for (int i = 0; i < model.Stages.Length + 2; i++)
         {
@@ -133,7 +133,7 @@ internal static class PresentationTests
         model.Save.Execute(null);
         while (model.Busy) await Task.Delay(30);
         window.UpdateLayout();
-        if (model.Dirty || saveButton.Appearance != Wpf.Ui.Controls.ControlAppearance.Secondary) throw new Exception("Confirmed save must clear primary emphasis.");
+        if (model.Dirty || model.Save.CanExecute(null) || saveButton.Appearance != Wpf.Ui.Controls.ControlAppearance.Primary) throw new Exception("Confirmed save must disable saving while preserving the primary action style.");
         tabs.SelectedIndex = 0; model.SelectedStage = 5; window.UpdateLayout();
         mainArt = Find<GearArt>(window).First();
         int oldCabinet = model.SelectedCabinet.Value;
@@ -151,7 +151,7 @@ internal static class PresentationTests
             window.UpdateLayout(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
             var header = (Grid)window.FindName("HeaderGrid");
             var connection = (Grid)window.FindName("ConnectionGroup");
-            if (Grid.GetRow(connection) != (header.ActualWidth < 1000 ? 1 : 0)) throw new Exception("Header breakpoint mismatch.");
+            if (Grid.GetRow(connection) != 0 || Grid.GetRow((FrameworkElement)window.FindName("NavigationHeader")) != (header.ActualWidth < 1000 ? 1 : 0)) throw new Exception("Header breakpoint mismatch.");
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
             using var stream = File.Create(Path.Combine(folder, $"header-{mode}-{width}-{scale}.png")); png.Save(stream);

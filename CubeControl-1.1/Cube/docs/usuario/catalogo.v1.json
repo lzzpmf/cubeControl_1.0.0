@@ -382,7 +382,7 @@
         {
           "language": "pt-BR",
           "title": "Backing Tracks",
-          "summary": "Áudio local, trechos, velocidade, tom e YouTube.",
+          "summary": "Player, ajustes pela roda do mouse, mixer, metrônomo e busca no YouTube.",
           "keywords": [
             "MP3",
             "WAV",
@@ -399,7 +399,7 @@
         {
           "language": "en-US",
           "title": "Backing Tracks",
-          "summary": "Local audio, loops, speed, pitch and YouTube.",
+          "summary": "Player, mouse wheel adjustments, mixer, metronome and YouTube search.",
           "keywords": [
             "MP3",
             "WAV",

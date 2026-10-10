@@ -1,6 +1,6 @@
 # Interação, zoom e aparência do Windows
 
-[Documentação](../README.md) · [Design system](../DESIGN_SYSTEM.md) · Revisão: 01/10/2026
+[Documentação](../README.md) · [Design system](../DESIGN_SYSTEM.md) · Revisão: 10/10/2026
 
 - Zoom de 50% a 200%, em passos de 10%, nas reticências. Menos, percentual, mais e restaurar. Atalhos: Ctrl +, Ctrl -, Ctrl 0. Preferência local em `%LOCALAPPDATA%/CubeControl/zoom-v1.json`; 100% preserva a densidade anterior de 90%. Não modifica as configurações de DPI do Windows. O manifesto declara PerMonitorV2.
 - Rolagem da roda nas páginas e diálogos interpolada por 180 ms, com alvo acumulado para entrada rápida/fracionada. `CompositionTarget.Rendering` agenda os quadros, sem timer de 16 ms ou loop permanente. A inscrição termina ao concluir, ocultar ou descarregar a superfície; navegação pelo teclado/toque e reposicionamento externo interrompem o movimento. Limites permitem continuar a rolagem no contêiner externo.
@@ -10,6 +10,24 @@
 - A/B/C e ações se reorganizam em larguras pequenas. Diálogos com pouco espaço reduzem margens e quebram texto dos botões, preservando o conteúdo rolável e os comandos nativos.
 
 ## Verificação
+
+### Player e mixer de Backing Tracks
+
+O player organiza tempo/tom, transporte e mixer/metrônomo em grupos adaptativos. Os saltos de cinco segundos usam somente ícones, com tooltip e nome acessível; as legendas “−5 s” e “+5 s” foram removidas. O metrônomo usa `CubeMetronomeIcon`, vetor compartilhado no botão de ativação e no canal do mixer, com cor herdada do controle.
+
+| Controle sob o mouse | Passo da roda | Limites |
+| --- | --- | --- |
+| Velocidade | 1 ponto percentual | 50–150% |
+| Pitch | 1 semitom | −6…+6 |
+| BPM | 1 BPM | 20–300 |
+
+Rolar para cima aumenta e para baixo diminui. Os handlers de `MainWindow.BackingMenus.cs` acumulam deltas fracionados até 120 unidades por passo, com acumuladores independentes e limpeza ao sair do controle. `EditorPageWheel` preserva esses alvos, evitando rolagem da página. Velocidade e pitch exigem faixa selecionada e reutilizam os setters existentes. BPM respeita o modo independente ou **Acompanhar faixa**. Clicar continua abrindo as opções de tempo/tom ou a edição de BPM.
+
+O mixer tem largura máxima de 620 DIPs e faders horizontais. Cada canal tem um único mute junto ao percentual, disponível nos modos Compacto e Expandido, com tooltip e nome acessível de silenciar/restaurar som. Os três mutes são independentes. Expandido acrescenta comandos de monitor/metrônomo e medidores: entrada antes do volume; saída com faixa e click sincronizado. Reset restaura 30/0/30% e preserva mute; duplo clique restaura o fader individual.
+
+O toggle de fones no campo de busca vincula `AppendBackingTrack` e acrescenta “backing track” à consulta. Ativado, usa `CubeAccent`, texto sobre destaque e marca de confirmação; desativado, aparência neutra sem a marca. `AutomationProperties.ItemStatus` informa Ligado/Desligado com localização. A indicação combina forma e cor.
+
+`--player-layout-only` verifica passos, sentidos, deltas fracionados e limites da roda, além de contenção do transporte e mixer em 640/1600 DIPs, zoom 50/100/200%, pt-BR/en-US e temas claro/escuro. Gera capturas em `C:/CubeControl-Build/reports/player-layout`, incluindo os dois modos do mixer e estados do botão de busca. A suíte passou durante a implementação e capturas foram inspecionadas; isso não substitui validação auditiva, Narrator ou mouse físico.
 
 ### YouTube em Backing Tracks
 

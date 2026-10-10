@@ -1,0 +1,86 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:local="clr-namespace:Cube.Desktop.Controls" xmlns:loc="clr-namespace:Cube.Desktop.Localization" xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+<ui:SymbolRegular x:Key="CubeIconStop24">Stop24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconSpeakerMute24">SpeakerMute24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconSoundWaveCircle24">SoundWaveCircle24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconSearch24">Search24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconSave24">Save24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconPrevious24">Previous24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconPlugDisconnected24">PlugDisconnected24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconPlugConnected24">PlugConnected24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconPlay24">Play24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconOptions24">Options24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconOpen24">Open24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconNext24">Next24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconMusicNote224">MusicNote224</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconMoreHorizontal24">MoreHorizontal24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconLink24">Link24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconLibrary24">Library24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconKeyboard24">Keyboard24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconInfo24">Info24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconImageEdit24">ImageEdit24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconHeadphonesSoundWave24">HeadphonesSoundWave24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconHandRight24">HandRight24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconFolderOpen24">FolderOpen24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconDismiss24">Dismiss24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconDelete24">Delete24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconChevronUp24">ChevronUp24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconChevronDown24">ChevronDown24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconArrowUpload24">ArrowUpload24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconArrowUndo24">ArrowUndo24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconArrowSync24">ArrowSync24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconArrowReset24">ArrowReset24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconArrowDownload24">ArrowDownload24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconAdd24">Add24</ui:SymbolRegular>
+<sys:Double x:Key="CubeIconSizeEmphasis">24</sys:Double>
+<sys:Double x:Key="CubeIconSizeNavigation">20</sys:Double>
+<sys:Double x:Key="CubeIconSizeAction">16</sys:Double>
+<Style x:Key="NavigationIcon" TargetType="ui:SymbolIcon">
+   <Setter Property="FontSize" Value="{DynamicResource CubeIconSizeNavigation}"/><Setter Property="Margin" Value="0,0,14,0"/><Setter Property="VerticalAlignment" Value="Center"/>
+   <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+   <Style.Triggers>
+    <DataTrigger Binding="{Binding IsSelected,RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True"><Setter Property="Foreground" Value="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/></DataTrigger>
+    <DataTrigger Binding="{Binding IsEnabled,RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="False"><Setter Property="Foreground" Value="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ListBoxItem}}"/></DataTrigger>
+   </Style.Triggers>
+  </Style>
+<Style x:Key="QuickActionIcon" TargetType="ui:SymbolIcon">
+   <Setter Property="FontSize" Value="{DynamicResource CubeIconSizeAction}"/><Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+   <Style.Triggers><DataTrigger Binding="{Binding IsEnabled,RelativeSource={RelativeSource AncestorType=ui:CardAction}}" Value="False"><Setter Property="Foreground" Value="{DynamicResource CardForegroundDisabled}"/></DataTrigger></Style.Triggers>
+  </Style>
+<Style x:Key="CubeActionIcon" TargetType="ui:SymbolIcon"><Setter Property="FontSize" Value="{DynamicResource CubeIconSizeAction}"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+<Style x:Key="CubeNavigationIcon" TargetType="ui:SymbolIcon"><Setter Property="FontSize" Value="{DynamicResource CubeIconSizeNavigation}"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+<Style x:Key="CubeEmphasisIcon" TargetType="ui:SymbolIcon"><Setter Property="FontSize" Value="{DynamicResource CubeIconSizeEmphasis}"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
+<Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource CubeActionIcon}"/>
+<ui:SymbolRegular x:Key="CubeIconCheckmark24">Checkmark24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconCheckmarkCircle24">CheckmarkCircle24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconColor24">Color24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconErrorCircle24">ErrorCircle24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconLightbulb24">Lightbulb24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconLocalLanguage24">LocalLanguage24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconPause24">Pause24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconSpeaker224">Speaker224</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconSubtract24">Subtract24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconWarning24">Warning24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconGauge24">Gauge24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconGuitar24">Guitar24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconTimer24">Timer24</ui:SymbolRegular>
+<!-- Mechanical metronome, drawn on the same 24-unit grid as the Fluent icons. -->
+<Style x:Key="CubeMetronomeIcon" TargetType="Control">
+ <Setter Property="Width" Value="{DynamicResource CubeIconSizeNavigation}"/>
+ <Setter Property="Height" Value="{DynamicResource CubeIconSizeNavigation}"/>
+ <Setter Property="VerticalAlignment" Value="Center"/>
+ <Setter Property="Focusable" Value="False"/>
+ <Setter Property="IsHitTestVisible" Value="False"/>
+ <Setter Property="Template">
+  <Setter.Value>
+   <ControlTemplate TargetType="Control">
+    <Viewbox>
+     <Canvas Width="24" Height="24">
+      <Path Data="M 10,3 L 14,3 L 19,21 L 5,21 Z M 6.2,17 L 17.8,17 M 12,17 L 17,5 M 14.3,8.8 L 17.1,10"
+            Stroke="{TemplateBinding Foreground}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+     </Canvas>
+    </Viewbox>
+   </ControlTemplate>
+  </Setter.Value>
+ </Setter>
+</Style>
+</ResourceDictionary>

@@ -1,6 +1,6 @@
 # Design system do cubeControl
 
-[Documentação](README.md) · Revisão: 04/10/2026 · [Decisões históricas](historico/historico-interface.md)
+[Documentação](README.md) · Revisão: 10/10/2026 · [Decisões históricas](historico/historico-interface.md)
 
 Referência para manutenção da interface WPF/.NET 10 com WPF UI 4.3.0. Esta revisão separa o comportamento atual das decisões antigas, que incluíam regras posteriormente substituídas. Critérios de acessibilidade são metas de verificação, não uma declaração de conformidade já comprovada.
 
@@ -8,32 +8,57 @@ Referência para manutenção da interface WPF/.NET 10 com WPF UI 4.3.0. Esta re
 
 A seção **Pedaleira**, incluindo o seletor de presets, a cadeia de efeitos e o editor do módulo selecionado, é a referência visual e de interação aprovada para todo o aplicativo. As adequações futuras de IRs, Dispositivo e ajuda, Backing Tracks e Criador de amps devem seguir esta base. A existência de um estilo particular em outra seção não o torna um padrão global.
 
-O padrão combina superfícies neutras, hierarquia por preenchimento e espaçamento, tipografia Segoe UI, comandos WPF UI e controles musicais com os assets oficiais. Cores de efeitos são acentos de identificação. O conteúdo e a organização funcional de cada seção podem variar; cores, densidade, estados e componentes equivalentes devem permanecer consistentes com a Pedaleira.
+O padrão combina superfícies neutras, hierarquia por preenchimento e espaçamento, tipografia Segoe UI, comandos WPF UI e controles musicais com artes e acabamentos próprios. Cores de efeitos são acentos de identificação. O conteúdo e a organização funcional de cada seção podem variar; cores, densidade, estados e componentes equivalentes devem permanecer consistentes com a Pedaleira.
 
-Esta revisão documenta a referência existente e os critérios para futuras adequações; não declara que as demais seções já foram adequadas. Os valores abaixo foram conferidos no XAML e nos controles locais, sem uma nova homologação visual ou de acessibilidade nesta revisão.
+Esta revisão incorpora a consolidação dos recursos compartilhados de aparência. A Pedaleira continua sendo a referência de composição e interação; os dicionários compartilhados definem os recursos usados em todo o app. Esta atualização documental confere regras contra o código, sem constituir nova homologação visual ou declaração de acessibilidade integral.
 
 ## Tokens e medidas da referência
 
-Use os recursos existentes, sem copiar os valores hexadecimais para estilos locais. Cores e espessuras dependentes do tema usam `DynamicResource`; estilos compartilhados são referenciados por suas chaves.
+### Organização dos recursos
 
-| Recurso | Escuro | Claro | Uso |
-| --- | --- | --- | --- |
-| `CubeCanvas` | `#202020` | `#F3F3F3` | Fundo sólido da aplicação |
-| `CubeCard` | `#2B2B2B` | `#FBFBFB` | Cards e seletores em repouso |
-| `CubeInset` | `#252525` | `#F5F5F5` | Área de equipamento e preenchimento de hover dos tiles |
-| `CubeWell` | `#1C1C1C` | `#EFEFEF` | Áreas rebaixadas |
-| `CubeFloatingSurface` | `#333333` | `#FFFFFF` | Superfícies flutuantes |
-| `CubeSelected` | `#3B3B3B` | `#E9E9E9` | Seleção |
-| `CubeSelectedText` | `#FFFFFF` | `#1B1B1B` | Conteúdo selecionado |
-| `CubeBorder` | `#404040` | `#E0E0E0` | Separadores e contornos quando previstos |
-| `CubeAccent` | `#BDBDBD` | `#626262` | Acento neutro dos controles musicais |
+O [App.xaml](../windows/Cube.Desktop/App.xaml) carrega `ThemesDictionary` e `ControlsDictionary` do WPF UI e, em seguida, estes dicionários, nesta ordem:
 
-`CubeText`, `Muted` e `CubeDisabledText` acompanham os recursos de texto primário, secundário e desabilitado do WPF UI. Comandos destacados usam os recursos de destaque do sistema. Não confundir esse destaque com `CubeAccent`. Em alto contraste, usar os recursos do sistema definidos por `ThemeService`; `CubeSurfaceBorderThickness` passa de 0 para 1 DIP. Não acrescentar bordas decorativas permanentes aos cards nos temas claro e escuro.
+1. [Colors.xaml](../windows/Cube.Desktop/Appearance/Resources/Colors.xaml): mapeamentos semânticos `CubePalette.*` e paletas funcionais claras/escuras.
+2. [Typography.xaml](../windows/Cube.Desktop/Appearance/Resources/Typography.xaml): famílias, tamanhos, entrelinhas e estilos de texto.
+3. [Icons.xaml](../windows/Cube.Desktop/Appearance/Resources/Icons.xaml): identificadores `CubeIcon*`, tamanhos e estilos dos ícones Fluent.
+4. [Styles.xaml](../windows/Cube.Desktop/Appearance/Resources/Styles.xaml): estilos de componentes e templates compartilhados, incluindo controles musicais.
+
+Os arquivos `colors.xaml`, `typography.xaml` e `icons.xaml` na raiz do repositório são páginas demonstrativas da galeria WPF UI. Não são dicionários carregados pelo aplicativo nem devem ser importados diretamente.
+
+Reutilizar as chaves existentes, sem copiar valores para estilos locais. Recursos dependentes do tema e medidas compartilhadas usam `DynamicResource` em XAML e `SetResourceReference` em elementos criados por C#. Estilos e identificadores imutáveis podem usar `StaticResource`. Verificar valores locais, que têm precedência sobre setters dos estilos, antes de criar ou alterar um recurso global.
+
+### Cores e temas
+
+| Recurso do app | Recurso WPF UI em claro/escuro | Uso |
+| --- | --- | --- |
+| `CubeCanvas` | `ApplicationBackgroundBrush` | Fundo sólido da aplicação |
+| `CubeCard` | `CardBackgroundFillColorDefaultBrush` | Cards e seletores em repouso |
+| `CubeInset` | `LayerFillColorDefaultBrush` | área de equipamento e hover dos tiles |
+| `CubeWell` | `ControlFillColorInputActiveBrush` | áreas rebaixadas |
+| `CubeFloatingSurface` | `SolidBackgroundFillColorSecondaryBrush` | Superfícies flutuantes |
+| `CubeSelected` | `SubtleFillColorSecondaryBrush` | Seleção |
+| `CubeSelectedText` | `TextFillColorPrimaryBrush` | Conteúdo selecionado |
+| `CubeBorder` | `ControlStrokeColorDefaultBrush` | Contornos previstos pelo componente |
+| `CubeAccent` / `CubeFocus` | `AccentFillColorDefaultBrush` | Destaque e foco do sistema |
+| `CubeText` | `TextFillColorPrimaryBrush` | Texto principal |
+| `Muted` | `TextFillColorSecondaryBrush` | Texto secundário |
+| `CubeDisabledText` | `TextFillColorDisabledBrush` | Texto desabilitado |
+| `CubeWarning` | `SystemFillColorCautionBrush` | Atenção |
+
+`ThemeService` resolve os mapeamentos `CubePalette.*` após a troca de tema, coordena Mica e aplica os acabamentos. `CubeAccent` e `CubeFocus` acompanham o destaque do sistema; não são uma paleta cinza fixa nem substituem as cores funcionais dos módulos. Não sobrescrever globalmente recursos nativos por nome ou por conterem `BorderBrush`; preservar os estados e templates do WPF UI.
+
+`CubeSurfaceBorderThickness` vale 1 DIP nos três tratamentos de aparência. Cada template determina onde utilizar esse recurso; isso não obriga todos os componentes a terem contorno. Em alto contraste, os recursos próprios usam `SystemColors`: superfícies em `WindowBrush`, texto e contornos em `WindowTextBrush`, seleção/foco em `HighlightBrush`, texto selecionado em `HighlightTextBrush` e texto desabilitado em `GrayTextBrush`.
+
+As paletas funcionais `Backing*`, dos gráficos e dos knobs permanecem em `Colors.xaml`; `ControlArtwork` pode aplicar cores e artes específicas do acabamento escolhido. Brushes de superfície do WPF UI podem ser translúcidos: avaliar contraste sobre o fundo efetivamente composto, não somente pelos canais RGB isolados.
+
+### Tipografia e componentes
 
 | Estilo/recurso | Especificação | Aplicação |
 | --- | --- | --- |
 | `CubeUiFont` | Segoe UI Variable Text → Segoe UI Variable → Segoe UI | Família da interface |
 | `TitleText` | 28, SemiBold, entrelinha 36 | Título da página |
+| `TitleLargeText` | 40, SemiBold, entrelinha 52 | Título grande quando necessário |
+| `DisplayText` | 68, SemiBold, entrelinha 92 | Destaque excepcional; não obrigatório nas páginas |
 | `SectionTitle` | 20, SemiBold, entrelinha 28 | Título de seção quando necessário |
 | `BodyText` / `BodyStrongText` | 14, entrelinha 20; Normal / SemiBold | Corpo, nomes e títulos compactos |
 | `CaptionText` / `HelpText` | 12, entrelinha 16; ajuda em `Muted`, com quebra | Estado e orientação secundária |
@@ -45,7 +70,21 @@ Use os recursos existentes, sem copiar os valores hexadecimais para estilos loca
 | `SettingsAction` | Altura mínima 64, padding 16,12 | Ações em cards |
 | `QuickAction` | Altura mínima 64, padding 12,10, raio 6, fundo transparente | Ações contextuais com ícone, título e ajuda |
 
-Todas as medidas são DIPs antes da escala de interface. Para compor novas seções, reutilizar os intervalos da referência: 4–8 entre elementos próximos, 12–16 entre grupos e 24 no interior de superfícies principais. A Pedaleira usa 6 entre título e descrição e 12 após a descrição. Não criar uma escala tipográfica ou densidade própria por página. Ícones de comando usam normalmente `SymbolIcon` de 16 DIPs; ações contextuais, 20; navegação, 24.
+Todas as medidas são DIPs antes da escala de interface. Para compor novas seções, reutilizar os intervalos da referência: 4–8 entre elementos próximos, 12–16 entre grupos e 24 no interior de superfícies principais. A Pedaleira usa 6 entre título e descrição e 12 após a descrição. Não criar uma escala tipográfica ou densidade própria por página. Ícones seguem os recursos descritos abaixo.
+
+Os tamanhos usam `CubeFontSizeCaption`, `CubeFontSizeBody`, `CubeFontSizeSubtitle`, `CubeFontSizeTitle`, `CubeFontSizeTitleLarge` e `CubeFontSizeDisplay`; as entrelinhas correspondentes usam o prefixo `CubeLineHeight`. `BodyStrongText` compartilha as medidas de Body. `SectionTitle` corresponde a Subtitle. `CubeUiFont` e `ContentControlThemeFontFamily` mantêm os fallbacks da família. Preservar Consolas em trechos de código e mostradores monoespaçados, além da tipografia funcional desenhada em gráficos e artes.
+
+### Ícones e identidade dos controles
+
+| Papel | Recurso de tamanho | Estilo | DIPs |
+| --- | --- | --- | --- |
+| Ação compacta | `CubeIconSizeAction` | `CubeActionIcon` | 16 |
+| Navegação | `CubeIconSizeNavigation` | `CubeNavigationIcon` | 20 |
+| Destaque | `CubeIconSizeEmphasis` | `CubeEmphasisIcon` | 24 |
+
+`NavigationIcon` especializa navegação com margem e estados; `QuickActionIcon` usa o tamanho de ação. Reutilizar os identificadores `CubeIcon*` em XAML. Em C#, [AppIcons.Create](../windows/Cube.Desktop/Appearance/AppIcons.cs) cria uma instância de `SymbolIcon` por uso, com referências aos recursos; o parâmetro `navigation` seleciona o papel de navegação. Para outro papel, aplicar o estilo compartilhado correspondente à instância. Não compartilhar uma instância visual entre pais diferentes.
+
+Fluent padroniza ações e navegação. Preservar marca, fotos de equipamentos, knobs, faders, switches, footswitches e transporte com arte própria. [ControlArtwork](../windows/Cube.Desktop/Appearance/ControlArtwork.cs) e [ControlFinishCatalog](../windows/Cube.Desktop/Appearance/ControlFinishCatalog.cs) administram acabamentos e alternativas de alto contraste; uma revisão visual não deve fixar o acabamento oficial nem remover a personalização.
 
 ## Composição e interação da Pedaleira
 
@@ -76,7 +115,7 @@ Resolver essas cores pelo modelo e por `ThemeService.ModuleColor`, incluindo o t
 
 Reutilizar `Knob`, `GearImageButton`, `GearArt` e os templates oficiais de switches e faders. Os knobs do `DialTemplate` têm 94 × 94 DIPs, célula de largura 132 e rótulo acima; Master usa 104 × 104. Os valores ficam em tooltip e automação, sem campos numéricos permanentes adicionais. Os grupos de knobs usam `WrapPanel`.
 
-O switch compartilhado tem altura mínima 32 e face de 56 × 26 com os assets oficiais de ligado/desligado. Presets usam a imagem oficial de footswitch. Esses elementos representam operações diferentes e não devem ser trocados entre si apenas por semelhança visual.
+O switch compartilhado tem altura mínima 32 e face de 56 × 26. Switches, faders, knobs e footswitches usam os recursos do acabamento selecionado, incluindo as artes oficiais e as alternativas de alto contraste. Esses elementos representam operações diferentes e não devem ser trocados entre si apenas por semelhança visual.
 
 Equipamentos preservam proporção, transparência e cores da imagem. A área de arte da referência tem altura 240; não aplicar essa dimensão como obrigação para qualquer imagem do app. Quando há galeria, a imagem oferece clique para abrir a seleção e roda para trocar equipamento, com indicação e tooltip próprios. Personalização de imagem fica em um expansor secundário e informa que não altera o som.
 
@@ -110,7 +149,7 @@ A navegação superior usa seletores locais; não há integração de páginas p
 - Cabeçalho, faixas e diálogos devem reorganizar comandos em larguras pequenas. Use os painéis adaptativos existentes e mantenha ações acessíveis por rolagem.
 - A cadeia mantém a ordem dos módulos e adapta o número de colunas conforme `StagePanel`; a roda sobre ela navega entre módulos. A descrição anterior de faixa obrigatoriamente horizontal foi substituída pela implementação atual, detalhada acima.
 
-Superfícies claras/escuras usam fundos e espaçamento sem contornos permanentes. O tratamento de alto contraste segue os recursos atuais, incluindo contorno em cards; regras antigas de remover qualquer contorno foram substituídas. Foco precisa permanecer identificável nos controles nativos e musicais.
+Superfícies claras/escuras combinam preenchimento, espaçamento e contornos definidos pelos componentes e recursos compartilhados. O tratamento de alto contraste segue os recursos do sistema. As antigas regras de eliminar contornos globais ou manter o foco sempre cinza não se aplicam. Foco precisa permanecer identificável nos controles nativos e musicais.
 
 Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](desenvolvimento/windows-interaction.md). Os callbacks de renderização não garantem FPS apresentados pelo monitor.
 
@@ -129,6 +168,14 @@ Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](
 | Confirmações | Manter destino, consequência e backup definidos pelo fluxo; arquivo/slot não pode ficar ambíguo |
 
 O criador possui limites específicos em cinco grupos de coeficientes; o limite atual de ganho interno é 100 e aceita os nove amps originais; veja [Criador de amps](referencias/criador-de-amps.md). Não converta os nomes musicais dos grupos em bandas de frequência comprovadas. Os códigos A/B preservam a rastreabilidade. Resposta usa dois painéis com chave discreta, visor seletor e intensidade, reaproveitando PNGs vintage transparentes e cards WPF UI. Os 16 trechos internos ficam ocultos e limitados a 67–133%; os perfis são propostas de escuta, não uma curva de palhetada ou equivalência elétrica comprovada. Em alto contraste os knobs usam desenho vetorial e cores do sistema. A EQ distingue A/B por cor, letra e traço, com reset da banda. Estados locais, prévia RAM e gravação verificada ficam separados. A página usa recursos locais e uma única rolagem por modo de layout.
+
+## Player, mixer e busca de backing tracks
+
+O transporte conserva suas artes próprias, sem legendas permanentes nos saltos de cinco segundos; tooltips e nomes acessíveis descrevem as ações. O ícone vetorial `CubeMetronomeIcon` compartilha a grade de 24 unidades, tamanho de navegação e cor herdada dos controles vizinhos.
+
+No mixer, usar faders horizontais e um único mute por canal junto ao percentual, também no modo Compacto. O botão comunica o estado e oferece a ação inversa no tooltip/nome acessível. Evitar indicadores duplicados e linhas reservadas somente a um ícone. O painel limita a largura a 620 DIPs e usa 8 DIPs entre grupos; Expandido revela comandos e medidores adicionais.
+
+O toggle de busca por backing track usa fundo `CubeAccent`, texto sobre destaque e check quando ligado, e aparência neutra sem check quando desligado. Preservar foco, comportamento de ToggleButton e estado localizado para automação. Detalhes de interação e verificação ficam em [Interação no Windows](desenvolvimento/windows-interaction.md#player-e-mixer-de-backing-tracks).
 
 ## Progresso e mensagens
 
@@ -161,6 +208,8 @@ Ao revisar uma seção, usar a Pedaleira como comparação e registrar os seguin
 - [ ] Superfícies, textos e estados usam os recursos semânticos compartilhados e respondem a Claro, Escuro, Sistema e alto contraste.
 - [ ] Títulos, corpo, ajuda, espaçamentos, raios e densidade seguem as tabelas deste documento.
 - [ ] Botões, ícones, cards de ação e controles musicais reutilizam os componentes existentes; especializações têm motivo funcional documentado.
+- [ ] Valores locais em XAML e C# não anulam indevidamente recursos compartilhados; ícones criados por código usam instâncias próprias e os mesmos papéis visuais.
+- [ ] Artes, acabamentos e personalização continuam disponíveis; a troca visual preserva valores e não envia comandos MIDI.
 - [ ] Seleção, ativação, hover, foco, indisponibilidade e processamento são distinguíveis e coerentes com a referência.
 - [ ] A ordem de leitura é clara, ações continuam acessíveis na janela compacta e os grupos se reorganizam com zoom de 50–200% e diferentes DPIs.
 - [ ] Imagens preservam proporção e diagramas não sugerem uma medição inexistente.
@@ -169,9 +218,11 @@ Ao revisar uma seção, usar a Pedaleira como comparação e registrar os seguin
 
 Registrar na adequação a seção alterada, os componentes reutilizados, eventuais exceções e a evidência de verificação (tema, tamanho de janela, zoom e idioma). Critérios não verificados ficam marcados como pendentes. Diferenças existentes em outras páginas são candidatas a adequação, não justificativa automática para mudar a referência aprovada.
 
-[Estilos](../windows/Cube.Desktop/App.xaml), [janela](../windows/Cube.Desktop/MainWindow.xaml), [tema](../windows/Cube.Desktop/Appearance/ThemeService.cs), [densidade](../windows/Cube.Desktop/Appearance/UiDensity.cs), [zoom](../windows/Cube.Desktop/Appearance/ZoomService.cs) e [editor de amps](../windows/Cube.Desktop/Views/AmpEditor.xaml) são as fontes da implementação.
+[Carregamento](../windows/Cube.Desktop/App.xaml), [estilos](../windows/Cube.Desktop/Appearance/Resources/Styles.xaml), [janela](../windows/Cube.Desktop/MainWindow.xaml), [tema](../windows/Cube.Desktop/Appearance/ThemeService.cs), [densidade](../windows/Cube.Desktop/Appearance/UiDensity.cs), [zoom](../windows/Cube.Desktop/Appearance/ZoomService.cs) e [editor de amps](../windows/Cube.Desktop/Views/AmpEditor.xaml) são as fontes da implementação.
 
 Para a referência da Pedaleira, consultar também [layout da cadeia](../windows/Cube.Desktop/Controls/StagePanel.cs), [modelo visual dos módulos](../windows/Cube.Desktop/ViewModels/EditorViewModel.Visual.cs), [knob](../windows/Cube.Desktop/Controls/Knob.cs) e [interações da janela](../windows/Cube.Desktop/MainWindow.xaml.cs). Se código e documento divergirem, conferir a implementação e registrar a decisão antes de propagar a diferença para outras seções.
+
+Este documento define o padrão; a skill `cube-design-system` orienta sua aplicação e verificação, sem manter uma segunda cópia dos tokens. Registrar evidências de validação separadamente das regras: uma compilação bem-sucedida não comprova todos os critérios, e falhas de testes auxiliares de catálogo ou MIDI não redefinem o padrão visual.
 
 Registre novas decisões neste guia e mantenha histórico separado. Não altere protocolo, dependências ou semântica de persistência como consequência implícita de uma mudança visual. O antigo relatório `wpf-ui-audit.md` citado no histórico não está incluído nesta árvore; não é uma verificação reproduzida nesta revisão.
 
