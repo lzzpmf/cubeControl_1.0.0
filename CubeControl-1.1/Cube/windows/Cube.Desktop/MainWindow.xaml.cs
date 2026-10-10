@@ -26,6 +26,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }));
     }
 
+    private void BackingMusicSearchLoaded(object sender, RoutedEventArgs e)
+    {
+        IrLibrarySearchLoaded(sender, e);
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
+        {
+            if (sender is Wpf.Ui.Controls.AutoSuggestBox box && box.Template?.FindName("PART_TextBox", box) is Wpf.Ui.Controls.TextBox search)
+                search.Padding = new Thickness(12, 8, 84, 8);
+        }));
+    }
+
     // Compatibility names also keep automation clients pointed at the shared browser.
     private TreeView IrLibraryTree => SingleIrLibrary.Tree;
     protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
@@ -34,7 +44,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         DependencyObject? node = e.OriginalSource as DependencyObject;
         while (node != null)
         {
-            if (ReferenceEquals(node, IrLibraryTree) || node is Controls.IrPackEditor or Controls.IrPackReview) return;
+            if (ReferenceEquals(node, IrLibraryTree) || node is Controls.IrPackEditor or Controls.IrPackReview
+                || node is Expander { Name: "IrCaptureDetails" }) return;
             node = node is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
         }
         Model.IrLibrary.ClearSelection();
@@ -851,6 +862,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
     private void BackingDisableLoopClick(object sender, RoutedEventArgs e) => BackingTracks.IsLooping = false;
+    private void IrAuditionLoopClick(object sender, RoutedEventArgs e) => Model.IrAudition.Loop = !Model.IrAudition.Loop;
     private void BackingLoopClick(object sender, RoutedEventArgs e) => BackingTracks.IsLooping = !BackingTracks.IsLooping;
     private void BackingReturnClick(object sender, MouseButtonEventArgs e) { Navigation.SelectedIndex = Tabs.SelectedIndex = 2; BackingTracks.PageVisible = true; e.Handled = true; }
     private void BackingTrackDoubleClick(object sender, MouseButtonEventArgs e)
@@ -886,6 +898,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (!backingPage && (BackingTracks.SelectedTrack == null || e.Key is not (Key.Space or Key.L or Key.Left or Key.Right or Key.Up or Key.Down))) return;
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
         {
+            if (ReferenceEquals(node, BackingMetronomePanel))
+            {
+                if ((e.Key == Key.Apps || e.Key == Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift) && OpenBackingKeyboardMenu(e.OriginalSource as DependencyObject)) e.Handled = true;
+                return;
+            }
             if (node is System.Windows.Controls.Primitives.TextBoxBase or ComboBox or MenuItem or Wpf.Ui.Controls.ContentDialog) return;
             if (node is Slider && e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown) return;
             if (!backingPage && node is Controls.Knob or Slider) return;
@@ -893,7 +910,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var modifiers = Keyboard.Modifiers;
         if (backingPage && (e.Key == Key.Apps || e.Key == Key.F10 && modifiers == ModifierKeys.Shift)
             && OpenBackingKeyboardMenu(e.OriginalSource as DependencyObject)) { e.Handled = true; return; }
-        if (BackingButtonAncestor(e.OriginalSource as DependencyObject) is FrameworkElement { Tag: string menuKind } && menuKind is "track" or "wave" or "section" or "speed" or "pitch" or "player" && e.Key is Key.Space or Key.Enter) return;
+        if (BackingButtonAncestor(e.OriginalSource as DependencyObject) is FrameworkElement { Tag: string menuKind } && menuKind is "track" or "wave" or "section" or "speed" or "pitch" or "player" or "metronome" && e.Key is Key.Space or Key.Enter) return;
         ICommand? command = null;
         if (BackingTrackList.IsKeyboardFocusWithin)
         {

@@ -44,6 +44,7 @@
     <None Update="Assets/RawWaves/*.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Assets/IrPacks.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Assets/ImpulseResponses/**/*.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/ImpulseResponses/Overdriven.catalog.v1.json;Assets/ImpulseResponses/Overdriven.fr/**/readme.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Resource Include="Assets/Images/Icons/*.png" />
     <Resource Include="Assets/Images/Controls/BackingTrack/*.png" />
     <Resource Include="Assets/Images/Controls/Finishes/**/*.png" />

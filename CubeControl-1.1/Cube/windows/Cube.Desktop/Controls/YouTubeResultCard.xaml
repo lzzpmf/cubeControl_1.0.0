@@ -2,54 +2,34 @@
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
- xmlns:local="clr-namespace:Cube.Desktop.Controls"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization"
  MouseEnter="CardMouseEnter" MouseLeave="CardMouseLeave" Loaded="CardLoaded" Unloaded="CardUnloaded"
- IsVisibleChanged="CardVisibilityChanged" Focusable="False" AutomationProperties.Name="{Binding Title}">
- <UserControl.Resources>
-  <Style x:Key="VideoTitle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongText}">
-   <Style.Triggers><DataTrigger Binding="{Binding IsMouseOver,ElementName=Root}" Value="True"><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></DataTrigger></Style.Triggers>
-  </Style>
-  <Style x:Key="VideoCaption" TargetType="TextBlock" BasedOn="{StaticResource CaptionText}">
-   <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
-   <Style.Triggers><DataTrigger Binding="{Binding IsMouseOver,ElementName=Root}" Value="True"><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></DataTrigger></Style.Triggers>
-  </Style>
- </UserControl.Resources>
- <Border CornerRadius="10" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
+ IsVisibleChanged="CardVisibilityChanged" Focusable="False" AutomationProperties.Name="{Binding Title}" Margin="0,0,0,8">
+ <Border CornerRadius="10" Padding="12" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
   <Border.Style><Style TargetType="Border"><Setter Property="Background" Value="{DynamicResource CubeInset}"/>
-   <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></Trigger></Style.Triggers>
+   <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></Trigger>
+    <DataTrigger Binding="{Binding IsPreviewActive,ElementName=Root}" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></DataTrigger>
+   </Style.Triggers>
   </Style></Border.Style>
-  <StackPanel SizeChanged="CardContentSizeChanged">
-   <local:VideoThumbnailPanel ClipToBounds="True" Background="{DynamicResource CubeWell}">
-    <ui:SymbolIcon Symbol="Video24" FontSize="32" Foreground="{DynamicResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    <Image x:Name="Thumbnail" Source="{Binding Thumbnail}" Stretch="Uniform" ImageFailed="ThumbnailFailed"/>
-    <Border Background="{DynamicResource CubeFloatingSurface}" CornerRadius="4" Padding="4,2" Margin="8" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-     <TextBlock Text="{Binding DurationLabel}" Style="{StaticResource CaptionText}"/>
-    </Border>
-    <Grid Margin="8" VerticalAlignment="Top">
-     <Grid.Style><Style TargetType="Grid"><Setter Property="Opacity" Value="0"/><Setter Property="IsHitTestVisible" Value="False"/>
-      <Style.Triggers>
-       <DataTrigger Binding="{Binding IsMouseOver,ElementName=Root}" Value="True"><Setter Property="Opacity" Value="1"/><Setter Property="IsHitTestVisible" Value="True"/></DataTrigger>
-       <DataTrigger Binding="{Binding IsKeyboardFocusWithin,ElementName=Root}" Value="True"><Setter Property="Opacity" Value="1"/><Setter Property="IsHitTestVisible" Value="True"/></DataTrigger>
-       <DataTrigger Binding="{Binding IsPreviewActive,ElementName=Root}" Value="True"><Setter Property="Opacity" Value="1"/><Setter Property="IsHitTestVisible" Value="True"/></DataTrigger>
-      </Style.Triggers>
-     </Style></Grid.Style>
-     <ui:Button x:Name="PreviewButton" Style="{StaticResource CubeIconButtonStyle}" Background="{DynamicResource CubeFloatingSurface}" HorizontalAlignment="Left"
-      Click="PreviewClick" ToolTip="{loc:Translate Value={Binding PreviewLabel,ElementName=Root}}" AutomationProperties.Name="{loc:Translate Value={Binding PreviewLabel,ElementName=Root}}">
-      <ui:SymbolIcon Symbol="{Binding PreviewIcon,ElementName=Root}" FontSize="16"/>
-     </ui:Button>
-     <ui:Button x:Name="DownloadButton" Style="{StaticResource CubeIconButtonStyle}" Background="{DynamicResource CubeFloatingSurface}" HorizontalAlignment="Right"
-      IsEnabled="{Binding CanDownload,ElementName=Root}" Click="DownloadClick" ToolTip="{loc:Translate Text='Baixar MP3'}" AutomationProperties.Name="{loc:Translate Text='Baixar MP3'}">
-      <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="16"/>
-     </ui:Button>
+  <Grid>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="40"/><ColumnDefinition Width="*"/><ColumnDefinition Width="40"/></Grid.ColumnDefinitions>
+   <ui:Button x:Name="PreviewButton" Style="{StaticResource CubeIconButtonStyle}" VerticalAlignment="Center"
+    Click="PreviewClick" ToolTip="{loc:Translate Value={Binding PreviewLabel,ElementName=Root}}" AutomationProperties.Name="{loc:Translate Value={Binding PreviewLabel,ElementName=Root}}">
+    <ui:SymbolIcon Symbol="{Binding PreviewIcon,ElementName=Root}" FontSize="16"/>
+   </ui:Button>
+   <StackPanel Grid.Column="1" Margin="12,0">
+    <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+    <Grid Margin="0,4,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <TextBlock Text="{Binding Channel}" Style="{StaticResource HelpText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Channel}" Margin="0,0,8,0"/>
+     <TextBlock Grid.Column="1" Text="{Binding DurationLabel}" Style="{StaticResource CaptionText}" Foreground="{DynamicResource Muted}"/>
     </Grid>
-   </local:VideoThumbnailPanel>
-   <StackPanel Margin="12,8,12,12">
-    <TextBlock Text="{Binding Title}" Style="{StaticResource VideoTitle}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="40" ToolTip="{Binding Title}"/>
-    <TextBlock Text="{Binding Channel}" Style="{StaticResource VideoCaption}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Channel}" Margin="0,4,0,0"/>
-    <TextBlock Text="{loc:Translate Value={Binding StatusText,ElementName=Root}}" Style="{StaticResource VideoCaption}" TextTrimming="CharacterEllipsis" Height="16" Margin="0,4,0,0"
+    <TextBlock Text="{loc:Translate Value={Binding StatusText,ElementName=Root}}" Style="{StaticResource HelpText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,4,0,0"
      ToolTip="{loc:Translate Value={Binding StatusText,ElementName=Root}}" AutomationProperties.LiveSetting="Polite"/>
    </StackPanel>
-  </StackPanel>
+   <ui:Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource CubeIconButtonStyle}" VerticalAlignment="Center"
+    IsEnabled="{Binding CanDownload,ElementName=Root}" Click="DownloadClick" ToolTip="{loc:Translate Text='Baixar MP3'}" AutomationProperties.Name="{loc:Translate Text='Baixar MP3'}">
+    <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="16"/>
+   </ui:Button>
+  </Grid>
  </Border>
 </UserControl>

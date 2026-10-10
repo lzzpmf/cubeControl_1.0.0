@@ -12,6 +12,45 @@
           <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
          </ui:AutoSuggestBox.Resources>
         </ui:AutoSuggestBox>
+        <WrapPanel>
+         <StackPanel Width="180" Margin="0,0,8,8">
+          <TextBlock Text="{loc:Translate Text='Coleção'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+          <ComboBox x:Name="IrCollectionFilter" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ItemsSource="{Binding CollectionOptions}" SelectedValuePath="Value" SelectedValue="{Binding CollectionFilter, Mode=TwoWay}" AutomationProperties.Name="{loc:Translate Text='Coleção'}">
+           <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+         </StackPanel>
+         <StackPanel Width="180" Margin="0,0,8,8">
+          <TextBlock Text="{loc:Translate Text='Caixa'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+          <ComboBox x:Name="IrCabinetFilter" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ItemsSource="{Binding CabinetOptions}" SelectedValuePath="Value" SelectedValue="{Binding CabinetFilter, Mode=TwoWay}" AutomationProperties.Name="{loc:Translate Text='Caixa'}">
+           <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+         </StackPanel>
+         <StackPanel Width="180" Margin="0,0,8,8">
+          <TextBlock Text="{loc:Translate Text='Falante'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+          <ComboBox x:Name="IrSpeakerFilter" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ItemsSource="{Binding SpeakerOptions}" SelectedValuePath="Value" SelectedValue="{Binding SpeakerFilter, Mode=TwoWay}" AutomationProperties.Name="{loc:Translate Text='Falante'}">
+           <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+         </StackPanel>
+         <StackPanel Width="180" Margin="0,0,8,8">
+          <TextBlock Text="{loc:Translate Text='Microfone'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+          <ComboBox x:Name="IrMicrophoneFilter" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ItemsSource="{Binding MicrophoneOptions}" SelectedValuePath="Value" SelectedValue="{Binding MicrophoneFilter, Mode=TwoWay}" AutomationProperties.Name="{loc:Translate Text='Microfone'}">
+           <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+         </StackPanel>
+         <StackPanel Width="180" Margin="0,0,8,8">
+          <TextBlock Text="{loc:Translate Text='Posição'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+          <ComboBox x:Name="IrPositionFilter" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ItemsSource="{Binding PositionOptions}" SelectedValuePath="Value" SelectedValue="{Binding PositionFilter, Mode=TwoWay}" AutomationProperties.Name="{loc:Translate Text='Posição'}">
+           <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+         </StackPanel>
+         <StackPanel Width="180" Margin="0,0,8,8">
+          <TextBlock Text="{loc:Translate Text='Distância de captura'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+          <ComboBox x:Name="IrDistanceFilter" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ItemsSource="{Binding DistanceOptions}" SelectedValuePath="Value" SelectedValue="{Binding DistanceFilter, Mode=TwoWay}" AutomationProperties.Name="{loc:Translate Text='Distância de captura'}">
+           <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
+          </ComboBox>
+         </StackPanel>
+        </WrapPanel>
+        <Button Content="{loc:Translate Text='Limpar filtros'}" Command="{Binding ClearFilters}" HorizontalAlignment="Left" Margin="0,0,0,8"/>
         <TreeView x:Name="IrLibraryTree" ItemsSource="{Binding Roots}" MinHeight="320" MaxHeight="420" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Biblioteca'}">
          <TreeView.Resources>
           <Style TargetType="TreeViewItem" BasedOn="{StaticResource DefaultTreeViewItemStyle}">
@@ -57,6 +96,9 @@
           </HierarchicalDataTemplate>
          </TreeView.ItemTemplate>
         </TreeView>
+        <Expander x:Name="IrCaptureDetails" Header="{loc:Translate Text='Informações de captura'}" Margin="0,8,0,0">
+         <TextBlock Text="{loc:Translate Value={Binding SelectedDetails}}" Style="{StaticResource HelpText}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+        </Expander>
         <TextBlock Text="{loc:Translate Value={Binding Message}}" Style="{StaticResource HelpText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
  </StackPanel>
 </UserControl>

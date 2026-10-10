@@ -25,7 +25,7 @@ internal static class IrLibraryUiTests
         try
         {
             await Settle();
-            if (tree.SelectedItem != null || tree.Items.Count != 5) throw new Exception("Library must open with five collapsed groups and no selection.");
+            if (tree.SelectedItem != null || tree.Items.Count != 6) throw new Exception("Library must open with six collapsed groups and no selection.");
             var collection = (TreeViewItem)tree.ItemContainerGenerator.ContainerFromIndex(0);
             collection.IsExpanded = true; collection.IsSelected = true; await Settle();
             if (model.Ir.Audio != null) throw new Exception("Opening or selecting a collection must not load audio.");
@@ -40,10 +40,13 @@ internal static class IrLibraryUiTests
             }
             var item = await FirstLeaf(collection);
             item.IsSelected = true; await model.PendingLibraryLoad; await Settle();
-            item.Focus();
+            var siblings = (TreeViewItem)ItemsControl.ItemsControlFromItemContainer(item);
+            int nextIndex = siblings.ItemContainerGenerator.IndexFromContainer(item) + 1;
+            var expectedNext = ((IrLibraryNode)siblings.Items[nextIndex]).Entry?.FullPath ?? throw new Exception("Keyboard fixture needs adjacent IR leaves.");
+            window.Activate(); item.Focus();
             item.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window), 0, Key.Down) { RoutedEvent = Keyboard.KeyDownEvent });
-            await model.PendingLibraryLoad;
-            if (model.Ir.SourcePath != model.IrLibrary.Entries[1].FullPath) throw new Exception("Keyboard selection must load the next IR.");
+            await Settle(); await model.PendingLibraryLoad;
+            if (model.Ir.SourcePath != expectedNext) throw new Exception("Keyboard selection must load the next IR.");
             Console.WriteLine("PASS keyboard navigation loads library IR");
             var audio = model.Ir.Audio;
             var individualSelection = model.IrLibrary.Selected;

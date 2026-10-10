@@ -28,7 +28,7 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
         DataContextChanged += (_, e) =>
         {
             if (e.OldValue is YouTubeResult old) Model?.StopYouTubePreview(old.Id);
-            Thumbnail.Visibility = Visibility.Visible; Refresh();
+            Refresh();
         };
         TouchDown += (_, _) => { PreviewButton.Focus(); };
         LostKeyboardFocus += (_, _) => { if (!IsKeyboardFocusWithin && !IsMouseOver) Stop(); };
@@ -68,7 +68,4 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
     }
     private async void DownloadClick(object sender, RoutedEventArgs e)
     { if (Video is { } video && Model != null) await Model.DownloadYouTube(video); e.Handled = true; }
-    private void ThumbnailFailed(object sender, ExceptionRoutedEventArgs e) => Thumbnail.Visibility = Visibility.Hidden;
-    private void CardContentSizeChanged(object sender, SizeChangedEventArgs e)
-        => ((FrameworkElement)sender).Clip = new System.Windows.Media.RectangleGeometry(new Rect(e.NewSize), 10, 10);
 }

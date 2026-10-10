@@ -6,6 +6,13 @@ Add MP3/WAV files and choose a Windows audio output. The list references origina
 ## Practice a section
 Use A/B to mark and loop a section. Adjust speed and pitch with the available controls. Automatically detected BPM and key are estimates; you can correct them. Guitar monitoring uses the chosen audio input and does not simulate the pedal DSP.
 
+## Record
+Under **Recording source**, choose **Guitar only**, **Backing track + guitar**, or a specific Windows input/output. The guitar preset uses the input selected above. The combined preset requires a selected track, input and output; it records the output mix, including other sounds playing on that device.
+
+Use **Start recording**, choose the WAV destination and play the track when ready. Combined mode starts guitar monitoring automatically; if its volume is 0%, it changes to 50% during recording. Use headphones to avoid feedback and adjust the guitar and backing volumes. The previous monitor state is restored when recording ends.
+
+Use **Stop and save** to finalize the WAV. You can show the file or add it to the playlist. Choose a different source before starting another recording. If a failure occurs, the app shows the recoverable WAV path. Recording does not require USB; audio comes from the chosen audio device.
+
 ## Export
 Export creates a new file at the chosen destination without changing the original. Check the section and settings before exporting. Removing a track from the list does not delete its audio file.
 
@@ -17,6 +24,17 @@ Playlist and YouTube use separate cards below the player, with independent searc
 Hover over a video for 800 ms to preview up to 30 seconds. If a local track is playing, it pauses when preview audio is ready. Leaving the card or finishing the preview keeps the track paused at the same position; use Play to resume. If preparation fails, the track keeps playing. With a keyboard, use Preview audio and Escape to stop.
 
 Choose a folder on your first download. It is remembered for later downloads and across app restarts. Use **Change folder** in the YouTube card to select another destination. Duplicate filenames receive a numeric suffix without overwriting existing files. The card shows the current stage, an indeterminate progress bar and a cancel action during download, conversion and validation.
+
+## Metronome
+
+The metronome is integrated into the player: the note button toggles it, the knob adjusts BPM, and the tap button accepts repeated clicks. Drag or scroll the knob; use Shift for fine adjustment and Enter to edit its value. Open options with the options button, right-click, or Shift+F10. The menu contains synchronization, meter, accent, count-in and alignment. The three vertical faders control backing track, guitar and metronome.
+
+Choose Click, Bell, Ping, Woodblock or Hi-hat from the sound menu, or import a mono/stereo PCM or float WAV up to two seconds long. The app copies the file into its local data and remembers the selection; unavailable files fall back to Click.
+Use **Start metronome** with **Follow track** off to practice even with an empty playlist. Set its BPM, Tap tempo, time signature, accent and volume. Backing track mute also silences clicks. In 6/8, BPM represents quarter notes and each click represents an eighth note.
+
+With **Follow track** on, the metronome uses the detected or corrected BPM and follows the local track's speed, pause, seek and loop. Use **Mark first beat here** or **First beat (s)** to align the grid. **Count-in (bars)** accepts 0, 1 or 2 and prepares playback; resuming a pause and repeating a loop do not repeat the count-in. YouTube preview does not support synchronization; independent mode remains available.
+
+Preferences, manual BPM and alignment per file are remembered, but the metronome always opens stopped. Changing mode or output stops clicks. WAV export excludes the metronome; loopback output recording can include the clicks you hear.
 
 ## Session and files
 The list, output, volume and mute are stored in local preferences. The list is not a backup of audio files. See [Privacy](privacidade.md) for storage and external services.

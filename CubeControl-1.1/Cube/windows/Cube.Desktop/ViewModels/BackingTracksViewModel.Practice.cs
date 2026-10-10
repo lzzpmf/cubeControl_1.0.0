@@ -41,7 +41,7 @@ public sealed partial class BackingTracksViewModel
     public string[] Keys { get; } = ["Não definido", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "A#m", "Bm"];
     public string[] PresetOptions { get; } = ["Sem vínculo", "Preset A", "Preset B", "Preset C"];
     public string Search { get => search; set { if (Set(ref search, value)) { FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); } } }
-    public double Bpm { get => SelectedTrack?.Bpm ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.ManualBpm = true; SelectedTrack.Bpm = Math.Clamp(value, 20, 300); Notify(); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); } }
+    public double Bpm { get => SelectedTrack?.Bpm ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.ManualBpm = true; SelectedTrack.Bpm = Math.Clamp(value, 20, 300); Notify(); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); UpdateMetronome(); } }
     public string CurrentBpm => $"{Bpm * Speed / 100:0.#} BPM atual · grade 4/4";
     public string OriginalKey { get => SelectedTrack?.OriginalKey ?? Keys[0]; set { if (SelectedTrack == null || !Keys.Contains(value)) return; SelectedTrack.ManualKey = true; SelectedTrack.OriginalKey = value; Notify(); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); } }
     public string BpmBadge => SelectedTrack?.MusicPending == true && Bpm <= 0 ? "Analisando…" : Bpm > 0 ? $"BPM: {(SelectedTrack?.ManualBpm == true ? "" : "≈")}{Bpm * Speed / 100:0.#}" : "BPM não identificado";
@@ -103,12 +103,13 @@ public sealed partial class BackingTracksViewModel
         AddSection = new UiCommand(() => { var marker = new BackingSection(Position, SectionName.Trim()); int index = 0; while (index < Sections!.Count && Sections[index].Position <= Position) index++; Sections.Insert(index, marker); }, () => CanSeek && !string.IsNullOrWhiteSpace(SectionName) && SectionName.Length <= 40);
         RemoveSection = new UiCommand(() => { if (SelectedSection is { } section) Sections?.Remove(section); SelectedSection = null; }, () => SelectedSection != null);
         GoToSection = new UiCommand(() => { if (SelectedSection != null) Position = SelectedSection.Position; }, () => SelectedSection != null);
-        ToggleMonitor = new UiCommand(() => { if (IsMonitoring) StopMonitor(); else StartMonitor(); }, () => IsMonitoring || SelectedInput != null && SelectedOutput != null);
+        ToggleMonitor = new UiCommand(() => { if (IsMonitoring) StopMonitor(); else StartMonitor(); }, () => !IsRecordingMix && !recordingFinalizing && (IsMonitoring || SelectedInput != null && SelectedOutput != null));
         RefreshInputs = new UiCommand(LoadInputs);
         PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Duration)) { Notify(nameof(ViewportDuration)); ViewportStart = viewportStart; } };
     }
     private void RefreshPractice()
     {
+        RefreshMetronome(); UpdateMetronome(false);
         Zoom = 1; ViewportStart = 0; SelectedSection = null;
         foreach (var name in new[] { nameof(BpmBadge), nameof(KeyBadge), nameof(PresetBadge), nameof(Bpm), nameof(CurrentBpm), nameof(OriginalKey), nameof(CurrentKey), nameof(LinkedPreset), nameof(PresetHint), nameof(Sections), nameof(SelectedSection) }) Notify(name);
     }
@@ -155,6 +156,7 @@ public sealed partial class BackingTracksViewModel
     }
     private void StopMonitor()
     {
+        if (IsRecordingMix && recording is { } session) Start(session.Stop(new InvalidOperationException("Guitar monitor interrupted during recording.")));
         var capture = monitorCapture; monitorCapture = null;
         // Release every endpoint even when a disconnected device throws during teardown.
         foreach (IDisposable? resource in new IDisposable?[] { capture, monitorOutput, monitorInputDevice, monitorOutputDevice })

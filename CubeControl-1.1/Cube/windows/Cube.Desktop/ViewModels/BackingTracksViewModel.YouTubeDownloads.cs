@@ -16,7 +16,7 @@ public sealed partial class BackingTracksViewModel
     public ICommand ChangeYouTubeDownloadFolder => new UiCommand(() => ChooseDownloadFolder(), () => !YouTubeDownloading && !choosingDownloadFolder);
     internal Func<string, string?> SelectYouTubeDownloadFolder { get; set; } = current =>
     {
-        var dialog = new OpenFolderDialog { Title = LanguageService.T("Pasta de downloads do YouTube"), Multiselect = false };
+        var dialog = new OpenFolderDialog { Title = LanguageService.T("Pasta de downloads das faixas"), Multiselect = false };
         if (Directory.Exists(current)) dialog.InitialDirectory = current;
         return dialog.ShowDialog() == true ? dialog.FolderName : null;
     };

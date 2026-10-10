@@ -35,6 +35,7 @@ public partial class IrLibraryBrowser : UserControl
         TreeViewItem? item = null; bool chevron = false;
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null;)
         {
+            if (ReferenceEquals(node, IrCaptureDetails)) return;
             if (ReferenceEquals(node, Tree))
             {
                 if (e.ChangedButton == MouseButton.Left && item != null)

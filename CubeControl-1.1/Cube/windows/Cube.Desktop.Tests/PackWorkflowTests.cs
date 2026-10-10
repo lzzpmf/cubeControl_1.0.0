@@ -11,14 +11,37 @@ internal static class PackWorkflowTests
     { if (!value) throw new Exception(message); Console.WriteLine("PASS " + message); }
     public static async Task Run()
     {
+        await DirectPackEditingTests.Run();
         string data = Path.Combine(Path.GetTempPath(), "cube-pack-workflow-" + Guid.NewGuid().ToString("N"));
         using var model = new EditorViewModel(data);
         var editor = model.PackEditor;
+        editor.ChooseDetails = (name, description) => Task.FromResult<(string Name, string Description)?>((name, description));
         editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
-        editor.NewPack.Execute(null);
+        await editor.SelectAsync(null);
         Check(!model.ApplyIrPack.CanExecute(null) && !editor.SavePack.CanExecute(null), "empty draft has no save or apply action");
         editor.PackLibrary.Selected = editor.PackLibrary.Entries.First();
         editor.Slots[1].UseIr.Execute(null); editor.Slots[6].UseIr.Execute(null);
+        editor.Slots[1].DistanceValue = 19;
+        var firstEntry = editor.Slots[1].Entry!;
+        var secondIr = editor.PackLibrary.Entries.First(e => e.RelativePath != editor.SelectedIr!.RelativePath);
+        Check(editor.AssignIr(3, secondIr) && editor.Slots[3].Entry!.Distance == 50, "library drop assigns a fresh IR at distance 50");
+        editor.Slots[3].DistanceValue = 83;
+        var secondEntry = editor.Slots[3].Entry!;
+        Check(editor.SwapSlots(1, 3) && editor.Slots[1].Entry!.Sha256 == secondEntry.Sha256 && editor.Slots[3].Entry!.Distance == 19 && editor.Slots[1].Entry!.Distance == 83,
+            "slot drag swaps content and its distance while preserving destination numbers");
+        Check(editor.SwapSlots(3, 4) && !editor.Slots[3].HasEntry && editor.Slots[4].Entry!.Slot == 4 && editor.Slots[4].Entry!.Distance == 19, "dropping on an empty slot moves content and clears origin");
+        var unchanged = editor.Draft();
+        Check(!editor.SwapSlots(4, 4) && !editor.SwapSlots(0, 5) && !editor.AssignIr(9, secondIr) && editor.Draft().Entries.SequenceEqual(unchanged.Entries), "invalid and canceled moves leave draft intact");
+        editor.Slots[1].Remove.Execute(null); editor.Slots[4].Remove.Execute(null);
+        editor.Slots[1].UseIr.Execute(null);
+        editor.Name = "Metadata before"; editor.Description = "Original notes";
+        int detailsCalls = 0;
+        editor.ChooseDetails = (name, description) => { detailsCalls++; return Task.FromResult<(string Name, string Description)?>(null); };
+        Check(!await editor.EnsureDetailsAsync(true) && editor.Name == "Metadata before" && editor.Description == "Original notes", "canceling metadata preserves named draft and fields");
+        Check(await editor.EnsureDetailsAsync() && detailsCalls == 1, "exporting an already named draft does not reopen metadata");
+        editor.ChooseDetails = (name, description) => Task.FromResult<(string Name, string Description)?>(("Confirmed name", "Confirmed notes"));
+        Check(await editor.EnsureDetailsAsync(true) && editor.Name == "Confirmed name" && editor.Description == "Confirmed notes", "saving a named pack still requests metadata and commits only confirmed fields");
+        editor.ChooseDetails = (name, description) => Task.FromResult<(string Name, string Description)?>((name, description));
         editor.Name = "Portable draft";
         string bundle = Path.Combine(data, "portable.cubeirpack.zip"); Directory.CreateDirectory(data);
         editor.Export(bundle);
@@ -50,7 +73,7 @@ internal static class PackWorkflowTests
         editor.Import(bundle);
         Check(editor.Dirty && model.IrLibrary.Entries.Any(e => e.RelativePath.StartsWith("Imported/")), "import stages the pack and updates the individual library");
         Check(editor.PackLibrary.Roots.Any(n => n.Name == "IRs importados"), "imported WAVs appear in the shared pack library");
-        Check(editor.PackLibrary.Entries.Where(e => e.RelativePath.StartsWith("Imported/")).All(e => e.Name.StartsWith("Fender")), "imported library keeps musical cabinet names instead of losing the original collection context");
+        Check(editor.Current!.Definition!.Entries.All(e => e.Name == firstEntry.Name) && editor.PackLibrary.Entries.Where(e => e.RelativePath.StartsWith("Imported/")).All(e => Path.GetFileNameWithoutExtension(e.FullPath).StartsWith(firstEntry.Name.Split(' ')[0], StringComparison.Ordinal)), "imported library keeps musical cabinet names instead of losing the original collection context");
         editor.Save();
         editor.Name = "Save on switch";
         editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Save);
@@ -58,6 +81,7 @@ internal static class PackWorkflowTests
         await editor.SelectAsync(model.IrPacks.First(p => p.Group == "Predefinidos"));
         Check(model.IrPacks.Single(p => p.Id == savedId).Name == "Save on switch", "save-discard-cancel switch can save the current personal draft");
         Check(model.IrPacks.Contains(editor.Current!), "saving during a switch selects an item from the refreshed catalog");
+        Check(editor.CanEdit && editor.Slots[0].Remove.CanExecute(null) && !editor.Dirty, "predefined packs offer direct editing before any draft is created");
         using var fake = new FakeConnection(); using var session = new CubeSession(fake); await session.Identify();
         await model.Execute(() => model.AttachSession(session));
         var before = fake.Flash.ToArray();
@@ -74,7 +98,7 @@ internal static class PackWorkflowTests
         await Apply(); Check(fake.Flash.SequenceEqual(before) && fake.Writes == 0, "canceling review sends no device write");
         Check(predefined.Definition!.Entries.All(e => e.Distance == 50) && !editor.Dirty, "temporary review distances do not modify the predefined pack");
         editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
-        editor.NewPack.Execute(null); editor.SelectedIr = editor.PackLibrary.Entries[0]; editor.Slots[4].UseIr.Execute(null);
+        await editor.SelectAsync(null); editor.SelectedIr = editor.PackLibrary.Entries[0]; editor.Slots[4].UseIr.Execute(null);
         Check(model.ApplyIrPack.CanExecute(null), "unnamed unsaved draft can be applied");
         int writes = fake.Writes;
         model.ReviewPack = review => { review.Slots.Single().Distance = 23; return Task.FromResult(true); };

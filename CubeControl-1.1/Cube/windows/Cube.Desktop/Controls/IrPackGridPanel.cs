@@ -7,12 +7,17 @@ namespace Cube.Desktop.Controls;
 public sealed class IrPackGridPanel : Panel
 {
     private const double Gap = 12;
+    public static readonly DependencyProperty MinimumCardWidthProperty = DependencyProperty.Register(
+        nameof(MinimumCardWidth), typeof(double), typeof(IrPackGridPanel),
+        new FrameworkPropertyMetadata(260d, FrameworkPropertyMetadataOptions.AffectsMeasure),
+        value => value is double width && double.IsFinite(width) && width > 0);
+    public double MinimumCardWidth { get => (double)GetValue(MinimumCardWidthProperty); set => SetValue(MinimumCardWidthProperty, value); }
     private int columns;
     private double rowHeight;
     protected override Size MeasureOverride(Size available)
     {
-        double width = double.IsInfinity(available.Width) ? 1076 : available.Width;
-        columns = width >= 1076 ? 4 : width >= 532 ? 2 : 1;
+        double width = double.IsInfinity(available.Width) ? MinimumCardWidth * 4 + Gap * 3 : available.Width;
+        columns = width >= MinimumCardWidth * 4 + Gap * 3 ? 4 : width >= MinimumCardWidth * 2 + Gap ? 2 : 1;
         double cellWidth = Math.Max(0, (width - Gap * (columns - 1)) / columns);
         rowHeight = 0;
         foreach (UIElement child in InternalChildren)

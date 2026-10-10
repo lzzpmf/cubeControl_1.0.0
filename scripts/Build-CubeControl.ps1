@@ -145,7 +145,7 @@ try {
     foreach ($folder in 'Assets\Images\Equipment', 'Assets\Images\Controls\Knobs', 'Assets\Images\Controls\Faders', 'Assets\ImpulseResponses', 'Localization') {
         foreach ($file in Get-ChildItem -LiteralPath (Join-Path $desktop $folder) -File -Recurse) {
             if (($folder.StartsWith('Assets\Images\') -and $file.Extension -in '.png', '.jpg', '.jpeg' -and $file.Name -notmatch '_oficial_') -or
-                ($folder -eq 'Assets\ImpulseResponses' -and $file.Extension -eq '.wav') -or
+                ($folder -eq 'Assets\ImpulseResponses' -and ($file.Extension -eq '.wav' -or $file.Name -in 'Overdriven.catalog.v1.json', 'readme.txt')) -or
                 ($folder -eq 'Localization' -and ($file.Extension -eq '.json' -or $file.Name -eq 'README.md'))) {
                 $resources[$file.FullName.Substring($desktop.Length + 1)] = $file.FullName
             }

@@ -23,16 +23,27 @@ internal static class YouTubeTests
             await YouTubeDownloadTests.Run(folder);
             using var model = new BackingTracksViewModel(folder);
             var fake = new Fake(); model.YouTubeService = fake;
+            Check(model.AppendBackingTrack, "backing track option starts enabled");
             model.YouTubeQuery = "ab"; await Task.Delay(650); Check(fake.Calls.Count == 0, "short query stays local");
             model.YouTubeQuery = "blues"; await Task.Delay(200); model.YouTubeQuery = "jazz"; await Task.Delay(650);
-            Check(fake.Calls.Count == 1 && fake.Calls[0].Query == "jazz", "600ms debounce cancels previous query");
+            Check(fake.Calls.Count == 1 && fake.Calls[0].Query == "jazz backing track", "600ms debounce cancels previous query");
             model.YouTubeQuery = "rock"; await Task.Delay(650);
             var video = new YouTubeResult("abcdefghijk", "Track", "Channel", 60, null);
             fake.Calls[1].Result.SetResult([video]); await Task.Delay(30);
             fake.Calls[0].Result.SetResult([]); await Task.Delay(30);
             Check(model.YouTubeResults.Count == 1, "stale response cannot replace current results");
+            Check(model.YouTubeQuery == "rock", "suffix does not change user text");
+            model.AppendBackingTrack = false; await Task.Delay(650);
+            Check(fake.Calls[2].Query == "rock", "disabled option sends original term");
+            model.AppendBackingTrack = true; await Task.Delay(650);
+            Check(fake.Calls[3].Query == "rock backing track", "toggle repeats current query with suffix");
+            fake.Calls[3].Result.SetResult([video]); await Task.Delay(30);
+            fake.Calls[2].Result.SetResult([]); await Task.Delay(30);
+            Check(model.YouTubeResults.Count == 1, "response from old toggle state cannot replace current tracks");
+            using (var fresh = new BackingTracksViewModel(Path.Combine(folder, "fresh")))
+                Check(fresh.AppendBackingTrack, "new session resets option to enabled");
             model.YouTubeQuery = ""; Check(model.YouTubeResults.Count == 0 && !model.ShowYouTube, "clearing search removes online results");
-            model.YouTubeQuery = "offline"; await Task.Delay(650); fake.Calls[2].Result.SetException(new IOException("offline")); await Task.Delay(30);
+            model.YouTubeQuery = "offline"; await Task.Delay(650); fake.Calls[4].Result.SetException(new IOException("offline")); await Task.Delay(30);
             Check(!model.YouTubeSearching && model.YouTubeStatus.Length > 0, "offline search ends with a recoverable message");
             model.YouTubeQuery = "";
             foreach (string tool in new[] { "yt-dlp", "ffmpeg", "ffprobe", "deno" }) File.WriteAllText(Path.Combine(folder, tool + ".exe"), "fixture");
@@ -92,7 +103,7 @@ internal static class YouTubeTests
                         using var image = File.Create(Path.Combine(reports, $"youtube-{theme}-{width}.png")); encoder.Save(image);
                         Check(window.BackingTracks.YouTubeResults.Count == 10, $"results survive {theme} at {width} DIPs");
                     }
-                await CheckMosaic(window);
+                await CheckTrackList(window);
                 await YouTubePreviewTests.RunUi(window);
             }
             finally { window.Close(); }
@@ -108,7 +119,7 @@ internal static class YouTubeTests
             foreach (var descendant in Children<T>(child)) yield return descendant;
         }
     }
-    private static async Task CheckMosaic(Cube.Desktop.MainWindow window)
+    private static async Task CheckTrackList(Cube.Desktop.MainWindow window)
     {
         var zoomService = Cube.Desktop.Appearance.ZoomService.Instance;
         var languageService = Cube.Desktop.Localization.LanguageService.Instance;
@@ -133,21 +144,31 @@ internal static class YouTubeTests
                 Check(playlist.IsVisible && (columns ? Math.Abs(playlistBounds.Top - youtubeBounds.Top) < 1 && youtubeBounds.Left >= playlistBounds.Right + 15 : youtubeBounds.Top >= playlistBounds.Bottom + 15), "playlist stays open and cards adapt without overlap");
                 Check(columns ? list.ActualHeight <= 481 && resultsScroll.ActualHeight <= 481 : double.IsPositiveInfinity(list.MaxHeight) && resultsScroll.VerticalScrollBarVisibility == System.Windows.Controls.ScrollBarVisibility.Disabled, "wide lists scroll internally; compact layout uses page scrolling");
                 Check(list.Items.Count == 12 && window.BackingTracks.Search.Length == 0, "YouTube query preserves all playlist rows");
+                Check(Cube.Desktop.Localization.LanguageService.T("Buscando faixas\u2026") == (language == "en-US" ? "Searching tracks\u2026" : "Buscando faixas\u2026"), "search progress is translated");
+                Check(!Children<System.Windows.Controls.TextBlock>(youtube).Any(t => t.Text.Contains("YouTube") || t.Text.Contains("v\u00eddeo")), "search presentation uses musical language");
+                var toggle = (System.Windows.Controls.Primitives.ToggleButton)window.FindName("BackingTrackSearchToggle");
+                var search = (Wpf.Ui.Controls.AutoSuggestBox)window.FindName("BackingYouTubeSearch");
+                var toggleBounds = toggle.TransformToAncestor(search.Parent as System.Windows.Media.Visual).TransformBounds(new System.Windows.Rect(toggle.RenderSize));
+                Check(toggleBounds.Left >= 0 && toggleBounds.Right <= search.ActualWidth + 1 && toggle.ActualHeight >= 32, "search toggle stays within field");
+                toggle.Focus();
+                Check(toggle.IsKeyboardFocused && new System.Windows.Automation.Peers.ToggleButtonAutomationPeer(toggle).GetPattern(System.Windows.Automation.Peers.PatternInterface.Toggle) != null, "search option exposes keyboard focus and toggle state");
                 var mosaic = (System.Windows.Controls.ItemsControl)window.FindName("YouTubeMosaic");
                 var cards = Children<Cube.Desktop.Controls.YouTubeResultCard>(mosaic).ToArray();
                 Check(cards.Length == 10 && cards.All(c => c.ActualWidth <= mosaic.ActualWidth + 1 && c.ActualWidth > 0), $"mosaic fits {width}/{zoom}%/{language}");
-                bool contained = true, proportional = true;
+                bool contained = true;
+                double previousBottom = 0;
                 foreach (var card in cards)
                 {
                     var position = card.TransformToAncestor(mosaic).Transform(new System.Windows.Point());
                     contained &= position.X >= -1 && position.X + card.ActualWidth <= mosaic.ActualWidth + 1;
-                    var thumbnail = Children<Cube.Desktop.Controls.VideoThumbnailPanel>(card).Single();
-                    proportional &= Math.Abs(thumbnail.ActualWidth / thumbnail.ActualHeight - 16d / 9) < .02;
+                    contained &= position.Y >= previousBottom - 1;
+                    previousBottom = position.Y + card.ActualHeight;
+                    Check(!Children<System.Windows.Controls.Image>(card).Any(), "track rows have no video artwork");
                 }
-                Check(contained && proportional, "all cards stay inside mosaic with 16:9 thumbnails");
+                Check(contained, "track rows fit full width in a single vertical list");
                 var button = (Wpf.Ui.Controls.Button)cards[0].FindName("DownloadButton");
                 button.Focus(); await Task.Delay(20);
-                Check(button.IsKeyboardFocused && button.ActualWidth >= 40 && button.ActualHeight >= 40 && ((System.Windows.Controls.Grid)button.Parent).Opacity == 1, "keyboard reveals accessible download action");
+                Check(button.IsKeyboardFocused && button.ActualWidth >= 40 && button.ActualHeight >= 40 && button.IsVisible, "keyboard reaches always visible download action");
                 var preview = (Wpf.Ui.Controls.Button)cards[0].FindName("PreviewButton");
                 Check(preview.ToolTip?.ToString() == (language == "en-US" ? "Preview audio" : "Pré-ouvir"), "preview action is translated");
             }

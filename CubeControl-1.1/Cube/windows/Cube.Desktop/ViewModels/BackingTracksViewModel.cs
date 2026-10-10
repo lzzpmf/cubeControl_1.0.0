@@ -74,7 +74,14 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public Func<Task>? BeforePlayback { get; set; }
     public async Task StopForIrAudition()
     {
+        if (recording is { } session && !CanChangeRecordingOutput)
+        {
+            recordingFinalizing = true; RefreshRecording();
+            var error = await session.Stop();
+            if (recording == session) CompleteRecording(session, error);
+        }
         selectionGeneration++; opening = false;
+        MetronomeOutputChanged();
         await StopYouTubePreviewAndWait();
         UpdatePosition(); await engine.ReleaseOutput();
         positionTimer.Stop(); StopMonitor();
@@ -139,6 +146,8 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public BackingTracksViewModel(string dataDirectory)
     {
         InitializePractice();
+        InitializeMetronome(dataDirectory);
+        InitializeRecording();
         InitializeYouTubeDownloads(dataDirectory);
         AddFiles = new UiCommand(() => Run(() => { var dialog = new OpenFileDialog { Multiselect = true, Filter = LanguageService.T("Áudio MP3 ou WAV") + "|*.mp3;*.wav" }; if (dialog.ShowDialog() == true) AddPaths(dialog.FileNames); }));
         RemoveTrack = new UiCommand(RemoveSelected, () => SelectedTrack != null);
@@ -177,7 +186,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
             parameterTimer.Stop(); positionTimer.Stop(); Start(engine.Clear()); position = 0;
             Duration = value?.Length ?? 0; State = value == null ? BackingPlaybackState.Empty : BackingPlaybackState.Ready;
             Notify(); Notify(nameof(Peaks)); Notify(nameof(Position)); Notify(nameof(Speed)); Notify(nameof(Pitch)); Notify(nameof(HasModifiedSpeed)); Notify(nameof(HasModifiedPitch)); RangeChanged(false);
-            RefreshPractice();
+            RestoreTrackMetronome(); RefreshPractice();
             Status = ""; HasError = false; Changed(); Start(LoadWaveform()); ScheduleMusic();
         }
     }
@@ -187,7 +196,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         set
         {
             if (!Set(ref selectedOutput, value)) return;
-            StopYouTubePreview(); StopMonitor(); UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
+            MetronomeOutputChanged(); StopYouTubePreview(); StopMonitor(); UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
             if (HasActivePlayback) State = BackingPlaybackState.Paused;
             if (!restoring) { preferredOutputId = value?.Id; Changed(); }
             Notify(nameof(OutputName)); Notify(nameof(OutputState)); CommandManager.InvalidateRequerySuggested();
@@ -195,10 +204,10 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     }
     public bool ContinueSequence { get => continueSequence; set { if (Set(ref continueSequence, value)) Changed(); } }
     public bool IsLooping { get => looping; set { if (value && !CanLoop) return; if (Set(ref looping, value)) { if (value && (Position < RangeStart || Position >= RangeEnd)) position = RangeStart; Start(ApplyParameters()); Notify(nameof(Position)); Notify(nameof(TimeLabel)); } } }
-    public double Speed { get => SelectedTrack?.Speed ?? 100; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Speed = Math.Clamp(Math.Round(value), 50, 150); Notify(); Notify(nameof(HasModifiedSpeed)); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); ScheduleParameters(); Changed(); } }
+    public double Speed { get => SelectedTrack?.Speed ?? 100; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Speed = Math.Clamp(Math.Round(value), 50, 150); Notify(); Notify(nameof(HasModifiedSpeed)); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); RefreshMetronome(); ScheduleParameters(); Changed(); } }
     public double Pitch { get => SelectedTrack?.Pitch ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.Pitch = Math.Clamp(Math.Round(value), -6, 6); Notify(); Notify(nameof(HasModifiedPitch)); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); ScheduleParameters(); Changed(); } }
     public double Volume { get => volume; set { if (double.IsFinite(value) && Set(ref volume, Math.Clamp(value, 0, 100))) { UpdateYouTubePreviewVolume(); Start(engine.SetVolume(volume / 100, IsMuted)); Changed(); } } }
-    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { UpdateYouTubePreviewVolume(); Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
+    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) { UpdateYouTubePreviewVolume(); metronomeProvider?.Configure(MetronomeConfiguration(true), value); Start(engine.SetVolume(Volume / 100, value)); Notify(nameof(MuteIcon)); Notify(nameof(MuteLabel)); Changed(); } } }
     public double RangeStart
     {
         get => SelectedTrack?.Start ?? double.NaN;
@@ -270,20 +279,22 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         if (disposed || opening || SelectedTrack is not { } track || SelectedOutput is not { } output) return;
         StopYouTubePreview();
         if (IsPlaying) { await engine.Pause(); return; }
+        bool countIn = State != BackingPlaybackState.Paused;
         int version = selectionGeneration; opening = true; RefreshPresentation();
         try
         {
+            await engine.ConfigureMetronome(MetronomeConfiguration() with { Enabled = FollowTrack && metronomeEnabled && Bpm > 0 });
             if (BeforePlayback != null) await BeforePlayback();
             await StopYouTubePreviewAndWait();
             if (disposed || version != selectionGeneration || output != SelectedOutput) return;
             if (engine.Snapshot.Source != track.Source || engine.Snapshot.OutputId != output.Id || State == BackingPlaybackState.Error)
                 await engine.Open(track.Source, output.Id, Position, Speed / 100, Pitch, IsLooping && HasRange, HasRange ? RangeStart : 0, HasRange ? RangeEnd : Duration, Volume / 100, IsMuted);
-            if (!disposed && version == selectionGeneration && output == SelectedOutput) await engine.Play();
+            if (!disposed && version == selectionGeneration && output == SelectedOutput) await engine.Play(countIn);
         }
         finally { if (version == selectionGeneration) { opening = false; RefreshPresentation(); } }
     }
     public void PlaySelected() { StopYouTubePreview(); if (!IsPlaying) Start(TogglePlayback()); }
-    private async Task StopPlayback() { await StopYouTubePreviewAndWait(); await engine.Stop(); position = IsLooping && HasRange ? RangeStart : 0; Notify(nameof(Position)); Notify(nameof(TimeLabel)); }
+    private async Task StopPlayback() { selectionGeneration++; opening = false; RefreshPresentation(); await StopYouTubePreviewAndWait(); await engine.Stop(); position = IsLooping && HasRange ? RangeStart : 0; Notify(nameof(Position)); Notify(nameof(TimeLabel)); }
     private async Task SelectAdjacent(int step)
     {
         int index = SelectedTrack == null ? -1 : Tracks.IndexOf(SelectedTrack) + step;
@@ -453,6 +464,8 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public void Dispose()
     {
         if (disposed) return;
+        DisposeRecording();
+        SaveMetronome(); metronomeTimer.Stop(); StopIndependentMetronome();
         StopYouTubePreview(); StopMonitor(); meterTimer.Stop(); disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); parameterTimer.Stop();
         LanguageService.Instance.PropertyChanged -= MusicLanguageChanged;
         engine.Changed -= EngineChanged; engine.Dispose();

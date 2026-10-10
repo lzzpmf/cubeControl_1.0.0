@@ -26,6 +26,7 @@ internal static class PackReviewUiTests
     }
     public static async Task Run()
     {
+        await PackCompactUiTests.Run();
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-review-ui-" + Guid.NewGuid().ToString("N")));
         using var fake = new FakeConnection(); using var session = new CubeSession(fake); await session.Identify();
         await model.Execute(() => model.AttachSession(session)); model.Ask = _ => Task.FromResult(false);

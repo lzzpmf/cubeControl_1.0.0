@@ -58,6 +58,41 @@ public partial class MainWindow
         void Separator() => menu.Items.Add(new Separator());
         switch (kind)
         {
+            case "metronome":
+                void Choice(string title, bool selected, Action action, bool enabled = true)
+                {
+                    var item = new MenuItem { Header = LanguageService.T(title), IsCheckable = true, IsChecked = selected, IsEnabled = enabled };
+                    item.Click += (_, _) => action(); menu.Items.Add(item);
+                }
+                Choice("Acompanhar faixa", model.FollowTrack, () => model.FollowTrack = !model.FollowTrack);
+                Choice("Acentuar primeiro tempo", model.MetronomeAccent, () => model.MetronomeAccent = !model.MetronomeAccent);
+                Action("Editar BPM", () => EditMetronomeNumber(false));
+                var meters = new MenuItem { Header = LanguageService.T("Compasso") };
+                foreach (string meter in model.MetronomeMeters)
+                {
+                    var item = new MenuItem { Header = meter, IsCheckable = true, IsChecked = meter == model.MetronomeMeter };
+                    item.Click += (_, _) => model.MetronomeMeter = meter; meters.Items.Add(item);
+                }
+                menu.Items.Add(meters);
+                var countIn = new MenuItem { Header = LanguageService.T("Contagem (compassos)"), IsEnabled = model.FollowTrack };
+                foreach (int bars in model.MetronomeCountIns)
+                {
+                    var item = new MenuItem { Header = bars == 0 ? LanguageService.T("Desligado") : bars.ToString(), IsCheckable = true, IsChecked = bars == model.CountInBars };
+                    item.Click += (_, _) => model.CountInBars = bars; countIn.Items.Add(item);
+                }
+                menu.Items.Add(countIn);
+                Command("Marcar primeiro tempo aqui", model.MarkFirstBeat);
+                Action("Primeiro tempo (s)", () => EditMetronomeNumber(true), () => model.CanSeek && model.FollowTrack);
+                Separator();
+                var sounds = new MenuItem { Header = LanguageService.T("Som do metrônomo") };
+                foreach (string sound in model.BuiltInMetronomeSounds.Concat(model.CustomMetronomeFiles))
+                {
+                    var item = new MenuItem { Header = model.BuiltInMetronomeSounds.Contains(sound) ? LanguageService.T(sound) : System.IO.Path.GetFileNameWithoutExtension(sound), IsCheckable = true, IsChecked = sound == model.MetronomeSound };
+                    item.Click += (_, _) => model.SelectMetronomeSound(sound); sounds.Items.Add(item);
+                }
+                menu.Items.Add(sounds);
+                Action("Importar som WAV", () => ImportMetronomeWav());
+                break;
             case "track":
                 track ??= model.SelectedTrack;
                 if (track == null) return;
@@ -126,7 +161,7 @@ public partial class MainWindow
         for (var node = source; node != null; node = BackingParent(node))
         {
             if (node is Controls.BackingWaveform wave) { OpenBackingMenu(wave, "wave"); return true; }
-            if (node is FrameworkElement owner && owner.Tag is string kind && kind is "track" or "wave" or "section" or "speed" or "pitch" or "player" or "audio")
+            if (node is FrameworkElement owner && owner.Tag is string kind && kind is "track" or "wave" or "section" or "speed" or "pitch" or "player" or "audio" or "metronome")
             {
                 var item = source == null ? null : ItemsControl.ContainerFromElement(BackingTrackList, source) as ListBoxItem;
                 OpenBackingMenu(owner, kind, item?.DataContext as BackingTrack ?? original?.DataContext as BackingTrack,
@@ -192,6 +227,37 @@ public partial class MainWindow
             try { message = await Task.Run(() => { using var decoder = new Services.BackingDecoder(track.Source); return $"{track.Title}\n{System.IO.Path.GetExtension(track.Source).TrimStart('.').ToUpperInvariant()} · {decoder.Format.SampleRate} Hz · {decoder.Format.Channels} ch\n{BackingTracksViewModel.FormatTime(decoder.Duration)}\n{track.Source}"; }); }
             catch { message = LanguageService.T("Não foi possível ler o arquivo. Use Localizar novamente."); }
             await new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T("Informações"), Content = new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, MaxWidth = 520 }, CloseButtonText = LanguageService.T("Fechar") }.ShowLocalizedAsync();
+        }
+        finally { backingDialogOpen = false; }
+    }
+    private async void ImportMetronomeWav()
+    {
+        var picker = new Microsoft.Win32.OpenFileDialog { Filter = "WAV (*.wav)|*.wav", Title = LanguageService.T("Importar som WAV") };
+        if (picker.ShowDialog(this) == true) await BackingTracks.ImportMetronomeSound(picker.FileName);
+    }
+    private void BackingMetronomeBpmKey(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true; EditMetronomeNumber(false);
+    }
+    private async void EditMetronomeNumber(bool offset)
+    {
+        if (backingDialogOpen) return;
+        backingDialogOpen = true;
+        try
+        {
+            string title = offset ? "Primeiro tempo (s)" : "BPM do metrônomo";
+            var input = new TextBox { Text = (offset ? BackingTracks.FirstBeatOffset : BackingTracks.MetronomeBpm).ToString("0.###", CultureInfo.CurrentCulture), MinWidth = 240 };
+            System.Windows.Automation.AutomationProperties.SetName(input, LanguageService.T(title));
+            var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T(title), Content = input, PrimaryButtonText = LanguageService.T("Salvar"), CloseButtonText = LanguageService.T("Cancelar") };
+            bool Valid() => double.TryParse(input.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double value) && double.IsFinite(value) && value >= (offset ? 0 : 20) && value <= (offset ? BackingTracks.Duration : 300);
+            input.TextChanged += (_, _) => dialog.IsPrimaryButtonEnabled = Valid(); dialog.IsPrimaryButtonEnabled = Valid();
+            dialog.Loaded += (_, _) => { input.Focus(); input.SelectAll(); };
+            if (await dialog.ShowLocalizedAsync() == Wpf.Ui.Controls.ContentDialogResult.Primary && Valid())
+            {
+                double value = double.Parse(input.Text, CultureInfo.CurrentCulture);
+                if (offset) BackingTracks.FirstBeatOffset = value; else BackingTracks.MetronomeBpm = value;
+            }
         }
         finally { backingDialogOpen = false; }
     }

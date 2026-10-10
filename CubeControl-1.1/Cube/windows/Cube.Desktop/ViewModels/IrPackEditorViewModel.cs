@@ -11,7 +11,8 @@ public sealed class IrPackEditorViewModel : Observable
     private readonly EditorViewModel owner;
     private string id = Guid.NewGuid().ToString("N"), name = "", description = "", message = "";
     private bool dirty, loading;
-    private IrPack? current;
+    private IrPack? current, origin;
+    private string basedOnName = "";
     public IrPackEditorViewModel(EditorViewModel owner)
     {
         this.owner = owner;
@@ -29,12 +30,16 @@ public sealed class IrPackEditorViewModel : Observable
     public EditorViewModel Owner => owner;
     public IrPackSlotViewModel[] Slots { get; }
     public IrPack? Current => current;
+    public IrPack? SelectedCatalogPack => owner.IrPacks.FirstOrDefault(p => p.Id == current?.Id);
     public bool ReadOnly => current != null && current.Group != "Meus packs";
-    private bool detailsExpanded;
-    public bool DetailsExpanded { get => detailsExpanded; set => Set(ref detailsExpanded, value); }
-    public bool EditablePack => !ReadOnly;
-    public string DisplayTitle => string.IsNullOrWhiteSpace(Name) ? "Novo pack" : Name;
-    public bool CanEdit => !ReadOnly && !owner.Busy;
+    public bool EditablePack => true;
+    public bool IsCreating => IsDraftSelection && Dirty;
+    public bool HasDraftNotice => Dirty;
+    public string BasedOnName => basedOnName;
+    public bool HasBasis => basedOnName.Length > 0;
+    public string DraftNoticeTitle => IsCreating ? "Criando pack" : "Alterações não salvas";
+    public string DisplayTitle => string.IsNullOrWhiteSpace(Name) ? "Montagem atual" : Name;
+    public bool CanEdit => !owner.Busy && (current == null || current.Definition != null);
     public bool Dirty { get => dirty; private set { if (Set(ref dirty, value)) RefreshState(); } }
     public string Name { get => name; set { if (Set(ref name, value)) { Notify(nameof(DisplayTitle)); Changed(); } } }
     public string Description { get => description; set { if (Set(ref description, value)) Changed(); } }
@@ -80,7 +85,10 @@ public sealed class IrPackEditorViewModel : Observable
         return image;
     }
     public string Message { get => message; private set => Set(ref message, value); }
-    public string DraftNotice => Dirty ? "Montagem não salva. Você pode revisar e aplicar sem salvar." : ReadOnly ? "Pack predefinido. Crie uma cópia para alterar sua montagem." : "";
+    public string DraftNotice => IsCreating
+        ? "Sua montagem ainda não foi salva. Você pode continuar editando, salvar ou revisar e aplicar."
+        : "Salvar atualiza este pack pessoal. Você também pode descartar as alterações.";
+
     public string Problems => string.Join("\n", new[] {
         string.Join("\n", Slots.Select(s => s.Problem).Where(p => p.Length > 0)),
         Slots.Where(s => s.Entry != null).GroupBy(s => s.Entry!.Sha256, StringComparer.OrdinalIgnoreCase).Any(g => g.Count() > 1) ? "Este pack contém IRs repetidos." : ""
@@ -96,8 +104,8 @@ public sealed class IrPackEditorViewModel : Observable
         string suffix = Localization.LanguageService.T(" (cópia)");
         Name = Name[..Math.Min(Name.Length, 120 - suffix.Length)] + suffix; Dirty = true;
     });
-    public ICommand SavePack => Action(async () => { if (await EnsureDetailsAsync()) Save(); }, () => CanEdit && HasEntries && Dirty);
-    public ICommand DiscardChanges => Action(async () => { if (await owner.Ask("Descartar alterações não salvas?")) Load(owner.IrPacks.FirstOrDefault(p => p.Id == current?.Id) ?? owner.IrPacks.FirstOrDefault()); }, () => Dirty);
+    public ICommand SavePack => Action(async () => { if (await EnsureDetailsAsync(true)) Save(); }, () => CanEdit && !ReadOnly && HasEntries);
+    public ICommand DiscardChanges => Action(async () => { if (await owner.Ask("Descartar alterações não salvas?")) Load(owner.IrPacks.FirstOrDefault(p => p.Id == origin?.Id) ?? owner.IrPacks.FirstOrDefault()); }, () => Dirty);
     public ICommand DeletePack => Action(async () =>
     {
         if (ReadOnly || current?.Definition == null || !owner.IrPacks.Any(p => p.Id == current.Id)) { Message = "Selecione um pack pessoal salvo."; return; }
@@ -127,22 +135,29 @@ public sealed class IrPackEditorViewModel : Observable
         if (choice == PackDraftDecision.Cancel) return false;
         if (choice == PackDraftDecision.Save)
         {
-            if (!await EnsureDetailsAsync()) return false;
+            if (!await EnsureDetailsAsync(true)) return false;
             try { Save(); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException) { ReportError(ex.Message); return false; }
         }
         return true;
     }
-    public async Task<bool> EnsureDetailsAsync()
+    public Func<string, string, Task<(string Name, string Description)?>>? ChooseDetails { get; set; }
+    public async Task<bool> EnsureDetailsAsync(bool always = false)
     {
-        if (!string.IsNullOrWhiteSpace(Name)) return true;
-        var title = new System.Windows.Controls.TextBox { MinWidth = 0, MaxLength = 120 };
+        if (!always && !string.IsNullOrWhiteSpace(Name)) return true;
+        if (ChooseDetails != null)
+        {
+            var details = await ChooseDetails(Name, Description);
+            if (details == null || string.IsNullOrWhiteSpace(details.Value.Name)) return false;
+            Name = details.Value.Name; Description = details.Value.Description; return true;
+        }
+        var title = new System.Windows.Controls.TextBox { Text = Name, MinWidth = 0, MaxLength = 120 };
         var notes = new System.Windows.Controls.TextBox { Text = Description, AcceptsReturn = true, TextWrapping = System.Windows.TextWrapping.Wrap, MinHeight = 64, MaxLength = 4000 };
         System.Windows.Automation.AutomationProperties.SetName(title, Localization.LanguageService.T("Nome do pack"));
         System.Windows.Automation.AutomationProperties.SetName(notes, Localization.LanguageService.T("Descrição do pack"));
         var panel = new System.Windows.Controls.StackPanel();
         panel.Children.Add(new System.Windows.Controls.TextBlock { Text = Localization.LanguageService.T("Nome do pack") }); panel.Children.Add(title);
         panel.Children.Add(new System.Windows.Controls.TextBlock { Text = Localization.LanguageService.T("Descrição do pack"), Margin = new System.Windows.Thickness(0,12,0,8) }); panel.Children.Add(notes);
-        var dialog = new Controls.PackDialog("Detalhes do pack", panel) { IsPrimaryEnabled = false };
+        var dialog = new Controls.PackDialog("Detalhes do pack", panel, always ? "Salvar" : "Continuar") { IsPrimaryEnabled = !string.IsNullOrWhiteSpace(Name) };
         title.TextChanged += (_, _) => dialog.IsPrimaryEnabled = !string.IsNullOrWhiteSpace(title.Text);
         title.Loaded += (_, _) => title.Focus();
         if (await dialog.ShowAsync() != Controls.PackDialogChoice.Primary) return false;
@@ -158,37 +173,48 @@ public sealed class IrPackEditorViewModel : Observable
     private void Load(IrPack? pack)
     {
         loading = true;
-        current = pack; id = pack?.Definition?.Id ?? Guid.NewGuid().ToString("N");
+        current = pack; origin = owner.IrPacks.FirstOrDefault(p => p.Id == pack?.Id); basedOnName = ""; id = pack?.Definition?.Id ?? Guid.NewGuid().ToString("N");
         Name = pack?.Name ?? ""; Description = pack?.Description ?? "";
         foreach (var slot in Slots) slot.Load(pack?.Definition?.Entries.FirstOrDefault(e => e.Slot == slot.Index));
         owner.SelectedIrPack = pack;
-        Message = ""; Dirty = false; DetailsExpanded = false; loading = false;
+        Message = ""; Dirty = false; loading = false;
         Notify(nameof(Current)); RefreshState();
     }
     internal void Changed()
     {
         if (loading) return;
-        Dirty = true; Message = ""; Notify(nameof(Problems)); Notify(nameof(CanExport)); Notify(nameof(HasEntries)); Notify(nameof(PackSummary));
+        if (ReadOnly && current?.Definition != null)
+        {
+            origin = current; basedOnName = current.Name;
+            id = Guid.NewGuid().ToString("N");
+            current = current with { Id = id, Group = "Meus packs", Definition = current.Definition with { Id = id, Group = "Meus packs" } };
+            loading = true;
+            try { owner.SelectedIrPack = current; } finally { loading = false; }
+            Notify(nameof(Current));
+        }
+        Dirty = true; Message = ""; RefreshState();
     }
     private void RefreshState()
     {
-        Notify(nameof(IsDraftSelection)); Notify(nameof(CanExport)); Notify(nameof(HasEntries)); Notify(nameof(PackSummary)); Notify(nameof(CanDelete)); Notify(nameof(ReadOnly)); Notify(nameof(EditablePack)); Notify(nameof(DisplayTitle)); Notify(nameof(CanEdit)); Notify(nameof(DraftNotice)); Notify(nameof(Problems));
+        Notify(nameof(IsCreating)); Notify(nameof(HasDraftNotice)); Notify(nameof(DraftNoticeTitle)); Notify(nameof(BasedOnName)); Notify(nameof(HasBasis));
+        Notify(nameof(SelectedCatalogPack)); Notify(nameof(IsDraftSelection)); Notify(nameof(CanExport)); Notify(nameof(HasEntries)); Notify(nameof(PackSummary)); Notify(nameof(CanDelete)); Notify(nameof(ReadOnly)); Notify(nameof(EditablePack)); Notify(nameof(DisplayTitle)); Notify(nameof(CanEdit)); Notify(nameof(DraftNotice)); Notify(nameof(Problems));
         foreach (var slot in Slots) slot.Refresh();
         CommandManager.InvalidateRequerySuggested();
     }
     public IrPackDefinition Draft() => new() { Id = id, Name = Name.Trim(), Description = Description.Trim(), Entries = Slots.Select(s => s.Entry).OfType<IrPackEntry>().ToArray() };
     public void Save()
     {
-        if (!CanEdit) return;
+        if (!CanEdit || ReadOnly || !HasEntries) return;
         var draft = Draft(); owner.PackStore.Save(draft);
         Dirty = false; owner.ReloadIrPacks(draft.Id); Load(owner.SelectedIrPack); Message = "Pack salvo.";
     }
     public void Import(string path)
     {
         if (owner.Busy) return;
+        var previousOrigin = origin;
         var imported = owner.PackStore.ImportDraft(path);
         owner.IrLibrary.Reload(); PackLibrary.Reload();
-        Load(owner.PackStore.Resolve(imported)); Dirty = true;
+        Load(owner.PackStore.Resolve(imported)); origin = previousOrigin; Dirty = true;
         Message = "Pack importado para revisão. Salvar e aplicar são ações separadas.";
     }
     public void Export(string path)
@@ -202,18 +228,32 @@ public sealed class IrPackEditorViewModel : Observable
     }
     public IrPackDefinition ApplicationDraft() => Draft() with { Name = string.IsNullOrWhiteSpace(Name) ? "Montagem atual" : Name.Trim() };
     public void ReportError(string error) => Message = error;
+    public bool AssignIr(int index, IrLibraryEntry entry)
+    {
+        if (!CanEdit || index is < 0 or > 7 || !PackLibrary.Entries.Contains(entry)) return false;
+        var reference = owner.PackStore.Reference(index, entry.RelativePath, IrViewModel.DisplayName(entry.FullPath, entry.Collection));
+        if (Slots[index].Entry == reference) return false;
+        Slots[index].Load(reference);
+        Changed(); return true;
+    }
+    public bool SwapSlots(int source, int destination)
+    {
+        if (!CanEdit || source is < 0 or > 7 || destination is < 0 or > 7 || source == destination || Slots[source].Entry == null) return false;
+        var entry = Slots[source].Entry;
+        if (entry == (Slots[destination].Entry == null ? null : Slots[destination].Entry! with { Slot = source })) return false;
+        Slots[source].Load(Slots[destination].Entry); Slots[destination].Load(entry); Changed(); return true;
+    }
     internal ICommand UseIr(IrPackSlotViewModel slot) => Action(() =>
     {
-        if (SelectedIr == null) { Message = "Selecione um IR da biblioteca."; return Task.CompletedTask; }
-        slot.Load(owner.PackStore.Reference(slot.Index, SelectedIr.RelativePath, IrViewModel.DisplayName(SelectedIr.FullPath, SelectedIr.Collection)));
-        Changed(); return Task.CompletedTask;
+        if (SelectedIr != null) AssignIr(slot.Index, SelectedIr);
+        return Task.CompletedTask;
     }, () => CanEdit && SelectedIr != null);
     internal ICommand Remove(IrPackSlotViewModel slot) => Action(() => { slot.Load(null); Changed(); return Task.CompletedTask; }, () => CanEdit && slot.Entry != null);
     internal ICommand Move(IrPackSlotViewModel slot, int offset) => Action(() =>
     {
-        var other = Slots[slot.Index + offset]; var entry = slot.Entry;
-        slot.Load(other.Entry); other.Load(entry); Changed(); return Task.CompletedTask;
-    }, () => CanEdit && slot.Index + offset is >= 0 and < 8);
+        SwapSlots(slot.Index, slot.Index + offset); return Task.CompletedTask;
+    }, () => CanEdit && slot.Entry != null && slot.Index + offset is >= 0 and < 8);
+
 }
 
 public enum PackDraftDecision { Save, Discard, Cancel }

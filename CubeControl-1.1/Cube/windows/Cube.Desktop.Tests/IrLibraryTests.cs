@@ -20,7 +20,7 @@ internal static class IrLibraryTests
         Check(Array.IndexOf(response, response.Max()) == 15 && Math.Abs(response[15]) < 1e-8, "1500 Hz reference peaks at its measured frequency bin");
         Check(Cube.Desktop.Controls.Waveform.Spectrum(new float[512]).All(db => db == -60), "silent response remains finite at display floor");
         var library = new IrLibraryViewModel(() => true);
-        Check(library.Entries.Count == 276 && library.Roots.Count == 5, "276 WAVs across five brands; NAM models excluded");
+        Check(library.Entries.Count == 958 && library.Roots.Count == 6, "958 WAVs across six providers; NAM models excluded");
         Check(library.Roots.All(n => !n.IsExpanded && n.EntryCount > 0), "brand folders start collapsed and report their IR counts");
         Check(library.Roots.Sum(n => n.EntryCount) == library.Entries.Count, "tree contains every WAV exactly once");
         Check(library.Roots.Single(n => n.Name == "Fender").Children.Select(n => n.Name).SequenceEqual(new[] { "1x12", "2x12" }), "brand leads directly to speaker configuration without redundant format level");
@@ -57,7 +57,7 @@ internal static class IrLibraryTests
         library.Search = "Orange";
         Check(library.Roots.Count == 1 && library.Roots[0].EntryCount == 20 && library.Roots[0].IsExpanded, "collection search expands matching folder");
         library.Search = "sm57";
-        Check(library.VisibleEntries.Count == library.Entries.Count(e => e.Name.Contains("sm57", StringComparison.OrdinalIgnoreCase) || e.Collection.Contains("sm57", StringComparison.OrdinalIgnoreCase)) && library.Selected == null, "collection and name filters do not auto-select");
+        Check(library.VisibleEntries.Count == library.Entries.Count(e => e.SearchText.Contains("sm57", StringComparison.OrdinalIgnoreCase)) && library.Selected == null, "collection and name filters do not auto-select");
         library.Search = "no-such-ir";
         Check(library.VisibleEntries.Count == 0, "empty search results");
 
@@ -75,6 +75,15 @@ internal static class IrLibraryTests
         model.IrLibrary.Search = "DELUXE"; await model.PendingLibraryLoad;
         Check(fake.Writes == 0 && model.IrLibrary.Selected == null, "filtering does not preview");
         model.IrLibrary.Search = "";
+        var capture = model.IrLibrary.Entries.First(e => e.Metadata != null).Metadata!;
+        model.IrLibrary.CollectionFilter = capture.CollectionId;
+        model.IrLibrary.CabinetFilter = capture.Cabinet;
+        model.IrLibrary.SpeakerFilter = capture.Speaker;
+        model.IrLibrary.MicrophoneFilter = capture.Microphone;
+        model.IrLibrary.PositionFilter = capture.Position;
+        model.IrLibrary.DistanceFilter = capture.CaptureDistanceMm.ToString();
+        model.IrLibrary.ClearFilters.Execute(null);
+        Check(fake.Writes == 0 && model.IrLibrary.Selected == null, "all capture filters and clear send no commands to connected pedal");
         model.IrLibrary.Selected = first; await model.PendingLibraryLoad;
         Check(model.Ir.PreviewConfirmed && fake.Writes > 0 && fake.FlashWrites == 0, "library selection previews in RAM only");
         var active = model.Ir.Audio; int writes = fake.Writes;

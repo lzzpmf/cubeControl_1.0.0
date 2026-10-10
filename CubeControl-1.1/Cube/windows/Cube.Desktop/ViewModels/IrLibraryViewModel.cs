@@ -2,7 +2,11 @@ using System.IO;
 
 namespace Cube.Desktop.ViewModels;
 
-public sealed record IrLibraryEntry(string RelativePath, string FullPath, string Collection, string Name);
+public sealed record IrLibraryEntry(string RelativePath, string FullPath, string Collection, string Name)
+{
+    public IrLibraryMetadata? Metadata { get; init; }
+    public string SearchText => RelativePath + " " + Name + " " + Metadata?.SearchText;
+}
 
 public sealed class IrLibraryNode(string name, IrLibraryEntry? entry, Action<IrLibraryNode> select) : Observable
 {
@@ -45,6 +49,48 @@ public sealed class IrLibraryViewModel : Observable
     private readonly bool packPicker;
     public IReadOnlyList<IrLibraryEntry> VisibleEntries { get; private set; } = [];
     public string Message { get; private set; } = "";
+    private string catalogProblem = "";
+    private string collectionFilter = "", cabinetFilter = "", speakerFilter = "", microphoneFilter = "", positionFilter = "", distanceFilter = "";
+    public IReadOnlyList<IrFilterOption> CollectionOptions { get; private set; } = [];
+    public IReadOnlyList<IrFilterOption> CabinetOptions { get; private set; } = [];
+    public IReadOnlyList<IrFilterOption> SpeakerOptions { get; private set; } = [];
+    public IReadOnlyList<IrFilterOption> MicrophoneOptions { get; private set; } = [];
+    public IReadOnlyList<IrFilterOption> PositionOptions { get; private set; } = [];
+    public IReadOnlyList<IrFilterOption> DistanceOptions { get; private set; } = [];
+    public string CollectionFilter { get => collectionFilter; set => ChangeFilter(ref collectionFilter, value, nameof(CollectionFilter)); }
+    public string CabinetFilter { get => cabinetFilter; set => ChangeFilter(ref cabinetFilter, value, nameof(CabinetFilter)); }
+    public string SpeakerFilter { get => speakerFilter; set => ChangeFilter(ref speakerFilter, value, nameof(SpeakerFilter)); }
+    public string MicrophoneFilter { get => microphoneFilter; set => ChangeFilter(ref microphoneFilter, value, nameof(MicrophoneFilter)); }
+    public string PositionFilter { get => positionFilter; set => ChangeFilter(ref positionFilter, value, nameof(PositionFilter)); }
+    public string DistanceFilter { get => distanceFilter; set => ChangeFilter(ref distanceFilter, value, nameof(DistanceFilter)); }
+    public UiCommand ClearFilters { get; }
+    public string SelectedDetails
+    {
+        get
+        {
+            if (Selected?.Metadata is not { } m) return Selected == null ? "" : $"Nome original: {Selected.Name}\n{Selected.RelativePath}\nMetadados de captura não informados.";
+            return $"Origem: Overdriven.fr · {m.Collection}" + (m.IsPreview ? " · SP1-PREVIEW" : "")
+                + $"\nCaixa: {m.Cabinet}\nFalante: {m.Speaker}\nMicrofone: {m.MicrophoneLabel}"
+                + $"\nPosição: {m.Position} · {m.PositionDescription}\nDistância de captura aproximada: {m.CaptureDistanceMm} mm"
+                + $"\nPotência: {m.PowerAmp} · Pré de microfone: {m.MicPreamp}"
+                + $"\nVariantes: {(m.Variants.Length == 0 ? "Nenhuma" : string.Join("-", m.Variants))} · {m.CapturePrefix}"
+                + $"\nFormato original: {m.Format} · {m.Bits} bits · {m.SampleRate} Hz · {m.Channels} canal · {m.DurationMs:0.##} ms"
+                + "\nConversão no pedal: mono · 48 kHz · 512 amostras (≈10,7 ms), sem normalização."
+                + "\nDistância de captura não altera o controle Distance do pedal."
+                + $"\nNome original: {m.OriginalName}\n{Selected.RelativePath}";
+        }
+    }
+    private void ChangeFilter(ref string field, string value, string property)
+    {
+        if (canSelect() && Set(ref field, value ?? "", property)) Filter();
+    }
+    private void ResetFilters()
+    {
+        if (!canSelect()) return;
+        search = collectionFilter = cabinetFilter = speakerFilter = microphoneFilter = positionFilter = distanceFilter = "";
+        foreach (string name in new[] { nameof(Search), nameof(CollectionFilter), nameof(CabinetFilter), nameof(SpeakerFilter), nameof(MicrophoneFilter), nameof(PositionFilter), nameof(DistanceFilter) }) Notify(name);
+        Filter();
+    }
     public event Action<IrLibraryEntry?>? SelectionChanged;
     public string Search { get => search; set { if (canSelect() && Set(ref search, value)) Filter(); } }
     public IrLibraryEntry? Selected
@@ -54,6 +100,7 @@ public sealed class IrLibraryViewModel : Observable
         {
             if (!canSelect() || !Set(ref selected, value)) return;
             SynchronizeSelection();
+            Notify(nameof(SelectedDetails));
             SelectionChanged?.Invoke(value);
         }
     }
@@ -61,6 +108,7 @@ public sealed class IrLibraryViewModel : Observable
     {
         bool changed = Set(ref selected, null, nameof(Selected));
         SynchronizeSelection();
+        Notify(nameof(SelectedDetails));
         if (changed) SelectionChanged?.Invoke(null);
     }
     public IrLibraryViewModel(Func<bool> canSelect, string? directory = null, string? importedDirectory = null, bool packPicker = false)
@@ -69,11 +117,13 @@ public sealed class IrLibraryViewModel : Observable
         this.directory = directory ?? Path.Combine(AppContext.BaseDirectory, "Assets", "ImpulseResponses");
         this.importedDirectory = importedDirectory;
         this.packPicker = packPicker;
+        ClearFilters = new(ResetFilters, canSelect);
         Reload();
     }
     public void Reload()
     {
         var entries = new List<IrLibraryEntry>();
+        var catalog = IrLibraryCatalog.Load(directory, out catalogProblem);
         void Scan(string folder, string prefix)
         {
             try
@@ -84,28 +134,48 @@ public sealed class IrLibraryViewModel : Observable
                 {
                     string relative = prefix + Path.GetRelativePath(folder, p);
                     string collection = prefix.Length > 0 ? "IRs importados" : Path.GetDirectoryName(relative) ?? "ImpulseResponses";
-                    entries.Add(new(relative, p, collection, Path.GetFileNameWithoutExtension(p)));
+                    catalog.TryGetValue(relative.Replace('\\', '/'), out var metadata);
+                    if (prefix.Length > 0) metadata = null;
+                    entries.Add(new(relative, p, metadata?.Collection ?? collection, Path.GetFileNameWithoutExtension(p)) { Metadata = metadata });
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         Scan(directory, "");
         if (importedDirectory != null) Scan(importedDirectory, "Imported/");
-        Entries = entries.OrderBy(e => e.Collection, StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+        Entries = entries.OrderBy(e => e.Metadata is { } m ? "Overdriven.fr/" + m.Collection : e.Collection, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+        IReadOnlyList<IrFilterOption> Options(Func<IrLibraryMetadata, string> key, Func<IrLibraryMetadata, string>? label = null, bool numeric = false)
+        {
+            var values = Entries.Where(e => e.Metadata != null).Select(e => e.Metadata!).GroupBy(key)
+                .Select(g => new IrFilterOption(g.Key, label?.Invoke(g.First()) ?? g.Key));
+            values = numeric ? values.OrderBy(v => int.Parse(v.Value, System.Globalization.CultureInfo.InvariantCulture)) : values.OrderBy(v => v.Label, StringComparer.OrdinalIgnoreCase);
+            return new[] { new IrFilterOption("", "Todos") }.Concat(Entries.Any(e => e.Metadata == null) ? new[] { new IrFilterOption("?", "Não informado") } : []).Concat(values).ToArray();
+        }
+        CollectionOptions = Options(m => m.CollectionId, m => m.Collection);
+        CabinetOptions = Options(m => m.Cabinet); SpeakerOptions = Options(m => m.Speaker);
+        MicrophoneOptions = Options(m => m.Microphone, m => m.MicrophoneLabel); PositionOptions = Options(m => m.Position);
+        DistanceOptions = Options(m => m.CaptureDistanceMm.ToString(System.Globalization.CultureInfo.InvariantCulture), m => $"{m.CaptureDistanceMm} mm", numeric: true);
+        foreach (string name in new[] { nameof(CollectionOptions), nameof(CabinetOptions), nameof(SpeakerOptions), nameof(MicrophoneOptions), nameof(PositionOptions), nameof(DistanceOptions) }) Notify(name);
         Notify(nameof(Entries)); Filter();
     }
     private void Filter()
     {
         ClearSelection();
         var terms = Search.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
-        VisibleEntries = Entries.Where(e => terms.All(term =>
-            e.RelativePath.Contains(term, StringComparison.OrdinalIgnoreCase))).ToArray();
+        static bool Matches(string filter, string? value) => filter.Length == 0 || (filter == "?" ? value == null : filter == value);
+        VisibleEntries = Entries.Where(e => terms.All(term => e.SearchText.Contains(term, StringComparison.OrdinalIgnoreCase))
+            && Matches(CollectionFilter, e.Metadata?.CollectionId) && Matches(CabinetFilter, e.Metadata?.Cabinet)
+            && Matches(SpeakerFilter, e.Metadata?.Speaker) && Matches(MicrophoneFilter, e.Metadata?.Microphone)
+            && Matches(PositionFilter, e.Metadata?.Position) && Matches(DistanceFilter, e.Metadata?.CaptureDistanceMm.ToString(System.Globalization.CultureInfo.InvariantCulture))).ToArray();
         var roots = new List<IrLibraryNode>();
         foreach (var entry in VisibleEntries)
         {
             var children = roots;
             string? directory = entry.RelativePath.StartsWith("Imported/") ? "IRs importados" : Path.GetDirectoryName(entry.RelativePath);
             string[] parts = (directory ?? "").Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
+            if (entry.Metadata is { } metadata)
+                parts = ["Overdriven.fr", metadata.Collection, metadata.MicrophoneLabel];
             // The disk separates WAV/NAM assets; the WAV-only picker does not need that extra level.
             if (parts.Length > 1 && parts[1].Equals("IRs WAV", StringComparison.OrdinalIgnoreCase))
                 parts = parts.Where((_, index) => index != 1).ToArray();
@@ -120,6 +190,7 @@ public sealed class IrLibraryViewModel : Observable
                 children = folder.Children;
             }
             string label = entry.Name;
+            if (entry.Metadata is { } details) label = details.LeafName;
             string collection = Path.GetFileName(directory) ?? "";
             if (collection.Length > 0 && label.StartsWith(collection + " ", StringComparison.OrdinalIgnoreCase))
                 label = label[collection.Length..].TrimStart(' ', '-');
@@ -127,7 +198,7 @@ public sealed class IrLibraryViewModel : Observable
         }
         Roots = roots.OrderBy(n => n.Name, StringComparer.OrdinalIgnoreCase).ToArray();
         // Search reveals the first matching path while keeping the accordion invariant.
-        if (terms.Length > 0)
+        if (terms.Length > 0 || new[] { CollectionFilter, CabinetFilter, SpeakerFilter, MicrophoneFilter, PositionFilter, DistanceFilter }.Any(f => f.Length > 0))
         {
             var level = Roots;
             while (level.FirstOrDefault(n => n.IsFolder) is { } folder)
@@ -138,6 +209,7 @@ public sealed class IrLibraryViewModel : Observable
         }
         Message = Entries.Count == 0 ? packPicker ? "Biblioteca vazia. Importe um pack com WAVs para montar seus IRs." : "Biblioteca indisponível ou vazia. Você pode selecionar um WAV externo."
             : VisibleEntries.Count == 0 ? "Nenhum IR encontrado." : packPicker ? "Selecione um IR e use-o no slot desejado. Nenhum áudio é enviado ao pedal." : "Selecione um IR para ouvir no pedal conectado. A gravação no slot é separada.";
+        if (catalogProblem.Length > 0) Message += " " + catalogProblem;
         Notify(nameof(Roots)); Notify(nameof(VisibleEntries)); Notify(nameof(Message));
     }
     private void SelectNode(IrLibraryNode node)

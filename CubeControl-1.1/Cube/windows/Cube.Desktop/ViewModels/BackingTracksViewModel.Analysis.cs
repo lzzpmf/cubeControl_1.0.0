@@ -7,7 +7,7 @@ public sealed partial class BackingTracksViewModel
 {
     internal int MusicAnalysisCount { get; private set; }
     private void MusicLanguageChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    { if (e.PropertyName == "Language") foreach (var track in Tracks) track.RefreshMusic(); }
+    { if (e.PropertyName == "Language") { foreach (var track in Tracks) track.RefreshMusic(); RefreshMetronome(); } }
     private readonly Dictionary<string, BackingMusicResult> musicCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<BackingTrack, string> musicFinished = [];
     private BackingTrack? musicActive;

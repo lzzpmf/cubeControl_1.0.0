@@ -60,6 +60,11 @@ public sealed class BackingButtonFace : FrameworkElement
         {
             var brush = SystemParameters.HighContrast || ThemeService.Instance.IsHighContrast ? SystemColors.WindowTextBrush : (Brush)(TryFindResource("CubeText") ?? Brushes.White);
             var text = new FormattedText(Glyph, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Segoe UI Symbol"), size * .48, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            if (string.IsNullOrEmpty(Art))
+            {
+                var surface = (Brush)(TryFindResource(IsActive ? "CubeSelected" : "CubeInset") ?? Brushes.Transparent);
+                dc.DrawEllipse(surface, IsActive ? new Pen(brush, 1.5) : null, new Point(ActualWidth / 2, ActualHeight / 2), size * .44, size * .44);
+            }
             dc.DrawText(text, new Point((ActualWidth - text.Width) / 2, (ActualHeight - text.Height) / 2));
             return;
         }
@@ -192,6 +197,17 @@ public sealed class BackingFader : Slider
         if (steps != 0) SetCurrentValue(ValueProperty, Math.Clamp(Value + steps, Minimum, Maximum));
         e.Handled = true;
     }
-    private void RefreshTemplate() => SetCurrentValue(TemplateProperty,
-        FindResource(ThemeService.Instance.IsHighContrast || SystemParameters.HighContrast ? "BackingAccessibleFaderTemplate" : "OfficialHorizontalFaderTemplate"));
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.Property == OrientationProperty && IsLoaded) RefreshTemplate();
+    }
+    private void RefreshTemplate()
+    {
+        bool accessible = ThemeService.Instance.IsHighContrast || SystemParameters.HighContrast;
+        string key = Orientation == Orientation.Vertical
+            ? accessible ? "BackingAccessibleVerticalFaderTemplate" : "OfficialVerticalFaderTemplate"
+            : accessible ? "BackingAccessibleFaderTemplate" : "OfficialHorizontalFaderTemplate";
+        SetCurrentValue(TemplateProperty, FindResource(key));
+    }
 }

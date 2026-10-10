@@ -28,6 +28,10 @@ public sealed class BackingAudioEngine : IDisposable
     private float[] block = [];
     private byte[] bytes = [];
     private int generation;
+    private MetronomeSettings metronome = new();
+    private long renderedFrames, countInFrames, countInRemaining;
+    public bool IsCountingIn { get; private set; }
+    public int MetronomeBeat { get; private set; }
     public BackingPlaybackSnapshot Snapshot => snapshot;
     public event Action<BackingPlaybackSnapshot>? Changed;
     public event Action<int, long>? LoopCompleted;
@@ -51,10 +55,22 @@ public sealed class BackingAudioEngine : IDisposable
         path = file; outputId = endpoint; speed = rate; pitch = semitones; looping = loop; loopStart = a; loopEnd = b; volume = level; muted = mute;
         generation++; Rebuild(position, false);
     });
-    public Task Play() => Invoke(() =>
+    public Task ConfigureMetronome(MetronomeSettings settings) => Invoke(() =>
+    {
+        if (!settings.Valid) throw new ArgumentException("Invalid metronome settings.");
+        if (metronome == settings) return;
+        var previous = metronome;
+        metronome = settings;
+        if (output != null && (previous.Enabled != settings.Enabled || previous.Bpm != settings.Bpm
+            || previous.Beats != settings.Beats || previous.EighthNotes != settings.EighthNotes || previous.Offset != settings.Offset))
+        { UpdateClock(); Rebuild(snapshot.Position, snapshot.State == BackingPlaybackState.Playing); }
+    });
+    public Task Play() => Play(false);
+    public Task Play(bool countIn) => Invoke(() =>
     {
         if (output == null) return;
         if (snapshot.State == BackingPlaybackState.Ended) Rebuild(looping ? loopStart : 0, false);
+        if (countIn && metronome.Enabled && metronome.CountInBars > 0) Rebuild(snapshot.Position, false, true);
         Fill(); output!.Play(); Publish(BackingPlaybackState.Playing, snapshot.Position);
     });
     public Task Pause() => Invoke(() => { if (output == null) return; UpdateClock(); output.Pause(); Publish(BackingPlaybackState.Paused, snapshot.Position); });
@@ -70,7 +86,7 @@ public sealed class BackingAudioEngine : IDisposable
     public Task Stop() => Invoke(() => { if (path != null && output != null) Rebuild(looping ? loopStart : 0, false); });
     public Task ReleaseOutput() => Invoke(() => { UpdateClock(); CloseAudio(); Publish(BackingPlaybackState.Paused, snapshot.Position); });
     public Task Clear() => Invoke(() => { generation++; CloseAudio(); path = null; snapshot = new(BackingPlaybackState.Empty, 0, 0, null, generation); Changed?.Invoke(snapshot); });
-    private void Rebuild(double position, bool resume)
+    private void Rebuild(double position, bool resume, bool countIn = false)
     {
         if (path == null || outputId == null) return;
         CloseAudio(); Publish(BackingPlaybackState.Loading, position);
@@ -84,6 +100,9 @@ public sealed class BackingAudioEngine : IDisposable
         }
         provider = speed != 1 || pitch != 0 ? new BackingPeakGuard(processing) : processing;
         start = position; eof = false; gain = 0;
+        renderedFrames = 0;
+        countInFrames = countIn ? (long)Math.Round(metronome.CountInBars * metronome.Beats * metronome.Interval / speed * processing.WaveFormat.SampleRate) : 0;
+        countInRemaining = countInFrames; IsCountingIn = countInFrames > 0;
         snapshot = snapshot with { Repetitions = 0 };
         int samples = Math.Max(processing.WaveFormat.Channels, processing.WaveFormat.SampleRate / 100 * processing.WaveFormat.Channels);
         block = new float[samples]; bytes = new byte[samples * sizeof(float)];
@@ -105,7 +124,10 @@ public sealed class BackingAudioEngine : IDisposable
         if (queue == null || provider == null || eof) return;
         while (queue.FreeBytes >= bytes.Length)
         {
-            int count = provider.Read(block);
+            bool prelude = countInRemaining > 0;
+            int count;
+            if (prelude) { count = (int)Math.Min(block.Length, countInRemaining * provider.WaveFormat.Channels); Array.Clear(block); }
+            else count = provider.Read(block);
             if (count == 0) { eof = true; queue.Complete(); break; }
             float target = muted ? 0 : (float)volume;
             float step = 1f / Math.Max(1, provider.WaveFormat.SampleRate * .005f);
@@ -113,8 +135,17 @@ public sealed class BackingAudioEngine : IDisposable
             for (int i = 0; i < count; i += channels)
             {
                 gain += Math.Clamp(target - gain, -step, step);
-                for (int c = 0; c < channels; c++) block[i + c] *= gain;
+                double sourceTime = prelude ? metronome.Offset + renderedFrames * speed / provider.WaveFormat.SampleRate
+                    : MetronomeClick.SourcePosition(renderedFrames - countInFrames, provider.WaveFormat.SampleRate, start, speed, looping, loopStart, loopEnd);
+                float click = muted ? 0 : MetronomeClick.Sample(metronome, sourceTime, speed);
+                for (int c = 0; c < channels; c++)
+                {
+                    float mixed = block[i + c] * gain + click;
+                    block[i + c] = metronome.Enabled ? Math.Clamp(mixed, -1, 1) : mixed;
+                }
+                renderedFrames++;
             }
+            if (prelude) countInRemaining -= count / channels;
             float peak = 0;
             for (int i = 0; i < count; i++) peak = Math.Max(peak, Math.Abs(block[i]));
             Volatile.Write(ref outputPeak, Math.Max(Volatile.Read(ref outputPeak), peak));
@@ -126,6 +157,10 @@ public sealed class BackingAudioEngine : IDisposable
     {
         if (output == null || processing == null || snapshot.State is not (BackingPlaybackState.Playing or BackingPlaybackState.Paused)) return;
         double elapsed = output.GetPosition() / (double)output.OutputWaveFormat.AverageBytesPerSecond;
+        double preludeDuration = countInFrames / (double)processing.WaveFormat.SampleRate;
+        IsCountingIn = elapsed < preludeDuration;
+        MetronomeBeat = metronome.Enabled ? metronome.BeatAt(IsCountingIn ? metronome.Offset + elapsed * speed : snapshot.Position) : 0;
+        elapsed = Math.Max(0, elapsed - preludeDuration);
         double sourcePosition = start + elapsed * speed;
         long repetitions = 0;
         if (looping && sourcePosition >= loopEnd)
@@ -141,6 +176,7 @@ public sealed class BackingAudioEngine : IDisposable
         }
         long previousRepetitions = snapshot.Repetitions;
         snapshot = snapshot with { Position = Math.Min(processing.Duration, sourcePosition), Repetitions = repetitions };
+        if (!IsCountingIn) MetronomeBeat = metronome.Enabled ? metronome.BeatAt(snapshot.Position) : 0;
         if (repetitions > previousRepetitions) LoopCompleted?.Invoke(generation, repetitions);
     }
     private void Work()
@@ -166,6 +202,7 @@ public sealed class BackingAudioEngine : IDisposable
     private void Fail(Exception error) { double position = snapshot.Position; CloseAudio(); Publish(BackingPlaybackState.Error, position, error); }
     private void CloseAudio()
     {
+        IsCountingIn = false; MetronomeBeat = 0;
         var previous = output; output = null;
         try { previous?.Stop(); } finally { previous?.Dispose(); processing?.Dispose(); processing = null; device?.Dispose(); device = null; queue = null; provider = null; }
     }
