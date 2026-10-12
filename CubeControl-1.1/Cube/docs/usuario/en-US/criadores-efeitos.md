@@ -6,7 +6,7 @@ Select the effect on the Pedalboard and open its creator. Manipulate the graph c
 Drawings are illustrative, not acoustic-response measurements. Normal pedal controls remain separate from creators.
 
 ## Preview and persistence
-Read active effect checks the firmware profile and physical context and saves a reference before enabling adjustments. Use the same preset in the app and on the pedal. Other operations may be blocked during preview to prevent conflicts.
+When starting a new preview, the app checks the firmware and requires PRESET mode on the pedal. It reads the physical preset and selects the matching A/B/C in the interface. Preparation may send live adjustments to enable the section and give the effect an audible level before capturing its reference; Read active effect is therefore not a read-only operation. These adjustments may leave unsaved bank changes. The app cannot remotely change the physical pedal mode. Other operations may be blocked during preview to prevent conflicts.
 
 Chorus, phaser, delay and reverb creators modify RAM: **they do not write their adjustments to flash or guarantee persistence after power-off**. Export saves a local file; import prepares an edit, and Apply settings sends it to an active preview.
 

@@ -49,4 +49,4 @@ With **Follow track** on, the metronome uses the detected or corrected BPM and f
 Preferences, manual BPM and alignment per file are remembered, but the metronome always opens stopped. Changing mode or output stops clicks. WAV export excludes the metronome; loopback output recording can include the clicks you hear.
 
 ## Session and files
-The list, output, volume and mute are stored in local preferences. The list is not a backup of audio files. See [Privacy](privacidade.md) for storage and external services.
+The playlist, selection, output and playback adjustments remain in the current session only. Reopening the app starts an empty playlist; the old `backing-tracks-v1.json` is neither loaded nor updated. Metronome preferences, manual BPM and beat alignment per file, plus the YouTube download folder and completed-download records, are stored separately. Downloaded audio remains in your chosen folder; the list is not a backup of files. See [Privacy](privacidade.md) for storage and external services.

@@ -49,4 +49,4 @@ Com **Acompanhar faixa**, o metrônomo usa o BPM detectado ou corrigido e acompa
 Preferências, BPM manual e alinhamento por arquivo são lembrados, mas o metrônomo sempre abre parado. Trocar de modo ou saída interrompe os cliques. Exportar WAV não inclui o metrônomo; uma gravação da saída por loopback pode incluir os cliques que você está ouvindo.
 
 ## Sessão e arquivos
-Lista, saída, volume e mute ficam nas preferências locais. Não conte com a lista como backup dos áudios. Consulte [Privacidade](privacidade.md) para armazenamento e serviços externos.
+A playlist, a seleção, a saída e os ajustes de reprodução ficam apenas nesta sessão. Reabrir o aplicativo inicia uma playlist vazia; o antigo `backing-tracks-v1.json` não é carregado nem atualizado. As preferências do metrônomo, seu BPM manual e alinhamento por arquivo, além da pasta e dos registros de downloads do YouTube, são guardados separadamente. Os áudios baixados permanecem na pasta escolhida; a lista não é um backup dos arquivos. Consulte [Privacidade](privacidade.md) para armazenamento e serviços externos.

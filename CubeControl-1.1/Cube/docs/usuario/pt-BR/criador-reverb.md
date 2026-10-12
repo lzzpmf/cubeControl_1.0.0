@@ -1,7 +1,7 @@
 # Criador de reverb
 
 ## Preparar a prévia
-Na Pedaleira, abra Reverb → Criador de reverb. Ative reverb e a seção reverb/cabinet, desligue a modulação, selecione o mesmo preset físico no aplicativo e use Ler reverb ativo. Um perfil ou contexto incompatível impede iniciar a prévia; não tente contornar essa verificação.
+Selecione fisicamente o modo PRESET e o A/B/C desejado no pedal. Na Pedaleira, abra o criador e use Ler reverb ativo para iniciar a prévia. O aplicativo seleciona na interface o preset físico detectado. A preparação ativa a seção reverb/cabinet e aumenta o reverb se estiver em zero; não exige desligar a modulação. Essa preparação pode alterar parâmetros ao vivo, sem salvar o banco. Um perfil ou contexto incompatível impede iniciar a prévia; consulte [Criadores de efeitos](criadores-efeitos.md).
 
 ## Controles
 Sinal direto, sinal reverberado, realimentação, retorno das linhas e amortecimento. Ajuste gradualmente dentro das faixas do editor.

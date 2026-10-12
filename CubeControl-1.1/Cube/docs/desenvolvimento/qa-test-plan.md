@@ -1,6 +1,6 @@
 # QA TEST PLAN
 
-> Atualização de contexto — 12/10/2026: este documento preserva o registro anterior. Referências a backups automáticos em disco, pastas `*Recovery` e recuperação por `pending-*-preview.json` não descrevem o editor atual, que mantém snapshots apenas na sessão. Consulte a [arquitetura atual](arquitetura.md) e a [revisão de 12/10/2026](revisao-documental.md) antes de interpretar esses cenários como comportamento implementado.
+> Atualização de contexto — 12/10/2026: este documento preserva o registro anterior. Referências a backups automáticos em disco, pastas `*Recovery` e recuperação por `pending-*-preview.json` não descrevem o editor atual, que mantém snapshots apenas na sessão. Consulte a [arquitetura atual](arquitetura.md) e a [revisão de 12/10/2026](revisao-documental.md) antes de interpretar esses cenários como comportamento implementado. A persistência do player e das imagens também mudou: o antigo `backing-tracks-v1.json` não é usado, e `gear-images-v1.json` migra apenas imagens elegíveis do arquivo visual antigo.
 
 ## 1. Resumo Executivo
 

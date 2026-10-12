@@ -1,7 +1,7 @@
 # Criador de delay
 
 ## Preparar a prévia
-Na Pedaleira, abra Delay → Criador de delay. Ative a seção delay/modulação, desligue chorus/phaser, selecione o mesmo preset físico no aplicativo e use Ler delay ativo. Um perfil ou contexto incompatível impede iniciar a prévia; não tente contornar essa verificação.
+Selecione fisicamente o modo PRESET e o A/B/C desejado no pedal. Na Pedaleira, abra o criador e use Ler delay ativo para iniciar a prévia. O aplicativo seleciona na interface o preset físico detectado. A preparação ativa a seção delay/modulação e aumenta a mistura se estiver em zero; não exige desligar chorus/phaser. Essa preparação pode alterar parâmetros ao vivo, sem salvar o banco. Um perfil ou contexto incompatível impede iniciar a prévia; consulte [Criadores de efeitos](criadores-efeitos.md).
 
 ## Controles
 O gráfico oferece profundidade e velocidade de modulação temporal, tempo em amostras internas e resolução fina de realimentação/mistura. Profundidade e velocidade são percentuais do original: profundidade zero elimina a oscilação, velocidade zero congela sua fase. A velocidade efetiva depende do tempo. Mistura interna 50 mantém direto e eco integrais; não é uma soma complementar wet/dry. A equivalência do tempo em milissegundos não foi comprovada por áudio.

@@ -1,7 +1,7 @@
 # Criador de phaser
 
 ## Preparar a prévia
-Na Pedaleira, abra Phaser → Criador de phaser. Ative phaser e a seção delay/modulação no preset físico, selecione o mesmo A/B/C no aplicativo e use Ler phaser ativo. Um perfil ou contexto incompatível impede iniciar a prévia; não tente contornar essa verificação.
+Selecione fisicamente o modo PRESET e o A/B/C desejado no pedal. Na Pedaleira, abra o criador e use Ler phaser ativo para iniciar a prévia. O aplicativo seleciona na interface o preset físico detectado. A preparação seleciona phaser e ativa a seção delay/modulação quando necessário. Essa preparação pode alterar parâmetros ao vivo, sem salvar o banco. Um perfil ou contexto incompatível impede iniciar a prévia; consulte [Criadores de efeitos](criadores-efeitos.md).
 
 ## Controles
 Velocidade e extremos de frequência estimados, nível e número de seções. O extremo inferior deve ser menor ou igual ao superior. Valores estimados não são medições acústicas.

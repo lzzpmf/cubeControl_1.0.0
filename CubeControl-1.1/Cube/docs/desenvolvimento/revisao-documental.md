@@ -26,6 +26,17 @@ Os testes foram executados na raiz por `dotnet run --project CubeControl-1.1/Cub
 
 Não houve acesso ao pedal, testes visuais WPF, escuta, atualização de firmware ou geração/instalação do pacote completo. Os testes simulados não comprovam persistência após desligar nem compatibilidade física com outros firmwares.
 
+## Complemento da revisão — 12/10/2026
+
+Uma segunda conferência estática identificou e corrigiu lacunas adicionais nos guias atuais:
+
+- `BackingTracksViewModel` mantém playlist e reprodução na sessão, sem ler/gravar `backing-tracks-v1.json`. Metrônomo e downloads do YouTube têm arquivos próprios de preferências.
+- `GearImagePreferences` salva `gear-images-v1.json` e migra apenas imagens do arquivo visual antigo. Nomes de packs usam `ir-pack-names-v1.json`; o editor não lê `IrNames/*.txt`.
+- `PrepareAdvancedEffectAsync` exige modo PRESET, seleciona o preset físico na interface e pode escrever parâmetros live para preparar uma nova prévia. Os guias agora distinguem essa preparação de uma leitura sem escrita e não exigem desligar modulação para delay/reverb.
+- A descrição de serviços externos inclui a prévia de áudio do YouTube acionada por hover.
+
+Esta conferência não executou os diagnósticos nem acessou o pedal. Não representa nova execução dos testes de protocolo registrados acima.
+
 ## Escopo e resultado
 
 Foram analisados os **21 arquivos Markdown originais** do repositório, incluindo relatórios da raiz, documentação da aplicação, READMEs de recursos e o README de terceiro em `resources/META-INF`. O comportamento descrito foi confrontado com projetos C#/XAML, scripts PowerShell/CMD, catálogos e artefatos binários disponíveis.

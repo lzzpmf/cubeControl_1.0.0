@@ -66,13 +66,19 @@ Diretório padrão: `%LOCALAPPDATA%\CubeControl`. Com `CubeSimulation=true`, os 
 
 | Caminho relativo | Conteúdo / comportamento |
 | --- | --- |
-| `visual-preferences-v1.json` | Associações de gabinetes, nomes por conteúdo, imagens e preferência de associação automática |
-| `IrNames/` | Arquivos `.txt` por hash do IR com o nome local do WAV; mantidos também para compatibilidade com metadados anteriores |
+| `gear-images-v1.json` | Associações de imagens; na primeira carga, migra apenas imagens elegíveis de `visual-preferences-v1.json`, se existir |
+| `ir-pack-names-v1.json` | Nomes locais por hash, salvos ao aplicar packs e carregados ao atualizar o catálogo |
+| `IrPacks/` | Packs pessoais em `.cubeirpack.json` |
+| `ImportedIrs/` | IRs importados usados pelo armazenamento de packs |
 | `Images/` | Cópias de imagens personalizadas |
-| `backing-tracks-v1.json` | Lista de caminhos de áudio, ordem, seleção, saída, volume e mute |
+| `backing-metronome-v1.json` | Preferências do metrônomo, BPM manual e alinhamento por arquivo, som e lista de sons personalizados |
+| `metronome-sounds/` | Cópias de WAVs importados para o metrônomo |
+| `youtube-downloads-v1.json` | Pasta de download e associação de IDs de vídeos a caminhos de downloads concluídos |
 | `appearance-v1.json` | Tema, sempre na pasta CubeControl |
 | `language-v1.json` | Idioma, sempre na pasta CubeControl |
 | `zoom-v1.json` | Zoom, sempre na pasta CubeControl |
+
+A playlist, a seleção, a saída e os ajustes de reprodução ficam na sessão atual. O player não carrega nem atualiza o antigo `backing-tracks-v1.json`; reabrir começa com playlist vazia. Preferências do metrônomo e registros de downloads são persistências separadas. O metrônomo inicia parado. O editor atual também não lê os antigos nomes em `IrNames/*.txt`; a migração de `visual-preferences-v1.json` abrange apenas imagens, não associações de gabinetes ou nomes.
 
 Os fluxos automáticos de `BackupBank`, `BackupIr` e preservação de amp mantêm cópias em memória da sessão. As prévias de IR e dos criadores também não geram nem carregam arquivos `pending-*-preview.json` no editor atual. Reconectar na mesma execução pode permitir restaurar uma prévia, conforme identidade e contexto; reiniciar o aplicativo perde esses snapshots. Exportar banco, backup de setor IR, amp ou ajustes de efeito é uma operação explícita, com arquivo no destino escolhido. Arquivos de recuperação de versões anteriores e evidências produzidas por diagnósticos não equivalem a recuperação automática do editor.
 
