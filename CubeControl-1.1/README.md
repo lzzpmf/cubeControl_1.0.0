@@ -12,4 +12,4 @@ O código e os recursos ficam em `Cube/windows/`; a documentação do produto fi
 
 O projeto declara **1.1.0**, versão da linha **1.1**. A pasta de fontes e os nomes de publicação estão alinhados; o script usa a versão declarada no projeto para nomear os pacotes.
 
-O desenvolvimento requer Windows e SDK .NET 10 disponível como `dotnet`; a primeira restauração pode acessar o NuGet. Saídas e intermediários ficam em `C:\CubeControl-Build`, ou na pasta externa escolhida com `-OutputRoot`; o build não grava no projeto. O acervo Android em `../engenharia-reversa/apk-cubesuite/` serve à pesquisa e não participa da compilação Windows.
+O desenvolvimento requer Windows, SDK .NET 10 disponível como `dotnet` e Visual Studio Build Tools com MSVC x64 e Windows SDK para o DSP nativo de áudio; a primeira restauração pode acessar o NuGet. Saídas e intermediários ficam em `C:\CubeControl-Build`, ou na pasta externa escolhida com `-OutputRoot`; o build não grava no projeto. O acervo Android em `../engenharia-reversa/apk-cubesuite/` serve à pesquisa e não participa da compilação Windows.

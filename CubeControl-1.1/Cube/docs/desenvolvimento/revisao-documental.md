@@ -2,6 +2,30 @@
 
 [Documentação](../README.md) · Data: 01/10/2026
 
+## Atualização verificada — 12/10/2026
+
+Esta seção atualiza o estado do produto; as seções seguintes preservam os resultados e as pendências registrados em 01/10/2026, que não devem ser interpretados integralmente como o estado atual.
+
+- `AmpImage.Validate` aceita ganho e compensação até 100. Os nove amps originais passaram nas verificações de carregamento sem alteração dos dados; a incompatibilidade com o antigo teto 60 foi resolvida.
+- O fechamento normal chama o encerramento dos quatro efeitos, `RestoreAmpAsync` e `EndPreviewAsync`. A ausência de tentativa de restaurar amp ao fechar foi resolvida; falhas ainda podem levar à confirmação de fechamento sem recuperação concluída.
+- Os snapshots automáticos de banco, IR, amp e dos quatro efeitos ficam em memória no editor atual. Não há retomada automática por `pending-*-preview.json` após reiniciar. Exportações explícitas e arquivos de diagnósticos são fluxos distintos.
+- O desktop inclui áudio NAudio/WASAPI e DSP nativo C++, exigindo MSVC x64/Windows SDK além do SDK .NET. A arquitetura também contempla criadores com assinaturas específicas de firmware e atualização por auxiliar elevado.
+
+Verificações executadas nesta análise, com SDK .NET 10.0.401:
+
+| Verificação | Resultado observado |
+| --- | --- |
+| `dotnet build CubeControl-1.1/Cube/windows/Cube.Desktop/Cube.Desktop.csproj -c Release --artifacts-path C:/CubeControl-Build/study-20261012` | Sucesso, zero avisos e erros, incluindo DSP nativo |
+| Mesmo build Release no destino padrão, antes da tentativa isolada | Falha CS2001 por 15 arquivos WPF gerados ausentes; causa dos intermediários não determinada |
+| `Cube.Tests`, sem filtro | Interrompido em `one transaction and minimum 100 ms interval`, `ExtendedTests.cs:58`; a fila não impõe esse intervalo |
+| `Cube.Tests --effects-firmware-b-only` | 52 verificações passaram |
+| `Cube.Tests --ir-packs-only` | 46 verificações passaram |
+| `Cube.Tests --reverb-only` | Interrompido em `external bank edit blocks recovery`, `ReverbTests.cs:79` |
+
+Os testes foram executados na raiz por `dotnet run --project CubeControl-1.1/Cube/windows/Cube.Tests -c Release`; os modos específicos acrescentaram `--no-build -- <modo>`. As falhas continuam visíveis: ainda é necessário alinhar o contrato de temporização e investigar a divergência de recuperação de reverb. O sucesso da compilação isolada não demonstra que o problema dos intermediários padrão foi corrigido.
+
+Não houve acesso ao pedal, testes visuais WPF, escuta, atualização de firmware ou geração/instalação do pacote completo. Os testes simulados não comprovam persistência após desligar nem compatibilidade física com outros firmwares.
+
 ## Escopo e resultado
 
 Foram analisados os **21 arquivos Markdown originais** do repositório, incluindo relatórios da raiz, documentação da aplicação, READMEs de recursos e o README de terceiro em `resources/META-INF`. O comportamento descrito foi confrontado com projetos C#/XAML, scripts PowerShell/CMD, catálogos e artefatos binários disponíveis.
@@ -37,7 +61,7 @@ A etapa inicial desta revisão alterou somente documentação, sem modificar apl
 
 ## Divergências ainda presentes no produto
 
-As pendências abaixo exigem mudanças ou decisões de implementação e foram mantidas fora desta revisão documental.
+Registro histórico de 01/10/2026: as pendências abaixo foram mantidas fora daquela revisão. Consulte a atualização de 12/10/2026 acima para os itens já resolvidos ou cujo comportamento mudou.
 
 | Tema | Evidência | Consequência / trabalho pendente |
 | --- | --- | --- |

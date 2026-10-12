@@ -1,6 +1,6 @@
 # Arquitetura e dados locais
 
-[Documentação](../README.md) · Revisão: 01/10/2026
+[Documentação](../README.md) · Revisão: 12/10/2026
 
 O aplicativo Windows é C#/.NET 10 com WPF. O acervo descompilado Android em `engenharia-reversa/apk-cubesuite/` reúne `sources/` e `resources/` e fornece evidências de protocolo; não é dependência de execução nem solução de build do aplicativo.
 
@@ -17,7 +17,7 @@ Os caminhos abaixo são relativos a [windows/](../../windows/README.md).
 | Cube.Desktop.Tests | Executável de testes WPF, cenários simulados e capturas |
 | Cube.Diagnostics | Operações de diagnóstico/pesquisa que acessam o pedal |
 
-O desktop referencia Cube.Usb, que referencia Cube.Protocol. O build de simulação inclui `Cube.Tests/FakeConnection.cs` por condição no projeto desktop. O áudio de backing tracks utiliza APIs de mídia do Windows, fora do protocolo de controle do pedal.
+O desktop referencia Cube.Usb, que referencia Cube.Protocol. O build de simulação inclui `Cube.Tests/FakeConnection.cs` por condição no projeto desktop. O áudio de backing tracks utiliza NAudio Core/Wasapi 3.1.0 e saída WASAPI, fora do protocolo de controle do pedal. O processamento de velocidade e pitch usa `CubeBackingDsp.dll`, compilada em C++ com Signalsmith Stretch. O player tem fila própria de comandos, loops, metrônomo, gravação e exportação. Busca, download e prévia do YouTube usam ferramentas preparadas pelo build: yt-dlp, FFmpeg/ffprobe e Deno.
 
 ## Caminho de uma edição
 
@@ -52,15 +52,20 @@ As bases da tabela são inícios de setores, não limites finais de conteúdo. A
 
 A conexão automática identifica o aparelho, lê o banco e inventaria IRs. Existe código experimental de footswitch, mas `StartFootswitchMonitoring` não é chamado no fluxo atual. Ver [investigação](../historico/physical-switch-investigation.md).
 
+## Criadores de efeitos e atualização de firmware
+
+Chorus, Phaser, Delay e Reverb têm prévias em RAM com verificação de assinaturas de código/tabelas do firmware e do contexto físico. O perfil adicional `cubebaby_B_20220706.up` possui endereços e hashes próprios em [CubeSession.EffectsFirmware](../../windows/Cube.Protocol/CubeSession.EffectsFirmware.cs). Compatibilidade recusada pelo criador não implica, por si só, bloqueio da edição normal de presets. Os criadores consultam o estado físico ao preparar a prévia; a seleção A/B/C da interface não comprova o footswitch ativo.
+
+Os snapshots dos quatro efeitos são copiados e validados em memória pelo editor. O fechamento normal tenta encerrar essas prévias, restaurar o amp e restaurar o IR; se uma etapa falhar, apresenta a opção de fechar mesmo assim. Encerramento abrupto não executa esse fluxo nem conserva os snapshots para a próxima execução.
+
+A atualização de firmware usa [FirmwareUpdater](../../windows/Cube.Desktop/FirmwareUpdater.cs), separadamente da sessão USB-MIDI. Um processo auxiliar elevado comunica progresso por named pipe. O fluxo valida extensão, tamanho, cabeçalho e CRC do arquivo `.up`, confere seu SHA-256 após a confirmação, valida o auxiliar de reinicialização e a identificação da flash e verifica o CRC dos blocos gravados. Essas verificações não constituem homologação de qualquer arquivo ou modelo de pedal.
+
 ## Arquivos do usuário
 
 Diretório padrão: `%LOCALAPPDATA%\CubeControl`. Com `CubeSimulation=true`, os dados do editor usam `%LOCALAPPDATA%\CubeControl-Simulation`.
 
 | Caminho relativo | Conteúdo / comportamento |
 | --- | --- |
-| `Backups/` | Bancos JSON, snapshots e backups de IR criados pelos fluxos do editor |
-| `pending-ir-preview.json` | Snapshot de recuperação de IR; carregado após reiniciar e removido depois de restaurar |
-| `AmpRecovery/` | Cópias RAM reconstruídas e setores flash anteriores de amps; não há retomada automática de prévia de amp após reiniciar |
 | `visual-preferences-v1.json` | Associações de gabinetes, nomes por conteúdo, imagens e preferência de associação automática |
 | `IrNames/` | Arquivos `.txt` por hash do IR com o nome local do WAV; mantidos também para compatibilidade com metadados anteriores |
 | `Images/` | Cópias de imagens personalizadas |
@@ -68,6 +73,8 @@ Diretório padrão: `%LOCALAPPDATA%\CubeControl`. Com `CubeSimulation=true`, os 
 | `appearance-v1.json` | Tema, sempre na pasta CubeControl |
 | `language-v1.json` | Idioma, sempre na pasta CubeControl |
 | `zoom-v1.json` | Zoom, sempre na pasta CubeControl |
+
+Os fluxos automáticos de `BackupBank`, `BackupIr` e preservação de amp mantêm cópias em memória da sessão. As prévias de IR e dos criadores também não geram nem carregam arquivos `pending-*-preview.json` no editor atual. Reconectar na mesma execução pode permitir restaurar uma prévia, conforme identidade e contexto; reiniciar o aplicativo perde esses snapshots. Exportar banco, backup de setor IR, amp ou ajustes de efeito é uma operação explícita, com arquivo no destino escolhido. Arquivos de recuperação de versões anteriores e evidências produzidas por diagnósticos não equivalem a recuperação automática do editor.
 
 Tema, idioma e zoom são compartilhados entre aplicativo real e simulado. Exportações ficam no destino escolhido. Logs da sessão são mantidos na interface; diagnósticos podem gravar arquivos nos caminhos solicitados. Não há telemetria implementada no código de produção inspecionado.
 
@@ -91,4 +98,4 @@ Tema, idioma e zoom são compartilhados entre aplicativo real e simulado. Export
 
 [Perfil de presets](../../windows/Cube.Protocol/CubeBabyProfile.cs), [sessão](../../windows/Cube.Protocol/CubeSession.cs), [fila](../../windows/Cube.Protocol/LiveEditQueue.cs), [transporte Windows](../../windows/Cube.Usb/WindowsMidiConnection.cs), [estado do editor](../../windows/Cube.Desktop/ViewModels/EditorViewModel.cs) e [projeto desktop](../../windows/Cube.Desktop/Cube.Desktop.csproj).
 
-Os problemas conhecidos de validação de amps e recuperação, além do registro da padronização de versão/publicação em 1.1, estão reunidos na [revisão documental](revisao-documental.md).
+Os resultados históricos, as correções já incorporadas e as falhas de testes reproduzidas em 12/10/2026, além do registro da padronização de versão/publicação em 1.1, estão reunidos na [revisão documental](revisao-documental.md).

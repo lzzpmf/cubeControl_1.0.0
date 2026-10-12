@@ -11,6 +11,6 @@ Import `.reverb.json` prepares local settings; Apply settings sends them to an a
 
 Restore reverb, normal disconnection, reading again and normal closing attempt to return the original parameters. Lost connection or a context change stops writes; an attempted restoration is not confirmation of success.
 
-After restarting, pending recovery loads without reapplying adjustments. Reconnect the same device, restore the matching context and use Restore reverb. Preserve `pending-reverb-preview.json` and `ReverbRecovery` in the data folder until recovery is resolved.
+The recovery snapshot exists only in memory for this app session. If the connection is lost, reconnect the same device and use Restore reverb, subject to the context checks performed by the app. Closing or restarting the app discards this snapshot; old recovery files are not loaded automatically. Export any adjustments you want to keep.
 
 See [Effect creators](criadores-efeitos.md) and [Backups and recovery](recuperacao.md).

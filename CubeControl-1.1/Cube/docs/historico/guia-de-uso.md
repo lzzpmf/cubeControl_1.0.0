@@ -1,5 +1,7 @@
 # Guia de uso do cubeControl
 
+> Atualização de contexto — 12/10/2026: este documento preserva o registro anterior. Referências a backups automáticos em disco, pastas `*Recovery` e recuperação por `pending-*-preview.json` não descrevem o editor atual, que mantém snapshots apenas na sessão. Consulte a [arquitetura atual](../desenvolvimento/arquitetura.md) e a [revisão de 12/10/2026](../desenvolvimento/revisao-documental.md) antes de interpretar esses cenários como comportamento implementado.
+
 [Documentação](../README.md) · Revisão: 01/10/2026
 
 O cubeControl configura o Cube Baby **de guitarra** pelo USB-MIDI. Não há perfil implementado para Cube Baby Bass, AC, Chocolate ou Blackbox.

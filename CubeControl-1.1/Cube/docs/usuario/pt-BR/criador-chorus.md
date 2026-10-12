@@ -11,6 +11,6 @@ Importar `.chorus.json` prepara ajustes locais; Aplicar ajustes envia para a pr�
 
 Restaurar chorus, desconexão normal, releitura e fechamento normal tentam devolver os parâmetros originais. Perda de conexão ou mudança de contexto interrompem os envios; uma tentativa de restauração não equivale a confirmação de sucesso.
 
-Após reiniciar, a recuperação pendente é carregada sem reaplicar ajustes. Reconecte o mesmo aparelho, restabeleça o contexto correspondente e use Restaurar chorus. Preserve `pending-chorus-preview.json` e `ChorusRecovery` na pasta de dados até resolver a recuperação.
+O snapshot de recuperação permanece apenas na memória desta execução. Se a conexão cair, reconecte o mesmo aparelho e use Restaurar chorus, respeitando o contexto validado pelo aplicativo. Fechar ou reiniciar o aplicativo descarta esse snapshot; não há carregamento automático de arquivos de recuperação antigos. Exporte os ajustes que desejar guardar.
 
 Veja [Criadores de efeitos](criadores-efeitos.md) e [Backups e recuperação](recuperacao.md).

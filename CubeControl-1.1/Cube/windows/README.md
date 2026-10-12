@@ -1,13 +1,14 @@
 # cubeControl — desenvolvimento Windows
 
-[Documentação](../docs/README.md) · [Guia de uso](../docs/usuario/pt-BR/primeiros-passos.md) · Revisão: 01/10/2026
+[Documentação](../docs/README.md) · [Guia de uso](../docs/usuario/pt-BR/primeiros-passos.md) · Revisão: 12/10/2026
 
 O código está em `CubeControl-1.1/Cube/windows/`. Existe um único fluxo de geração do aplicativo: [scripts/Build-CubeControl.ps1](../../../scripts/Build-CubeControl.ps1).
 
 ## Requisitos e versão
 
 - Windows e SDK .NET 10 disponível como `dotnet`. Não há SDK privado nem `global.json` nesta árvore.
-- Acesso ao NuGet na primeira restauração. Dependência de interface: WPF UI 4.3.0.
+- Acesso ao NuGet na primeira restauração. Dependência de interface: WPF UI 4.3.0; áudio: NAudio.Core e NAudio.Wasapi 3.1.0.
+- Visual Studio Build Tools com Desktop development with C++, MSVC x64 e Windows SDK. O target `BuildBackingDsp` chama `Cube.Desktop/Native/Build.ps1`, que localiza a toolchain com `vswhere` e compila `CubeBackingDsp.dll`. O SDK .NET sozinho não atende a essa etapa.
 - O projeto declara versão **1.1.0**; o script lê essa versão para nomear o pacote.
 - O pacote é `win-x64`, inclui o runtime .NET e pode ser executado sem SDK. O alvo desktop é `net10.0-windows10.0.19041.0`; isso não representa uma matriz de versões do Windows testadas.
 

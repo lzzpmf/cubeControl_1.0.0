@@ -1,6 +1,6 @@
 # Privacy
 
-Updated: October 8, 2026. Scope: cubeControl 1.1.0 for Windows, including amp creator and Backing Tracks.
+Updated: October 12, 2026. Scope: cubeControl 1.1.0 for Windows, including amp creator and Backing Tracks.
 
 Application controller: Luiz Paulo Martins Ferreira. Privacy contact: [lzpmartins@gmail.com](mailto:lzpmartins@gmail.com).
 
@@ -13,9 +13,9 @@ The app uses MIDI port names and pedal identification to connect; presets, effec
 Names, paths and selected content may contain personal information. Avoid unnecessary personal details.
 
 ## Storage and retention
-Preferences, images and backups generally reside in `%LOCALAPPDATA%\CubeControl`. Simulation editor data uses `%LOCALAPPDATA%\CubeControl-Simulation`; theme, language and zoom remain shared. Exported files go to your chosen location.
+Preferences and images generally reside in `%LOCALAPPDATA%\CubeControl`. Simulation editor data uses `%LOCALAPPDATA%\CubeControl-Simulation`; theme, language and zoom remain shared. Exported files go to your chosen location.
 
-Audio lists reference files and do not copy them. Playback section/speed settings are not generally persisted with the list. Recovery files preserve interrupted previews. Local files remain until replaced or deleted; backups have no general automatic expiry. Uninstalling the executable does not remove this data. Pedal settings remain independently on the device. See [Recovery](recuperacao.md).
+Audio lists reference files and do not copy them. Playback section/speed settings are not generally persisted with the list. Automatic bank, IR, amp and effect recovery snapshots remain in memory for the current session; the editor does not generate or reload pending preview files after restart. Explicitly exported backups and adjustments remain in your chosen location. See [Backups and recovery](recuperacao.md). Local files remain until replaced or deleted; backups have no general automatic expiry. Uninstalling the executable does not remove this data. Pedal settings remain independently on the device. See [Recovery](recuperacao.md).
 
 ## External services
 The app does not automatically send your presets, files, device information or diagnostics to its developer or the pedal manufacturer, or sell them for advertising. YouTube search/download, when requested, uses internet tools to contact external services; queries and media requests are subject to those services' policies. Local playback and documentation do not require these requests.

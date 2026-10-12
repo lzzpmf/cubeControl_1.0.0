@@ -1,5 +1,7 @@
 # QA TEST PLAN
 
+> Atualização de contexto — 12/10/2026: este documento preserva o registro anterior. Referências a backups automáticos em disco, pastas `*Recovery` e recuperação por `pending-*-preview.json` não descrevem o editor atual, que mantém snapshots apenas na sessão. Consulte a [arquitetura atual](arquitetura.md) e a [revisão de 12/10/2026](revisao-documental.md) antes de interpretar esses cenários como comportamento implementado.
+
 ## 1. Resumo Executivo
 
 Auditoria estática do **cubeControl 1.1.0**, em 03/10/2026. Base: checkout `7bfe7ca979b88fe267e5daeab39472c3573469b0` **mais alterações locais preexistentes**, incluindo FirmwareUpdater e mudanças nos efeitos. O commit sozinho não reproduz a árvore analisada. Este arquivo é um catálogo para seleção humana; nenhuma bateria foi selecionada ou executada, nenhum build foi disparado e nenhum dispositivo foi acessado.

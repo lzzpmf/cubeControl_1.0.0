@@ -2,7 +2,7 @@
 
 [Primeiros passos](primeiros-passos.md)
 
-Última atualização: 8 de outubro de 2026
+Última atualização: 12 de outubro de 2026
 
 Escopo: aplicativo Windows cubeControl 1.1.0, incluindo criador de amps e Backing Tracks.
 
@@ -40,9 +40,9 @@ Informações técnicas não identificam necessariamente uma pessoa. Entretanto,
 
 ## 3. Armazenamento e conservação
 
-Preferências, imagens personalizadas, metadados e backups são armazenados, em geral, na pasta `%LOCALAPPDATA%\CubeControl` do seu usuário do Windows. A edição de simulação utiliza `%LOCALAPPDATA%\CubeControl-Simulation` para dados do editor, inclusive Backing Tracks e recuperação de amps; tema, idioma e zoom permanecem compartilhados na pasta `CubeControl`. Arquivos exportados ficam no local escolhido por você.
+Preferências, imagens personalizadas e metadados são armazenados, em geral, na pasta `%LOCALAPPDATA%\CubeControl` do seu usuário do Windows. A edição de simulação utiliza `%LOCALAPPDATA%\CubeControl-Simulation` para dados do editor, inclusive Backing Tracks; tema, idioma e zoom permanecem compartilhados na pasta `CubeControl`. Arquivos exportados ficam no local escolhido por você.
 
-A lista de áudio fica em `backing-tracks-v1.json`; imagens em `Images`; backups em `Backups` e `AmpRecovery`. O arquivo `pending-ir-preview.json` conserva o estado necessário à recuperação de uma prévia de IR interrompida. O [guia de recuperação](recuperacao.md) detalha esses arquivos.
+A lista de áudio fica em `backing-tracks-v1.json`; imagens em `Images`. As cópias automáticas de recuperação de banco, IR, amp e efeitos ficam em memória durante a sessão, sem arquivos automáticos `pending-*-preview.json` nem retomada após reiniciar. Backups e ajustes exportados explicitamente ficam no destino escolhido. O [guia de recuperação](recuperacao.md) descreve esses limites.
 
 Os arquivos persistentes permanecem no computador até serem substituídos ou excluídos. Não há prazo automático geral de expiração para os backups locais. Remover o executável ou a pasta de instalação não garante a exclusão desses arquivos.
 

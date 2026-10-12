@@ -56,14 +56,14 @@ No modo compacto, somente o workspace rola; no modo amplo, a categoria ativa rol
 | Operação | Alcance |
 | --- | --- |
 | Prévia | Corpo de 1568 bytes em região 4, `0x1C–0x63B`; grava apenas trechos diferentes em blocos de até 64 bytes e compara todo o corpo |
-| Backup da prévia | `AmpRecovery/ram-<data-hora>.bin`; cabeçalho reconstruído e corpo anterior, sem representar uma leitura de setor flash completo |
+| Backup da prévia | Corpo anterior e identidade preservados em memória nesta execução; não gera arquivo automático |
 | Salvar no pedal | Setor de 4096 bytes em região 0, `0x60000 + slot × 0x1000`, slot interno 0–8 |
-| Backup do slot | `AmpRecovery/amp-<posição>-<data-hora>.bin`, lido novamente do arquivo antes de apagar |
+| Backup do slot | Setor anterior de 4096 bytes preservado em memória antes de apagar; exportação BIN é uma ação explícita |
 | Programação flash | 64 blocos alinhados de 64 bytes, seguida de comparação integral |
 
 A gravação relê o destino, confirma que corresponde ao esperado e preserva o conteúdo anterior. Após apagar, o fluxo não oferece cancelamento voluntário entre blocos. ACK isolado não comprova sucesso. Depois de gravar, selecione outro amp no pedal e volte para recarregar; a prévia RAM é independente da flash.
 
-**Recuperação de amp e de IR são diferentes.** O backup de amp fica no disco, mas a identidade e o estado de prévia de amp ficam em memória no processo. Não há carregamento automático de uma prévia de amp pendente após reiniciar o aplicativo. Use restaurar explicitamente antes de fechar: o fechamento normal chama o encerramento de IR, sem chamar `RestoreAmpCore`; a desconexão manual tenta restaurar ambos. Essa diferença permanece como pendência de implementação.
+**Estado conferido em 12/10/2026:** os snapshots de amp e IR ficam em memória no processo, sem recuperação automática após reiniciar. O fechamento normal tenta restaurar os quatro efeitos, o amp por `RestoreAmpAsync` e o IR por `EndPreviewAsync`; a desconexão manual também tenta restaurar as prévias. Se o fechamento encontrar uma falha, pede confirmação antes de descartar os snapshots. Exporte a edição local para conservá-la entre execuções; isso não substitui a restauração da RAM anterior.
 
 ## Limitações verificadas
 
