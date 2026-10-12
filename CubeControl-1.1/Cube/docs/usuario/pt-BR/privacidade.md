@@ -48,6 +48,8 @@ Os arquivos persistentes permanecem no computador até serem substituídos ou ex
 
 Configurações gravadas no pedal permanecem no próprio equipamento e são independentes dos arquivos armazenados no computador.
 
+Packs pessoais são armazenados em `IrPacks`, WAVs importados de packs portáteis em `ImportedIrs` e nomes personalizados em `ir-pack-names-v1.json`, na pasta de dados do editor. A importação pode copiar os WAVs antes de salvar a montagem; descartar a montagem não equivale a excluir essas cópias.
+
 ## 4. Compartilhamento e serviços externos
 
 O aplicativo não envia automaticamente seus presets, arquivos, informações do equipamento ou registros de diagnóstico ao desenvolvedor ou ao fabricante do pedal. Também não vende dados nem os transmite para publicidade.

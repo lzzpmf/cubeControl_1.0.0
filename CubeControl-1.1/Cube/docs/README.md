@@ -27,6 +27,7 @@ Os guias publicados têm fontes únicas em `usuario/pt-BR` e `usuario/en-US`. A 
 ### Desenvolvimento
 
 - [arquitetura](desenvolvimento/arquitetura.md)
+- [Diagnósticos e pesquisa com hardware](../windows/README.md#diagnósticos-e-pesquisa-com-hardware)
 - [wpf-ui-integracoes](desenvolvimento/wpf-ui-integracoes.md)
 - [windows-interaction](desenvolvimento/windows-interaction.md)
 - [snackbars](desenvolvimento/snackbars.md)
@@ -44,7 +45,7 @@ Os guias publicados têm fontes únicas em `usuario/pt-BR` e `usuario/en-US`. A 
 - [physical-switch-investigation](historico/physical-switch-investigation.md)
 - [analise-protocolo-windows](historico/analise-protocolo-windows.md)
 - [historico-interface](historico/historico-interface.md)
-- [guia-de-uso](usuario/pt-BR/primeiros-passos.md)
+- [guia-de-uso histórico](historico/guia-de-uso.md)
 - [backing-tracks](historico/backing-tracks.md)
 - [simulacao-temporaria](historico/simulacao-temporaria.md)
 - [Plano de QA](desenvolvimento/qa-test-plan.md)

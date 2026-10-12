@@ -36,7 +36,7 @@ Os oito setores lidos do dispositivo em 03/10/2026 coincidem, byte a byte e na m
 
 Isso confirma **o pack**, mas não os modelos dos gabinetes. O manual local contém a tabela abaixo; outra versão do manual apresenta uma lista diferente, sem vincular cada nome ao hash de um arquivo BFIN. Não há base suficiente para escolher uma dessas listas apenas pela posição. Por isso o BFIN aparece como `Pack BFIN · IR 1` até `IR 8`, com imagem genérica e indicação de modelo não confirmado. Nomes e imagens personalizados continuam vinculados ao hash e acompanham o IR quando ele muda de slot.
 
-A tabela abaixo conserva as referências visuais históricas do **Pack BFI**. Elas não são uma identificação acústica medida. Seus identificadores internos passaram de `factory-cab-N` para `pack-bfi-cab-N`; associações e fotos personalizadas persistidas pelo hash continuam válidas.
+A tabela abaixo conserva as referências visuais históricas do **Pack BFI**. Elas não são uma identificação acústica medida. Seus identificadores internos passaram de `factory-cab-N` para `pack-bfi-cab-N`; as imagens elegíveis são migradas por `GearImagePreferences`, mas as associações amp–gabinete do editor atual ficam apenas na sessão; o arquivo visual antigo não restaura essas associações.
 
 | Valor de cabinet | Slot interno | Alias/referência do catálogo |
 | ---: | ---: | --- |

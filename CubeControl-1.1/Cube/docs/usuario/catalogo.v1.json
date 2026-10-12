@@ -15,7 +15,12 @@
             "instalação",
             "installation",
             "conexão",
-            "connection"
+            "connection",
+            "busca",
+            "search",
+            "zoom",
+            "idioma",
+            "language"
           ],
           "format": "markdown",
           "path": "guias/pt-BR/primeiros-passos.md"
@@ -30,7 +35,12 @@
             "instalação",
             "installation",
             "conexão",
-            "connection"
+            "connection",
+            "busca",
+            "search",
+            "zoom",
+            "idioma",
+            "language"
           ],
           "format": "markdown",
           "path": "guias/en-US/primeiros-passos.md"
@@ -133,7 +143,14 @@
             "associação",
             "association",
             "biblioteca",
-            "library"
+            "library",
+            "pré-escuta",
+            "audition",
+            "guitarra",
+            "guitar",
+            "pack",
+            "partial",
+            "parcial"
           ],
           "format": "markdown",
           "path": "guias/pt-BR/irs.md"
@@ -150,7 +167,14 @@
             "associação",
             "association",
             "biblioteca",
-            "library"
+            "library",
+            "pré-escuta",
+            "audition",
+            "guitarra",
+            "guitar",
+            "pack",
+            "partial",
+            "parcial"
           ],
           "format": "markdown",
           "path": "guias/en-US/irs.md"
@@ -503,7 +527,10 @@
             "factory",
             "RAM",
             "flash",
-            "recovery"
+            "recovery",
+            "firmware",
+            "atualização",
+            "update"
           ],
           "format": "markdown",
           "path": "guias/pt-BR/recuperacao.md"
@@ -520,7 +547,10 @@
             "factory",
             "RAM",
             "flash",
-            "recovery"
+            "recovery",
+            "firmware",
+            "atualização",
+            "update"
           ],
           "format": "markdown",
           "path": "guias/en-US/recuperacao.md"

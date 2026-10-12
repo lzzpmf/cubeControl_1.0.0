@@ -1,16 +1,16 @@
 # Editores gráficos dos efeitos
 
-Revisão: 02/10/2026. Implementação WPF em `Controls/EffectGraphEditor.cs` e nas quatro Views `*Editor.xaml`. Os quatro efeitos estão funcionais conforme validação informada pelo usuário. Os desenhos são ilustrações editáveis, não medições ou simulações acústicas.
+Revisão de comportamento: 12/10/2026; registro visual original de 02/10/2026. Implementação WPF em `Controls/EffectGraphEditor.cs` e nas quatro Views `*Editor.xaml`. Os quatro efeitos estão funcionais conforme validação informada pelo usuário. Os desenhos são ilustrações editáveis, não medições ou simulações acústicas.
 
 ## Interação
 
-Abra o criador no efeito correspondente. Os pequenos círculos pertencem às cristas, envelopes, bordas e superfícies desenhadas. Arrastar altera somente a propriedade anunciada. Selecionar revela nome, unidade, valor e explicação na faixa integrada acima do desenho, sem caixa flutuante ou tooltip. Clique no valor, pressione Enter ou dê duplo clique na alça para digitar. Enter confirma; Escape cancela. Sair da caixa sem confirmar descarta o texto. Entradas não finitas, fora da faixa ou que invertam os limites do Phaser são recusadas.
+Abra o criador no efeito correspondente. Os pequenos círculos pertencem às cristas, envelopes, bordas e superfícies desenhadas. Arrastar altera somente a propriedade anunciada. Selecionar revela nome, unidade, valor e explicação no painel integrado de parâmetros, sem caixa flutuante ou tooltip. Clique no valor, pressione Enter ou dê duplo clique na alça para digitar. Enter confirma; Escape cancela. Perder o foco tenta confirmar um valor válido. Trocar o parâmetro selecionado também tenta confirmar; se o texto continuar inválido, descarta essa entrada ao trocar a seleção. Entradas não finitas, fora da faixa ou que invertam os limites do Phaser são recusadas.
 
 Tab/Shift+Tab percorrem os elementos, setas ajustam, Shift reduz o passo dos parâmetros contínuos. Os campos discretos são arredondados pelo modelo. Espaço, tecla de menu ou botão direito levam às opções na faixa integrada. Forma de onda oferece Original/Triangular; seções têm opções 1–3. O ciclo do Delay oferece congelar/retomar, recuperando a última velocidade congelada pela opção Congelar (100% se ainda não houver uma).
 
 Escape durante o arraste, perda involuntária da captura, ocultação ou descarregamento restauram o valor inicial do gesto. A liberação normal, inclusive fora do desenho, conserva o último valor. Como a prévia existente é automática, cancelar pode enviar uma nova alteração restaurando o valor inicial; isso não desfaz o áudio já ouvido. Uma interrupção de transporte continua exigindo a recuperação existente, sem promessa de restauração no hardware.
 
-Os alvos têm 36 DIPs e foco visível, sem reduzir texto/alvos junto com a largura do desenho. A superfície usa no mínimo 308 DIPs, acompanha a largura disponível até 900 DIPs e não contém rolagem própria. Na largura mínima, legendas longas são abreviadas visualmente; a explicação contextual conserva o conteúdo. A faixa contextual reserva espaço mesmo sem seleção; seus textos quebram em larguras menores. Hover realça o ponto, seleção preenche o ponto e foco de teclado acrescenta um contorno pontilhado. Os pontos são criados uma vez por tipo de efeito, e as opções inline são criadas quando muda o parâmetro selecionado; alterações redesenham primitivas vetoriais leves e reposicionam os mesmos alvos. Não há animações, timers de desenho ou dependências novas.
+Os alvos têm 36 DIPs e foco visível, sem reduzir texto/alvos junto com a largura do desenho. O controle tem largura mínima de 308 DIPs e não contém rolagem própria. A partir de 520 DIPs, o painel de parâmetros fica à esquerda do desenho: largura de 180 DIPs, ou 240 a partir de 720 DIPs. Abaixo de 520 DIPs, fica acima. O painel oferece seletor de parâmetro, slider, valor numérico e opções do campo selecionado. Na largura mínima, legendas longas são abreviadas visualmente; a explicação contextual conserva o conteúdo. O painel contextual adapta sua altura à seleção e à largura; seus textos quebram em larguras menores. Hover realça o ponto, seleção preenche o ponto e foco de teclado acrescenta um contorno pontilhado. Os pontos são criados uma vez por tipo de efeito, e as opções inline são criadas quando muda o parâmetro selecionado; alterações redesenham primitivas vetoriais leves e reposicionam os mesmos alvos. Não há animações, timers de desenho ou dependências novas.
 
 ## Linguagem visual
 
@@ -28,7 +28,7 @@ Durante a resolução inicial do DataContext, os bindings usam o mínimo do par�
 
 | Ação | Significado preservado |
 | --- | --- |
-| Ler efeito ativo | Confere identidade, firmware e contexto físico, captura referência e inicia edição em RAM com recuperação |
+| Ler efeito ativo | Confere firmware/contexto, prepara parâmetros live quando necessário, captura referência e inicia edição em RAM com recuperação na sessão |
 | Editar com prévia ativa | Solicita aplicação automática na RAM pela infraestrutura existente |
 | Editar sem prévia | Altera o modelo local; não grava o pedal |
 | Restaurar efeito | Restaura e confere o snapshot anterior à prévia; não é reset para defaults de fábrica |
@@ -36,9 +36,9 @@ Durante a resolução inicial do DataContext, os bindings usam o mínimo do par�
 | Aplicar ajustes | Envia os parâmetros locais para a prévia ativa; não salva A/B/C nem grava flash |
 | Exportar | Salva arquivo local específico do efeito, identidade e mapeamento; não persiste no pedal |
 
-As mensagens distinguem edição local alterada, pendência de aplicação, RAM conferida, importação aguardando aplicação e interrupção/erro. A faixa de estado informa desconexão, efeito desligado no preset do aplicativo, indisponibilidade e prévia em RAM não salva no pedal. A ativação real ainda é conferida pela leitura; a UI não liga/desliga efeitos para contornar requisitos. Erros detalhados permanecem na apresentação global existente e na mensagem do efeito quando fornecida pelo fluxo.
+As mensagens distinguem edição local alterada, pendência de aplicação, RAM conferida, importação aguardando aplicação e interrupção/erro. A faixa de estado informa desconexão, efeito desligado no preset do aplicativo, indisponibilidade e prévia em RAM não salva no pedal. A ativação real ainda é conferida pela leitura; a preparação pode ativar a seção e ajustar nível/modulação via edição live antes de capturar a referência, sem salvar o banco. Erros detalhados permanecem na apresentação global existente e na mensagem do efeito quando fornecida pelo fluxo.
 
-Chorus e Phaser compartilham o bloco de modulação: ative o algoritmo escolhido no mesmo preset físico A/B/C em modo PRESET antes de ler. Delay exige seção delay/modulação ativa e Chorus/Phaser desligados. Reverb exige reverb e seção reverb/cabinet ativos e modulação desligada. Prévia bloqueia operações concorrentes conforme os predicados existentes. Firmware desconhecido, contexto incompatível e backups inválidos continuam sendo restrições reais. Recuperações pendentes não são reaplicadas silenciosamente.
+Chorus e Phaser compartilham o bloco de modulação. `PrepareAdvancedEffectAsync` exige modo PRESET, lê o preset físico e seleciona o mesmo A/B/C na interface. Prepara o algoritmo de modulação escolhido; para delay/reverb, ativa a seção e eleva o nível se estiver em zero. Não exige modulação desligada para iniciar delay/reverb. Prévia bloqueia operações concorrentes conforme os predicados existentes. Firmware desconhecido, contexto incompatível e backups inválidos continuam sendo restrições reais. Os snapshots de recuperação do editor ficam apenas nesta execução; não há carregamento automático após reiniciar. Os arquivos de evidência produzidos por diagnósticos são outro fluxo.
 
 ## Contrato dos parâmetros
 
@@ -68,7 +68,7 @@ Para `m = Mix/100`: abaixo de 0,5, direto = 1 e eco = 2m; a partir de 0,5, diret
 | `Feedback` | Ganho de realimentação, % | 0–10 | 0 | Amplitude no contorno de retorno externo ao fluxo principal, sem mudar o caminho temporal | /100 → `0x64C` |
 | `WetGain` | Ganho do ramo atrasado, % do original | 50–100 | 100 = 1 | Envelope do atraso, antes da combinação | /100 → primeiro `b0`, `0x650` |
 | `CombinedGain` | Ganho do ramo combinado, % do original | 50–100 | 100 = 1 | Envelope após combinação; independente dos outros ganhos | /100 → segundo `b0`, `0x66C` |
-| `Waveform` | Seletor discreto, sem unidade | 0 ou 1 | 0 = Original | Opções Original/Triangular na faixa contextual | byte → `0x640` |
+| `Waveform` | Seletor discreto, sem unidade | 0 ou 1 | 0 = Original | Opções Original/Triangular no painel contextual | byte → `0x640` |
 
 Topologia consultada: `processado = ganhoCombinado × (entrada + ganhoAtrasado × atrasado)/2`; entrada do buffer recebe `entrada + feedback × processado`; saída = `(1−m) × entrada + m × processado`, com `m = 0,85 × Mix/100`. A contribuição direta desenhada acompanha essa função real. 100% preserva a mistura original, não corresponde a wet puro. O original de ganhos unitários produz `0,575 × entrada + 0,425 × atrasado`. O seletor Original chama ROM; sua curva é uma ilustração da inferência estrutural, não uma reconstrução ou medição da ROM. Duas leituras coincidentes não foram expostas como vozes independentes.
 
@@ -80,7 +80,7 @@ Topologia consultada: `processado = ganhoCombinado × (entrada + ganhoAtrasado �
 | `Lower` | Extremo inferior, Hz estimados | 300–Upper | 300 | Borda esquerda logarítmica; arraste horizontal | float → `0x64C` |
 | `Upper` | Extremo superior, Hz estimados | Lower–3000 | 3000 | Borda direita logarítmica; arraste horizontal | float → `0x650` |
 | `Level` | Ganho de saída, % do original | 0–100 | 100 = 0,64 | Envelope de saída; expandir aumenta, sem editar vales | ×0,64/100 → `0x654` |
-| `Sections` | Quantidade discreta de seções | 1–3 | 3 | Opções 1–3 na faixa contextual / setas | quantidade−1 → `0x641` |
+| `Sections` | Quantidade discreta de seções | 1–3 | 3 | Opções 1–3 no painel contextual / setas | quantidade−1 → `0x641` |
 
 As bordas têm alvos em alturas distintas para permitir limites iguais sem sobreposição. Não há deslocamento composto da região. Os vales acompanham a região delimitada e são ilustrativos, sem associação numérica entre vales e seções ou alegação de resposta calculada. Setas vetoriais indicam ida e volta, sem animação. Não foram adicionados feedback ou mistura; Level não é dry/wet.
 

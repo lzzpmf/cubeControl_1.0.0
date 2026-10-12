@@ -1,7 +1,7 @@
 # Criador de chorus
 
 ## Preparar a prévia
-Selecione fisicamente o modo PRESET e o A/B/C desejado no pedal. Na Pedaleira, abra o criador e use Ler chorus ativo para iniciar a prévia. O aplicativo seleciona na interface o preset físico detectado. A preparação seleciona chorus e ativa a seção delay/modulação quando necessário. Essa preparação pode alterar parâmetros ao vivo, sem salvar o banco. Um perfil ou contexto incompatível impede iniciar a prévia; consulte [Criadores de efeitos](criadores-efeitos.md).
+Selecione fisicamente o modo PRESET e o A/B/C desejado no pedal. Na Pedaleira, abra **Opções avançadas** do efeito: essa ação já tenta preparar e iniciar a prévia. O aplicativo seleciona na interface o preset físico detectado. A preparação seleciona chorus e ativa a seção delay/modulação quando necessário. Essa preparação pode alterar parâmetros ao vivo, sem salvar o banco. Um perfil ou contexto incompatível impede iniciar a prévia; consulte [Criadores de efeitos](criadores-efeitos.md).
 
 ## Controles
 Profundidade, velocidade estimada, mistura do ramo processado, realimentação, forma de onda e ganhos dos ramos atrasado e combinado. Mistura do ramo processado não equivale a porcentagem wet.

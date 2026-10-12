@@ -1,7 +1,7 @@
 # Reverb creator
 
 ## Prepare preview
-Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the creator and use Read active reverb to start preview. The app selects the detected physical preset in the interface. Preparation enables the reverb/cabinet section and raises reverb if it is zero; disabling modulation is not required. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
+Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the effect’s **Advanced options**: this already attempts to prepare and start preview. The app selects the detected physical preset in the interface. Preparation enables the reverb/cabinet section and raises reverb if it is zero; disabling modulation is not required. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
 
 ## Controls
 Dry signal, reverberated signal, feedback, line return and damping. Adjust gradually within the editor ranges.

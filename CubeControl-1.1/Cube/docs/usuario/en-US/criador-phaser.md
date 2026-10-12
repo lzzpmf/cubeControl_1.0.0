@@ -1,7 +1,7 @@
 # Phaser creator
 
 ## Prepare preview
-Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the creator and use Read active phaser to start preview. The app selects the detected physical preset in the interface. Preparation selects phaser and enables the delay/modulation section when needed. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
+Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the effect’s **Advanced options**: this already attempts to prepare and start preview. The app selects the detected physical preset in the interface. Preparation selects phaser and enables the delay/modulation section when needed. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
 
 ## Controls
 Estimated speed and frequency endpoints, level and section count. The lower endpoint must not exceed the upper one. Estimated values are not acoustic measurements.

@@ -1,8 +1,8 @@
 # Imagens de equipamentos e controles
 
-[Documentação](../../../../../docs/README.md) · Revisão: 01/10/2026
+[Documentação](../../../../../docs/README.md) · Revisão de mapeamentos: 12/10/2026
 
-As fotos padrão têm origem nos arquivos fornecidos pelo usuário durante o desenvolvimento. Esta revisão conferiu os arquivos presentes e seu mapeamento; os originais anteriores à movimentação não estão disponíveis para repetir a comparação de bytes. O projeto copia os PNGs para `Assets/Images/Equipment` e os controles utilizados para `Assets/Images/Controls` ao compilar/publicar.
+As fotos padrão têm origem nos arquivos fornecidos pelo usuário durante o desenvolvimento. Esta revisão conferiu os arquivos presentes e seu mapeamento; os originais anteriores à movimentação não estão disponíveis para repetir a comparação de bytes. O projeto copia PNG/JPEG de equipamentos para `Assets/Images/Equipment`. Artes oficiais de controles são recursos WPF embutidos; imagens auxiliares selecionadas são copiadas como arquivos externos, conforme o `.csproj`.
 
 ## Identidades de equipamentos
 
@@ -21,15 +21,15 @@ As fotos padrão têm origem nos arquivos fornecidos pelo usuário durante o des
 | VHT Pittbull.png | amp-6 |
 | Two Rock Coral- variante.png | amp-7 |
 | PRS Archon.png | amp-8 |
-| Line 6 Vetta.png | factory-cab-0 |
-| Marshall 1960AV.png | factory-cab-1 |
-| Marshall 1960A 4×12 com G12T-75.png | factory-cab-2 |
+| Line 6 Vetta.png | pack-bfi-cab-0 |
+| Marshall 1960AV.png | pack-bfi-cab-1 |
+| Marshall 1960A 4×12 com G12T-75.png | pack-bfi-cab-2 |
 | DirectBox.png | cab-off (imagem da opção Sem cabinet; não simula uma DI) |
-| VHT Deliverance.png | factory-cab-3 |
-| Soldano.png | factory-cab-4 |
-| Peavey 5150 + Mesa Oversized.png | factory-cab-5 |
-| JSX KT77 + Mesa Stiletto AKG C1000.png | factory-cab-6 |
-| Diezel V30 SM57 (Soldano HR PowerAmp).png | factory-cab-7 |
+| VHT Deliverance.png | pack-bfi-cab-3 |
+| Soldano.png | pack-bfi-cab-4 |
+| Peavey 5150 + Mesa Oversized.png | pack-bfi-cab-5 |
+| JSX KT77 + Mesa Stiletto AKG C1000.png | pack-bfi-cab-6 |
+| Diezel V30 SM57 (Soldano HR PowerAmp).png | pack-bfi-cab-7 |
 
 As identidades de fábrica dos IRs vêm do SHA-256 do conteúdo reconhecido, não da posição atual. Fotos personalizadas ficam em `Images` na pasta de dados do editor (`%LOCALAPPDATA%\CubeControl` ou `CubeControl-Simulation`) e têm prioridade. Não atribuir fotos de fábrica a IRs desconhecidos. Referências comerciais das fotos não comprovam a identidade sonora de um amp; veja o [catálogo](../../../../../docs/referencias/ampsEirs.md).
 
@@ -37,7 +37,7 @@ As identidades de fábrica dos IRs vêm do SHA-256 do conteúdo reconhecido, nã
 
 | Arquivo / grupo | Uso verificado |
 | --- | --- |
-| `footswitch.png` | Fundo dos seletores A/B/C na janela |
+| `footswitch_oficial_01.png` | Arte oficial embutida de footswitch; `ControlArtwork` resolve o acabamento selecionado e o fallback de alto contraste |
 | `gabineteGenerico.png`, `micGenerico.png` | Cena de distância do microfone |
 | `cuvaveBaby.png` | Recurso disponível; sem referência direta localizada no C#/XAML atual |
 | Quatro PNGs iniciados por `Botão` | Nomes referenciados por `AmpControl.Asset` |

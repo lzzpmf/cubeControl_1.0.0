@@ -12,7 +12,7 @@ O projeto usa `WPF-UI` **4.3.0**, fixado em [Cube.Desktop.csproj](../../windows/
 | Recursos dinâmicos | Superfícies, textos, seleção, foco, knobs, ícones e onda; cores não alteram fotos |
 | `SnackbarService` / `SnackbarPresenter` | Resultados breves, conforme [Notificações](snackbars.md) |
 | `InfoBar` | Avisos e erros no editor |
-| `ProgressRing` / `ProgressBar` | Espera sem total e progresso medido, com apresentação centralizada |
+| `ProgressRing` / `ProgressBar` / `InfiniteProgressBar` | Espera sem total e progresso medido; downloads do YouTube mostram progresso indeterminado no próprio card |
 | `ContentDialog` / `MessageBox` | Galerias, associações, confirmações e avisos localizados |
 | `CardAction` | Ações e superfícies usando templates da biblioteca |
 | Mica | Integrado à preferência de transparência e ao fallback do Windows |

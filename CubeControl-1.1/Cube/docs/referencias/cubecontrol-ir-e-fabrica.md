@@ -1,6 +1,6 @@
 # Cube Baby: IR, distância e recursos de fábrica
 
-[Documentação](../README.md) · [Guia de uso](../historico/guia-de-uso.md) · Referência reconferida em 01/10/2026
+[Documentação](../README.md) · [Guia de uso](../usuario/pt-BR/irs.md) · Comportamento do editor reconferido em 12/10/2026; evidências históricas preservadas
 
 Implementação e ensaios históricos de 17/09/2026, específicos ao Cube Baby de guitarra identificado como `SINCO-CubeBaby`. O [manual PDF incluído](../../windows/Cube.Desktop/Assets/Documents/manuais/oficial/en-US/Cube-Baby-M-Vave-Guitar-Pedal-User-Manual-Oficial.pdf) orienta nomes, modos e apresentação; os endereços não foram deduzidos do manual. A antiga extração Markdown em `windows/artifacts` não está incluída nesta árvore.
 
@@ -13,7 +13,7 @@ Origem examinada na pesquisa: `C:\Users\lzzpm\Downloads\CubeSuite\CubeSuite.exe`
 | CubeSuite.exe | `0E0183FD6DC1B347534C9CE1E3677ECDA2A6AE77FE3DA8D6314D43C7C2CFD2E6` |
 | bin/BFI.bin, 69.632 bytes | `2023EE73672E43A0381A37AE5ECB7B1E298836E84B052DF609D4EF9509EE37E5` |
 
-Esses dois arquivos do CubeSuite não são redistribuídos. [FactoryResources.Load](../../windows/Cube.Protocol/FactoryResources.cs) exige esses checksums e extrai os dados da instalação original. Na inicialização, o editor tenta somente `Downloads/CubeSuite/CubeSuite.exe` no perfil do usuário, com `bin/BFI.bin` ao lado; não há seletor de origem na interface atual. Outra versão permanece bloqueada até análise própria. Não há acesso à atualização de firmware.
+Esses dois arquivos do CubeSuite não são redistribuídos. [FactoryResources.Load](../../windows/Cube.Protocol/FactoryResources.cs) exige esses checksums e extrai os dados da instalação original. Na inicialização, o editor tenta somente `Downloads/CubeSuite/CubeSuite.exe` no perfil do usuário, com `bin/BFI.bin` ao lado; não há seletor de origem na interface atual. Outra versão permanece bloqueada até análise própria. Esse carregador não atualiza firmware. A atualização existe em um fluxo separado de `FirmwareUpdater`, descrito na [arquitetura](../desenvolvimento/arquitetura.md).
 
 Isso é distinto de `Assets/FactoryAmps.bin`, recurso de 36864 bytes embutido na aplicação para reconhecimento dos nove amps pelo conteúdo. Ele não fornece os presets e IRs de fábrica extraídos por este carregador.
 

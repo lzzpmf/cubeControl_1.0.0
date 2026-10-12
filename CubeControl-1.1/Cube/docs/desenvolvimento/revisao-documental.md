@@ -37,6 +37,21 @@ Uma segunda conferência estática identificou e corrigiu lacunas adicionais nos
 
 Esta conferência não executou os diagnósticos nem acessou o pedal. Não representa nova execução dos testes de protocolo registrados acima.
 
+## Conferência de IRs e recursos de fábrica — 12/10/2026
+
+A leitura de `LoadWavAndPreviewAsync`, `SaveMatches`, `FactoryResources.Load` e `IrPackCatalog.LoadAvailable` confirmou outras correções nos guias pt-BR/en-US: prévia de IR em RAM sem substituição de slot, início automático ao selecionar um WAV com sessão conectada e não bloqueada, associações amp–gabinete apenas na sessão e requisitos externos distintos para presets de fábrica e packs BFI/BFIN. A contagem direta em `Assets/ImpulseResponses` encontrou 958 WAVs, dos quais 682 em Overdriven.fr; as páginas atuais foram atualizadas e as contagens históricas do plano de QA foram identificadas como tais. Nenhuma gravação ou consulta ao pedal foi executada nesta conferência.
+
+## Reanálise dos comandos de teste e validação — 12/10/2026
+
+A conferência dos despachos em `Cube.Tests/Program.cs`, `Cube.Desktop.Tests/Program.cs` e da implementação em `AdvancedHardwareTests.cs` encontrou lacunas adicionais:
+
+- O guia Windows agora explicita os filtros do protocolo e que a execução sem filtro não agrega todas as suítes dedicadas. Vários filtros na mesma chamada não combinam os testes; prevalece a ordem do despacho.
+- A descrição genérica de transporte simulado foi corrigida: três modos desktop `--hardware-*` abrem o pedal real. O guia registra alterações, confirmação automática no modelo, evidências e tentativa de restauração.
+- O ramo `--hardware-advanced-recovery` ainda espera `pending-chorus-preview.json`, `LoadPendingChorus` e arquivamento legado. A busca no código desktop não encontrou esse método nem o fluxo legado. Essa incompatibilidade continua sendo uma pendência de implementação; documentá-la não corrige o teste nem fornece recuperação persistente ao editor.
+- O guia de validação agora fornece comandos reproduzíveis e distingue a raiz do pacote usada por `-PackageRoot` da pasta `Assets/Documents` usada por `--documentation-root`. Os resultados de 08/10 foram identificados como históricos.
+
+Verificações executadas nesta reanálise: `python scripts/qa/validate_document_links.py` e `scripts/Validate-Documentation.ps1`, ambos aprovados (18 entradas e 34 arquivos no catálogo). Não foram repetidos testes de protocolo/WPF, build, inspeção visual ou ensaios no pedal. As alterações desta etapa são somente documentais e preservam as edições anteriores do checkout.
+
 ## Escopo e resultado
 
 Foram analisados os **21 arquivos Markdown originais** do repositório, incluindo relatórios da raiz, documentação da aplicação, READMEs de recursos e o README de terceiro em `resources/META-INF`. O comportamento descrito foi confrontado com projetos C#/XAML, scripts PowerShell/CMD, catálogos e artefatos binários disponíveis.
@@ -164,6 +179,21 @@ Validação do fluxo único:
 - Os 32 Markdown e seus 300 links/imagens locais foram reconferidos, incluindo âncoras; todos continuam alcançáveis pelo README principal.
 
 O aplicativo não foi aberto e não houve acesso ao pedal nessas verificações. A falha conhecida da suíte de protocolo não foi alterada por esta mudança de build.
+
+## Conferência transversal do comportamento documentado — 12/10/2026
+
+Esta rodada confrontou as instruções atuais com os caminhos de execução e os eventos da interface. As correções foram aplicadas também aos guias em inglês e às palavras-chave do catálogo de ajuda.
+
+| Área | Evidência de código | Correção documental |
+|---|---|---|
+| Criadores de efeitos | `EditorViewModel.EffectCard.cs`, preparação dos quatro efeitos e `EffectGraphEditor.cs` | Abrir opções avançadas tenta iniciar prévia; retornar à edição simples não restaura; preparação pode enviar parâmetros; confirmação numérica ao perder foco; painel responsivo. |
+| Biblioteca de IRs | `IrLibraryViewModel.cs` e catálogo de metadados | Busca textual, árvore por marca/configuração/modelo, tratamento de arquivos sem metadados e remoção das instruções de filtros antigos. |
+| Pré-escuta de IRs | `IrAuditionViewModel` e serviço de reprodução | Cinco gravações, saída Windows, processamento no pedal, condições para tocar, pausa na transferência e exclusão entre reproduções. |
+| Packs portáteis | `IrPackStore.Portable` e `ApplyPreparedIrPackAsync` | Limite por WAV, validação antes das cópias, arquivos importados persistentes e gravação parcial sem rollback automático. |
+| Firmware | `EditorViewModel.Firmware.cs` e atualizador | Fluxo separado do carregador de IRs, desconexão MIDI, validação do arquivo, elevação e limites de recuperação. |
+| Ajuda e recursos | `DocumentCatalog.cs`, projeto Desktop e catálogos de imagens | Busca em metadados, fallback de idioma, fontes publicadas, imagens/IDs atuais e distinção dos manuais preservados. |
+
+Validação documental desta rodada: 536 links locais sem destinos ou âncoras inválidos; catálogo com 18 entradas e 34 arquivos publicados; `git diff --check` sem erros de espaços. A revisão é estática: confirma regras implementadas, não medições acústicas, comportamento do hardware nem resultados visuais em execução. Relatos históricos, manuais preservados e hipóteses de engenharia reversa mantêm sua origem; não foram convertidos em conclusões novas. Nenhum código funcional foi alterado e nenhum comando foi enviado ao pedal nesta rodada. Resultados antigos de build/testes continuam sendo registros das respectivas execuções.
 
 ## Como manter a documentação
 

@@ -20,6 +20,6 @@ Não simula o áudio do DSP nem valida USB físico, apagamento real ou retençã
 
 Os dados do editor usam `%LOCALAPPDATA%\CubeControl-Simulation`. Tema, idioma e **zoom** continuam compartilhados em `%LOCALAPPDATA%\CubeControl`.
 
-O inicializador `CubeControl-1.1/Iniciar-Simulacao.cmd` localiza `scripts/Build-CubeControl.ps1` relativamente à própria pasta e passa `-Simulation -Start`. Ele usa o fluxo único de build antes de abrir `C:\CubeControl-Build\publish\CubeControl-Simulation-1.1.0\CubeControl.exe`. Esse fluxo exige o SDK .NET 10. Para apenas gerar o pacote, omita `-Start`; para mudar a raiz de saída, use `-OutputRoot` com uma pasta externa ao projeto.
+O inicializador `CubeControl-1.1/Iniciar-Simulacao.cmd` localiza `scripts/Build-CubeControl.ps1` relativamente à própria pasta e passa `-Simulation -Start`. Ele usa o fluxo único de build antes de abrir `C:\CubeControl-Build\publish\CubeControl-Simulation-1.1.0\CubeControl.exe`. Esse fluxo exige o SDK .NET 10 e a toolchain C++ do DSP nativo (MSVC x64 e Windows SDK), conforme os requisitos atuais do guia Windows. Para apenas gerar o pacote, omita `-Start`; para mudar a raiz de saída, use `-OutputRoot` com uma pasta externa ao projeto.
 
 O fluxo único está no [guia Windows](../../windows/README.md). O script fornece `CubeSimulation=true`, que inclui o transporte simulado; não é necessário montar comandos de compilação manualmente. Os intermediários e o pacote final ficam fora do projeto, assim como na edição normal.

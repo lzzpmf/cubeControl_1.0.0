@@ -17,4 +17,9 @@ Selecione no aplicativo o mesmo A/B/C que você escolheu fisicamente no pedal. A
 ## Personalizar a leitura
 Tema, idioma e zoom ficam no menu de reticências. A central de documentação funciona offline e sem pedal. Guias acompanham o idioma do aplicativo; PDFs indicam seu próprio idioma.
 
+O zoom vai de 50% a 200%, em passos de 10%. Use Ctrl +, Ctrl − e Ctrl 0 para aumentar, diminuir e restaurar 100%; isso não altera o DPI do Windows. Tema, idioma e zoom são compartilhados com a edição simulada.
+
 Se a conexão falhar, consulte [Problemas comuns](problemas.md).
+
+## Encontrar ajuda
+A busca da Central de Documentação procura no título, resumo e palavras-chave do catálogo, não no texto integral dos guias. Todos os termos separados por espaço precisam corresponder; maiúsculas e acentos são ignorados. Se não houver versão no idioma selecionado, o app usa português brasileiro ou, na ausência dele, a primeira versão disponível. Os manuais preservados descrevem suas versões de origem; para os fluxos atuais do aplicativo, use os guias da Central.

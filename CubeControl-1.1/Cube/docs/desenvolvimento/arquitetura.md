@@ -78,7 +78,7 @@ Diretório padrão: `%LOCALAPPDATA%\CubeControl`. Com `CubeSimulation=true`, os 
 | `language-v1.json` | Idioma, sempre na pasta CubeControl |
 | `zoom-v1.json` | Zoom, sempre na pasta CubeControl |
 
-A playlist, a seleção, a saída e os ajustes de reprodução ficam na sessão atual. O player não carrega nem atualiza o antigo `backing-tracks-v1.json`; reabrir começa com playlist vazia. Preferências do metrônomo e registros de downloads são persistências separadas. O metrônomo inicia parado. O editor atual também não lê os antigos nomes em `IrNames/*.txt`; a migração de `visual-preferences-v1.json` abrange apenas imagens, não associações de gabinetes ou nomes.
+A playlist, a seleção, a saída e os ajustes de reprodução ficam na sessão atual. O player não carrega nem atualiza o antigo `backing-tracks-v1.json`; reabrir começa com playlist vazia. Preferências do metrônomo e registros de downloads são persistências separadas. O metrônomo inicia parado. As associações amp–gabinete e a opção de associação automática ficam somente na sessão; `SaveMatches` não grava preferências nem envia comandos. O editor atual também não lê os antigos nomes em `IrNames/*.txt`; a migração de `visual-preferences-v1.json` abrange apenas imagens, não associações de gabinetes ou nomes.
 
 Os fluxos automáticos de `BackupBank`, `BackupIr` e preservação de amp mantêm cópias em memória da sessão. As prévias de IR e dos criadores também não geram nem carregam arquivos `pending-*-preview.json` no editor atual. Reconectar na mesma execução pode permitir restaurar uma prévia, conforme identidade e contexto; reiniciar o aplicativo perde esses snapshots. Exportar banco, backup de setor IR, amp ou ajustes de efeito é uma operação explícita, com arquivo no destino escolhido. Arquivos de recuperação de versões anteriores e evidências produzidas por diagnósticos não equivalem a recuperação automática do editor.
 
@@ -92,7 +92,7 @@ Tema, idioma e zoom são compartilhados entre aplicativo real e simulado. Export
 | Backup de setor IR | Manifesto `cubecontrol-ir-v1` e `.bin` de 4096 bytes, com integridade verificada |
 | WAV preparado | Mono, 48 kHz, 512 amostras float32, sem normalização de amplitude |
 | Setor de amp | 4096 bytes; corpo editável separado do cabeçalho e preenchimento |
-| Biblioteca de IRs | 276 WAVs em `Cube.Desktop/Assets/ImpulseResponses`, copiados à saída |
+| Biblioteca de IRs | 958 WAVs em `Cube.Desktop/Assets/ImpulseResponses` no inventário de 12/10/2026: 276 do acervo anterior e 682 de Overdriven.fr; copiados à saída |
 | Amps originais | `Assets/FactoryAmps.bin`, 36864 bytes, recurso embutido `Cube.FactoryAmps`; usado para reconhecer o nome pelo conteúdo |
 | Presets e IRs de fábrica | Extraídos da instalação original do CubeSuite por `FactoryResources.Load`, com hashes específicos |
 | Manual | PDF em `Cube.Desktop/Assets/Documents`, copiado à saída |

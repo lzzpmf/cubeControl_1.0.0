@@ -1,7 +1,7 @@
 # Delay creator
 
 ## Prepare preview
-Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the creator and use Read active delay to start preview. The app selects the detected physical preset in the interface. Preparation enables the delay/modulation section and raises the mix if it is zero; disabling chorus/phaser is not required. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
+Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the effect’s **Advanced options**: this already attempts to prepare and start preview. The app selects the detected physical preset in the interface. Preparation enables the delay/modulation section and raises the mix if it is zero; disabling chorus/phaser is not required. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
 
 ## Controls
 The graph offers temporal modulation depth and speed, time in internal samples and fine feedback/mix resolution. Depth and speed are percentages of the original: zero depth removes oscillation; zero speed freezes its phase. Effective speed depends on time. Internal mix 50 keeps dry and echo signals at full level; it is not a complementary wet/dry sum. Millisecond equivalence has not been verified by audio measurement.

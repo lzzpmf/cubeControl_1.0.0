@@ -17,4 +17,9 @@ Select the same A/B/C in the app as on the physical pedal. Open a Pedalboard mod
 ## Customize reading
 Theme, language and zoom are in the ellipsis menu. Documentation works offline without a pedal. Guides follow the app language; PDFs display their own language.
 
+Zoom ranges from 50% to 200% in 10% steps. Use Ctrl +, Ctrl − and Ctrl 0 to increase, decrease and reset to 100%; this does not change Windows DPI. Theme, language and zoom are shared with the simulation edition.
+
 For connection issues, see [Troubleshooting](problemas.md).
+
+## Find help
+Documentation Center search matches catalog titles, summaries and keywords, not the full guide text. Every space-separated term must match; case and accents are ignored. If the selected language is unavailable, the app uses Brazilian Portuguese or, failing that, the first available version. Preserved manuals describe their source versions; use the Center’s guides for current app workflows.

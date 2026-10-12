@@ -4,7 +4,7 @@
 
 Pesquisa histórica em 18/09/2026. Resumos de apresentação da versão 3.3.6; nenhum endereço MIDI, identidade de conteúdo ou nome de slot foi alterado.
 
-As características descrevem o modelo de referência, não uma medição do IR. São exibidas somente quando a identificação por conteúdo fornece um `factoryId` conhecido; não são inferidas pelo número do slot ou por nomes personalizados. O tooltip explicita esse escopo.
+As características descrevem o modelo de referência, não uma medição do IR. São exibidas somente quando a identificação por conteúdo fornece uma identidade de gabinete conhecida (atualmente `pack-bfi-cab-N`, fornecida por `IrPackCatalog`); não são inferidas pelo número do slot ou por nomes personalizados. O tooltip explicita esse escopo.
 
 | Modelo | Texto abaixo do nome | Referência do fabricante |
 |---|---|---|

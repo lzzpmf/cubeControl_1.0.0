@@ -1,7 +1,7 @@
 # Chorus creator
 
 ## Prepare preview
-Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the creator and use Read active chorus to start preview. The app selects the detected physical preset in the interface. Preparation selects chorus and enables the delay/modulation section when needed. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
+Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalboard, open the effect’s **Advanced options**: this already attempts to prepare and start preview. The app selects the detected physical preset in the interface. Preparation selects chorus and enables the delay/modulation section when needed. This preparation may change live parameters without saving the bank. An incompatible profile or context prevents preview; see [Using effect creators](criadores-efeitos.md).
 
 ## Controls
 Depth, estimated speed, processed-branch mix, feedback, waveform and delayed/combined branch gains. Processed-branch mix is not a wet percentage.
