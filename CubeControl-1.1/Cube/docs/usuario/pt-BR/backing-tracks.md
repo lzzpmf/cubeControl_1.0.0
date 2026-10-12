@@ -23,8 +23,14 @@ Use **Iniciar gravação**, escolha o destino WAV e reproduza a faixa quando qui
 
 Use **Parar e salvar** para finalizar o WAV. Você pode mostrar o arquivo ou adicioná-lo à playlist. Selecione outra fonte antes de iniciar uma nova gravação. Se houver falha, o app informa o caminho do WAV recuperável. Gravar não exige USB; o áudio vem do dispositivo de áudio escolhido.
 
+O mute da guitarra continua valendo na gravação combinada: ativar o monitor e elevar seu volume não remove o mute. Confira esse canal no mixer antes de gravar. Em **Somente guitarra** ou uma **Entrada** específica, a captura vem diretamente da entrada e não depende do volume/mute do monitor. Ao gravar uma **Saída** específica, todos os sons reproduzidos nela podem entrar no arquivo.
+
 ## Exportar
-A exportação cria um novo arquivo no destino escolhido e não modifica o original. Verifique o trecho e os ajustes antes de exportar. Remover uma faixa da lista não apaga o áudio.
+A exportação gera WAV PCM de 16 bits. Com A e B válidos, exporta uma passagem do trecho, mesmo se a repetição estiver desligada; sem um trecho válido, exporta a faixa inteira. O intervalo mínimo entre A e B é 0,1 segundo.
+
+No diálogo, **Aplicar velocidade e tom (sem volume/mute)** começa desmarcado. Marque para incluir os ajustes de velocidade e transposição; deixe desmarcado para manter a velocidade e o tom originais. Volume e mute do player não entram na exportação, que também não inclui guitarra, metrônomo ou sons de outros aplicativos. Para capturar a mistura que você ouve, use a gravação da saída.
+
+O aplicativo impede usar como destino um áudio presente na playlist. Outro arquivo existente pode ser substituído após a confirmação no diálogo de salvar; escolha um nome novo para preservá-lo. A substituição só ocorre ao concluir a exportação. Cancelar mantém o destino anterior. Remover uma faixa da lista não apaga o áudio.
 
 ## YouTube
 A busca e o download precisam de internet e usam ferramentas incluídas no pacote. Escolha conteúdo próprio ou autorizado. Uma falha de rede não deve substituir um arquivo já existente. Importar não inicia reprodução automaticamente.

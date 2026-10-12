@@ -52,6 +52,17 @@ A conferência dos despachos em `Cube.Tests/Program.cs`, `Cube.Desktop.Tests/Pro
 
 Verificações executadas nesta reanálise: `python scripts/qa/validate_document_links.py` e `scripts/Validate-Documentation.ps1`, ambos aprovados (18 entradas e 34 arquivos no catálogo). Não foram repetidos testes de protocolo/WPF, build, inspeção visual ou ensaios no pedal. As alterações desta etapa são somente documentais e preservam as edições anteriores do checkout.
 
+## Reanálise de exportação e gravação de áudio — 12/10/2026
+
+Os guias de Backing Tracks e problemas comuns, em pt-BR e en-US, foram confrontados com `BackingTracksViewModel.ExportSelection`, `ChooseBackingExportMode`, `BackingAudioProcessing.Export`, `BackingTracksViewModel.Recording` e `BackingTracksViewModel.Practice`.
+
+- A exportação agora descreve WAV PCM de 16 bits, seleção A/B independentemente do loop, faixa inteira sem intervalo válido e aplicação opcional de velocidade/tom, desmarcada por padrão. Volume, mute, guitarra e metrônomo não integram esse arquivo.
+- A afirmação genérica de criar um novo arquivo foi precisada: fontes da playlist são protegidas, mas outro destino existente pode ser substituído após confirmação, somente ao concluir a exportação. Cancelamento preserva o destino anterior.
+- A gravação combinada mantém o mute da guitarra mesmo quando inicia o monitor e ajusta seu volume. Captura direta de entrada não passa pelo volume/mute do monitor. A interrupção do monitor encerra a gravação combinada.
+- Os guias de problemas comuns ganharam orientação para guitarra ausente na gravação e diferenças entre o player e o WAV exportado.
+
+Esta etapa altera apenas documentação. A conferência de comportamento é estática; não houve escuta, captura WASAPI, teste de desconexão de áudio nem acesso ao pedal. Validação por links locais, catálogo publicado e `git diff --check`; os resultados não equivalem a uma nova homologação de áudio ou do pacote instalado.
+
 ## Escopo e resultado
 
 Foram analisados os **21 arquivos Markdown originais** do repositório, incluindo relatórios da raiz, documentação da aplicação, READMEs de recursos e o README de terceiro em `resources/META-INF`. O comportamento descrito foi confrontado com projetos C#/XAML, scripts PowerShell/CMD, catálogos e artefatos binários disponíveis.

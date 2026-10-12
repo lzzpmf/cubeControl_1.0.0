@@ -23,8 +23,14 @@ Use **Start recording**, choose the WAV destination and play the track when read
 
 Use **Stop and save** to finalize the WAV. You can show the file or add it to the playlist. Choose a different source before starting another recording. If a failure occurs, the app shows the recoverable WAV path. Recording does not require USB; audio comes from the chosen audio device.
 
+Guitar mute still applies to combined recording: starting monitoring and raising its volume does not unmute the channel. Check it in the mixer before recording. **Guitar only** and a specific **Input** capture directly from the input, independently of monitor volume/mute. Recording a specific **Output** can capture all sounds playing on that device.
+
 ## Export
-Export creates a new file at the chosen destination without changing the original. Check the section and settings before exporting. Removing a track from the list does not delete its audio file.
+Export produces a 16-bit PCM WAV. With valid A and B markers, it exports one pass through the section, even when looping is off; without a valid section, it exports the entire track. The minimum interval between A and B is 0.1 seconds.
+
+The dialog's option to apply speed and pitch without volume/mute starts unchecked. Check it to include speed and pitch adjustments; leave it unchecked to keep the original speed and pitch. Player volume and mute do not affect export. Guitar, metronome and sounds from other apps are also excluded. To capture the mix you hear, use output recording.
+
+The app prevents choosing an audio file in the playlist as the destination. Another existing file can be replaced after confirmation in the save dialog; choose a new name to preserve it. Replacement happens only when export completes. Canceling preserves the previous destination. Removing a track from the list does not delete its audio file.
 
 ## YouTube
 Search and download require internet and use tools included in the package. Choose your own or authorized content. A network failure should not replace an existing file. Importing does not start playback automatically.
