@@ -17,7 +17,7 @@ public sealed partial class BackingTracksViewModel
     private static string MusicIdentity(BackingTrack track)
     {
         var file = new FileInfo(track.Source);
-        return track.Source + "|" + (file.Exists ? $"{file.Length}|{file.LastWriteTimeUtc.Ticks}" : "missing");
+        return $"music-v{BackingMusicAnalysis.AlgorithmVersion}|" + track.Source + "|" + (file.Exists ? $"{file.Length}|{file.LastWriteTimeUtc.Ticks}" : "missing");
     }
     private void ScheduleMusic()
     {

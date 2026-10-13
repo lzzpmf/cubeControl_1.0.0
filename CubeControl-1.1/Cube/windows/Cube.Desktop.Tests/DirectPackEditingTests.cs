@@ -10,7 +10,7 @@ internal static class DirectPackEditingTests
         string folder = Path.Combine(Path.GetTempPath(), "cube-direct-pack-" + Guid.NewGuid().ToString("N"));
         using var model = new EditorViewModel(folder);
         var editor = model.PackEditor;
-        var original = model.IrPacks.First(p => p.Group == "Predefinidos");
+        var original = model.IrPacks.First(p => p.Definition != null && p.Group != "Meus packs");
         var originalEntries = original.Definition!.Entries.ToArray();
         editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
         model.Ask = _ => Task.FromResult(true);

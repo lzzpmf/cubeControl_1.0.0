@@ -28,8 +28,8 @@ public sealed partial class CubeSession
         try
         {
             RequireIdentity();
-            // Idle monitoring checks only context and the delay block. Full protected
-            // DSP comparison remains mandatory immediately before/after every mutation.
+            // Idle monitoring checks only context and the delay block. All three effect
+            // blocks are checked immediately before/after every mutation.
             var bank = await ReadInternal(0, 48, CancellationToken.None);
             var state = await ReadInternal(EffectsPhysicalStateOffset, 2, CancellationToken.None, 4);
             var dsp = recovery.OriginalDsp.ToArray();
@@ -65,13 +65,14 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
-            var before = await ReadDelayCore(ct);
+            var before = await ReadDelayCore(ct, effectControlsOnly: true);
             CheckDelayContext(recovery, before, recovering: false);
+            if (parameters == recovery.Target) return recovery; // Fresh context already confirmed; no mutation.
             var transaction = (recovery with { Previous = recovery.Target, Target = parameters }).Seal();
-            await preserve(transaction); // Durable intent before the first byte; also covers partial writes.
+            await preserve(transaction); // Preserve recovery intent before the first byte, including partial writes.
             ct.ThrowIfCancellationRequested();
             await WriteDelayFields(before, parameters, CancellationToken.None);
-            var after = await ReadDelayCore(CancellationToken.None);
+            var after = await ReadDelayCore(CancellationToken.None, effectControlsOnly: true);
             VerifyEffectMutation(3, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckDelayContext(transaction, after, recovering: false);
             return transaction;
@@ -84,11 +85,11 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
-            var before = await ReadDelayCore(ct);
+            var before = await ReadDelayCore(ct, effectControlsOnly: true);
             CheckDelayContext(recovery, before, recovering: true);
             var original = DelayParameters.Read(recovery.OriginalDsp);
             await WriteDelayFields(before, original, CancellationToken.None);
-            var after = await ReadDelayCore(CancellationToken.None);
+            var after = await ReadDelayCore(CancellationToken.None, effectControlsOnly: true);
             VerifyEffectMutation(3, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckDelayContext((recovery with { Target = original }).Seal(), after, recovering: false);
         }

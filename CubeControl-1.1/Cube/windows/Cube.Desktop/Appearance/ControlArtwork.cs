@@ -56,6 +56,8 @@ internal static class ControlArtwork
         resources["CubeControlFootswitch"] = highContrast ? AccessibleFace("foot") : FaceBrush(Face("footswitch", "Switches/footswitch_oficial_01.png"));
         resources["CubePlayerUsesOfficialArtwork"] = original;
         resources["CubePlayerButtonFace"] = Load($"Finishes/{folder}/player-face.png");
+        resources["CubePlayerRecordFace"] = Face("record", "BackingTrack/record.png");
+        resources["CubeRecordingIndicator"] = highContrast ? SystemColors.WindowTextBrush : Brushes.Red;
         string playerGlyph = definition.Glyph;
         resources["CubePlayerGlyph"] = highContrast ? SystemColors.WindowTextBrush : new SolidColorBrush((Color)ColorConverter.ConvertFromString(playerGlyph));
         if (!highContrast)

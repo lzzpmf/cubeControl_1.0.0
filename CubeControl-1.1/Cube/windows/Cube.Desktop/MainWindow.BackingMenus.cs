@@ -51,7 +51,6 @@ public partial class MainWindow
     {
         BackingVolumesPanel.Visibility = BackingVolumesPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
     }
-    private void BackingMixerModeClick(object sender, RoutedEventArgs e) => BackingTracks.MixerExpanded = (sender as FrameworkElement)?.Tag as string == "expanded";
     private void BackingMixerResetClick(object sender, RoutedEventArgs e) => BackingTracks.ResetMixerVolumes();
     private void BackingMixerMuteClick(object sender, RoutedEventArgs e)
     {
@@ -261,7 +260,9 @@ public partial class MainWindow
             }
             var bpm = new TextBox { Text = track.Bpm > 0 ? track.Bpm.ToString("0.#", CultureInfo.CurrentCulture) : "" };
             var key = new ComboBox { ItemsSource = BackingTracks.Keys.Select(k => new KeyValuePair<string, string>(k, LanguageService.T(k))).ToArray(), DisplayMemberPath = "Value", SelectedValuePath = "Key", SelectedValue = track.OriginalKey };
-            var tuning = new TextBox { Text = track.Tuning, MaxLength = 40 };
+            var tuning = new Wpf.Ui.Controls.TextBox { Text = track.Tuning, MaxLength = 40,
+                PlaceholderText = LanguageService.T("Sem afinação associada"),
+                ToolTip = LanguageService.T("Deixe vazio para não associar uma afinação.") };
             var preset = new ComboBox { ItemsSource = BackingTracks.PresetOptions.Select(LanguageService.T).ToArray(), SelectedIndex = track.Preset };
             System.Windows.Automation.AutomationProperties.SetName(bpm, LanguageService.T("BPM original"));
             System.Windows.Automation.AutomationProperties.SetName(key, LanguageService.T("Tom original"));

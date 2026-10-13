@@ -11,19 +11,6 @@ public partial class IrLibraryBrowser : UserControl
     public IrLibraryBrowser() => InitializeComponent();
     public TreeView Tree => IrLibraryTree;
     public FrameworkElement SearchBox => IrLibrarySearch;
-    private void SearchLoaded(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Wpf.Ui.Controls.AutoSuggestBox box) return;
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
-        {
-            if (box.Template?.FindName("PART_TextBox", box) is Wpf.Ui.Controls.TextBox search)
-            {
-                search.IconPlacement = Wpf.Ui.Controls.ElementPlacement.Left;
-                search.SetValue(Border.CornerRadiusProperty, new CornerRadius(22));
-                search.MinHeight = 40; search.Padding = new Thickness(12, 8, 12, 8);
-            }
-        }));
-    }
     private void FolderClick(object sender, MouseButtonEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: IrLibraryNode { IsFolder: true, IsBrand: false } node })

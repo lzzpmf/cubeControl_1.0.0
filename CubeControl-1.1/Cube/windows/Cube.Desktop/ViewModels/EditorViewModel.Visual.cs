@@ -143,6 +143,7 @@ public sealed partial class EditorViewModel
     }
     private void RefreshEditor()
     {
+        Notify(nameof(RandomIrDestination));
         RefreshEffectCard();
         if (Amps.Length == 0 || Cabinets.Length == 0 || Presets == null) return;
         Notify(nameof(DelayGraphState)); Notify(nameof(ChorusGraphState));

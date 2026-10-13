@@ -4,6 +4,9 @@ namespace Cube.Protocol;
 
 public sealed partial class CubeSession
 {
+    // Modulation, delay and reverb controls/context; excludes amp/IR payloads.
+    private const int EffectControlsStart = 0x63C;
+    private const int EffectControlsLength = 0x764 - EffectControlsStart;
     private bool effectsFirmwareB;
     public string? EffectsFirmware { get; private set; }
     private uint EffectsPhysicalStateOffset => effectsFirmwareB ? 0xFFFD81F6u : 0xFFFD8202u;
@@ -15,17 +18,40 @@ public sealed partial class CubeSession
         try
         {
             RequireIdentity();
-            switch (stage)
-            {
-                case 1: await VerifyChorusFirmware(ct); break;
-                case 2: await VerifyPhaserFirmware(ct); break;
-                case 3: await VerifyDelayFirmware(ct); break;
-                case 4: await VerifyReverbFirmware(ct); break;
-                default: throw new ArgumentOutOfRangeException(nameof(stage));
-            }
+            await VerifyEffectStageFirmware(stage, ct);
             return await ReadPhaserCore(ct);
         }
         finally { gate.Release(); }
+    }
+
+    // Preparation only consumes bank and physical selection. The subsequent Begin*Preview
+    // captures the complete original DSP after any required live parameter changes.
+    public async Task<(byte[] Bank, byte[] PhysicalState)> ReadEffectPreparationState(int stage, CancellationToken ct = default)
+    {
+        await gate.WaitAsync(ct);
+        try
+        {
+            RequireIdentity();
+            await VerifyEffectStageFirmware(stage, ct);
+            var bank = await ReadInternal(0, 48, ct);
+            var alias = await ReadInternal(EffectsBankAliasOffset, 48, ct, 4);
+            if (!bank.SequenceEqual(alias)) throw new IOException("Alias do banco diverge; releia antes de preparar o efeito.");
+            var physical = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4);
+            return (bank, physical);
+        }
+        finally { gate.Release(); }
+    }
+
+    private async Task VerifyEffectStageFirmware(int stage, CancellationToken ct)
+    {
+        switch (stage)
+        {
+            case 1: await VerifyChorusFirmware(ct); break;
+            case 2: await VerifyPhaserFirmware(ct); break;
+            case 3: await VerifyDelayFirmware(ct); break;
+            case 4: await VerifyReverbFirmware(ct); break;
+            default: throw new ArgumentOutOfRangeException(nameof(stage));
+        }
     }
 
     private static bool EffectControlOffset(int stage, int offset) => stage switch
@@ -59,7 +85,7 @@ public sealed partial class CubeSession
     private static void VerifyEffectMutation(int stage, PhaserResearchSnapshot before, PhaserResearchSnapshot after)
     {
         if (!before.Bank.SequenceEqual(after.Bank) || !before.PhysicalState.SequenceEqual(after.PhysicalState) ||
-            !Enumerable.Range(0, before.Dsp.Length).All(i => i is >= 0xF6C and < 0xF70 ||
+            !Enumerable.Range(EffectControlsStart, EffectControlsLength).All(i =>
                 PhaserParameters.IsModulationDynamicOffset(before.Dsp, i) || EffectControlOffset(stage, i) || before.Dsp[i] == after.Dsp[i]))
             throw new IOException("Outro parâmetro mudou durante a escrita do efeito; recuperação preservada.");
     }

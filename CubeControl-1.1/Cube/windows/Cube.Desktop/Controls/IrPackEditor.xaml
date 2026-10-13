@@ -9,18 +9,22 @@
    <Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers>
   </Style>
  </UserControl.Resources>
- <Border Style="{StaticResource Card}"><StackPanel>
+ <StackPanel>
   <TextBlock Text="{loc:Translate Text='Packs de IRs'}" Style="{StaticResource SectionTitle}"/>
   <TextBlock Text="{loc:Translate Text='Escolha um pack ou monte até oito IRs. Revise a seleção e a distância antes de aplicar.'}" Style="{StaticResource HelpText}" Margin="0,4,0,8"/>
   <TextBlock Text="{loc:Translate Text='1 · Escolher pack'}" Style="{StaticResource CaptionText}" Margin="0,0,0,8"/>
-  <WrapPanel Margin="0,0,0,4">
-   <Grid Width="220" Margin="0,0,8,8">
+  <local:AdaptivePanel FirstShare="0.5" Breakpoint="560">
+   <Grid MaxWidth="320" HorizontalAlignment="Stretch" Margin="0,0,16,8">
    <ComboBox x:Name="PackSelector" ItemsSource="{Binding Owner.IrPackGroups}" SelectedItem="{Binding SelectedCatalogPack, Mode=OneWay}" SelectionChanged="PackSelectionChanged" IsEnabled="{Binding Owner.CanChooseIr}" MinWidth="0" AutomationProperties.Name="{loc:Translate Text='Pack de IRs'}">
-    <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/></DataTemplate></ComboBox.ItemTemplate>
+    <ComboBox.ItemTemplate><DataTemplate><TextBlock TextTrimming="CharacterEllipsis"><TextBlock.Style><Style TargetType="TextBlock">
+     <Setter Property="Text" Value="{loc:Translate Value={Binding Name}}"/><Setter Property="ToolTip" Value="{loc:Translate Value={Binding Name}}"/>
+     <Style.Triggers><DataTrigger Binding="{Binding Group}" Value="Meus packs"><Setter Property="Text" Value="{Binding Name}"/><Setter Property="ToolTip" Value="{Binding Name}"/></DataTrigger></Style.Triggers>
+    </Style></TextBlock.Style></TextBlock></DataTemplate></ComboBox.ItemTemplate>
     <ComboBox.GroupStyle><GroupStyle><GroupStyle.HeaderTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Name}}" Style="{StaticResource BodyStrongText}" Margin="8"/></DataTemplate></GroupStyle.HeaderTemplate></GroupStyle></ComboBox.GroupStyle>
    </ComboBox>
    <TextBlock Text="{loc:Translate Text='Montagem atual'}" Style="{StaticResource BodyText}" Margin="14,0,36,0" VerticalAlignment="Center" IsHitTestVisible="False" Visibility="{Binding IsDraftSelection,Converter={StaticResource Visible}}"/>
    </Grid>
+   <WrapPanel HorizontalAlignment="Right">
    <ui:Button Content="{loc:Translate Text='Importar'}" Click="ImportClick" IsEnabled="{Binding Owner.CanChooseIr}" Margin="0,0,8,8"/>
    <ui:Button Content="{loc:Translate Text='Exportar'}" Click="ExportClick" IsEnabled="{Binding CanExport}" Margin="0,0,8,8"/>
    <ui:Button Content="{loc:Translate Text='Ações do pack'}" Click="OpenMenuClick" Appearance="Transparent" Margin="0,0,0,8" Visibility="{Binding CanDelete,Converter={StaticResource Visible}}" IsEnabled="{Binding Owner.CanChooseIr}">
@@ -29,35 +33,20 @@
      <MenuItem Header="{loc:Translate Text='Excluir pack'}" Command="{Binding DeletePack}"/>
     </ContextMenu></ui:Button.ContextMenu>
    </ui:Button>
-  </WrapPanel>
+   </WrapPanel>
+  </local:AdaptivePanel>
   <TextBlock Text="{loc:Translate Value={Binding DisplayTitle}}" Style="{StaticResource SectionTitle}" TextWrapping="Wrap"/>
   <TextBlock Text="{Binding PackSummary}" Style="{StaticResource CaptionText}" Margin="0,6,0,0"/>
-  <TextBlock Text="{Binding Description}" Style="{StaticResource PackNotice}" MaxHeight="32" TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}" Margin="0,4,0,8"/>
+  <TextBlock MaxHeight="32" TextTrimming="CharacterEllipsis" Margin="0,4,0,8"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PackNotice}">
+   <Setter Property="Text" Value="{Binding Description}"/><Setter Property="ToolTip" Value="{Binding Description}"/>
+   <Style.Triggers><DataTrigger Binding="{Binding ReadOnly}" Value="True"><Setter Property="Text" Value="{loc:Translate Value={Binding Description}}"/><Setter Property="ToolTip" Value="{loc:Translate Value={Binding Description}}"/></DataTrigger></Style.Triggers>
+  </Style></TextBlock.Style></TextBlock>
   <StackPanel Visibility="{Binding HasBasis,Converter={StaticResource Visible}}" Margin="0,0,0,8">
    <TextBlock Text="{loc:Translate Text='Baseado em:'}" Style="{StaticResource CaptionText}"/>
    <TextBlock Text="{Binding BasedOnName}" Style="{StaticResource PackNotice}"/>
   </StackPanel>
   <ui:InfoBar x:Name="PackCreationNotice" Severity="Warning" IsClosable="False" IsOpen="{Binding HasDraftNotice}" Visibility="{Binding HasDraftNotice,Converter={StaticResource Visible}}" Title="{loc:Translate Value={Binding DraftNoticeTitle}}" Message="{loc:Translate Value={Binding DraftNotice}}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
-  <WrapPanel x:Name="PackActions" Margin="0,0,0,4">
-   <WrapPanel Margin="0,0,16,8">
-    <ui:Button x:Name="ReviewPackButton" Content="{loc:Translate Text='Revisar e aplicar'}" Command="{Binding Owner.ApplyIrPack}" Appearance="Primary" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Compara os oito slots com o pack escolhido e aplica somente os selecionados.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
-    <ui:Button x:Name="RestorePackButton" Content="{loc:Translate Text='Restaurar IRs originais'}" Command="{Binding Owner.RestoreOriginalIrs}" Margin="0,0,0,8" ToolTip="{loc:Translate Text='Disponível quando os arquivos originais BFI/BFIN estão instalados.'}" ToolTipService.ShowOnDisabled="True"/>
-   </WrapPanel>
-   <WrapPanel Margin="0,0,0,8">
-    <ui:Button Content="{loc:Translate Text='Salvar pack'}" Command="{Binding SavePack}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSave24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Descartar alterações'}" Command="{Binding DiscardChanges}" Visibility="{Binding Dirty,Converter={StaticResource Visible}}" Margin="0,0,0,8"/>
-   </WrapPanel>
-  </WrapPanel>
   <TextBlock Text="{loc:Translate Text='2 · Montar ou visualizar'}" Style="{StaticResource CaptionText}" Margin="0,0,0,12"/>
-  <local:AdaptivePanel FirstShare="0.3" Breakpoint="1040">
-   <StackPanel Margin="0,0,16,16">
-    <TextBlock Text="{loc:Translate Text='Biblioteca'}" Style="{StaticResource BodyStrongText}" Margin="0,0,0,8"/>
-    <local:IrLibraryBrowser x:Name="PackLibrary" DataContext="{Binding PackLibrary}" IsEnabled="{Binding Owner.CanChooseIr}" PreviewMouseLeftButtonDown="LibraryMouseDown" PreviewMouseMove="LibraryMouseMove"/>
-    <TextBlock Text="{loc:Translate Text='IR selecionado'}" Style="{StaticResource CaptionText}" Margin="0,12,0,4"/>
-    <TextBlock Text="{loc:Translate Value={Binding SelectedIrName}}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" Margin="0,0,0,12"/>
-    <TextBlock Text="{loc:Translate Text='Arraste um IR para um slot. Arraste os cartões para trocar suas posições.'}" Style="{StaticResource HelpText}" Margin="0,12,0,0"/>
-   </StackPanel>
-   <StackPanel>
     <ItemsControl ItemsSource="{Binding Slots}">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:IrPackGridPanel MinimumCardWidth="180"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
@@ -86,6 +75,12 @@
          <TextBlock Text="{Binding Title}" Style="{StaticResource CaptionText}" Height="24" VerticalAlignment="Center"/>
          <local:GearArt Kind="cab" Image="{Binding Image}" Accent="{DynamicResource CubeAccent}" Height="88" Margin="0,4,0,8" ToolTip="{loc:Translate Value={Binding ImageHint}}" AutomationProperties.HelpText="{loc:Translate Value={Binding ImageHint}}"/>
          <TextBlock Text="{loc:Translate Value={Binding Name}}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="40" ToolTip="{Binding Name}"/>
+         <TextBlock Text="{Binding CaptureSummary}" Style="{StaticResource PackNotice}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+         <StackPanel Orientation="Horizontal" Margin="0,8,0,4">
+          <TextBlock Text="{loc:Translate Text='Distância'}" Style="{StaticResource HelpText}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+          <TextBox Text="{Binding Distance,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanSetDistance}" Width="56" AutomationProperties.Name="{loc:Translate Text='Distância do microfone'}" AutomationProperties.HelpText="{Binding Title}"/>
+          <TextBlock Text="%" Style="{StaticResource HelpText}" VerticalAlignment="Center" Margin="4,0,0,0"/>
+         </StackPanel>
          <TextBlock Text="{loc:Translate Value={Binding Problem}}" Style="{StaticResource PackNotice}" MaxHeight="32" TextTrimming="CharacterEllipsis" ToolTip="{Binding Problem}"/>
         </StackPanel>
         <ui:Button HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding Remove}" Appearance="Transparent" Width="40" Height="40" Padding="0" AutomationProperties.Name="{loc:Translate Text='Remover IR'}" AutomationProperties.HelpText="{Binding Title}" ToolTip="{loc:Translate Text='Remover IR'}">
@@ -107,12 +102,22 @@
       </Border>
      </DataTemplate></ItemsControl.ItemTemplate>
     </ItemsControl>
-    <TextBlock Text="{loc:Translate Text='A distância de cada IR será ajustada na revisão antes de aplicar.'}" Style="{StaticResource HelpText}" Margin="0,12,0,16"/>
-   </StackPanel>
-  </local:AdaptivePanel>
+    <TextBlock Text="{loc:Translate Text='Arraste um IR para um slot. Arraste os cartões para trocar suas posições.'}" Style="{StaticResource HelpText}" Margin="0,12,0,8"/>
+    <TextBlock Text="{loc:Translate Text='Ajuste a distância nos cartões ou na revisão antes de aplicar.'}" Style="{StaticResource HelpText}" Margin="0,0,0,16"/>
+  <WrapPanel x:Name="PackActions" Margin="0,12,0,4" HorizontalAlignment="Right">
+   <WrapPanel Margin="0,0,16,8">
+    <ui:Button x:Name="ReviewPackButton" Content="{loc:Translate Text='Revisar e aplicar'}" Command="{Binding Owner.ApplyIrPack}" Appearance="Primary" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Compara os oito slots com o pack escolhido e aplica somente os selecionados.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
+    <ui:Button x:Name="RestorePackButton" Content="{loc:Translate Text='Restaurar IRs originais'}" Command="{Binding Owner.RestoreOriginalIrs}" Margin="0,0,0,8" ToolTip="{loc:Translate Text='Disponível quando os arquivos originais BFI/BFIN estão instalados.'}" ToolTipService.ShowOnDisabled="True"/>
+   </WrapPanel>
+   <WrapPanel Margin="0,0,0,8">
+    <ui:Button Content="{loc:Translate Text='Salvar pack'}" Command="{Binding SavePack}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSave24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Descartar alterações'}" Command="{Binding DiscardChanges}" Visibility="{Binding Dirty,Converter={StaticResource Visible}}" Margin="0,0,0,8"/>
+   </WrapPanel>
+  </WrapPanel>
+
   <TextBlock Text="{loc:Translate Value={Binding Owner.PackCatalogProblems}}" Style="{StaticResource PackNotice}" AutomationProperties.LiveSetting="Polite"/>
   <TextBlock Text="{loc:Translate Value={Binding Problems}}" Style="{StaticResource PackNotice}" AutomationProperties.LiveSetting="Polite"/>
   <TextBlock Text="{loc:Translate Value={Binding Message}}" Style="{StaticResource PackNotice}" AutomationProperties.LiveSetting="Polite" Margin="0,4,0,12"/>
 
- </StackPanel></Border>
+ </StackPanel>
 </UserControl>

@@ -11,31 +11,19 @@ using System.Windows.Input;
 namespace Cube.Desktop;
 public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
-    private void IrLibrarySearchLoaded(object sender, RoutedEventArgs e)
+    private void BackingPlaylistItemSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (sender is not Wpf.Ui.Controls.AutoSuggestBox box) return;
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
+        if (sender is not Grid row || row.Children[0] is not StackPanel details) return;
+        // The content grid excludes the shared 12-DIP padding and one-DIP border.
+        bool compact = e.NewSize.Width + 26 < 480;
+        if (details.Children[0] is TextBlock title)
+            title.TextWrapping = compact ? TextWrapping.Wrap : TextWrapping.NoWrap;
+        if (details.Children[1] is TextBlock metadata)
         {
-        if (box.Template?.FindName("PART_TextBox", box) is Wpf.Ui.Controls.TextBox search)
-        {
-            search.IconPlacement = Wpf.Ui.Controls.ElementPlacement.Left;
-            search.SetValue(Border.CornerRadiusProperty, new CornerRadius(22));
-            search.MinHeight = 40;
-            search.Padding = new Thickness(12, 8, 12, 8);
+            metadata.TextWrapping = compact ? TextWrapping.Wrap : TextWrapping.NoWrap;
+            metadata.TextTrimming = TextTrimming.CharacterEllipsis;
         }
-        }));
     }
-
-    private void BackingMusicSearchLoaded(object sender, RoutedEventArgs e)
-    {
-        IrLibrarySearchLoaded(sender, e);
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle, new Action(() =>
-        {
-            if (sender is Wpf.Ui.Controls.AutoSuggestBox box && box.Template?.FindName("PART_TextBox", box) is Wpf.Ui.Controls.TextBox search)
-                search.Padding = new Thickness(12, 8, 84, 8);
-        }));
-    }
-
     // Compatibility names also keep automation clients pointed at the shared browser.
     private TreeView IrLibraryTree => SingleIrLibrary.Tree;
     protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
@@ -92,6 +80,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Model.IrAudition.BeforePlayback = BackingTracks.StopForIrAudition;
         BackingTracks.BeforePlayback = Model.IrAudition.StopAsync;
         BackingTracks.ChooseExportMode = ChooseBackingExportMode;
+        PreviewKeyDown += SuppressStandaloneAltDown;
+        PreviewKeyUp += SuppressStandaloneAltUp;
+        Deactivated += (_, _) => standaloneAltPressed = false;
         PreviewKeyDown += BackingKeyDown;
         Deactivated += (_, _) => BackingTracks.StopYouTubePreview();
         Appearance.UiDensity.Initialize();
@@ -300,8 +291,65 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
+    private void SharedIrLibraryMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (Model.IrWorkspaceTab == 1) IrPacksCard.LibraryMouseDown(sender, e);
+    }
+    private void SharedIrLibraryMouseMove(object sender, MouseEventArgs e)
+    {
+        if (Model.IrWorkspaceTab == 1) IrPacksCard.LibraryMouseMove(sender, e);
+    }
+
+    private bool standaloneAltPressed;
+    private void SuppressStandaloneAltDown(object sender, KeyEventArgs e)
+    {
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (key is not (Key.LeftAlt or Key.RightAlt))
+        {
+            standaloneAltPressed = false;
+            return;
+        }
+        // Handle only the modifier event, never the following shortcut key.
+        // Ctrl+Alt (including AltGr) and other modifier combinations pass through.
+        if ((Keyboard.Modifiers & ~ModifierKeys.Alt) != ModifierKeys.None)
+        {
+            standaloneAltPressed = false;
+            return;
+        }
+        if (!e.IsRepeat) standaloneAltPressed = true;
+        e.Handled = true;
+    }
+    private void SuppressStandaloneAltUp(object sender, KeyEventArgs e)
+    {
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (key is not (Key.LeftAlt or Key.RightAlt)) return;
+        if (standaloneAltPressed && (Keyboard.Modifiers & ~ModifierKeys.Alt) == ModifierKeys.None)
+            e.Handled = true;
+        standaloneAltPressed = false;
+    }
+
+    private int navigationWheelDelta;
+    private bool navigatingByWheel;
+    private void NavigationLeave(object sender, MouseEventArgs e) => navigationWheelDelta = 0;
+    private void NavigationWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        if (!Navigation.IsEnabled || Navigation.SelectedIndex < 0 || Navigation.Items.Count == 0)
+        { navigationWheelDelta = 0; return; }
+        navigationWheelDelta += e.Delta;
+        int steps = navigationWheelDelta / 120;
+        navigationWheelDelta %= 120;
+        if (steps == 0) return;
+        int next = Math.Clamp(Navigation.SelectedIndex - steps, 0, Navigation.Items.Count - 1);
+        if (Navigation.Items[next] is ListBoxItem item && (!item.IsEnabled || item.Visibility != Visibility.Visible))
+        { navigationWheelDelta = 0; return; }
+        navigatingByWheel = true;
+        try { Navigation.SelectedIndex = next; }
+        finally { navigatingByWheel = false; }
+    }
     private void NavigationChanged(object sender, SelectionChangedEventArgs e)
     {
+        if (e.Source == Navigation && !navigatingByWheel) navigationWheelDelta = 0;
         if (Tabs != null && e.Source == Navigation && Navigation.SelectedIndex >= 0)
         {
             Tabs.SelectedIndex = Navigation.SelectedIndex;

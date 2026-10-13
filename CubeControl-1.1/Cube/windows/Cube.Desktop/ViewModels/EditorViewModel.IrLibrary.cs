@@ -7,20 +7,33 @@ public sealed partial class EditorViewModel
 {
     public IrLibraryViewModel IrLibrary { get; }
     public bool CanChooseIr => !Busy;
+    private int irWorkspaceTab;
+    public int IrWorkspaceTab
+    {
+        get => irWorkspaceTab;
+        set
+        {
+            if (value is < 0 or > 1 || !Set(ref irWorkspaceTab, value)) return;
+            irSelectionGeneration++;
+            IrLibrary.SetPackPicker(value == 1);
+            if (value == 1) PackEditor.SelectedIr = IrLibrary.Selected;
+        }
+    }
     private int irSelectionGeneration;
     internal Task PendingLibraryLoad { get; private set; } = Task.CompletedTask;
     private void SelectLibraryIr(IrLibraryEntry? entry)
     {
         int generation = ++irSelectionGeneration;
-        PendingLibraryLoad = entry == null ? Task.CompletedTask : LoadLibrarySelectionAsync(entry, generation);
+        PendingLibraryLoad = entry == null || IrWorkspaceTab == 1 ? Task.CompletedTask : LoadLibrarySelectionAsync(entry, generation);
     }
     private async Task LoadLibrarySelectionAsync(IrLibraryEntry entry, int generation)
     {
         await Task.Delay(125);
-        if (generation != irSelectionGeneration || Busy) return;
+        if (generation != irSelectionGeneration || Busy || IrWorkspaceTab == 1) return;
+        int loadingGeneration = generation + 1; // Execute invalidates earlier selections before awaiting queued work.
         await Execute(async () =>
         {
-            int loadingGeneration = irSelectionGeneration;
+            if (loadingGeneration != irSelectionGeneration || IrWorkspaceTab == 1) return;
             IrAudio audio;
             try
             {
@@ -33,8 +46,9 @@ public sealed partial class EditorViewModel
                 Status = ErrorMessage = $"Não foi possível carregar o IR: {entry.Name}. {ex.Message}";
                 return;
             }
-            if (loadingGeneration != irSelectionGeneration) return;
-            await LoadWavAndPreviewAsync(entry.FullPath, audio, entry.Collection);
+            if (loadingGeneration != irSelectionGeneration || IrWorkspaceTab == 1) return;
+            await LoadWavAndPreviewAsync(entry.FullPath, audio, entry.Collection,
+                () => loadingGeneration == irSelectionGeneration && IrWorkspaceTab == 0);
         });
     }
 }

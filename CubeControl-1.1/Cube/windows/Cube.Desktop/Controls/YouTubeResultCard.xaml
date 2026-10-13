@@ -5,35 +5,36 @@
  xmlns:local="clr-namespace:Cube.Desktop.Controls"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization"
  MouseEnter="CardMouseEnter" MouseLeave="CardMouseLeave" Loaded="CardLoaded" Unloaded="CardUnloaded"
- IsVisibleChanged="CardVisibilityChanged" Focusable="False" AutomationProperties.Name="{Binding Title}" Margin="0,0,0,8">
- <Border CornerRadius="10" Padding="12" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
-  <Border.Style><Style TargetType="Border"><Setter Property="Background" Value="{DynamicResource CubeInset}"/>
+ IsVisibleChanged="CardVisibilityChanged" Focusable="False" AutomationProperties.Name="{Binding Title}" SizeChanged="CardSizeChanged">
+ <Border>
+  <Border.Style><Style TargetType="Border" BasedOn="{StaticResource CompactMusicCardSurface}">
    <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></Trigger>
     <DataTrigger Binding="{Binding IsPreviewActive,ElementName=Root}" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></DataTrigger>
    </Style.Triggers>
   </Style></Border.Style>
   <Grid>
-   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <ui:Button x:Name="PreviewButton" Style="{StaticResource CubeIconButtonStyle}" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center"
     Click="PreviewClick" ToolTip="{loc:Translate Value={Binding PreviewLabel,ElementName=Root}}" AutomationProperties.Name="{loc:Translate Value={Binding PreviewLabel,ElementName=Root}}">
     <ui:SymbolIcon Symbol="{Binding PreviewIcon,ElementName=Root}" FontSize="{DynamicResource CubeIconSizeAction}"/>
    </ui:Button>
    <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
-    <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" MaxHeight="40" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+    <TextBlock x:Name="ResultTitle" Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" MaxHeight="40" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
     <Grid Margin="0,4,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
      <TextBlock Text="{Binding Channel}" Style="{StaticResource HelpText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Channel}" Margin="0,0,8,0"/>
      <TextBlock Grid.Column="1" Text="{Binding DurationLabel}" Style="{StaticResource CaptionText}" Foreground="{DynamicResource Muted}"/>
     </Grid>
-    <Grid Height="30" Margin="0,4,0,0">
-     <local:BackingWaveform Visibility="{Binding WaveVisibility,ElementName=Root}" Peaks="{Binding PreviewPeaks,ElementName=Root}" Duration="{Binding PreviewDuration,ElementName=Root}" Position="{Binding PreviewPosition,ElementName=Root,Mode=OneWay}" IsOverview="True" IsHitTestVisible="False" Focusable="False" Cursor="Arrow" Height="30" AutomationProperties.Name="{loc:Translate Text='Forma de onda da prévia de até 30 s'}"/>
+   </StackPanel>
+    <Grid x:Name="PreviewDetails" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Height="28" Margin="12,4,12,0" Visibility="{Binding DetailVisibility,ElementName=Root}">
+     <local:BackingWaveform Visibility="{Binding WaveVisibility,ElementName=Root}" Peaks="{Binding PreviewPeaks,ElementName=Root}" Duration="{Binding PreviewDuration,ElementName=Root}" Position="{Binding PreviewPosition,ElementName=Root,Mode=OneWay}" IsOverview="True" IsHitTestVisible="False" Focusable="False" Cursor="Arrow" Height="28" AutomationProperties.Name="{loc:Translate Text='Forma de onda da prévia de até 30 s'}"/>
      <TextBlock Text="{loc:Translate Value={Binding StatusText,ElementName=Root}}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Top" Margin="0,2,0,0"
       ToolTip="{loc:Translate Value={Binding StatusText,ElementName=Root}}" AutomationProperties.LiveSetting="Polite">
       <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource HelpText}"><Setter Property="Background" Value="{DynamicResource CubeInset}"/><Style.Triggers><DataTrigger Binding="{Binding StatusText,ElementName=Root}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsPreviewActive,ElementName=Root}" Value="True"><Setter Property="Opacity" Value="0.85"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>
      <ProgressBar x:Name="DownloadProgress" Style="{StaticResource InfiniteProgressBar}" VerticalAlignment="Bottom" Visibility="{Binding DownloadProgressVisibility,ElementName=Root}" AutomationProperties.Name="{loc:Translate Value={Binding StatusText,ElementName=Root}}"/>
     </Grid>
-   </StackPanel>
-   <ui:Button x:Name="DownloadButton" Grid.Column="2" Style="{StaticResource CubeIconButtonStyle}" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center"
+   <ui:Button x:Name="DownloadButton" Grid.Column="3" Style="{StaticResource CubeIconButtonStyle}" Margin="0" HorizontalAlignment="Center" VerticalAlignment="Center"
     IsEnabled="{Binding CanDownload,ElementName=Root}" Click="DownloadClick" ToolTip="{loc:Translate Value={Binding DownloadLabel,ElementName=Root}}" AutomationProperties.Name="{loc:Translate Value={Binding DownloadLabel,ElementName=Root}}">
     <ui:SymbolIcon Symbol="{Binding DownloadIcon,ElementName=Root}" FontSize="{DynamicResource CubeIconSizeAction}"/>
    </ui:Button>

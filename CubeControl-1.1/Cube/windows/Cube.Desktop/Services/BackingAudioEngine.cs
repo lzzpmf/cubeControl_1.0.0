@@ -9,8 +9,10 @@ public sealed record BackingPlaybackSnapshot(BackingPlaybackState State, double 
 
 public sealed class BackingAudioEngine : IDisposable
 {
-    private float outputPeak;
-    public float ConsumeOutputPeak() => Interlocked.Exchange(ref outputPeak, 0);
+    private readonly AudioPeakAccumulator outputPeak = new(), trackPeak = new(), clickPeak = new();
+    public float ConsumeOutputPeak() => outputPeak.Consume();
+    internal float ConsumeTrackPeak() => trackPeak.Consume();
+    internal float ConsumeClickPeak() => clickPeak.Consume();
     private readonly BlockingCollection<Action> commands = new();
     private readonly Task worker;
     private volatile BackingPlaybackSnapshot snapshot = new(BackingPlaybackState.Empty, 0, 0, null, 0);
@@ -85,6 +87,18 @@ public sealed class BackingAudioEngine : IDisposable
     public Task SetVolume(double level, bool mute) => Invoke(() => { volume = Math.Clamp(level, 0, 1); muted = mute; });
     public Task Stop() => Invoke(() => { if (path != null && output != null) Rebuild(looping ? loopStart : 0, false); });
     public Task ReleaseOutput() => Invoke(() => { UpdateClock(); CloseAudio(); Publish(BackingPlaybackState.Paused, snapshot.Position); });
+    internal Task ChangeOutput(string endpoint) => Invoke(() =>
+    {
+        if (outputId == endpoint && output != null) return;
+        outputId = endpoint;
+        // Read the clock on the audio worker before disposing the old endpoint.
+        // Preserve transport intent here so consecutive changes remain serialized.
+        if (path == null || output == null) return;
+        UpdateClock();
+        var state = snapshot.State;
+        Rebuild(snapshot.Position, state == BackingPlaybackState.Playing);
+        if (state == BackingPlaybackState.Paused) Publish(state, snapshot.Position);
+    });
     public Task Clear() => Invoke(() => { generation++; CloseAudio(); path = null; snapshot = new(BackingPlaybackState.Empty, 0, 0, null, generation); Changed?.Invoke(snapshot); });
     private void Rebuild(double position, bool resume, bool countIn = false)
     {
@@ -132,15 +146,19 @@ public sealed class BackingAudioEngine : IDisposable
             float target = muted ? 0 : (float)volume;
             float step = 1f / Math.Max(1, provider.WaveFormat.SampleRate * .005f);
             int channels = provider.WaveFormat.Channels;
+            float trackMaximum = 0, clickMaximum = 0;
             for (int i = 0; i < count; i += channels)
             {
                 gain += Math.Clamp(target - gain, -step, step);
                 double sourceTime = prelude ? metronome.Offset + renderedFrames * speed / provider.WaveFormat.SampleRate
                     : MetronomeClick.SourcePosition(renderedFrames - countInFrames, provider.WaveFormat.SampleRate, start, speed, looping, loopStart, loopEnd);
                 float click = MetronomeClick.Sample(metronome, sourceTime, speed);
+                clickMaximum = Math.Max(clickMaximum, Math.Abs(click));
                 for (int c = 0; c < channels; c++)
                 {
-                    float mixed = block[i + c] * gain + click;
+                    float trackSample = block[i + c] * gain;
+                    trackMaximum = Math.Max(trackMaximum, Math.Abs(trackSample));
+                    float mixed = trackSample + click;
                     block[i + c] = metronome.Enabled ? Math.Clamp(mixed, -1, 1) : mixed;
                 }
                 renderedFrames++;
@@ -148,7 +166,7 @@ public sealed class BackingAudioEngine : IDisposable
             if (prelude) countInRemaining -= count / channels;
             float peak = 0;
             for (int i = 0; i < count; i++) peak = Math.Max(peak, Math.Abs(block[i]));
-            Volatile.Write(ref outputPeak, Math.Max(Volatile.Read(ref outputPeak), peak));
+            outputPeak.Add(peak); trackPeak.Add(trackMaximum); clickPeak.Add(clickMaximum);
             Buffer.BlockCopy(block, 0, bytes, 0, count * sizeof(float));
             queue.Write(bytes, count * sizeof(float));
         }
@@ -202,6 +220,7 @@ public sealed class BackingAudioEngine : IDisposable
     private void Fail(Exception error) { double position = snapshot.Position; CloseAudio(); Publish(BackingPlaybackState.Error, position, error); }
     private void CloseAudio()
     {
+        outputPeak.Consume(); trackPeak.Consume(); clickPeak.Consume();
         IsCountingIn = false; MetronomeBeat = 0;
         var previous = output; output = null;
         try { previous?.Stop(); } finally { previous?.Dispose(); processing?.Dispose(); processing = null; device?.Dispose(); device = null; queue = null; provider = null; }

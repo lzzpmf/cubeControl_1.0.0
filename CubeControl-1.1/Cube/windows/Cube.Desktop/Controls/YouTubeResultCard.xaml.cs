@@ -22,7 +22,8 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
     public string DownloadLabel => IsDownloading ? "Cancelar download" : IsDownloaded ? "Download realizado — baixar novamente" : "Baixar MP3";
     public SymbolRegular DownloadIcon => IsDownloading ? SymbolRegular.Dismiss24 : IsDownloaded ? SymbolRegular.CheckmarkCircle24 : SymbolRegular.ArrowDownload24;
     public Visibility DownloadProgressVisibility => IsDownloading ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility WaveVisibility => HasDownloadMessage ? Visibility.Hidden : Visibility.Visible;
+    public Visibility WaveVisibility => !HasDownloadMessage && PreviewPeaks.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility DetailVisibility => WaveVisibility == Visibility.Visible || StatusText.Length > 0 || IsDownloading ? Visibility.Visible : Visibility.Collapsed;
     public string PreviewLabel => IsPreviewActive ? "Parar prévia" : "Pré-ouvir";
     public SymbolRegular PreviewIcon => IsPreviewActive ? SymbolRegular.Stop24 : SymbolRegular.Play24;
     public string StatusText => HasDownloadMessage ? Model!.YouTubeDownloadStatus
@@ -45,6 +46,17 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
         TouchDown += (_, _) => { PreviewButton.Focus(); };
         LostKeyboardFocus += (_, _) => { if (!IsKeyboardFocusWithin && !IsMouseOver) Stop(); };
     }
+    private void CardSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        bool compact = e.NewSize.Width < 480;
+        ResultTitle.TextWrapping = compact ? TextWrapping.Wrap : TextWrapping.NoWrap;
+        Grid.SetRow(PreviewDetails, compact ? 1 : 0);
+        Grid.SetColumn(PreviewDetails, compact ? 1 : 2);
+        Grid.SetColumnSpan(PreviewDetails, compact ? 2 : 1);
+        PreviewDetails.Width = compact ? double.NaN : 120;
+        PreviewDetails.Margin = compact ? new Thickness(12, 4, 12, 0) : new Thickness(0, 0, 12, 0);
+        PreviewDetails.VerticalAlignment = VerticalAlignment.Center;
+    }
     private static void ModelChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e) => ((YouTubeResultCard)sender).Subscribe();
     private void Subscribe()
     {
@@ -55,7 +67,7 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
     }
     private void Refresh()
     {
-        foreach (string name in new[] { nameof(IsPreviewActive), nameof(CanDownload), nameof(IsDownloading), nameof(DownloadLabel), nameof(DownloadIcon), nameof(DownloadProgressVisibility), nameof(WaveVisibility), nameof(PreviewLabel), nameof(PreviewIcon), nameof(StatusText), nameof(PreviewPeaks), nameof(PreviewDuration), nameof(PreviewPosition) })
+        foreach (string name in new[] { nameof(IsPreviewActive), nameof(CanDownload), nameof(IsDownloading), nameof(DownloadLabel), nameof(DownloadIcon), nameof(DownloadProgressVisibility), nameof(WaveVisibility), nameof(DetailVisibility), nameof(PreviewLabel), nameof(PreviewIcon), nameof(StatusText), nameof(PreviewPeaks), nameof(PreviewDuration), nameof(PreviewPosition) })
             PropertyChanged?.Invoke(this, new(name));
     }
     private void ModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

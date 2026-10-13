@@ -1,0 +1,99 @@
+{
+  "state": "pedal-off",
+  "started_utc": "2026-10-12T20:56:31.692059+00:00",
+  "duration_seconds": 30,
+  "devices": [
+    {
+      "address": "70:09:71:B6:EF:E1",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "117": [
+          "4204018066700971b6efe1720971b6efe001970000000000"
+        ]
+      },
+      "service_data": {},
+      "count": 32,
+      "rssi_min": -73,
+      "rssi_max": -59
+    },
+    {
+      "address": "51:94:9F:B8:FC:0E",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "76": [
+          "10060f191ccc2668"
+        ]
+      },
+      "service_data": {},
+      "count": 2,
+      "rssi_min": -98,
+      "rssi_max": -96
+    },
+    {
+      "address": "94:A9:90:A7:B1:E2",
+      "names": [
+        "MI_60Q1252054RK168"
+      ],
+      "services": [
+        "000000ee-0000-1000-8000-00805f9b34fb"
+      ],
+      "manufacturer_data": {
+        "12621": [
+          "7c8c4a0000"
+        ]
+      },
+      "service_data": {},
+      "count": 3,
+      "rssi_min": -97,
+      "rssi_max": -96
+    },
+    {
+      "address": "43:B2:E9:67:F7:FF",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "76": [
+          "10060f191ccc2668"
+        ]
+      },
+      "service_data": {},
+      "count": 2,
+      "rssi_min": -96,
+      "rssi_max": -96
+    },
+    {
+      "address": "54:F3:AF:34:A8:80",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "76": [
+          "0908131ac0a801e61b58160800f6fd72a3865b7d"
+        ]
+      },
+      "service_data": {},
+      "count": 1,
+      "rssi_min": -97,
+      "rssi_max": -97
+    },
+    {
+      "address": "D4:8D:26:43:44:11",
+      "names": [
+        "[LG] webOS TV OLED55C4PSA"
+      ],
+      "services": [
+        "0000feb9-0000-1000-8000-00805f9b34fb"
+      ],
+      "manufacturer_data": {
+        "196": [
+          "0534141216fd80"
+        ]
+      },
+      "service_data": {},
+      "count": 3,
+      "rssi_min": -101,
+      "rssi_max": -99
+    }
+  ]
+}

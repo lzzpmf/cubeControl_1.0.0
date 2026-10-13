@@ -1,0 +1,20 @@
+{
+  "inquiry": true,
+  "timeout_multiplier": 10,
+  "cube_devices": [
+    {
+      "name": "CubeBaby",
+      "connected": false,
+      "remembered": true,
+      "last_seen_utc": {
+        "year": 2026,
+        "month": 10,
+        "day": 12,
+        "hour": 21,
+        "minute": 3,
+        "second": 13
+      }
+    }
+  ],
+  "error_if_no_handle": null
+}

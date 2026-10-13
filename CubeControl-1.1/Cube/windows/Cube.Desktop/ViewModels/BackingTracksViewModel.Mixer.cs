@@ -1,9 +1,25 @@
+using System.Diagnostics;
+using Cube.Desktop.Services;
+
 namespace Cube.Desktop.ViewModels;
 
 public sealed partial class BackingTracksViewModel
 {
-    private bool monitorMuted, metronomeMuted, mixerExpanded;
-    public bool MixerExpanded { get => mixerExpanded; set => Set(ref mixerExpanded, value); }
+    private bool monitorMuted, metronomeMuted;
+    private readonly BackingMeterEnvelope trackEnvelope = new(), guitarEnvelope = new(), clickEnvelope = new();
+    private BackingMeterReading trackMeter = BackingMeterReading.Silent, guitarMeter = BackingMeterReading.Silent, clickMeter = BackingMeterReading.Silent;
+    public BackingMeterReading TrackMeter { get => trackMeter; private set => Set(ref trackMeter, value); }
+    public BackingMeterReading GuitarMeter { get => guitarMeter; private set => Set(ref guitarMeter, value); }
+    public BackingMeterReading ClickMeter { get => clickMeter; private set => Set(ref clickMeter, value); }
+    private void UpdateMixerMeters()
+    {
+        double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
+        TrackMeter = trackEnvelope.Update(engine.ConsumeTrackPeak(), IsPlaying, now);
+        GuitarMeter = guitarEnvelope.Update(monitorMeter?.ConsumePeak() ?? 0, IsMonitoring, now);
+        float synced = engine.ConsumeClickPeak(), independent = metronomeLevelMeter?.ConsumePeak() ?? 0;
+        ClickMeter = clickEnvelope.Update(FollowTrack ? synced : independent,
+            metronomeEnabled && (FollowTrack ? IsPlaying : metronomeOutput != null), now);
+    }
     public bool MonitorMuted
     {
         get => monitorMuted;
@@ -15,14 +31,15 @@ public sealed partial class BackingTracksViewModel
         set { if (Set(ref metronomeMuted, value)) UpdateMetronome(false); }
     }
     private bool inputClipping;
-    private DateTime lastInputClip;
+    private double lastInputClip = double.NegativeInfinity;
     public bool InputClipping { get => inputClipping; private set => Set(ref inputClipping, value); }
     private void UpdateMixerInputPeak()
     {
         float peak = inputMeter?.ConsumePeak() ?? 0;
-        if (IsMonitoring && peak >= 1) lastInputClip = DateTime.UtcNow;
-        InputClipping = IsMonitoring && DateTime.UtcNow - lastInputClip < TimeSpan.FromSeconds(1);
-        InputLevel = IsMonitoring ? Math.Max((int)(InputLevel * .65), (int)(Math.Clamp(peak, 0, 1) * 100)) : 0;
+        double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
+        if (IsMonitoring && peak >= 1) lastInputClip = now;
+        InputClipping = IsMonitoring && now - lastInputClip < 1;
+        InputLevel = IsMonitoring ? (int)(Math.Clamp(peak, 0, 1) * 100) : 0;
     }
     public void ResetMixerVolumes()
     {

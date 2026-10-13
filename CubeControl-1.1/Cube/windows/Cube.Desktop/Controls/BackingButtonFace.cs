@@ -59,6 +59,13 @@ public sealed class BackingButtonFace : FrameworkElement
         if (SystemParameters.HighContrast || ThemeService.Instance.IsHighContrast || string.IsNullOrEmpty(Art))
         {
             var brush = SystemParameters.HighContrast || ThemeService.Instance.IsHighContrast ? SystemColors.WindowTextBrush : (Brush)(TryFindResource("CubeText") ?? Brushes.White);
+            if (Art == "record")
+            {
+                var center = new Point(ActualWidth / 2, ActualHeight / 2);
+                dc.DrawEllipse(SystemColors.WindowBrush, new Pen(brush, IsActive ? 3 : 1.5), center, size * .42, size * .42);
+                dc.DrawEllipse(brush, null, center, size * .17, size * .17);
+                return;
+            }
             var text = new FormattedText(Glyph, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Segoe UI Symbol"), size * .48, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
             if (string.IsNullOrEmpty(Art))
             {
@@ -69,7 +76,8 @@ public sealed class BackingButtonFace : FrameworkElement
             return;
         }
         bool official = TryFindResource("CubePlayerUsesOfficialArtwork") is not false;
-        var image = !official && TryFindResource("CubePlayerButtonFace") is ImageSource face ? face : Load(Art);
+        var image = Art == "record" && TryFindResource("CubePlayerRecordFace") is ImageSource recordFace ? recordFace
+            : !official && TryFindResource("CubePlayerButtonFace") is ImageSource face ? face : Load(Art);
         double scale = size / Math.Max(image.Width, image.Height);
         var bounds = new Rect((ActualWidth - image.Width * scale) / 2, (ActualHeight - image.Height * scale) / 2, image.Width * scale, image.Height * scale);
         dc.DrawImage(image, bounds);
@@ -77,10 +85,10 @@ public sealed class BackingButtonFace : FrameworkElement
         {
             dc.PushOpacity(.3);
             dc.PushOpacityMask(new ImageBrush(image) { Stretch = Stretch.Fill });
-            dc.DrawRectangle((Brush)(TryFindResource("BackingPlayed") ?? Brushes.SteelBlue), null, bounds);
+            dc.DrawRectangle((Brush)(TryFindResource(Art == "record" ? "CubeRecordingIndicator" : "BackingPlayed") ?? Brushes.SteelBlue), null, bounds);
             dc.Pop(); dc.Pop();
         }
-        if (!official)
+        if (!official && Art != "record")
         {
             var brush = (Brush)(TryFindResource(IsActive ? "BackingPlayed" : "CubePlayerGlyph") ?? Brushes.Black);
             if (Art is "sound" or "mute")
@@ -184,6 +192,17 @@ public sealed class BackingButtonFace : FrameworkElement
 
 public sealed class BackingFader : Slider
 {
+    public static readonly DependencyProperty ShowMeterProperty = DependencyProperty.Register(
+        nameof(ShowMeter), typeof(bool), typeof(BackingFader), new PropertyMetadata(false));
+    public bool ShowMeter { get => (bool)GetValue(ShowMeterProperty); set => SetValue(ShowMeterProperty, value); }
+    public static readonly DependencyProperty MeterReadingProperty = DependencyProperty.Register(
+        nameof(MeterReading), typeof(Cube.Desktop.Services.BackingMeterReading), typeof(BackingFader),
+        new PropertyMetadata(Cube.Desktop.Services.BackingMeterReading.Silent));
+    public Cube.Desktop.Services.BackingMeterReading MeterReading
+    {
+        get => (Cube.Desktop.Services.BackingMeterReading)GetValue(MeterReadingProperty);
+        set => SetValue(MeterReadingProperty, value);
+    }
     public BackingFader()
     {
         Loaded += (_, _) => { ThemeService.Instance.Changed += RefreshTemplate; RefreshTemplate(); };

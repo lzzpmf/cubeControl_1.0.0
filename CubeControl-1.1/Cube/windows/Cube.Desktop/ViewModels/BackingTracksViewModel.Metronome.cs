@@ -54,6 +54,7 @@ public sealed partial class BackingTracksViewModel
     private MMDevice? metronomeDevice;
     private WasapiPlayer? metronomeOutput;
     private MetronomeSampleProvider? metronomeProvider;
+    private BackingLevelMeter? metronomeLevelMeter;
     private bool followTrack, metronomeEnabled, metronomeAccent = true;
     private double metronomeBpm = 120, metronomeVolume = 30;
     private string metronomeMeter = "4/4";
@@ -166,6 +167,7 @@ public sealed partial class BackingTracksViewModel
     }
     private void RefreshMetronome()
     {
+        RefreshMeters();
         if (metronomeEnabled) metronomeTimer.Start(); else { metronomeTimer.Stop(); MetronomeBeat = 0; }
         RefreshMetronomeBeatMarkers();
         foreach (string name in new[] { nameof(MetronomeEnabled), nameof(MetronomeToggleLabel), nameof(MetronomeBpm), nameof(MetronomeTempoLabel), nameof(FirstBeatOffset), nameof(MetronomeStatus) }) Notify(name);
@@ -198,7 +200,20 @@ public sealed partial class BackingTracksViewModel
         finally { metronomeStarting = false; RefreshMetronome(); }
         if (disposed || SelectedOutput != endpoint || metronomeGeneration != request) return;
         metronomeEnabled = true;
-        if (!FollowTrack)
+        if (!FollowTrack) StartIndependentMetronome();
+        UpdateMetronome();
+    }
+    private void RestartIndependentMetronome()
+    {
+        bool resume = metronomeEnabled;
+        StopIndependentMetronome();
+        if (!resume) return;
+        try { StartIndependentMetronome(); }
+        catch (Exception ex) { Error("Metrônomo interrompido. Verifique a saída de áudio.", ex); }
+    }
+    private void StartIndependentMetronome()
+    {
+        if (SelectedOutput != null)
         {
             try
             {
@@ -207,11 +222,11 @@ public sealed partial class BackingTracksViewModel
                 metronomeOutput = new WasapiPlayerBuilder().WithDevice(metronomeDevice).WithSharedMode().WithEventSync().WithLatency(100).Build();
                 var current = metronomeOutput;
                 current.PlaybackStopped += (_, args) => Dispatch(() => { if (metronomeOutput != current) return; StopIndependentMetronome(); metronomeEnabled = false; RefreshMetronome(); if (args.Exception != null) Error("Metrônomo interrompido. Verifique a saída de áudio.", args.Exception); });
-                metronomeOutput.Init(new SampleToWaveProvider(metronomeProvider)); metronomeOutput.Play();
+                metronomeLevelMeter = new BackingLevelMeter(metronomeProvider);
+                metronomeOutput.Init(new SampleToWaveProvider(metronomeLevelMeter)); metronomeOutput.Play();
             }
             catch { metronomeEnabled = false; StopIndependentMetronome(); RefreshMetronome(); throw; }
         }
-        UpdateMetronome();
     }
     private void StopIndependentMetronome()
     {
@@ -219,7 +234,7 @@ public sealed partial class BackingTracksViewModel
         try { previous?.Stop(); } catch (Exception ex) { Log(ex); }
         foreach (IDisposable? resource in new IDisposable?[] { previous, metronomeDevice, metronomeEnumerator })
             try { resource?.Dispose(); } catch (Exception ex) { Log(ex); }
-        metronomeProvider = null; metronomeDevice = null; metronomeEnumerator = null; MetronomeBeat = 0;
+        metronomeProvider = null; metronomeLevelMeter = null; metronomeDevice = null; metronomeEnumerator = null; MetronomeBeat = 0;
     }
     private void MetronomeOutputChanged()
     {

@@ -30,7 +30,7 @@ internal static class PackCompactUiTests
     {
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-pack-compact-" + Guid.NewGuid().ToString("N")));
         var editor = model.PackEditor;
-        await editor.SelectAsync(model.IrPacks.First(p => p.Group == "Predefinidos"));
+        await editor.SelectAsync(model.IrPacks.First(p => p.Definition != null && p.Group != "Meus packs"));
         editor.SelectedIr = editor.PackLibrary.Entries.First();
         for (int i = 0; i < 8; i++) editor.AssignIr(i, editor.SelectedIr);
         var old = Application.Current.MainWindow;

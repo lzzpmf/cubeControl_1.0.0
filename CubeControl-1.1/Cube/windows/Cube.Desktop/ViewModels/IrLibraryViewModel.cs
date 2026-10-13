@@ -46,7 +46,13 @@ public sealed class IrLibraryViewModel : Observable
     public IReadOnlyList<IrLibraryEntry> Entries { get; private set; } = [];
     private readonly string directory;
     private readonly string? importedDirectory;
-    private readonly bool packPicker;
+    private bool packPicker;
+    internal void SetPackPicker(bool value)
+    {
+        if (packPicker == value) return;
+        packPicker = value;
+        UpdateMessage();
+    }
     public IReadOnlyList<IrLibraryEntry> VisibleEntries { get; private set; } = [];
     public string Message { get; private set; } = "";
     private string catalogProblem = "";
@@ -177,10 +183,15 @@ public sealed class IrLibraryViewModel : Observable
                 level = folder.Children;
             }
         }
+        UpdateMessage();
+        Notify(nameof(Roots)); Notify(nameof(VisibleEntries));
+    }
+    private void UpdateMessage()
+    {
         Message = Entries.Count == 0 ? packPicker ? "Biblioteca vazia. Importe um pack com WAVs para montar seus IRs." : "Biblioteca indisponível ou vazia. Você pode selecionar um WAV externo."
             : VisibleEntries.Count == 0 ? "Nenhum IR encontrado." : packPicker ? "Selecione um IR e use-o no slot desejado. Nenhum áudio é enviado ao pedal." : "Selecione um IR para ouvir no pedal conectado. A gravação no slot é separada.";
         if (catalogProblem.Length > 0) Message += " " + catalogProblem;
-        Notify(nameof(Roots)); Notify(nameof(VisibleEntries)); Notify(nameof(Message));
+        Notify(nameof(Message));
     }
     private void SelectNode(IrLibraryNode node)
     {

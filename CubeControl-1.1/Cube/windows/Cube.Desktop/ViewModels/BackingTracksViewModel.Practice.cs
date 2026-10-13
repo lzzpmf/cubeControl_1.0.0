@@ -17,17 +17,18 @@ public sealed record BackingSection(double Position, string Name)
 
 public sealed partial class BackingTracksViewModel
 {
-    private readonly DispatcherTimer meterTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
-    private BackingLevelMeter? inputMeter;
+    private readonly DispatcherTimer meterTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
+    private BackingLevelMeter? inputMeter, monitorMeter;
     private int trackLevel, inputLevel;
     public int TrackLevel { get => trackLevel; private set => Set(ref trackLevel, value); }
     public int InputLevel { get => inputLevel; private set => Set(ref inputLevel, value); }
     private void RefreshMeters()
     {
-        bool active = IsPlaying || IsMonitoring;
+        bool active = IsPlaying || IsMonitoring || metronomeEnabled;
         if (active) meterTimer.Start(); else meterTimer.Stop();
         if (!IsPlaying) { TrackLevel = 0; engine.ConsumeOutputPeak(); }
-        if (!IsMonitoring) { InputLevel = 0; InputClipping = false; }
+        if (!IsMonitoring) { InputLevel = 0; InputClipping = false; lastInputClip = double.NegativeInfinity; }
+        UpdateMixerMeters();
     }
     private string search = "", sectionName = "Intro";
     private double zoom = 1, viewportStart, monitorVolume = 0;
@@ -82,7 +83,7 @@ public sealed partial class BackingTracksViewModel
     public ICommand GoToSection { get; private set; } = null!;
     public ICommand ToggleMonitor { get; private set; } = null!;
     public ICommand RefreshInputs { get; private set; } = null!;
-    public BackingOutput? SelectedInput { get => selectedInput; set { if (Set(ref selectedInput, value)) StopMonitor(); } }
+    public BackingOutput? SelectedInput { get => selectedInput; set { if (CanChangeRecordingInput && Set(ref selectedInput, value)) RestartMonitorForDeviceChange(); } }
     public bool IsMonitoring => monitorCapture != null;
     public double MonitorVolume { get => monitorVolume; set { if (!double.IsFinite(value)) return; Set(ref monitorVolume, Math.Clamp(value, 0, 100)); if (monitorGain != null) monitorGain.Volume = MonitorMuted ? 0 : (float)(monitorVolume / 100); } }
     public void SelectRange(double start, double end)
@@ -98,6 +99,7 @@ public sealed partial class BackingTracksViewModel
         {
             TrackLevel = IsPlaying ? Math.Max((int)(TrackLevel * .65), (int)(Math.Clamp(engine.ConsumeOutputPeak(), 0, 1) * 100)) : 0;
             UpdateMixerInputPeak();
+            UpdateMixerMeters();
         };
         PropertyChanged += (_, e) => { if (e.PropertyName is nameof(IsPlaying) or nameof(IsMonitoring)) RefreshMeters(); };
         LowerPitch = new UiCommand(() => Pitch--, () => SelectedTrack != null && Pitch > -6);
@@ -111,8 +113,8 @@ public sealed partial class BackingTracksViewModel
         AddSection = new UiCommand(() => { var marker = new BackingSection(Position, SectionName.Trim()); int index = 0; while (index < Sections!.Count && Sections[index].Position <= Position) index++; Sections.Insert(index, marker); }, () => CanSeek && !string.IsNullOrWhiteSpace(SectionName) && SectionName.Length <= 40);
         RemoveSection = new UiCommand(() => { if (SelectedSection is { } section) Sections?.Remove(section); SelectedSection = null; }, () => SelectedSection != null);
         GoToSection = new UiCommand(() => { if (SelectedSection != null) Position = SelectedSection.Position; }, () => SelectedSection != null);
-        ToggleMonitor = new UiCommand(() => { if (IsMonitoring) StopMonitor(); else StartMonitor(); }, () => !IsRecordingMix && !recordingFinalizing && (IsMonitoring || SelectedInput != null && SelectedOutput != null));
-        RefreshInputs = new UiCommand(LoadInputs);
+        ToggleMonitor = new UiCommand(() => { if (IsMonitoring) StopMonitor(); else StartMonitor(); }, () => !recordingFinalizing && (IsMonitoring || SelectedInput != null && SelectedOutput != null));
+        RefreshInputs = new UiCommand(LoadInputs, () => CanChangeRecordingInput);
         PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(Duration)) { Notify(nameof(ViewportDuration)); ViewportStart = viewportStart; }
@@ -127,6 +129,7 @@ public sealed partial class BackingTracksViewModel
     }
     private void LoadInputs()
     {
+        if (!CanChangeRecordingInput) return;
         try
         {
             string? id = SelectedInput?.Id;
@@ -137,6 +140,12 @@ public sealed partial class BackingTracksViewModel
             SelectedInput = Inputs.FirstOrDefault(x => x.Id == id);
         }
         catch (Exception ex) { Error("Não foi possível listar as entradas de áudio.", ex); }
+    }
+    private void RestartMonitorForDeviceChange()
+    {
+        bool resume = IsMonitoring;
+        StopMonitor();
+        if (resume && SelectedInput != null && SelectedOutput != null) StartMonitor();
     }
     private void StartMonitor()
     {
@@ -152,7 +161,8 @@ public sealed partial class BackingTracksViewModel
             inputMeter = new BackingLevelMeter(buffer.ToSampleProvider());
             monitorGain = new VolumeSampleProvider(inputMeter) { Volume = MonitorMuted ? 0 : (float)(MonitorVolume / 100) };
             monitorOutput = new WasapiPlayerBuilder().WithDevice(monitorOutputDevice).WithSharedMode().WithLatency(40).Build();
-            monitorOutput.Init(new SampleToWaveProvider(monitorGain));
+            monitorMeter = new BackingLevelMeter(monitorGain);
+            monitorOutput.Init(new SampleToWaveProvider(monitorMeter));
             byte[] silence = [];
             capture.DataAvailable += (data, flags, devicePosition, qpcPosition) =>
             {
@@ -168,12 +178,11 @@ public sealed partial class BackingTracksViewModel
     }
     private void StopMonitor()
     {
-        if (IsRecordingMix && recording is { } session) Start(session.Stop(new InvalidOperationException("Guitar monitor interrupted during recording.")));
         var capture = monitorCapture; monitorCapture = null;
         // Release every endpoint even when a disconnected device throws during teardown.
         foreach (IDisposable? resource in new IDisposable?[] { capture, monitorOutput, monitorInputDevice, monitorOutputDevice })
             try { resource?.Dispose(); } catch (Exception ex) { Log(ex); }
-        monitorOutput = null; monitorGain = null; inputMeter = null; monitorInputDevice = monitorOutputDevice = null;
+        monitorOutput = null; monitorGain = null; inputMeter = null; monitorMeter = null; monitorInputDevice = monitorOutputDevice = null;
         Notify(nameof(IsMonitoring));
     }
 }

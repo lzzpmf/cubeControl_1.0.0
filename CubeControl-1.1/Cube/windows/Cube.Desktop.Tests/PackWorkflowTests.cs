@@ -78,7 +78,7 @@ internal static class PackWorkflowTests
         editor.Name = "Save on switch";
         editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Save);
         var savedId = editor.Current!.Id;
-        await editor.SelectAsync(model.IrPacks.First(p => p.Group == "Predefinidos"));
+        await editor.SelectAsync(model.IrPacks.First(p => p.Definition != null && p.Group != "Meus packs"));
         Check(model.IrPacks.Single(p => p.Id == savedId).Name == "Save on switch", "save-discard-cancel switch can save the current personal draft");
         Check(model.IrPacks.Contains(editor.Current!), "saving during a switch selects an item from the refreshed catalog");
         Check(editor.CanEdit && editor.Slots[0].Remove.CanExecute(null) && !editor.Dirty, "predefined packs offer direct editing before any draft is created");
@@ -104,7 +104,15 @@ internal static class PackWorkflowTests
         model.ReviewPack = review => { review.Slots.Single().Distance = 23; return Task.FromResult(true); };
         model.Ask = _ => Task.FromResult(true);
         var expected = model.PackStore.Resolve(editor.ApplicationDraft() with { Entries = [editor.Slots[4].Entry! with { Distance = 23 }] });
+        var readSlots = new HashSet<uint>();
+        fake.Observe = packet =>
+        {
+            if (packet.Command == 0x23 && packet.Payload[0] == 0)
+                readSlots.Add((System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(packet.Payload.AsSpan(1)) - 0x69000) / 4096);
+        };
         await Apply();
+        Check(readSlots.SetEquals(new uint[] { 4 }), "partial pack reads only its populated destination, including verification");
+        fake.Observe = null;
         for (int i = 0; i < 8; i++) Check(fake.Flash.AsSpan(i * 4096, 4096).SequenceEqual(i == 4 ? expected.Sectors[i] : before.AsSpan(i * 4096, 4096)), "draft application preserves destination " + (i + 1));
         Check(editor.Dirty && editor.Name == "" && editor.Slots[4].Entry!.Distance == 50 && fake.Writes > writes, "application leaves the unnamed draft and its saved distance intact");
         int erases = fake.Erases; await Apply(); Check(fake.Erases == erases, "identical adjusted sector is not rewritten");

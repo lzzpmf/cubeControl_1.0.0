@@ -40,9 +40,9 @@ internal static class BackingUiReviewTests
     {
         var panel = Named<BackingTransportPanel>(window, "BackingTransportButtons");
         var buttons = Find<ButtonBase>(panel).ToArray();
-        Check(buttons.Length == 7, "all transport actions remain reachable");
+        Check(buttons.Length == 8, "all transport actions remain reachable");
         var bounds = buttons.Select(b => b.TransformToAncestor(panel).TransformBounds(new Rect(b.RenderSize))).ToArray();
-        var row = panel.ActualWidth >= 344 ? Enumerable.Range(0, 7).ToArray() : new[] { 1, 2, 3, 4 };
+        var row = panel.ActualWidth >= 392 ? Enumerable.Range(0, 8).ToArray() : new[] { 1, 2, 3, 4 };
         var centers = row.Select(i => bounds[i].Top + bounds[i].Height / 2).ToArray();
         Check(centers.Max() - centers.Min() <= 1.1, "transport centers align independently of icon size");
         for (int i = 0; i < bounds.Length; i++)

@@ -2,11 +2,11 @@ namespace Cube.Protocol;
 
 public sealed partial class CubeSession
 {
-    private async Task<PhaserResearchSnapshot> ReadChorusPreviewCore(CancellationToken ct)
+    private async Task<PhaserResearchSnapshot> ReadChorusPreviewCore(CancellationToken ct, bool effectControlsOnly = false)
     {
         RequireIdentity();
         await VerifyChorusFirmware(ct);
-        return await ReadPhaserCore(ct);
+        return await ReadPhaserCore(ct, effectControlsOnly);
     }
 
     public async Task<ChorusRecovery> BeginChorusPreview(int physicalSlot, Func<ChorusRecovery, Task> preserve,
@@ -36,8 +36,8 @@ public sealed partial class CubeSession
         try
         {
             RequireIdentity();
-            // Idle monitoring checks only context and the modulation block. Full protected
-            // DSP comparison remains mandatory immediately before/after every mutation.
+            // Idle monitoring checks only context and the modulation block. All three effect
+            // blocks are checked immediately before/after every mutation.
             var bank = await ReadInternal(0, 48, CancellationToken.None);
             var state = await ReadInternal(EffectsPhysicalStateOffset, 2, CancellationToken.None, 4);
             var dsp = recovery.OriginalDsp.ToArray();
@@ -80,13 +80,14 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
-            var before = await ReadChorusPreviewCore(ct);
+            var before = await ReadChorusPreviewCore(ct, effectControlsOnly: true);
             CheckChorusContext(recovery, before, recovering: false);
+            if (parameters == recovery.Target) return recovery; // Fresh context already confirmed; no mutation.
             var transaction = recovery with { Previous = recovery.Target, Target = parameters };
-            await preserve(transaction); // Durable intent before the first byte; also covers partial writes.
+            await preserve(transaction); // Preserve recovery intent before the first byte, including partial writes.
             ct.ThrowIfCancellationRequested();
             await WriteChorusFields(transaction, before.Dsp, parameters, CancellationToken.None);
-            var after = await ReadChorusPreviewCore(CancellationToken.None);
+            var after = await ReadChorusPreviewCore(CancellationToken.None, effectControlsOnly: true);
             VerifyEffectMutation(1, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckChorusContext(transaction, after, recovering: false);
             return transaction;
@@ -99,11 +100,11 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
-            var before = await ReadChorusPreviewCore(ct);
+            var before = await ReadChorusPreviewCore(ct, effectControlsOnly: true);
             CheckChorusContext(recovery, before, recovering: true);
             var original = ChorusParameters.Read(recovery.OriginalDsp);
             await WriteChorusFields(recovery, before.Dsp, original, CancellationToken.None);
-            var after = await ReadChorusPreviewCore(CancellationToken.None);
+            var after = await ReadChorusPreviewCore(CancellationToken.None, effectControlsOnly: true);
             VerifyEffectMutation(1, new(before.Bank, before.Dsp, before.PhysicalState), new(after.Bank, after.Dsp, after.PhysicalState));
             CheckChorusContext(recovery with { Target = original }, after, recovering: false);
         }

@@ -27,10 +27,10 @@ public sealed partial class CubeSession
         }
         reverbFirmwareVerified = true;
     }
-    private async Task<ReverbSnapshot> ReadReverbCore(CancellationToken ct)
+    private async Task<ReverbSnapshot> ReadReverbCore(CancellationToken ct, bool effectControlsOnly = false)
     {
         await VerifyReverbFirmware(ct);
-        var p = await ReadPhaserCore(ct);
+        var p = await ReadPhaserCore(ct, effectControlsOnly);
         return new(p.Bank, p.Dsp, p.PhysicalState);
     }
     public async Task<ReverbSnapshot> ReadReverbResearch(CancellationToken ct = default)

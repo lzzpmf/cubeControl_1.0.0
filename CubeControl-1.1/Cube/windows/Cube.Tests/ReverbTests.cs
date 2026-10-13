@@ -74,9 +74,12 @@ internal static class ReverbTests
         fake.Dsp[0x6E9] = 1; writes = fake.Writes; failed = false;
         try { await reconnect.RestoreReverbPreview(saved!); } catch (IOException) { failed = true; }
         check(failed && fake.Writes == writes, "unknown non-control byte blocks recovery without writes"); fake.Dsp = baseline.ToArray();
-        fake.Bank[4] = 1; failed = false;
+        fake.Bank[4] = 1;
+        await reconnect.RestoreReverbPreview(saved!);
+        check(fake.Bank[4] == 1 && fake.Writes == writes, "unrelated delay setting is preserved by reverb restoration"); fake.Bank[4] = 0;
+        byte originalReverb = fake.Bank[3]; fake.Bank[3] = 1; failed = false;
         try { await reconnect.RestoreReverbPreview(saved!); } catch (IOException) { failed = true; }
-        check(failed && fake.Writes == writes, "external bank edit blocks recovery"); fake.Bank[4] = 0;
+        check(failed && fake.Writes == writes, "external reverb setting blocks recovery"); fake.Bank[3] = originalReverb;
         fake.BadSignature = true; using var bad = new CubeSession(fake); await bad.Identify(); writes = fake.Writes; failed = false;
         try { await bad.BeginReverbPreview(0, Save); } catch (NotSupportedException) { failed = true; }
         check(failed && fake.Writes == writes, "incompatible firmware never written"); fake.BadSignature = false;

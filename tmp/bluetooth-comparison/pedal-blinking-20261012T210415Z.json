@@ -1,0 +1,35 @@
+{
+  "state": "pedal-blinking",
+  "started_utc": "2026-10-12T21:03:15.894825+00:00",
+  "duration_seconds": 60,
+  "devices": [
+    {
+      "address": "70:09:71:B6:EF:E1",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "117": [
+          "4204018066700971b6efe1720971b6efe001970000000000"
+        ]
+      },
+      "service_data": {},
+      "count": 50,
+      "rssi_min": -71,
+      "rssi_max": -59
+    },
+    {
+      "address": "B8:A0:B8:87:AD:C0",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "117": [
+          "021844a1738db8d2c0133be1b9cbdd5b67d2bc13e892ed38"
+        ]
+      },
+      "service_data": {},
+      "count": 1,
+      "rssi_min": -96,
+      "rssi_max": -96
+    }
+  ]
+}

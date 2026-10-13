@@ -27,7 +27,7 @@ internal static class AssetLoadingTests
         using var resources = typeof(App).Assembly.GetManifestResourceStream("CubeControl.g.resources")
             ?? throw new Exception("WPF resources missing");
         using var reader = new ResourceReader(resources);
-        int count = 0;
+        var embeddedImages = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (DictionaryEntry entry in reader)
         {
             string key = (string)entry.Key;
@@ -35,9 +35,14 @@ internal static class AssetLoadingTests
             var uri = new Uri("pack://application:,,,/CubeControl;component/" + key);
             var image = new BitmapImage(uri);
             if (image.PixelWidth == 0) throw new Exception("Invalid WPF image: " + key);
-            count++;
+            embeddedImages.Add(key);
         }
-        if (count != 20) throw new Exception("Expected 20 embedded PNGs, got " + count);
+        var recordImages = Cube.Desktop.Appearance.ControlFinishCatalog.All
+            .Select(f => "assets/images/controls/finishes/" + f.Folder + "/record.png")
+            .Append("assets/images/controls/backingtrack/record.png");
+        foreach (string key in recordImages)
+            if (!embeddedImages.Contains(key)) throw new Exception("REC artwork missing from embedded resources: " + key);
+        if (embeddedImages.Count < 20) throw new Exception("Base embedded artwork is incomplete");
         if (Directory.Exists(Path.Combine(AppContext.BaseDirectory, "Assets", "Archive")))
             throw new Exception("Archive must not be distributed");
         string data = Path.Combine(Path.GetTempPath(), "cube-asset-override-" + Guid.NewGuid().ToString("N"));
@@ -58,7 +63,7 @@ internal static class AssetLoadingTests
                 throw new Exception("Reset must restore relocated default and persist removal");
         }
         Console.WriteLine("PASS custom images: saved override loads; reset restores default and persists.");
-        Console.WriteLine($"PASS assets: {AssetPaths.Images.Count} external mappings, 14 cabinet options, device, PDF, {count} WPF images; archive excluded.");
+        Console.WriteLine($"PASS assets: {AssetPaths.Images.Count} external mappings, 14 cabinet options, device, PDF, {embeddedImages.Count} WPF images; archive excluded.");
         return Task.CompletedTask;
     }
 }

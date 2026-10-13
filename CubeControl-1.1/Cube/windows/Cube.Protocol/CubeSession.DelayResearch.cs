@@ -23,10 +23,10 @@ public sealed partial class CubeSession
         }
         delayFirmwareVerified = true;
     }
-    private async Task<DelaySnapshot> ReadDelayCore(CancellationToken ct)
+    private async Task<DelaySnapshot> ReadDelayCore(CancellationToken ct, bool effectControlsOnly = false)
     {
         await VerifyDelayFirmware(ct);
-        var p = await ReadPhaserCore(ct);
+        var p = await ReadPhaserCore(ct, effectControlsOnly);
         return new(p.Bank, p.Dsp, p.PhysicalState);
     }
     public async Task<DelaySnapshot> ReadDelayResearch(CancellationToken ct = default)

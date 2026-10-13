@@ -648,5 +648,1565 @@
         "Distance": 50
       }
     ]
+  },
+  {
+    "Version": 1,
+    "Id": "c5cbc517a14e5ab697a398ecfeb43903",
+    "Name": "Britânicos — Marshall + Vox",
+    "Description": "Explorar gabinetes britânicos em bases e solos.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960 - 1985 Custom/JCM 800 Lead - G12T-75 + JBL 2130 - Airsong.wav",
+        "Sha256": "5E352CAD18044BF6A51E3846B129A2109E48253C33BA5FD095ABA1CE31FE434E",
+        "Name": "Marshall · 4x12 · 1960 - 1985 Custom · JCM 800 Lead - G12T-75 + JBL 2130 - Airsong",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/Blend Of All - DC.wav",
+        "Sha256": "0C38306C4280538FC4BE6F8B68EF6037C035B6070AB379C0A8146C80CD3B78E8",
+        "Name": "Marshall · 4x12 · 1960AV · Blend Of All - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/CND-2020/OD-M212-GB55-CND-2020-P05-40-L.wav",
+        "Sha256": "B2AE80F87CE02BFEEEBA1C91D249FCDD427027AA2F85332128E655D949EB0D28",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · CND-2020 · P05 · 40 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/CND-2020/OD-M212-GB55-CND-2020-P09-40-L.wav",
+        "Sha256": "A285044AA9E6C2A7E33DCDF637FA2B3996C34814CBA324B4B2DFFCEAE07C605E",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · CND-2020 · P09 · 40 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P00-30.wav",
+        "Sha256": "9DB1D7A50CD876AE04D87A310400BD6CDC9C1A651856F47C0771A996F4A4DDB6",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P00 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-P50-SSP2-v1.0/SSP2/DYN-421/OD-M212-P50-DYN-421-P10-00.wav",
+        "Sha256": "E058142F0F37B04F29D79766A983D05D869CAFC8592BA2385C0146AD0E741740",
+        "Name": "Marshall · 2x12 · M-212 · P50 · DYN-421 · P10 · 0 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "06d020c12a47549181f792c62759d3d5",
+    "Name": "Americanos — Fender + Mesa",
+    "Description": "Comparar Fender e Mesa em limpos e drives.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Clean.wav",
+        "Sha256": "46D47C497938FA8AAF1E375DC13F5A05BFDAB51E30832440DAAE28ED7CDBD840",
+        "Name": "Fender · 2x12 · Twin Reverb · Clean",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches 7603.wav",
+        "Sha256": "EB49DEFF8B6A98E6C8929450B788E1FB91E27B6A75E6A6EF0867E2046542AB25",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches OA30 7603.wav",
+        "Sha256": "95CCE2A86A375700F29F415077F8BB940AEDEE2BBDE6BF2BC4973A6456D36977",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches OA30 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-R112-V30-G4-SSP2-v1.0/SSP2/DYN-421/OD-R112-DYN-421-P09-00-EQ.wav",
+        "Sha256": "27E12BAA844444FC50D0BF36E45C1B56724EF1FF331EF13D2B571C2AC39551AE",
+        "Name": "Mesa Boogie · 1x12 · Rectifier · Celestion Vintage 30 · Mesa specs · DYN-421 · P09 · 0 mm · EQ",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-R112-V30-G4-SSP2-v1.0/SSP2/DYN-421/OD-R112-DYN-421-P10-00-EQ.wav",
+        "Sha256": "B917E887FB9A55673FD9ED8F82FA1494C706BAABB4F501291AE62C87BB517475",
+        "Name": "Mesa Boogie · 1x12 · Rectifier · Celestion Vintage 30 · Mesa specs · DYN-421 · P10 · 0 mm · EQ",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "1ce6c3e700b85a578a7698106befa94b",
+    "Name": "Orange + Marshall",
+    "Description": "Experimentar texturas de rock com duas famílias de gabinete.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - B.wav",
+        "Sha256": "7631C256D160644D8C0BB1106F6E5066BF55FCE9C9D8FA174AE83447A5D933C8",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - B",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - C.wav",
+        "Sha256": "172BC5584BD5BCA9B40118DC802517CE11FC3605C967A7871E7074F9CD636880",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - D.wav",
+        "Sha256": "496441344F686736C844F7EFAFFBAED463364835B2204BE4C3422E1F68C72BAF",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - D",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/RB500 - DC.wav",
+        "Sha256": "0E3F3C82CFEF11221DF4CEE9E302E0055EE7F5F10B25FD48282454792740FF55",
+        "Name": "Marshall · 4x12 · 1960AV · RB500 - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/CND-2020/OD-M212-GB55-CND-2020-P10-40-L.wav",
+        "Sha256": "DB132D20CD5813841C8039461B94EE04137732DEDF2EC9B54F47FDA288702015",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · CND-2020 · P10 · 40 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P00-50.wav",
+        "Sha256": "FB91D33FA94C1E712203D5E6544DAC1A67087BDADFC6FFE3B220E971B3DBA5EA",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P00 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-P50-SSP2-v1.0/SSP2/DYN-421/OD-M212-P50-DYN-421-P10-10-CUT1.wav",
+        "Sha256": "DF5FC651144437AAE580501128948DCD5AF79F89F7C137C91A9957089955545C",
+        "Name": "Marshall · 2x12 · M-212 · P50 · DYN-421 · P10 · 10 mm · CUT1",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "f19778e3b15b5b4ea3ff7e13fc4418fd",
+    "Name": "Mesa + Engl",
+    "Description": "Explorar bases de ganho alto e solos.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches OA30 SA73.wav",
+        "Sha256": "1E516D27FE8879A8EBC9EA61112B2C3C0DAB0759E3B36F2971503BC1D5CA2E73",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches OA30 SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches OA30 VP28.wav",
+        "Sha256": "EB584B0EE27718C0984A34B2C2CE2FE1EA68AE6FDBC5AF98C7F13E976096E6A6",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches OA30 VP28",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-R112-V30-G4-SSP2-v1.0/SSP2/DYN-421/OD-R112-DYN-421-P12-00-EQ.wav",
+        "Sha256": "61E900BE7B21F708D2D7C8914713D4DD127FE2B77600E95C8E43A876A285B23D",
+        "Name": "Mesa Boogie · 1x12 · Rectifier · Celestion Vintage 30 · Mesa specs · DYN-421 · P12 · 0 mm · EQ",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-R112-V30-G4-SSP2-v1.0/SSP2/DYN-421/OD-R112-DYN-421-P14-00-EQ.wav",
+        "Sha256": "750CAAFB79AB1BA4D4418E9D99765132F56C679A43CB815F8F1D5B085BFD7801",
+        "Name": "Mesa Boogie · 1x12 · Rectifier · Celestion Vintage 30 · Mesa specs · DYN-421 · P14 · 0 mm · EQ",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P00-30-LC45.wav",
+        "Sha256": "7F2D286ACC03EB081097D2D720231360D3212FA59580A8A746AA8780E2964A44",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P00 · 30 mm · LC45",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-DE-112-T75-G4-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-T75-CND-AU-1-P00-50.wav",
+        "Sha256": "6A630E7A3CA80AC512CF128704E994A59920552E1E72B47C666E07773E3FCD1E",
+        "Name": "Engl · 1x12 · E112 / DE-112 · T-75 · CND-AU-1 · P00 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-BVV-SSP2-v1.0/SSP2/CND-M3-P/OD-E112-BV30V-CND-M3-P05-20-P0.wav",
+        "Sha256": "90D4B53B87D124FE6F7735CBD243126F0E71AFBA9BA1ED6EDA0D918CAA979295",
+        "Name": "Engl · 1x12 · E112 / DE-112 · BV30V · CND-M3 · P05 · 20 mm · P0",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-P50E-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-P50-CND-AU-1-P09-40.wav",
+        "Sha256": "EE3FC020196FCF732BA869BAD8716B7601AAF5EA57496532400B6C458969425B",
+        "Name": "Engl · 1x12 · E112 / DE-112 · P50E · CND-AU-1 · P09 · 40 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "1e7ac29e769e58869a289cb43803f8db",
+    "Name": "Zilla — Governor + Veteran",
+    "Description": "Comparar capturas Governor e Veteran no Zilla Fatboy.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/CND-AU-1/OD-FB-GOV-CND-AU-1-P00-60.wav",
+        "Sha256": "9ED58D51DA8E8476366B845B68FB553C14A3E34D1765DCB520B6CC17EFE63B30",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · CND-AU-1 · P00 · 60 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/CND-AU-1/OD-FB-GOV-CND-AU-1-P05-60.wav",
+        "Sha256": "BD681592E7B7402CD94DB130182DB152EC3496A6A0EC9776DF66A08B8611A1EB",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · CND-AU-1 · P05 · 60 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/CND-AU-1/OD-FB-GOV-CND-AU-1-P09-60.wav",
+        "Sha256": "C2D956947730DB8160DF60F19FE97D1502F6F8F523347DAD4DC5CEAB2A5DEDD5",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · CND-AU-1 · P09 · 60 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/CND-AU-1/OD-FB-GOV-CND-AU-1-P10-60.wav",
+        "Sha256": "35FEEE946CF808A6E8B403565BD09FE7997C2B4D690FCE682B5D708DC218D9C7",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · CND-AU-1 · P10 · 60 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-FBVET30-CND-AU-1-P05-50.wav",
+        "Sha256": "8D00D8899EA4422470EBF62061D057D693BEB1D5B80720379381DFA94AF07939",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · CND-AU-1 · P05 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-FBVET30-CND-AU-1-P09-50.wav",
+        "Sha256": "576F834B125DF0F58DA2090AED85DF6D00760AB218EE80193A67B827D8358498",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · CND-AU-1 · P09 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-FBVET30-CND-AU-1-P10-50.wav",
+        "Sha256": "D4C9D92F6CB583CD053FD73F71F4E0208DD38BDECB8935951B6DDA29B9D210E4",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · CND-AU-1 · P10 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-FBVET30-CND-AU-1-P12-50.wav",
+        "Sha256": "0A9DAAA15F4446B522BD01514AF57A1C524D3A6A227F5145D0024EDE518A8B60",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · CND-AU-1 · P12 · 50 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "3da056eca82b500c91404fbf423b45bf",
+    "Name": "Engl — Seleção de falantes",
+    "Description": "Comparar sete famílias de falantes em gabinetes Engl.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Overdriven.fr/Overdriven-DE-112-T75-G4-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-T75-CND-AU-1-P05-50.wav",
+        "Sha256": "7AF0D665CA42F3884207B2BD3BF2C17FCC5B3FB0424AD0469721C15C5A48C543",
+        "Name": "Engl · 1x12 · E112 / DE-112 · T-75 · CND-AU-1 · P05 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-BVV-SSP2-v1.0/SSP2/CND-M3-P/OD-E112-BV30V-CND-M3-P05-30-P0.wav",
+        "Sha256": "90D4B53B87D124FE6F7735CBD243126F0E71AFBA9BA1ED6EDA0D918CAA979295",
+        "Name": "Engl · 1x12 · E112 / DE-112 · BV30V · CND-M3 · P05 · 30 mm · P0",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-CV-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-CV-CND-AU-1-P05-30.wav",
+        "Sha256": "079956331E79FB9ACD72C7FC6C610B8507E2970E643EB7E0AD8570311AA633EE",
+        "Name": "Engl · 1x12 · E112 / DE-112 · CV · CND-AU-1 · P05 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-GM-G4-SSP2-v1.0/SSP2/DYN-421/OD-E112-GM-DYN-421-P10-20.wav",
+        "Sha256": "36AD5DF6E371BD777906AB91B49C02CAAB79AE1434DCC74E463D488816475C77",
+        "Name": "Engl · 1x12 · E112 / DE-112 · Grey Mojo (GM) · DYN-421 · P10 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P00-30.wav",
+        "Sha256": "52992FDE91149EFCF916AE74F15AF25C14743C7F3E2C4975D976A354C987C1A6",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P00 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-P50E-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-P50-CND-AU-1-P09-50.wav",
+        "Sha256": "AFE50C4B77333A34B5E68ECED8EE6E52F3D6C5846B2051F5C57A4B1EEEF4D951",
+        "Name": "Engl · 1x12 · E112 / DE-112 · P50E · CND-AU-1 · P09 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-VT-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-VT-CND-AU-1-P05-30.wav",
+        "Sha256": "5A1BB76ECA77DC779AB8B0A389132EC3EB713F17EBC6C0D6C1983AD8BDE0682B",
+        "Name": "Engl · 1x12 · E112 / DE-112 · V-Type (VT) · CND-AU-1 · P05 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P00-45-LC45.wav",
+        "Sha256": "7F2D286ACC03EB081097D2D720231360D3212FA59580A8A746AA8780E2964A44",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P00 · 45 mm · LC45",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "fcf21d7a9553517a8eae614d0b12295e",
+    "Name": "Marshall — Greenback + Vintage",
+    "Description": "Comparar Greenback 55 Hz e G12 Vintage.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/CND-2020/OD-M212-GB55-CND-2020-P12-40-L.wav",
+        "Sha256": "3994EB35C245338F503292E360C2CC396011F5E204E5C98A30957EB57AD2E79D",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · CND-2020 · P12 · 40 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/CND-2020/OD-M212-GB55-CND-2020-P15-40-L.wav",
+        "Sha256": "69D1A5B89AFBE4BC4E49E1F37757975AAA10A3674097CBEBCFA0B60B7F988824",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · CND-2020 · P15 · 40 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/CND-2020/OD-M212-GB55-CND-2020-P20-40-L.wav",
+        "Sha256": "07971A9BFA32484B28F2DB282F2F224756F971270B00B772059898D672DD9220",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · CND-2020 · P20 · 40 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-421/OD-M212-GB55-DYN-421-P09-00-L.wav",
+        "Sha256": "835BD15A3F56C75D81A8DA481561CD8A860E1F3F406BC3C4AC730B5A09DFF93D",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-421 · P09 · 0 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P05-30.wav",
+        "Sha256": "81348DE010D555DFAAFA211B883B8CAF716823FCC253A4A86FB1529B4288BC06",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P05 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P05-50.wav",
+        "Sha256": "2F98B596DF32FEBAD15AFD8FEB855B455B8F12995F64C64DCFB881D0BCDF6112",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P05 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P09-30.wav",
+        "Sha256": "1E496946DEBBBA7CFFE6C9BD9AD3624B885D470661CE09FE4A87DD7030AAE3F2",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P09 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P09-50.wav",
+        "Sha256": "3A00E776927EB2DF6999F43E51178C924A87A2BC5F9E8AE6BF197030A71D7CFF",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P09 · 50 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "f4260923713158e298bb03f412f55636",
+    "Name": "Multimarcas — Oito sabores",
+    "Description": "Explorar oito combinações de gabinete e falante.",
+    "Group": "Por marca",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Midrange.wav",
+        "Sha256": "F156C1E6A1EE348045BA8ACA3C734FA686634D81CE30B8E2C1299AA24CBDC815",
+        "Name": "Fender · 2x12 · Twin Reverb · Midrange",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - E.wav",
+        "Sha256": "197B56165533845E14E01CD63CA70F3977DBE27D09E2125371AC6B4EB436175C",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - E",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches SA73.wav",
+        "Sha256": "EE7CFA80F4D1B147935020A6CD3BD5FC6CC9101F12B6D34CA5C79D85A23E85CB",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-421/OD-M212-GB55-DYN-421-P10-00-L.wav",
+        "Sha256": "5F016ACCF40088A2FC7127F2764E69793DBC11A83E376CBD372B815C6922859F",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-421 · P10 · 0 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/CND-AU-1/OD-FB-GOV-CND-AU-1-P12-60.wav",
+        "Sha256": "023ED0C09A8FACA0C41AA62143F56A58BDC1E6B3963C83374B4F22DC6441B1F5",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · CND-AU-1 · P12 · 60 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-FBVET30-CND-AU-1-P15-50.wav",
+        "Sha256": "C140D8FB4750CE5A0508062A2A5EEFB1381022554FA48C38131C2244D583F732",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · CND-AU-1 · P15 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P00-45.wav",
+        "Sha256": "52992FDE91149EFCF916AE74F15AF25C14743C7F3E2C4975D976A354C987C1A6",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P00 · 45 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "101cef6256f25c1f8bf738ba124a7351",
+    "Name": "Jazz & Neo Soul",
+    "Description": "Ponto de partida para acordes e linhas limpas.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-GM-G4-SSP2-v1.0/SSP2/DYN-421/OD-E112-GM-DYN-421-P12-20.wav",
+        "Sha256": "04208662CECD4272706B531687B57805C47505BDA2F0649A7A0E87B6A9C681B2",
+        "Name": "Engl · 1x12 · E112 / DE-112 · Grey Mojo (GM) · DYN-421 · P12 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-GM-G4-SSP2-v1.0/SSP2/DYN-421/OD-E112-GM-DYN-421-P15-20.wav",
+        "Sha256": "9F1EFFC523B65DAAD05590C614B62C047C10CC11ECA18381B7F565ECF1AFA8E3",
+        "Name": "Engl · 1x12 · E112 / DE-112 · Grey Mojo (GM) · DYN-421 · P15 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-FBVET30-CND-AU-1-P20-50.wav",
+        "Sha256": "30E1C62EF511290936665EF0E6D4222192F1B39F7B22FB644BA4123B370F835E",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · CND-AU-1 · P20 · 50 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "9bb081c40b7a55e38961015c1a08a5ba",
+    "Name": "Funk & Disco",
+    "Description": "Ponto de partida para bases rítmicas e articulação.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Clean.wav",
+        "Sha256": "46D47C497938FA8AAF1E375DC13F5A05BFDAB51E30832440DAAE28ED7CDBD840",
+        "Name": "Fender · 2x12 · Twin Reverb · Clean",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Midrange.wav",
+        "Sha256": "F156C1E6A1EE348045BA8ACA3C734FA686634D81CE30B8E2C1299AA24CBDC815",
+        "Name": "Fender · 2x12 · Twin Reverb · Midrange",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/RM700 - A.wav",
+        "Sha256": "3FA5046FB32FD5503E8D7B9E12AF1FE4E51AE91C6E61BA6926E617390C6544D3",
+        "Name": "Orange · 2x12 · Vintage 30 · RM700 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/RM700 - B.wav",
+        "Sha256": "1D83FFF3168253188CAAB71DFB5DBBEC84C9E7F087B24DD3E430A0F7F7B76655",
+        "Name": "Orange · 2x12 · Vintage 30 · RM700 - B",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-VT-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-VT-CND-AU-1-P09-30.wav",
+        "Sha256": "936B124085472A3E1B3EA8722E298E1F554BE57E49B7A2714C99E44AB7D1B608",
+        "Name": "Engl · 1x12 · E112 / DE-112 · V-Type (VT) · CND-AU-1 · P09 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-VT-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-VT-CND-AU-1-P10-30.wav",
+        "Sha256": "416E4C4C92C79A26F543AA9FF1951E60CB4A7CF1088CC524752050A64C3001B0",
+        "Name": "Engl · 1x12 · E112 / DE-112 · V-Type (VT) · CND-AU-1 · P10 · 30 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "a4568ebf3286508288038a1a3fcc4a4f",
+    "Name": "Surf & Rockabilly",
+    "Description": "Explorar bases limpas e saturação leve.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/SC1100 - DC.wav",
+        "Sha256": "F47D26DE533111C44BE13AE91CF87F2855FE03999DA2C7549E576226BAD9EDA6",
+        "Name": "Marshall · 4x12 · 1960AV · SC1100 - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-421/OD-M212-GB55-DYN-421-P12-00-L.wav",
+        "Sha256": "C06040C6C9398E94060FF57C5D3ED09EEBADAED46EC0CBFE0884F99D873DFD77",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-421 · P12 · 0 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-VT-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-VT-CND-AU-1-P12-30.wav",
+        "Sha256": "516A994DC3DC85052FF2AD109FE304E754A842A1393D879965DB35A6A89655A9",
+        "Name": "Engl · 1x12 · E112 / DE-112 · V-Type (VT) · CND-AU-1 · P12 · 30 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "6ead756c710c5a9b8e40204b407db400",
+    "Name": "Rock dos anos 70",
+    "Description": "Explorar crunch e solos de inspiração setentista.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960AV/V7X - DC.wav",
+        "Sha256": "24FF79A21340599A287DE6E20FE4389B106E8D4BC111F8C44EDD3D28047B76D6",
+        "Name": "Marshall · 4x12 · 1960AV · V7X - DC",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.00 Inches - 0.0 Inches - SA73.wav",
+        "Sha256": "7E50B41EA90BE782073D1F3C94772395B8B008D521614C5B7B1D7B72F2674590",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.00 Inches - 0.0 Inches - SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-421/OD-M212-GB55-DYN-421-P14-00-L.wav",
+        "Sha256": "564254CEAD46AC04FDE1AC1093080B40989800CA1F9BEA883B97056A2E401955",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-421 · P14 · 0 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-421/OD-M212-GB55-DYN-421-P15-00-L.wav",
+        "Sha256": "611749A12489D40DC155B159B61A8EA6DF9C5AE2338913C993E55AC50145C448",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-421 · P15 · 0 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/RM700 - C.wav",
+        "Sha256": "515AC2279F7391495AB9C488085B272285E65B0455325A0F8B3C0BB17AF14B1E",
+        "Name": "Orange · 2x12 · Vintage 30 · RM700 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/CND-AU-1/OD-FB-GOV-CND-AU-1-P15-60.wav",
+        "Sha256": "33B31E91525068AD2F0AF02D6CECD201154E311EB14C3BA15BA6B1E842A8000E",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · CND-AU-1 · P15 · 60 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P10-30.wav",
+        "Sha256": "44A24591E0977648854546AD85137D8AE63993F10B817EA8D0E5397A29E6B72D",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P10 · 30 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "c8866035377159b981a46c6252734c12",
+    "Name": "Rock dos anos 90",
+    "Description": "Explorar contrastes entre limpos e distorções.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.00 Inches - 0.0 Inches - VP28.wav",
+        "Sha256": "7F487CC2C3427694D6E8C0034779F4E5EAAE3E4D4329C817427D4E541D62CBC3",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.00 Inches - 0.0 Inches - VP28",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.00 Inches 0.0 Inches VP28.wav",
+        "Sha256": "1095F53DA4066366B8D759580FB2C1E827448D2A3EE61E0B9AA50661FDCC3E11",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.00 Inches 0.0 Inches VP28",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.25 Inches 0.0 Inches 7603.wav",
+        "Sha256": "1BE6569171A2896C76B3E811A679CCDDB76444A51DB35EF50B79FC5371D2E736",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.25 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/RM700 - D.wav",
+        "Sha256": "F899713CE01CBCC3817E178E5E9CB6C93065F50B82EAA9BECE132E6D23CD650F",
+        "Name": "Orange · 2x12 · Vintage 30 · RM700 - D",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/RM700 - E.wav",
+        "Sha256": "B6767F8D284A151C2529F9ED45BC8C0505ACCB06EC3FEA53FBDCDC7ACF530066",
+        "Name": "Orange · 2x12 · Vintage 30 · RM700 - E",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-P50-SSP2-v1.0/SSP2/DYN-421/OD-M212-P50-DYN-421-P10-10.wav",
+        "Sha256": "3A465816845FDE7C53F0ADAC527D0815A4B95BA1A2A1A5815F84AE3FFBA060DF",
+        "Name": "Marshall · 2x12 · M-212 · P50 · DYN-421 · P10 · 10 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/DYN-57/OD-FBVET30-DYN-57-P05-20-EQ.wav",
+        "Sha256": "1891657492482EFD1BCFDE8201ECB2CC5535EF1EA0E1422E6940578D9FA40FD7",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · DYN-57 · P05 · 20 mm · EQ",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "ceed584d128456b98076857088139044",
+    "Name": "Punk & Garage",
+    "Description": "Explorar bases diretas e texturas de garage rock.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Sennheiser E906 - A.wav",
+        "Sha256": "2813DD76909157D24FF4BDD3DD070AC69E3028A9D3D3BA810956341C355D3A99",
+        "Name": "Orange · 2x12 · Vintage 30 · Sennheiser E906 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Sennheiser E906 - B.wav",
+        "Sha256": "C3A66AAE3F4C4DBE025A6C68DDED071718013238BEE368C622E64256E5B0574E",
+        "Name": "Orange · 2x12 · Vintage 30 · Sennheiser E906 - B",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.25 Inches - 0.0 Inches - SA73.wav",
+        "Sha256": "68BB8309704A92FDF57C25012FAFB4452B2B09FEDCDFF83FA6B51F4F04199346",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.25 Inches - 0.0 Inches - SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.25 Inches - 0.0 Inches - VP28.wav",
+        "Sha256": "FCE106D1C48F763DF755FFC86C3390E05518867B31974D0439D42232E06F337C",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.25 Inches - 0.0 Inches - VP28",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-421/OD-M212-GB55-DYN-421-P17-00-L.wav",
+        "Sha256": "4ACC86BCB8A2BEB6A960579B1CC3613DF4767C4EDD89F3A22D13B8335CCD3C98",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-421 · P17 · 0 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/CND-AU-1/OD-FB-GOV-CND-AU-1-P20-60.wav",
+        "Sha256": "A5CD388F2E5C10D209C0B6D9BDF392062E8FC5CFEAC0DFE5D450FF39B33C319C",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · CND-AU-1 · P20 · 60 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-VT-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-VT-CND-AU-1-P15-30.wav",
+        "Sha256": "235830016D9E39F879E1CCAFE152E83EC5447F2CD6717B3F741467499F037AB3",
+        "Name": "Engl · 1x12 · E112 / DE-112 · V-Type (VT) · CND-AU-1 · P15 · 30 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "b9d7e221365a567cb2b253285ef838aa",
+    "Name": "Shoegaze & Dream Pop",
+    "Description": "Base para experimentar camadas e efeitos de ambiente.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Clean.wav",
+        "Sha256": "46D47C497938FA8AAF1E375DC13F5A05BFDAB51E30832440DAAE28ED7CDBD840",
+        "Name": "Fender · 2x12 · Twin Reverb · Clean",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Sennheiser E906 - C.wav",
+        "Sha256": "1B1711857FF6BEA6194CDBDD13D8D2FA3FD1AD85434150530D3AFC22969E998F",
+        "Name": "Orange · 2x12 · Vintage 30 · Sennheiser E906 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Sennheiser E906 - D.wav",
+        "Sha256": "88138F05805716A5A69A3DDF29ECE55C4DD651CEBB62ABC7C12B99DDA0185708",
+        "Name": "Orange · 2x12 · Vintage 30 · Sennheiser E906 - D",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/DYN-57/OD-FBVET30-DYN-57-P05-20.wav",
+        "Sha256": "72EE4A9C658B48D61409D40217C212D79E8F7C3A06EC8771DA2887284607C7E4",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · DYN-57 · P05 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-GM-G4-SSP2-v1.0/SSP2/DYN-421/OD-E112-GM-DYN-421-P17-20.wav",
+        "Sha256": "81DEA5E87EB0EDF05CCF55BA9920C159BCA2C4CC406FE7EE9780AC0A4A88BF7B",
+        "Name": "Engl · 1x12 · E112 / DE-112 · Grey Mojo (GM) · DYN-421 · P17 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-421/OD-M212-GB55-DYN-421-P20-00-L.wav",
+        "Sha256": "DD1F8A4AD3CE6B7C0ED29A95B5BBF80312116ACE006AFB10766B443BB3ED68DF",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-421 · P20 · 0 mm · L",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "094fb58dae9656cf8ca61a877ddbb696",
+    "Name": "Metal Progressivo",
+    "Description": "Explorar articulação de bases e variações de ganho.",
+    "Group": "Por estilo",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.25 Inches 0.0 Inches SA73.wav",
+        "Sha256": "AFD83CA2CB99CD6C6D9D1995D034CEE9DDF1456F3D589CF0D71D3E22FEB5E59E",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.25 Inches 0.0 Inches SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-R112-V30-G4-SSP2-v1.0/SSP2/DYN-421/OD-R112-DYN-421-P15-00-EQ.wav",
+        "Sha256": "11AE0C828360DFF386B91EE4E4C96EBAD540FF6050971953475DBDB223305D12",
+        "Name": "Mesa Boogie · 1x12 · Rectifier · Celestion Vintage 30 · Mesa specs · DYN-421 · P15 · 0 mm · EQ",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P05-30-LC45.wav",
+        "Sha256": "E4EE4FA54A1421CEFDE6A56E336E2B47AF77ECAB1D554A421CCAF5E935F956BC",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P05 · 30 mm · LC45",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P05-30.wav",
+        "Sha256": "FF5241741296431A7423482CC01C37CDA878A5294570052E2E40C991833C51AE",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P05 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-P50E-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-P50-CND-AU-1-P10-40.wav",
+        "Sha256": "47388889832414EA32B818E24B0C57EAC5198FEC477AEAA03FA3D8B85E360861",
+        "Name": "Engl · 1x12 · E112 / DE-112 · P50E · CND-AU-1 · P10 · 40 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/DYN-421/OD-FB-GOV-DYN-421-P00-20.wav",
+        "Sha256": "AD2DCAE7B1E282E68D434A6692238E94FF0680F45DC8F62DFD1DEB9106BDDEFB",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · DYN-421 · P00 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P10-50.wav",
+        "Sha256": "CF8014B5280B5F4B05C00CEE540E98F6F3CC78A3B7B7B1885AE577D2D1BA392A",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P10 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-P50-SSP2-v1.0/SSP2/DYN-421/OD-M212-P50-DYN-421-P12-00.wav",
+        "Sha256": "9E079170C334BA7A30065957BE9249DFEE97A5AC471454BCCFC7342717DEA10A",
+        "Name": "Marshall · 2x12 · M-212 · P50 · DYN-421 · P12 · 0 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "3a440decc50f5ab8ba9c2b406deaaf41",
+    "Name": "Stratocaster SSS",
+    "Description": "Sugestão para explorar guitarras com três single-coils.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Midrange.wav",
+        "Sha256": "F156C1E6A1EE348045BA8ACA3C734FA686634D81CE30B8E2C1299AA24CBDC815",
+        "Name": "Fender · 2x12 · Twin Reverb · Midrange",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-57/OD-M212-GB55-DYN-57-P05-10-L.wav",
+        "Sha256": "6885897A03E9968ABDA8CC9113171857725914B22120E842A78318D7C3056813",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-57 · P05 · 10 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Sennheiser E906 - E.wav",
+        "Sha256": "117E3B415E059F82A07BBDAF880E69B5465077BC31E1FB28062576EE0D90A838",
+        "Name": "Orange · 2x12 · Vintage 30 · Sennheiser E906 - E",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-GM-G4-SSP2-v1.0/SSP2/DYN-421/OD-E112-GM-DYN-421-P19-20.wav",
+        "Sha256": "DC56D1CBE91ED3C97473E26025D5838F1CC4F8CC79C58A0853C55A43AAC2B130",
+        "Name": "Engl · 1x12 · E112 / DE-112 · Grey Mojo (GM) · DYN-421 · P19 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/DYN-57/OD-FBVET30-DYN-57-P09-20-EQ.wav",
+        "Sha256": "10819BEA663DFDF4EC5A186C62B421BB39B75DEC13A00DD831CA4046DEB899AE",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · DYN-57 · P09 · 20 mm · EQ",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "c9d1f36e779857739b377a1f146d7db7",
+    "Name": "Telecaster SS",
+    "Description": "Sugestão para explorar guitarras com dois single-coils.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Clean.wav",
+        "Sha256": "46D47C497938FA8AAF1E375DC13F5A05BFDAB51E30832440DAAE28ED7CDBD840",
+        "Name": "Fender · 2x12 · Twin Reverb · Clean",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.50 Inches - 0.0 Inches - SA73.wav",
+        "Sha256": "5BBFBA5B8A88A4C41C7F7669891EBEC819B236548B2374DA37D56F49EA763694",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.50 Inches - 0.0 Inches - SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Shure SM57 - A.wav",
+        "Sha256": "BA2817D0DB6861A35FA5BE6BEB3D7646DE5D3C6FED7739AA41D2B23A02B4730F",
+        "Name": "Orange · 2x12 · Vintage 30 · Shure SM57 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-VT-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-VT-CND-AU-1-P20-30.wav",
+        "Sha256": "22208B321FA044D1483B2E4CCFFC6AACB6385F4124A873F62D480F257D0C049C",
+        "Name": "Engl · 1x12 · E112 / DE-112 · V-Type (VT) · CND-AU-1 · P20 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/DYN-421/OD-FB-GOV-DYN-421-P00-30.wav",
+        "Sha256": "3F73B8754B432B8873B022408087E53C4ADF25015BF615AB757AEA03EEE3F217",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · DYN-421 · P00 · 30 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "2b3149641c8b548bba530f6c86e9daf0",
+    "Name": "Les Paul HH",
+    "Description": "Sugestão para explorar bases e solos com dois humbuckers.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.50 Inches - 0.0 Inches - VP28.wav",
+        "Sha256": "40FF844D838D56C978C208930F3394638F82A3A8DCB6012265B28C2BA549311B",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.50 Inches - 0.0 Inches - VP28",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-57/OD-M212-GB55-DYN-57-P09-10-L.wav",
+        "Sha256": "2E35443EF1EECC376BEEF5797002777804C813A8A8F97A75380AC58378686672",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-57 · P09 · 10 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P12-30.wav",
+        "Sha256": "9285DF9F3C3D3C84BE63538F8D0E6135FD42662B0B100C7AB170CAB924BA7419",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P12 · 30 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Shure SM57 - B.wav",
+        "Sha256": "7D778B9DBD07DAADC08BD0CB5F83205767B5A09D4BD701D1C215439CF0AD10BE",
+        "Name": "Orange · 2x12 · Vintage 30 · Shure SM57 - B",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.25 Inches 0.0 Inches VP28.wav",
+        "Sha256": "8FD1833DE570E25501F87F18E941C6344E5A2C6EA0519F5803777A0CAC8A6EC0",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.25 Inches 0.0 Inches VP28",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Midrange.wav",
+        "Sha256": "F156C1E6A1EE348045BA8ACA3C734FA686634D81CE30B8E2C1299AA24CBDC815",
+        "Name": "Fender · 2x12 · Twin Reverb · Midrange",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/DYN-57/OD-FBVET30-DYN-57-P09-20.wav",
+        "Sha256": "2FCECCCCB57D335A235EEE48DED08EE4A18E75F4CA660EFC45EF21AA368DC9B2",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · DYN-57 · P09 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-BVV-SSP2-v1.0/SSP2/CND-M3-P/OD-E112-BV30V-CND-M3-P09-30-P0.wav",
+        "Sha256": "F21D1AAC2170ADEC5C63B77DD3DDDADFB78544C1E9227B9B5AE17F948482BEC5",
+        "Name": "Engl · 1x12 · E112 / DE-112 · BV30V · CND-M3 · P09 · 30 mm · P0",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "847544c4b4db521fab545b90ca02cf93",
+    "Name": "SG HH",
+    "Description": "Sugestão para explorar crunch e rock com dois humbuckers.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-57/OD-M212-GB55-DYN-57-P10-10-L.wav",
+        "Sha256": "FB86A612C241FA0B9B2E3959EA439220281E9507BA2221A3D28625CC65A64908",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-57 · P10 · 10 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-57/OD-M212-GB55-DYN-57-P12-10-L.wav",
+        "Sha256": "EB99F9CAE231CD6386FE260804C3B6D10188F9911B9BFD8001C3AF86783F59E0",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-57 · P12 · 10 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Marshall/IRs WAV/4x12/1960TV - Greenback M25/M201 - LL/0.75 Inches - 0.0 Inches - SA73.wav",
+        "Sha256": "72A1797F2FB1CB23D5DA500AF895018FF2E94827EB1586B76D7D4B31D8F24E99",
+        "Name": "Marshall · 4x12 · 1960TV - Greenback M25 · M201 - LL · 0.75 Inches - 0.0 Inches - SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Shure SM57 - C.wav",
+        "Sha256": "574BEA37E4953EF7233959980AED3BFE38F43FC338BBEBF677B6EE0C483081F6",
+        "Name": "Orange · 2x12 · Vintage 30 · Shure SM57 - C",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Shure SM57 - D.wav",
+        "Sha256": "614EB1FD08C0AB510DFEBDEC9954D54E5C7753C05E419AD721AA5F3863F4B766",
+        "Name": "Orange · 2x12 · Vintage 30 · Shure SM57 - D",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/DYN-421/OD-FB-GOV-DYN-421-P05-20.wav",
+        "Sha256": "76BBC59728E5BBCEB34244A2F64DD4A44D62DA30B9BBD36829AAD1BDCB582122",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · DYN-421 · P05 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-DE-112-T75-G4-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-T75-CND-AU-1-P09-50.wav",
+        "Sha256": "3A02BFE39E57DAA93406A799F8E1168E0EF7A4783C6F9E019E75BB967D093206",
+        "Name": "Engl · 1x12 · E112 / DE-112 · T-75 · CND-AU-1 · P09 · 50 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "21a4a8db28645cd8bf58b1cea1a1ed7c",
+    "Name": "Superstrat HSS",
+    "Description": "Sugestão para alternar single-coils e humbucker.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Big - 48 kHz - 24 Bits.wav",
+        "Sha256": "B607D70FE6F79E56F9AF049567071A65F73C18F66BC5C61089ABDA7C39E96B8B",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Big - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-57/OD-M212-GB55-DYN-57-P15-10-L.wav",
+        "Sha256": "9CA35D33296EB9C1ED635E98C1735BDE792EB37FC65D7E1A8EC1C509A5123BC6",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-57 · P15 · 10 mm · L",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.50 Inches 0.0 Inches 7603.wav",
+        "Sha256": "06B853F53C2436EB8A0CF9DEB6A129E0F8F3A31C48F45A1376EFB70D85C4E55A",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.50 Inches 0.0 Inches 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/Shure SM57 - E.wav",
+        "Sha256": "D1D58FE5DD4DBA67E901140D7A32A944FA5E5DA3DF40776B331DB10BE839755C",
+        "Name": "Orange · 2x12 · Vintage 30 · Shure SM57 - E",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-VT-CLASSD-SSP2-v1.0/SSP2/DYN-906/OD-E112-VT-DYN-906-P05-20-LC.wav",
+        "Sha256": "3113B4F36C7AFD86192E0DB1706F695E365063A6EAC07C64CCA9C70CEECDEDC3",
+        "Name": "Engl · 1x12 · E112 / DE-112 · V-Type (VT) · DYN-906 · P05 · 20 mm · LC",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/DYN-57/OD-FBVET30-DYN-57-P10-20-EQ.wav",
+        "Sha256": "E7CAEB4D167507123381213689E1D05AC16EBE9150A7618BF7AB8B15C4A12B8C",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · DYN-57 · P10 · 20 mm · EQ",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-P50-SSP2-v1.0/SSP2/DYN-421/OD-M212-P50-DYN-421-P12-10-CUT1.wav",
+        "Sha256": "BF61791EF040196BBE41C9D4186B0CDF7CA765D5845E0FA0E457C85FCFCCAD6C",
+        "Name": "Marshall · 2x12 · M-212 · P50 · DYN-421 · P12 · 10 mm · CUT1",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "b42dba019a145820b8deb1d4bf623ae5",
+    "Name": "Superstrat HH",
+    "Description": "Sugestão para explorar ganho alto e solos com humbuckers.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-VINT-L-G4-CLASSD-SSP2-v1.0/SSP2/CND-JP-1/OD-M212-VINT-CND-JP-1-P12-50.wav",
+        "Sha256": "F50A6E12076EC0CA2A88FCEAAEAFCCAC00D10847DD079A79F9878EFD2B96A09E",
+        "Name": "Marshall · 2x12 · M-212 · G12 Vintage · falante esquerdo · CND-JP-1 · P12 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-P50-SSP2-v1.0/SSP2/DYN-421/OD-M212-P50-DYN-421-P12-10.wav",
+        "Sha256": "AA450512605CA6A76E8C674C9EF76F0A9EDBF084F3013A37424579195FAADA8E",
+        "Name": "Marshall · 2x12 · M-212 · P50 · DYN-421 · P12 · 10 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.50 Inches 0.0 Inches OA30 7603.wav",
+        "Sha256": "2ED44D8F10A6F8BAC32F8291FE09B86A726C89B6814CA31FA6BE22E3C686C3F0",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.50 Inches 0.0 Inches OA30 7603",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-R112-V30-G4-SSP2-v1.0/SSP2/DYN-421/OD-R112-DYN-421-P17-00-EQ.wav",
+        "Sha256": "0CF81FE84825EF920223F6005664EFAC6294A5DF04AEA5018ECE40C07DA4057F",
+        "Name": "Mesa Boogie · 1x12 · Rectifier · Celestion Vintage 30 · Mesa specs · DYN-421 · P17 · 0 mm · EQ",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P05-45-LC45.wav",
+        "Sha256": "E4EE4FA54A1421CEFDE6A56E336E2B47AF77ECAB1D554A421CCAF5E935F956BC",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P05 · 45 mm · LC45",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-P50E-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-P50-CND-AU-1-P10-50.wav",
+        "Sha256": "3228EC5EC92A349BD21DEEA32E9A81AD15E58BEE6A33CB81F6694A0BFC30F080",
+        "Name": "Engl · 1x12 · E112 / DE-112 · P50E · CND-AU-1 · P10 · 50 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - A.wav",
+        "Sha256": "B642DB8669550036B32806C527C68598157C2D14C7B301A7894C51EF61004974",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - A",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/DYN-421/OD-FB-GOV-DYN-421-P05-30.wav",
+        "Sha256": "3F421E978F3997AD8435453E2C6392CF650CA023B2FD9A4C29BDBB4E58868574",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · DYN-421 · P05 · 30 mm",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "fe550e6e4d2a57af9ccd9c6c21aae224",
+    "Name": "Semiacústica HH",
+    "Description": "Sugestão para explorar acordes, blues e dinâmica com humbuckers.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Fender/IRs WAV/1x12/Deluxe Reverb Oxford/Lean - 48 kHz - 24 Bits.wav",
+        "Sha256": "498889978243891D1990DFD5CEEECC53AEED43089C34DE4E218E2249BAD9B6CF",
+        "Name": "Fender · 1x12 · Deluxe Reverb Oxford · Lean - 48 kHz - 24 Bits",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Fender/IRs WAV/2x12/Twin Reverb/Balanced.wav",
+        "Sha256": "8AC5FBA60C78702F405F126FCE170CD2DC85C5C245A5FB7A2B9B933DF0AD8CB7",
+        "Name": "Fender · 2x12 · Twin Reverb · Balanced",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 2.wav",
+        "Sha256": "2232A489E18146A6E55BEF7B773143ECC2247AA9E8EA702D2A2B1E2FEC591EB0",
+        "Name": "Vox · AC30 - Blue · Blue 2",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Vox/IRs WAV/Configuração Não Informada/AC30 - Blue/Blue 1.wav",
+        "Sha256": "DEF3021A16CB02BA92295BBE66063035B4038AC2EE38DA2FD2EC6D7C5A8CB35F",
+        "Name": "Vox · AC30 - Blue · Blue 1",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-GM-G4-SSP2-v1.0/SSP2/DYN-421/OD-E112-GM-DYN-421-P20-20.wav",
+        "Sha256": "9BFA285E3284045239390641828BD25846680017769DAAAD3FB54A4456900511",
+        "Name": "Engl · 1x12 · E112 / DE-112 · Grey Mojo (GM) · DYN-421 · P20 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-FB-VET30-G4-SSP2-v1.0/SSP2/DYN-57/OD-FBVET30-DYN-57-P10-20.wav",
+        "Sha256": "8C4E9A61CF755F5F90BE6F231E02D25500DB8DDBFC75B7FBCA3C865145C1A62C",
+        "Name": "Zilla · 2x12 · Fatboy · WGS Veteran 30 (VET30) · DYN-57 · P10 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - B.wav",
+        "Sha256": "7631C256D160644D8C0BB1106F6E5066BF55FCE9C9D8FA174AE83447A5D933C8",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - B",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-GB55-CLASSD-SSP2-v1.0/SSP2/DYN-57/OD-M212-GB55-DYN-57-P20-10-L.wav",
+        "Sha256": "F4C18BD199AA36A372C880DAAF11ABB0280F7BD025EDADAC5E4EB53FC35477C7",
+        "Name": "Marshall · 2x12 · M-212 · Greenback 55 Hz (GB55) · DYN-57 · P20 · 10 mm · L",
+        "Distance": 50
+      }
+    ]
+  },
+  {
+    "Version": 1,
+    "Id": "3970ddd9adf85a2f807190a21d122986",
+    "Name": "Sete cordas HH",
+    "Description": "Sugestão para explorar a extensão grave de guitarras de sete cordas.",
+    "Group": "Por guitarra",
+    "Entries": [
+      {
+        "Slot": 0,
+        "RelativePath": "Mesa Boogie/IRs WAV/4x12/4FB - Vintage 30/SM57 - LL/0.50 Inches 0.0 Inches OA30 SA73.wav",
+        "Sha256": "DDDA74E2C443264231B77B5A65EBDB892D12CA16B87513D3C24B3D2BCE68FEB3",
+        "Name": "Mesa Boogie · 4x12 · 4FB - Vintage 30 · SM57 - LL · 0.50 Inches 0.0 Inches OA30 SA73",
+        "Distance": 50
+      },
+      {
+        "Slot": 1,
+        "RelativePath": "Overdriven.fr/Overdriven-R112-V30-G4-SSP2-v1.0/SSP2/DYN-421/OD-R112-DYN-421-P20-00-EQ.wav",
+        "Sha256": "7E65A30D334125FEA6CA2A30378592013F85CF7AF4663EE2885DFB323A98C06C",
+        "Name": "Mesa Boogie · 1x12 · Rectifier · Celestion Vintage 30 · Mesa specs · DYN-421 · P20 · 0 mm · EQ",
+        "Distance": 50
+      },
+      {
+        "Slot": 2,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P05-45.wav",
+        "Sha256": "FF5241741296431A7423482CC01C37CDA878A5294570052E2E40C991833C51AE",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P05 · 45 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 3,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-K100-G4-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-K100-CND-AU-1-P09-30-LC45.wav",
+        "Sha256": "E38E1F93D2B12BAF45110F13DFD4C47079818086BEBE23C4F662BAC06A986A06",
+        "Name": "Engl · 1x12 · E112 / DE-112 · K-100 · CND-AU-1 · P09 · 30 mm · LC45",
+        "Distance": 50
+      },
+      {
+        "Slot": 4,
+        "RelativePath": "Overdriven.fr/Overdriven-E112-P50E-CLASSD-SSP2-v1.0/SSP2/CND-AU-1/OD-E112-P50-CND-AU-1-P12-40.wav",
+        "Sha256": "15E0512781B3602B48139E7395D8F5C5635BDB653005C0A12E97E0E2C6EA8065",
+        "Name": "Engl · 1x12 · E112 / DE-112 · P50E · CND-AU-1 · P12 · 40 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 5,
+        "RelativePath": "Overdriven.fr/Overdriven-212-GOV-SSP2-v1.0/SSP2/DYN-421/OD-FB-GOV-DYN-421-P09-20.wav",
+        "Sha256": "F5484D87A1DC8AB7A81486229A2574A36F75C62D876ABC9E6C58A50B7744769D",
+        "Name": "Zilla · 2x12 · Fatboy · Eminence Governor · DYN-421 · P09 · 20 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 6,
+        "RelativePath": "Overdriven.fr/Overdriven-M212-P50-SSP2-v1.0/SSP2/DYN-421/OD-M212-P50-DYN-421-P14-00.wav",
+        "Sha256": "E520AF68FB96D2B24B1CA37E4FBC6BDE8CFA8EF1ED05B5D0CF7FA776D5E5D619",
+        "Name": "Marshall · 2x12 · M-212 · P50 · DYN-421 · P14 · 0 mm",
+        "Distance": 50
+      },
+      {
+        "Slot": 7,
+        "RelativePath": "Orange/IRs WAV/2x12/Vintage 30/AKG C414 - C.wav",
+        "Sha256": "172BC5584BD5BCA9B40118DC802517CE11FC3605C967A7871E7074F9CD636880",
+        "Name": "Orange · 2x12 · Vintage 30 · AKG C414 - C",
+        "Distance": 50
+      }
+    ]
   }
 ]

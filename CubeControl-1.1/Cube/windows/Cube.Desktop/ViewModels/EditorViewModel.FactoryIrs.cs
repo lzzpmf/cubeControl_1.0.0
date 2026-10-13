@@ -39,7 +39,8 @@ public sealed partial class EditorViewModel
         try
         {
             var definitions = JsonSerializer.Deserialize<IrPackDefinition[]>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "IrPacks.v1.json"))) ?? [];
-            packs.AddRange(definitions.Select(d => PackStore.Resolve(d with { Group = "Predefinidos" })));
+            packs.AddRange(definitions.Select(d => PackStore.Resolve(d with
+            { Group = string.IsNullOrWhiteSpace(d.Group) ? "Predefinidos" : d.Group })));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or JsonException) { errors.Add(ex.Message); }
         try

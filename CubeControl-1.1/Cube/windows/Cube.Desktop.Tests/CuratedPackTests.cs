@@ -34,10 +34,10 @@ internal static class CuratedPackTests
         string data = Path.Combine(Path.GetTempPath(), "cube-curated-packs-" + Guid.NewGuid().ToString("N"));
         using var model = new EditorViewModel(data);
         var curated = model.IrPacks.Where(p => p.Definition != null).ToArray();
-        Check(curated.Length == 10 && model.PackCatalogProblems == "", "ten curated packs available without factory dependency");
+        Check(curated.Length == 34 && model.PackCatalogProblems == "", "34 curated packs available without factory dependency");
         int[][] counts = [[2,1,2,1,2], [5,2,1,0,0], [0,0,8,0,0], [0,0,1,1,6], [0,1,1,6,0], [4,2,2,0,0], [5,2,0,1,0], [3,2,1,2,0], [0,0,4,2,2], [0,0,2,2,4]];
         string[] brands = ["Fender", "Vox", "Marshall", "Orange", "Mesa Boogie"];
-        for (int i = 0; i < curated.Length; i++)
+        for (int i = 0; i < counts.Length; i++)
             Check(brands.Select(b => curated[i].Definition!.Entries.Count(e => e.RelativePath.StartsWith(b + "/"))).SequenceEqual(counts[i]), "brand composition: " + curated[i].Name);
         foreach (var pack in curated)
         {
@@ -45,6 +45,10 @@ internal static class CuratedPackTests
             Check(pack.Definition!.Entries.All(e => e.Distance == 50), "default distance: " + pack.Name);
             Check(pack.Sectors.Select(CabinetInventory.Hash).Distinct().Count() == 8, "unique prepared sectors: " + pack.Name);
         }
+        Check(curated.Select(p => p.Id).Distinct().Count() == curated.Length, "catalog IDs are unique");
+        Check(curated.Select(p => string.Join("|", p.Definition!.Entries.Select(e => e.Sha256).OrderBy(h => h))).Distinct().Count() == curated.Length,
+            "packs have distinct content selections, independent of order and distance");
+        Check(curated.All(p => p.Group == p.Definition!.Group && p.Group != "Meus packs"), "catalog grouping is preserved");
         var first = curated[0].Definition!;
         var partial = first with { Id = Guid.NewGuid().ToString("N"), Name = "Personal", Group = "Meus packs", Entries = [first.Entries[0] with { Slot = 2, Distance = 23 }, first.Entries[1] with { Slot = 6 }] };
         model.PackStore.Save(partial);
@@ -190,6 +194,7 @@ internal static class CuratedPackTests
             var page = new MainWindow(pageModel, initializeDevices: false) { Width = 1100, Height = 800, ShowInTaskbar = false };
             page.Show(); await System.Windows.Threading.Dispatcher.Yield();
             var tabs = (TabControl)page.FindName("Tabs"); tabs.SelectedIndex = 1;
+            pageModel.IrWorkspaceTab = 1;
             page.UpdateLayout(); await System.Windows.Threading.Dispatcher.Yield();
             var card = (IrPackEditor)page.FindName("IrPacksCard");
             Check(ReferenceEquals(card.DataContext, pageModel.PackEditor), "IR page hosts the session pack editor");
@@ -207,7 +212,7 @@ internal static class CuratedPackTests
             pageModel.PackEditor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
             pageModel.Ask = _ => Task.FromResult(true); pageModel.PackEditor.DiscardChanges.Execute(null);
             await pageModel.PackEditor.SelectAsync(pageModel.IrPacks.First());
-            var scroll = Find<ScrollViewer>(page).First(v => ReferenceEquals(v.Content, VisualTreeHelper.GetParent(card)));
+            var scroll = (ScrollViewer)page.FindName("IrScroll");
             foreach (var theme in new[] { ThemeMode.Dark, ThemeMode.Light })
             {
                 ThemeService.Instance.Preview(theme); ZoomService.Instance.Preview(100);

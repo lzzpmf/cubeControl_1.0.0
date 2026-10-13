@@ -173,7 +173,7 @@ O criador possui limites específicos em cinco grupos de coeficientes; o limite 
 
 O transporte conserva suas artes próprias, sem legendas permanentes nos saltos de cinco segundos; tooltips e nomes acessíveis descrevem as ações. O ícone vetorial `CubeMetronomeIcon` compartilha a grade de 24 unidades, tamanho de navegação e cor herdada dos controles vizinhos.
 
-No mixer, usar faders horizontais e um único mute por canal junto ao percentual, também no modo Compacto. O botão comunica o estado e oferece a ação inversa no tooltip/nome acessível. Evitar indicadores duplicados e linhas reservadas somente a um ícone. O painel limita a largura a 620 DIPs e usa 8 DIPs entre grupos; Expandido revela comandos e medidores adicionais.
+No mixer, usar um único layout com faders horizontais e um único mute por canal junto ao percentual. O botão comunica o estado e oferece a ação inversa no tooltip/nome acessível. O painel limita a largura a 620 DIPs e usa 8 DIPs entre grupos; monitoração e metrônomo ficam sempre disponíveis. Os medidores de pico digital ficam atrás dos faders, sem interceptar interação, com escala de −60 a 0 dBFS e retenção de pico por um segundo. Medir cada canal após volume e mute e manter o aviso de saturação da entrada separado. Preservar as artes dos faders, recursos semânticos e alternativa de alto contraste.
 
 O toggle de busca por backing track usa fundo `CubeAccent`, texto sobre destaque e check quando ligado, e aparência neutra sem check quando desligado. Preservar foco, comportamento de ToggleButton e estado localizado para automação. Detalhes de interação e verificação ficam em [Interação no Windows](desenvolvimento/windows-interaction.md#player-e-mixer-de-backing-tracks).
 

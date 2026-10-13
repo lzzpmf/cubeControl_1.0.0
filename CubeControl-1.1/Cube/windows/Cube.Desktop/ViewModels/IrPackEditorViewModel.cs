@@ -16,10 +16,15 @@ public sealed class IrPackEditorViewModel : Observable
     public IrPackEditorViewModel(EditorViewModel owner)
     {
         this.owner = owner;
-        PackLibrary = new IrLibraryViewModel(() => !owner.Busy, importedDirectory: owner.PackStore.ImportedDirectory, packPicker: true);
+        PackLibrary = owner.IrLibrary;
         PackLibrary.SelectionChanged += value => SelectedIr = value;
-        PackLibrary.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(IrLibraryViewModel.VisibleEntries)) { Notify(nameof(Library)); Notify(nameof(LibraryEmpty)); } };
+        SelectedIr = PackLibrary.Selected;
         Slots = Enumerable.Range(0, 8).Select(i => new IrPackSlotViewModel(this, i)).ToArray();
+        PackLibrary.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IrLibraryViewModel.VisibleEntries)) { Notify(nameof(Library)); Notify(nameof(LibraryEmpty)); }
+            if (e.PropertyName == nameof(IrLibraryViewModel.Entries)) foreach (var slot in Slots) slot.Refresh();
+        };
         owner.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(EditorViewModel.SelectedIrPack) && !loading && !Dirty) Load(owner.SelectedIrPack);
@@ -213,7 +218,7 @@ public sealed class IrPackEditorViewModel : Observable
         if (owner.Busy) return;
         var previousOrigin = origin;
         var imported = owner.PackStore.ImportDraft(path);
-        owner.IrLibrary.Reload(); PackLibrary.Reload();
+        PackLibrary.Reload();
         Load(owner.PackStore.Resolve(imported)); origin = previousOrigin; Dirty = true;
         Message = "Pack importado para revisão. Salvar e aplicar são ações separadas.";
     }
@@ -266,6 +271,17 @@ public sealed class IrPackSlotViewModel : Observable
     public string Title => $"Slot {Index + 1}";
     public IrPackEntry? Entry { get; private set; }
     public string Name => Entry?.Name ?? (editor.ReadOnly && editor.Current?.Definition == null ? editor.Current?.SlotName(Index) : null) ?? "Preservar slot do pedal";
+    public string CaptureSummary
+    {
+        get
+        {
+            var metadata = editor.PackLibrary.Entries.FirstOrDefault(e => e.RelativePath == Entry?.RelativePath)?.Metadata;
+            if (metadata == null) return "";
+            return string.Join(" · ", new[] { metadata.MicrophoneLabel, metadata.Position,
+                metadata.SampleRate > 0 && metadata.Bits > 0 ? $"{metadata.SampleRate / 1000d:0.###} kHz / {metadata.Bits}-bit" : "" }
+                .Where(value => !string.IsNullOrWhiteSpace(value)));
+        }
+    }
     public string Problem { get; private set; } = "";
     public bool Editable => editor.EditablePack;
     public bool HasEntry => Entry != null;
@@ -302,5 +318,5 @@ public sealed class IrPackSlotViewModel : Observable
         Problem = Entry == null ? "" : editor.Owner.PackStore.Resolve(new IrPackDefinition { Name = "Slot", Entries = [Entry] }).Problem;
         Refresh();
     }
-    internal void Refresh() { Notify(nameof(ShowRemove)); Notify(nameof(Editable)); Notify(nameof(HasEntry)); Notify(nameof(Name)); Notify(nameof(Problem)); Notify(nameof(Distance)); Notify(nameof(DistanceValue)); Notify(nameof(Image)); Notify(nameof(ImageHint)); Notify(nameof(CanSetDistance)); }
+    internal void Refresh() { Notify(nameof(ShowRemove)); Notify(nameof(Editable)); Notify(nameof(HasEntry)); Notify(nameof(Name)); Notify(nameof(CaptureSummary)); Notify(nameof(Problem)); Notify(nameof(Distance)); Notify(nameof(DistanceValue)); Notify(nameof(Image)); Notify(nameof(ImageHint)); Notify(nameof(CanSetDistance)); }
 }

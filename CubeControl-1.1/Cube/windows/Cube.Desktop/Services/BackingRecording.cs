@@ -4,7 +4,8 @@ using NAudio.Wave;
 
 namespace Cube.Desktop.Services;
 
-// Each session owns its endpoint and file. Loopback records the selected output's mix.
+// Each session owns its endpoint and file. The player records an input endpoint;
+// optional loopback is retained for the metronome hardware diagnostic only.
 public sealed class BackingRecording : IDisposable
 {
     private readonly MMDevice device;
@@ -50,7 +51,12 @@ public sealed class BackingRecording : IDisposable
         };
         capture.RecordingStopped += (_, e) => Finish(e.Exception);
         try { capture.StartRecording(); }
-        catch { Dispose(); throw; }
+        catch (Exception ex)
+        {
+            Dispose();
+            if (File.Exists(TemporaryPath)) ex.Data["RecordingPath"] = TemporaryPath;
+            throw;
+        }
     }
 
     private void Finish(Exception? error)

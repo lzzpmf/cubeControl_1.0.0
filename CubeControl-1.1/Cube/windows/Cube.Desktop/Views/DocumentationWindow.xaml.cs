@@ -11,7 +11,7 @@ using Cube.Desktop.Localization;
 
 namespace Cube.Desktop.Views;
 
-public partial class DocumentationWindow : Window
+public partial class DocumentationWindow : Wpf.Ui.Controls.FluentWindow
 {
     private sealed record Category(string Id, string Label);
     private DocumentCatalog? catalog;

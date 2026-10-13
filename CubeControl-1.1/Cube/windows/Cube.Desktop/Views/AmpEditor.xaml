@@ -9,6 +9,40 @@
   <SolidColorBrush x:Key="AmpAccent" Color="#8DB9AC"/>
   <SolidColorBrush x:Key="AmpBandA" Color="#FFA293"/>
   <SolidColorBrush x:Key="AmpBandB" Color="#73C6DE"/>
+  <!-- Button proportions with ListBoxItem selection and keyboard semantics. -->
+  <Style x:Key="AmpSectionSelector" TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+   <Setter Property="MinHeight" Value="40"/><Setter Property="MinWidth" Value="0"/>
+   <Setter Property="Padding" Value="16,8"/><Setter Property="Margin" Value="0,0,8,8"/>
+   <Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/>
+   <Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="VerticalAlignment" Value="Center"/>
+   <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+   <Setter Property="Background" Value="{DynamicResource ButtonBackground}"/>
+   <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
+   <Setter Property="BorderThickness" Value="{DynamicResource ButtonBorderThemeThickness}"/>
+   <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+    <Grid>
+     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource ControlCornerRadius}" Padding="{TemplateBinding Padding}">
+      <ContentPresenter ContentSource="Content" RecognizesAccessKey="True" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+     </Border>
+     <Border x:Name="KeyboardFocus" Margin="3" BorderBrush="{DynamicResource CubeFocus}" BorderThickness="2" CornerRadius="{DynamicResource ControlCornerRadius}" Visibility="Collapsed" IsHitTestVisible="False"/>
+    </Grid>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}"/></Trigger>
+     <Trigger Property="IsSelected" Value="True">
+      <Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource CubeAccent}"/>
+     </Trigger>
+     <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="KeyboardFocus" Property="Visibility" Value="Visible"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False">
+      <Setter Property="Background" Value="{DynamicResource ButtonBackgroundDisabled}"/><Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}"/>
+      <Setter TargetName="KeyboardFocus" Property="Visibility" Value="Collapsed"/>
+     </Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
   <Style x:Key="AmpPanel" TargetType="Border">
    <Setter Property="Padding" Value="0,16,0,0"/>
    <Setter Property="Margin" Value="0,0,0,12"/>
@@ -118,10 +152,7 @@
    </Grid>
    <ListBox x:Name="AmpSections" Margin="0,12,0,0" SelectedIndex="0" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Seções do amp'}">
     <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
-    <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource SelectionTile}">
-     <Setter Property="MinHeight" Value="40"/><Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/>
-     <Setter Property="FocusVisualStyle" Value="{StaticResource DefaultControlFocusVisualStyle}"/>
-    </Style></ListBox.ItemContainerStyle>
+    <ListBox.ItemContainerStyle><StaticResource ResourceKey="AmpSectionSelector"/></ListBox.ItemContainerStyle>
     <ListBoxItem Content="{loc:Translate Text='Equalização'}"/>
     <ListBoxItem Content="{loc:Translate Text='Corpo e textura'}"/>
     <ListBoxItem Content="{loc:Translate Text='Caráter e definição'}"/>

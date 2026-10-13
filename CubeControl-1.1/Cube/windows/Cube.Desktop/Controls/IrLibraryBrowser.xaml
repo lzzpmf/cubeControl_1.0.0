@@ -4,13 +4,8 @@
  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
  xmlns:loc="clr-namespace:Cube.Desktop.Localization">
  <StackPanel>
-        <ui:AutoSuggestBox x:Name="IrLibrarySearch" Loaded="SearchLoaded" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar marca, gabinete ou captação'}" ToolTip="{loc:Translate Text='Buscar marca, gabinete ou captação'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Buscar marca, gabinete ou captação'}">
-         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSearch24}" FontSize="{DynamicResource CubeIconSizeAction}" Width="20" Height="20" VerticalAlignment="Center" Margin="0,2,0,0"/></ui:AutoSuggestBox.Icon>
-         <ui:AutoSuggestBox.Resources>
-          <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
-          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="Transparent"/>
-          <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
-         </ui:AutoSuggestBox.Resources>
+        <ui:AutoSuggestBox x:Name="IrLibrarySearch" Style="{StaticResource CubeSearchAutoSuggestBoxStyle}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar marca, gabinete ou captação'}" ToolTip="{loc:Translate Text='Buscar marca, gabinete ou captação'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Buscar marca, gabinete ou captação'}">
+         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSearch24}" FontSize="{DynamicResource CubeIconSizeAction}" Width="20" Height="20" VerticalAlignment="Center"/></ui:AutoSuggestBox.Icon>
         </ui:AutoSuggestBox>
         <TreeView x:Name="IrLibraryTree" ItemsSource="{Binding Roots}" MinHeight="320" MaxHeight="420" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Biblioteca'}">
          <TreeView.Resources>

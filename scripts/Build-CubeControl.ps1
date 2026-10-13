@@ -124,6 +124,17 @@ try {
     Assert-ChildPath $staging $stagingRoot
     Assert-ChildPath $backup $stagingRoot
     [IO.Directory]::CreateDirectory($staging) | Out-Null
+    # Wildcard WPF resources silently omit a missing file. Require REC for the
+    # official dark artwork and every finish before starting tools or compilation.
+    $controlsRoot = Join-Path $workspace 'Cube.Desktop\Assets\Images\Controls'
+    $recordArtwork = @(Join-Path $controlsRoot 'BackingTrack\record.png')
+    $recordArtwork += @(Get-ChildItem -LiteralPath (Join-Path $controlsRoot 'Finishes') -Directory |
+        ForEach-Object { Join-Path $_.FullName 'record.png' })
+    foreach ($recordFile in $recordArtwork) {
+        if (-not (Test-Path -LiteralPath $recordFile -PathType Leaf)) {
+            throw "Arte REC obrigatoria ausente: $recordFile"
+        }
+    }
     & (Join-Path $PSScriptRoot 'Prepare-YouTubeTools.ps1') -OutputRoot $OutputRoot
     $sources = Get-SourceHashes
     $publishArgs = @('publish', $projectPath, '-c', $configuration, '-r', 'win-x64',

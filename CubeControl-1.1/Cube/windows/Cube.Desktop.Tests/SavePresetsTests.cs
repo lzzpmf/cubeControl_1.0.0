@@ -97,6 +97,13 @@ internal static class SavePresetsTests
             Check(model.Dirty && !button.IsEnabled, "Disconnect did not preserve dirty state and disable save");
             Console.WriteLine("PASS edit/revert/undo on A/B/C, verified save, memory snapshots, busy lock, IR preview, restoration and disconnect.");
         }
-        finally { window.Close(); }
+        finally
+        {
+            // The scenario deliberately leaves unsaved edits; answer only test cleanup prompts.
+            model.Ask = _ => Task.FromResult(true);
+            window.Close();
+            for (int i = 0; i < 500 && window.IsVisible; i++) await Task.Delay(10);
+            Check(!window.IsVisible, "Save test window did not close");
+        }
     }
 }

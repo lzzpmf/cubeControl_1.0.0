@@ -24,8 +24,8 @@ public sealed class BackingTrack(string source) : Observable
     public double Length { get => length; set { if (Set(ref length, value)) { Notify(nameof(LengthLabel)); Notify(nameof(MetadataLabel)); } } }
     public string LengthLabel => Length > 0 ? BackingTracksViewModel.FormatTime(Length) : "—";
     public string State { get => state; set => Set(ref state, value); }
-    private string tuning = "E Standard";
-    public string Tuning { get => tuning; set => Set(ref tuning, value); }
+    private string tuning = "";
+    public string Tuning { get => tuning; set { if (Set(ref tuning, value)) Notify(nameof(MetadataLabel)); } }
     private double bpm;
     internal bool ManualBpm, ManualKey, MusicPending;
     internal double TempoConfidence, KeyConfidence;
@@ -33,8 +33,8 @@ public sealed class BackingTrack(string source) : Observable
     private string originalKey = "Não definido";
     public double Bpm { get => bpm; set { if (Set(ref bpm, value)) Notify(nameof(MetadataLabel)); } }
     public string OriginalKey { get => originalKey; set { if (Set(ref originalKey, value)) Notify(nameof(MetadataLabel)); } }
-    public string MetadataLabel => (MusicPending && Bpm <= 0 && !ManualKey ? LanguageService.T("Analisando…") : (Bpm > 0 ? $"{(ManualBpm ? "" : "≈")}{Bpm:0.#} BPM" : LanguageService.T("BPM não identificado")) + " · " + (OriginalKey == "Não definido" ? LanguageService.T("Tom não identificado") : OriginalKey)) + " · " + LengthLabel;
-    public int Preset { get; set; }
+    public string MetadataLabel => (MusicPending && Bpm <= 0 && !ManualKey ? LanguageService.T("Analisando…") : (Bpm > 0 ? $"{(ManualBpm ? "" : "≈")}{Bpm:0.#} BPM" : LanguageService.T("BPM não identificado")) + " · " + (OriginalKey == "Não definido" ? LanguageService.T("Tom não identificado") : OriginalKey)) + (string.IsNullOrWhiteSpace(Tuning) ? "" : " · " + Tuning);
+    public int Preset { get; set; } = 0;
     public ObservableCollection<BackingSection> Sections { get; } = [];
     public double? Start { get; set; }
     public double? End { get; set; }
@@ -74,12 +74,6 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public Func<Task>? BeforePlayback { get; set; }
     public async Task StopForIrAudition()
     {
-        if (recording is { } session && !CanChangeRecordingOutput)
-        {
-            recordingFinalizing = true; RefreshRecording();
-            var error = await session.Stop();
-            if (recording == session) CompleteRecording(session, error);
-        }
         selectionGeneration++; opening = false;
         MetronomeOutputChanged();
         await StopYouTubePreviewAndWait();
@@ -147,12 +141,12 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     {
         InitializePractice();
         InitializeMetronome(dataDirectory);
-        InitializeRecording();
+        InitializeRecording(dataDirectory);
         InitializeYouTubeDownloads(dataDirectory);
         AddFiles = new UiCommand(() => Run(() => { var dialog = new OpenFileDialog { Multiselect = true, Filter = LanguageService.T("Áudio MP3 ou WAV") + "|*.mp3;*.wav" }; if (dialog.ShowDialog() == true) AddPaths(dialog.FileNames); }));
         RemoveTrack = new UiCommand(RemoveSelected, () => SelectedTrack != null);
         PlayPause = new UiCommand(() => Start(TogglePlayback()), () => !IsLoading && SelectedTrack != null && SelectedOutput != null);
-        Stop = new UiCommand(() => Start(StopPlayback()), () => SelectedTrack != null);
+        Stop = new UiCommand(() => Start(StopTransportAsync()), () => !recordingFinalizing && (SelectedTrack != null || IsRecording));
         RefreshOutputs = new UiCommand(() => Start(RefreshDevices()), () => !refreshing);
         BluetoothSettings = new UiCommand(() => Run(() => Process.Start(new ProcessStartInfo("ms-settings:bluetooth") { UseShellExecute = true })));
         MoveUp = new UiCommand(() => MoveSelected(-1), () => SelectedTrack != null && Tracks.IndexOf(SelectedTrack) > 0);
@@ -196,8 +190,18 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         set
         {
             if (!Set(ref selectedOutput, value)) return;
-            MetronomeOutputChanged(); StopYouTubePreview(); StopMonitor(); UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
-            if (HasActivePlayback) State = BackingPlaybackState.Paused;
+            StopYouTubePreview();
+            RestartMonitorForDeviceChange();
+            if (value == null)
+            {
+                MetronomeOutputChanged(); UpdatePosition(); Start(engine.ReleaseOutput()); positionTimer.Stop();
+                if (HasActivePlayback) State = BackingPlaybackState.Paused;
+            }
+            else
+            {
+                if (!FollowTrack) RestartIndependentMetronome();
+                Start(engine.ChangeOutput(value.Id));
+            }
             if (!restoring) { preferredOutputId = value?.Id; Changed(); }
             Notify(nameof(OutputName)); Notify(nameof(OutputState)); CommandManager.InvalidateRequerySuggested();
         }
@@ -286,10 +290,11 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
             await engine.ConfigureMetronome(MetronomeConfiguration() with { Enabled = FollowTrack && metronomeEnabled && Bpm > 0 });
             if (BeforePlayback != null) await BeforePlayback();
             await StopYouTubePreviewAndWait();
-            if (disposed || version != selectionGeneration || output != SelectedOutput) return;
+            if (disposed || version != selectionGeneration || SelectedOutput == null) return;
+            output = SelectedOutput;
             if (engine.Snapshot.Source != track.Source || engine.Snapshot.OutputId != output.Id || State == BackingPlaybackState.Error)
                 await engine.Open(track.Source, output.Id, Position, Speed / 100, Pitch, IsLooping && HasRange, HasRange ? RangeStart : 0, HasRange ? RangeEnd : Duration, Volume / 100, IsMuted);
-            if (!disposed && version == selectionGeneration && output == SelectedOutput) await engine.Play(countIn);
+            if (!disposed && version == selectionGeneration && SelectedOutput != null) await engine.Play(countIn);
         }
         finally { if (version == selectionGeneration) { opening = false; RefreshPresentation(); } }
     }
@@ -304,6 +309,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     private async Task AdvanceAtEnd() { int index = SelectedTrack == null ? -1 : Tracks.IndexOf(SelectedTrack) + 1; if (index <= 0 || index >= Tracks.Count) return; SelectedTrack = Tracks[index]; await TogglePlayback(); }
     public async Task Initialize()
     {
+        LoadRecordingPlaylist();
         try { LoadInputs(); watcher = DeviceInformation.CreateWatcher(MediaDevice.GetAudioRenderSelector()); watcher.Added += DeviceChanged; watcher.Removed += DeviceChanged; watcher.Updated += DeviceChanged; watcher.Start(); await RefreshDevices(); }
         catch (Exception ex) { Error("Não foi possível listar as saídas de áudio. Tente atualizar saídas.", ex); }
     }
@@ -345,6 +351,8 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         finally { refreshing = false; CommandManager.InvalidateRequerySuggested(); }
     }
     public void AddPaths(IEnumerable<string> paths)
+        => AddPathsCore(paths, selectWhenUnselected: true);
+    private void AddPathsCore(IEnumerable<string> paths, bool selectWhenUnselected)
     {
         int rejected = 0;
         foreach (string path in paths)
@@ -352,7 +360,8 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
             if (!Path.IsPathFullyQualified(path) || !File.Exists(path) || Path.GetExtension(path).ToLowerInvariant() is not (".mp3" or ".wav")) { rejected++; continue; }
             string source = Path.GetFullPath(path); if (Tracks.Any(t => string.Equals(t.Source, source, StringComparison.OrdinalIgnoreCase))) continue; Tracks.Add(new(source));
         }
-        SelectedTrack ??= Tracks.FirstOrDefault(); Changed();
+        if (selectWhenUnselected) SelectedTrack ??= Tracks.FirstOrDefault();
+        Changed();
         if (rejected > 0) Status = string.Format(LanguageService.T("{0} arquivo(s) não adicionado(s). Use arquivos MP3/WAV locais e acessíveis."), rejected);
     }
     public void MoveTrack(BackingTrack track, int index) { int old = Tracks.IndexOf(track); if (old < 0 || index < 0 || index >= Tracks.Count) return; Tracks.Move(old, index); Changed(); }

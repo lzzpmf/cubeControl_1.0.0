@@ -32,24 +32,18 @@ internal static class BackingRecordingTests
             }
             using var model = new BackingTracksViewModel(folder);
             Check(!model.ToggleRecording.CanExecute(null) && !model.IsRecording, "recording disabled without selected input");
-            model.SelectedInput = new BackingOutput("test", "Test input");
+            var input = new BackingOutput("test", "Test input");
+            model.Inputs.Add(input);
+            model.SelectedInput = input;
             Check(model.ToggleRecording.CanExecute(null) && model.CanChangeRecordingInput, "recording available without backing track or output");
-            model.SelectedRecordingSource = model.RecordingSources.First(x => x.Mode == BackingRecordingMode.BackingAndGuitar);
-            Check(!model.ToggleRecording.CanExecute(null), "combined preset requires input, output and backing track");
-            model.Inputs.Add(new("other-input", "Other instrument"));
-            model.Outputs.Add(new("other-output", "Other output"));
             model.SelectedInput = null;
-            model.SelectedRecordingSource = model.RecordingSources.First(x => x.Mode == BackingRecordingMode.Input);
-            Check(model.ToggleRecording.CanExecute(null) && model.SelectedRecordingSource.Endpoint == "other-input", "custom input records independently of guitar input selection");
-            model.SelectedRecordingSource = model.RecordingSources.First(x => x.Mode == BackingRecordingMode.Output);
-            Check(model.ToggleRecording.CanExecute(null) && model.SelectedRecordingSource.Endpoint == "other-output", "custom output records independently of backing playback output");
-            model.Outputs.Clear();
-            Check(!model.ToggleRecording.CanExecute(null), "removed source returns to safe unavailable guitar preset");
-            Check(!model.OpenRecording.CanExecute(null) && !model.AddRecording.CanExecute(null), "saved recording actions disabled before capture");
+            Check(!model.ToggleRecording.CanExecute(null), "recording requires the selected input");
+            model.SelectedInput = input;
+            model.Inputs.Clear();
+            Check(!model.ToggleRecording.CanExecute(null), "removed input cannot start recording");
             var language = new LanguageService(Path.Combine(AppContext.BaseDirectory, "Localization"), Path.Combine(folder, "language.json"));
             language.Preview("en-US");
             Check(language.Translate("Parar e salvar") == "Stop and save" && language.Translate("Gravação") == "Recording", "recording actions are translated by the loaded catalog");
-            Check(language.Translate("Somente guitarra") == "Guitar only" && language.Translate("Fonte da gravação") == "Recording source", "recording source selector is translated");
         }
         finally { Directory.Delete(folder, true); }
         return Task.CompletedTask;

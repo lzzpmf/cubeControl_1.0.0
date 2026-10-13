@@ -35,14 +35,14 @@ public partial class IrPackEditor : UserControl
         }
         return null;
     }
-    private void LibraryMouseDown(object sender, MouseButtonEventArgs e)
+    internal void LibraryMouseDown(object sender, MouseButtonEventArgs e)
     {
         dragCandidate = null;
         if (DataContext is IrPackEditorViewModel { CanEdit: true } model &&
             Ancestor<TreeViewItem>(e.OriginalSource as DependencyObject)?.DataContext is IrLibraryNode { Entry: { } entry })
         { dragStart = e.GetPosition(this); dragCandidate = new LibraryDrag(model, entry); }
     }
-    private void LibraryMouseMove(object sender, MouseEventArgs e) => StartDrag(sender, e);
+    internal void LibraryMouseMove(object sender, MouseEventArgs e) => StartDrag(sender, e);
     private void SlotMouseDown(object sender, MouseButtonEventArgs e)
     {
         dragCandidate = null;

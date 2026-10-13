@@ -105,6 +105,93 @@ A lista `BLE_DEVICE_CONFIGS` de [BleHandle.java](../apk-cubesuite/sources/com/cu
 
 **Conclusão:** o Windows reconhece o Cube Baby pelo Bluetooth clássico, mas não foi encontrado um canal Bluetooth para controlar seus parâmetros. Os serviços observados são de áudio e controle de reprodução. O controle pelo Bluetooth integrado permanece sem suporte comprovado; implementar apenas um transporte Bluetooth no CubeControl não resolve essa lacuna. A comunicação USB-MIDI continua sendo o caminho validado. Não foram enviados comandos de alteração de presets ou firmware durante esta verificação.
 
+### Nova verificação com conexão ativa — 12/10/2026
+
+O pedal estava conectado somente por Bluetooth ao Windows, conforme informado
+pelo usuário. A consulta WinRT `BluetoothDevice` confirmou o nome `CubeBaby` e
+o estado `CONNECTED`. Foram observados:
+
+- PnP: os mesmos três serviços `110B`, `110C` e `110E`, com drivers `BthA2dp`
+  e `Microsoft_Bluetooth_AvrcpTransport`.
+- `GetRfcommServicesAsync` com `BluetoothCacheMode.Uncached`: resultado
+  `SUCCESS`, **zero serviços RFCOMM**. O objeto informou três registros SDP.
+- Varredura BLE ativa de 25 segundos com Bleak/WinRT: quatro dispositivos
+  próximos, nenhum identificado como CubeBaby pelo nome ou pelo endereço
+  Bluetooth clássico conhecido; nenhum anunciou o serviço `AE40` do CubeSuite
+  nem o serviço padrão BLE-MIDI. Endereços BLE podem diferir do endereço clássico;
+  essa busca não exclui um anúncio anônimo ou um modo alternativo do pedal.
+- Enumeração WinMM: entradas `SG Device I/O` e `StudioRack`; saídas
+  `Microsoft GS Wavetable Synth`, `SG Device I/O` e `StudioRack`.
+  Nenhuma porta MIDI identificada como CubeBaby.
+- O código Android local continua sem CubeBaby em `BLE_DEVICE_CONFIGS`;
+  os UUIDs `AE40`/`AE41`/`AE42` são do transporte compartilhado, sem comprovação
+  de suporte neste modelo.
+
+**Resultado:** mesmo com a conexão ativa, não foi encontrado transporte para
+enviar os comandos de presets/efeitos do CubeControl pelo Bluetooth integrado.
+O perfil observado permite receber áudio; AVRCP é controle de reprodução,
+não evidência de controle dos parâmetros do DSP. A consulta RFCOMM sem cache
+reforça o resultado anterior, mas não prova inexistência de interfaces ocultas
+ou de outro modo de firmware. Nenhum comando de alteração de parâmetros,
+presets ou firmware foi enviado. A aplicação não foi modificada.
+
+### Comparação desligado/ligado e indicador piscando — 12/10/2026
+
+Foram feitas quatro varreduras BLE ativas de 30 segundos, com estados físicos
+informados pelo usuário: desligado, ligado, desligado, ligado. Foram vistos,
+respectivamente, seis, quatro, três e um endereços. Os dois endereços anônimos
+novos na primeira captura com o pedal ligado não reapareceram na segunda
+captura com ele ligado; não houve associação reproduzível desses anúncios
+ao pedal. O Windows informou `DISCONNECTED` nas duas capturas com ele ligado.
+
+O usuário confirmou então que o indicador Bluetooth estava piscando. Uma
+busca Bluetooth clássica com `fIssueInquiry=true` e timeout de 12,8 segundos
+retornou `CubeBaby`, sem conexão ativa, com `last_seen` atualizado para
+12/10/2026 21:03:13 UTC. Em seguida, uma varredura BLE ativa de 60 segundos
+recebeu anúncios de dois endereços anônimos, sem UUIDs de serviços anunciados.
+Não foi identificado anúncio BLE do CubeBaby nem um serviço de controle.
+
+Esses testes confirmam a detecção Bluetooth clássica no estado informado,
+mas não estabeleceram um canal BLE para consultar a identidade ou controlar
+parâmetros. Ausência em varreduras finitas não exclui interfaces ocultas.
+As capturas locais de diagnóstico estão em `tmp/bluetooth-comparison/`,
+incluindo `comparison-off-on-off-on.json`, `classic-blinking.json` e
+`pedal-blinking-20261012T210415Z.json`; essa pasta temporária não é um acervo
+versionado. Não foram enviados comandos de escrita ao pedal.
+
+### Rastreamento do CubeSuite Android — 12/10/2026
+
+Após o usuário informar que o CubeSuite permite controle Bluetooth do Cube Baby,
+foi rastreado o acervo descompilado local. O manifest identifica `com.cubeSuite`,
+`versionCode=48`, `versionName=20260511031149`; o APK original não está no acervo.
+
+- `MainActivity.startScan()` entrega dispositivos já conectados e resultados
+  de busca a `BleHandle.directAddBleDevice()` / `addBleDevice()`. Ambos exigem
+  correspondência de nome, ignorando maiúsculas, com `BLE_DEVICE_CONFIGS`.
+  Não há entrada CubeBaby nessa tabela.
+- `HomePageAdapter.nextPage()` abre `ControlAndPdfActivity`. Inclusive a opção
+  de conexão forçada usa esse caminho e exige um dispositivo já listado.
+- A conexão passa por FastBle e `BluetoothDevice.connectGatt(..., 2)`.
+  `ControlBaseFragment.initialize()` abre notificações; `CommunicationUtil`
+  usa serviço `AE40`, escrita `AE41` e notificações `AE42`.
+- `BleHandle.getFragmentByName()` seleciona telas da mesma tabela e retorna
+  `EmptyFragment` para um nome desconhecido. A classe `CubeBaby` está vazia,
+  herda apenas metadados de `InstrumentEntity` e não tem referências nas
+  fontes Java pesquisadas fora de sua própria declaração.
+- `JL_Constant.UUID_SPP` declara `1101`, mas não foram encontradas referências
+  a essa constante nem chamadas `BluetoothSocket`/`createRfcomm` nas fontes
+  Java pesquisadas. Sua presença isolada não estabelece transporte serial.
+- As declarações JNI examinadas em `JNIClass` e `JNIUtils` tratam de offsets
+  e conversões de estruturas de CubeTurner/FootCtrl; não revelam um caminho
+  de controle do Cube Baby. Isso não equivale a auditar binários nativos ausentes.
+
+**Limite:** esse rastreamento não explica o funcionamento relatado pelo usuário.
+É necessário comparar com o APK efetivamente usado no celular, seu nome de
+dispositivo na conexão e, se possível, uma captura de uma alteração de efeito
+sem USB. Não extrapolar o resultado dessa versão para todas as versões do app.
+A consulta ao endpoint `UpdateInfo.json` declarado em `WebConfig` expirou;
+não foi obtida nem analisada uma versão mais recente nesta etapa.
+
 ## 3. Catálogo dos comandos observados
 
 Host = computador/editor; pedal = Cube Baby.

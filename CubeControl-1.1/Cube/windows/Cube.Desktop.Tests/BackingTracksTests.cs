@@ -85,7 +85,7 @@ internal static class BackingTracksTests
             }
             using (var restored = new BackingTracksViewModel(folder))
             {
-                Check(restored.Tracks.Count == 0 && restored.Position == 0, "new session starts with an empty playlist");
+                Check(restored.Tracks.Count == 0 && restored.Position == 0, "playlist restoration is deferred until initialization");
             }
             Check(BackingTracksViewModel.FormatTime(3661) == "01:01:01", "time labels handle tracks longer than one hour");
             await CheckSilentTransport(source);

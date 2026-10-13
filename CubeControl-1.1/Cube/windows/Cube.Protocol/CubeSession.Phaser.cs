@@ -163,7 +163,7 @@ public sealed partial class CubeSession
         finally { gate.Release(); }
     }
 
-    private async Task<PhaserResearchSnapshot> ReadPhaserCore(CancellationToken ct)
+    private async Task<PhaserResearchSnapshot> ReadPhaserCore(CancellationToken ct, bool effectControlsOnly = false)
     {
             RequireIdentity();
             await VerifyPhaserFirmware(ct).ConfigureAwait(false);
@@ -171,7 +171,16 @@ public sealed partial class CubeSession
             var alias = await ReadInternal(EffectsBankAliasOffset, 48, ct, 4).ConfigureAwait(false);
             if (!bank.SequenceEqual(alias)) throw new IOException("Alias do banco diverge; mapeamento não confirmado.");
             var state = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4).ConfigureAwait(false);
-            var dsp = await ReadChunks(4, 0, 0xF70, ct).ConfigureAwait(false);
+            // Preview mutations only need the three effect blocks. Keep the absolute-offset
+            // buffer shape used by parameter codecs; bytes outside this range are NOT a capture.
+            byte[] dsp;
+            if (effectControlsOnly)
+            {
+                dsp = new byte[0xF70];
+                (await ReadChunks(4, EffectControlsStart, EffectControlsLength, ct).ConfigureAwait(false))
+                    .CopyTo(dsp, EffectControlsStart);
+            }
+            else dsp = await ReadChunks(4, 0, 0xF70, ct).ConfigureAwait(false);
             if (!(await ReadInternal(0, 48, ct).ConfigureAwait(false)).SequenceEqual(bank))
                 throw new IOException("Banco mudou durante a captura.");
             if (!(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4).ConfigureAwait(false)).SequenceEqual(state))

@@ -106,6 +106,8 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Presets = Enumerable.Range(0, 3).Select(i => new PresetViewModel(i, Change)).ToArray();
         IrLibrary = new IrLibraryViewModel(() => !Busy, importedDirectory: PackStore.ImportedDirectory);
         IrLibrary.SelectionChanged += SelectLibraryIr;
+        RandomizeCabinetIr = new UiCommand(async () => await RandomizeCabinetIrAsync(), () => CanRandomizeCabinetIr);
+        IrLibrary.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(IrLibrary.Entries)) CommandManager.InvalidateRequerySuggested(); };
         InitializeVisual();
         Amp.Edited += AmpEdited;
         Amp.PropertyChanged += AmpPresentationChanged;
@@ -314,7 +316,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         queue = new(async (key, value) =>
         {
             Presets[key.Slot].State = "Enviando…";
-            confirmed = await session!.WriteLiveChecked(key.Slot, key.Offset, value, confirmed);
+            confirmed = await session!.WriteLiveConfirmed(key.Slot, key.Offset, value, confirmed!);
             UpdateStates();
         });
         queue.Failed += Fault;
@@ -524,11 +526,11 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         var info = new FileInfo(dlg.FileName); if (info.Length > 32 * 1024 * 1024) throw new FormatException("WAV excede 32 MB.");
         await LoadWavAndPreviewAsync(dlg.FileName, IrAudio.Decode(await File.ReadAllBytesAsync(dlg.FileName)));
     }
-    internal async Task LoadWavAndPreviewAsync(string path, IrAudio audio, string? collection = null)
+    internal async Task LoadWavAndPreviewAsync(string path, IrAudio audio, string? collection = null, Func<bool>? stillSelected = null)
     {
         if (collection == null) IrLibrary.ClearSelection();
         Ir.Load(path, audio, collection);
-        if (Connected && !blocked) await PreviewAsync();
+        if (Connected && !blocked) await PreviewCoreAsync(stillSelected);
         else Status = "Arquivo preparado. Conecte o pedal e solte o microfone para ouvir.";
     }
     private int transferGeneration;
@@ -538,16 +540,19 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Ir.HasMeasuredProgress = false; Ir.Progress = 0; Ir.TransferActive = true;
         return new Progress<TransferProgress>(value => { if (generation == transferGeneration && Busy && Ir.TransferActive) Ir.Report(value); });
     }
-    private async Task PreviewAsync()
+    private Task PreviewAsync() => PreviewCoreAsync(null);
+    private async Task PreviewCoreAsync(Func<bool>? stillSelected)
     {
         var auditionVersion = await IrAudition.SuspendForTransfer();
         bool auditionSuccess = false;
         try
         {
+            if (stillSelected != null && !stillSelected()) return;
             BusyDetail = "Preparando prévia de IR…";
             if (originalRam == null)
             {
                 var snapshot = await session!.ReadIrRam();
+                if (stillSelected != null && !stillSelected()) return;
                 if (snapshot.Payload.Length != 2052) throw new FormatException("Snapshot RAM inválido.");
                 snapshot = new(snapshot.Flag, snapshot.Payload.ToArray());
                 originalRam = snapshot; ramIdentity = session.IdentityHex;
@@ -640,7 +645,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         catch (Exception ex) { Status = ErrorMessage = ex.Message; }
         finally { confirmingIrWrite = false; Refresh(); }
     }
-    private async Task WriteIrAsync(int slot, IrAudio audio, int distance, string file, string? imagePath)
+    private async Task WriteIrAsync(int slot, IrAudio audio, int distance, string file, string? imagePath, bool announceCompletion = true)
     {
         BusyDetail = "Preservando o slot de IR em memória…";
         var data = audio.Sector(distance);
@@ -667,7 +672,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         UpdateCabinet(slot, data);
         Ir.SlotInfo = "Nome local confirmado pelo conteúdo: " + file;
         Status = Ir.State = $"IR gravado e verificado no slot {slot + 1}. Selecione outro cabinet e volte a este slot para recarregá-lo.";
-        Completed("IR gravado e verificado.");
+        if (announceCompletion) Completed("IR gravado e verificado.");
     }
     private async Task RestoreIrAsync()
     {
@@ -714,7 +719,14 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         // Legacy selection hooks are retained for callers/tests; the new review supports per-slot repair states.
         if (ChoosePackIrSlots != null && pack.Problem.Length > 0) throw new FormatException("Pendências: " + pack.Problem);
         var originals = new byte[8][];
-        for (int i = 0; i < 8; i++) { BusyDetail = Status = $"Leitura do IR {i + 1}/8…"; originals[i] = await session!.ReadIrSlot(i, Progress()); await BackupIr(i, originals[i]); UpdateCabinet(i, originals[i]); }
+        for (int i = 0; i < 8; i++)
+        {
+            // Empty draft slots cannot be selected by the review; do not read or back them up.
+            if (!pack.HasSlot(i)) { originals[i] = []; continue; }
+            BusyDetail = Status = $"Leitura do IR {i + 1}/8…";
+            originals[i] = await session!.ReadIrSlot(i, Progress());
+            await BackupIr(i, originals[i]); UpdateCabinet(i, originals[i]);
+        }
         bool[] Differences(IrPack value) => Enumerable.Range(0, 8).Select(i => value.HasSlot(i) && value.Sectors[i].Length == 4096 && !originals[i].SequenceEqual(value.Sectors[i])).ToArray();
         var different = Differences(pack);
         int[]? selection;
@@ -834,7 +846,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     private async Task<bool> PrepareAdvancedEffectAsync(int stage)
     {
         if (session == null || confirmed == null || edited == null) throw new IOException("Conecte o pedal para iniciar a prévia.");
-        var snapshot = await session.ReadEffectPreviewState(stage);
+        var snapshot = await session.ReadEffectPreparationState(stage);
         if (snapshot.PhysicalState[1] != 1 || snapshot.PhysicalState[0] > 2)
             throw new IOException("Selecione o modo PRESET no pedal. O protocolo não oferece troca remota desse modo.");
         if (!snapshot.Bank.SequenceEqual(confirmed)) throw new IOException("O banco mudou no pedal. Releia os presets antes de iniciar a prévia.");

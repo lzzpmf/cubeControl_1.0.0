@@ -55,7 +55,7 @@ static class ExtendedTests
         var flush = queue.Flush(); check(!flush.IsCompleted, "save flush waits for active transmission");
         release.SetResult(); await flush;
         check(calls.Count == 3 && calls[0].Value == 49 && calls[1].Key.Slot == 0 && calls[1].Value == 99 && calls[2].Key.Slot == 2 && calls[2].Value == 17, "fast gesture coalesces and sends final values to original presets");
-        check(maximum == 1 && calls.Zip(calls.Skip(1)).All(pair => pair.Second.Time - pair.First.Time >= 100), "one transaction and minimum 100 ms interval");
+        check(maximum == 1, "one transaction at a time without an artificial pacing requirement");
         int attempted = 0, failed = 0;
         var broken = new LiveEditQueue((_, _) => { attempted++; throw new IOException("disconnected"); });
         broken.Failed += _ => failed++;

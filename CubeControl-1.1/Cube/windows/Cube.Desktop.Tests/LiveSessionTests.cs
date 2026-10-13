@@ -41,6 +41,18 @@ internal static class LiveSessionTests
                 var before = Directory.GetFiles(folder).ToDictionary(p => p, File.ReadAllText);
                 await model.AttachSession(session);
                 Check(model.CanEdit && model.ErrorMessage == "", "corrupt previous recovery does not prevent live editing");
+                model.Ask = _ => Task.FromResult(true);
+                double originalVolume = model.Current.Volume.Value;
+                model.Current.Volume.Value = originalVolume + 1;
+                await model.Flush();
+                var historyItem = model.Operations.First(item => item.IsRestorable);
+                model.Current.Volume.Value = originalVolume + 2;
+                await model.Flush();
+                await model.RestoreOperationAsync(historyItem);
+                Check(model.ErrorMessage == "" && model.Current.Volume.Value == originalVolume + 1 && device.Bank[5] == originalVolume + 1,
+                    "operation log restores an earlier confirmed bank after optimized live edits");
+                model.Current.Volume.Value = originalVolume;
+                await model.Flush();
                 await model.ReadDelayAsync();
                 Check(model.DelayPreviewActive, "preview starts with an in-memory snapshot");
                 var recovery = typeof(EditorViewModel).GetField("delayRecovery",

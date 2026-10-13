@@ -35,6 +35,17 @@ internal static class BackingPracticeTests
             float[] metered = new float[4];
             Check(meter.Read(metered) == 4 && metered.SequenceEqual(new[] { .2f, -.8f, .4f, -.1f }), "level metering preserves audio samples");
             Check(Math.Abs(meter.ConsumePeak() - .8f) < .0001 && meter.ConsumePeak() == 0, "level meter reports the strongest channel and resets between polls");
+            var envelope = new Cube.Desktop.Services.BackingMeterEnvelope();
+            var peak = envelope.Update(.5f, true, 10);
+            Check(Math.Abs(peak.LevelDb + 6.0206) < .001, "meter converts sample amplitude to dBFS");
+            var falling = envelope.Update(0, true, 10.25);
+            Check(Math.Abs(falling.LevelDb - (peak.LevelDb - 6)) < .001 && falling.PeakDb == peak.PeakDb,
+                "meter falls at 24 dB per second while peak is held");
+            Check(envelope.Update(1.2f, true, 11).Clipping && envelope.Update(0, true, 11.9).Clipping,
+                "clipping uses unclamped samples and remains visible for one second");
+            Check(!envelope.Update(0, true, 12.01).Clipping, "clip hold expires with elapsed time");
+            Check(envelope.Update(0, false, 12.02) == Cube.Desktop.Services.BackingMeterReading.Silent,
+                "stopping source clears level, peak and clipping");
             using var editor = new EditorViewModel(folder);
             var window = new MainWindow(editor, initializeDevices: false);
             window.Show();
@@ -93,7 +104,9 @@ internal static class BackingPracticeTests
                 var track = model.SelectedTrack;
                 model.Search = "not in playlist"; await Task.Delay(50);
                 Check(model.FilteredTracks.IsEmpty && model.SelectedTrack == track && model.Position == 15, "filtering the selected track out does not stop or change it");
-                model.Search = "E Standard"; Check(!model.FilteredTracks.IsEmpty, "playlist search includes tuning"); model.Search = "";
+                Check(string.IsNullOrEmpty(track!.Tuning) && track.Preset == 0, "track starts without tuning or preset associations");
+                track.Tuning = "Drop D";
+                model.Search = "Drop D"; Check(!model.FilteredTracks.IsEmpty, "playlist search includes explicitly assigned tuning"); model.Search = "";
                 Check(((ListBox)window.FindName("BackingTrackList")).SelectedItem == track, "clearing search restores the active row highlight");
                 var wave = (BackingWaveform)window.FindName("BackingMainWave");
                 void Key(UIElement target, System.Windows.Input.Key key)

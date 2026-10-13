@@ -3,7 +3,7 @@ using System.Windows.Controls;
 
 namespace Cube.Desktop.Controls;
 
-// Seven cells: previous, back, play, forward, stop, next and loop.
+// Eight cells: previous, back, play, forward, stop, next, loop and record.
 // At narrow widths the four playback controls remain together on the first row.
 public sealed class BackingTransportPanel : Panel
 {
@@ -12,8 +12,8 @@ public sealed class BackingTransportPanel : Panel
     protected override Size MeasureOverride(Size availableSize)
     {
         for (int i = 0; i < InternalChildren.Count; i++) InternalChildren[i].Measure(new Size(Cell(i), Row));
-        bool compact = availableSize.Width < 344;
-        return new Size(compact ? 200 : 344, compact ? 2 * Row + Gap : Row);
+        bool compact = availableSize.Width < 392;
+        return new Size(compact ? 200 : 392, compact ? 2 * Row + Gap : Row);
     }
     protected override Size ArrangeOverride(Size finalSize)
     {
@@ -26,8 +26,8 @@ public sealed class BackingTransportPanel : Panel
                 x += Cell(i) + Gap;
             }
         }
-        if (finalSize.Width >= 344) ArrangeRow([0, 1, 2, 3, 4, 5, 6], 0);
-        else { ArrangeRow([1, 2, 3, 4], 0); ArrangeRow([0, 5, 6], Row + Gap); }
+        if (finalSize.Width >= 392) ArrangeRow([0, 1, 2, 3, 4, 5, 6, 7], 0);
+        else { ArrangeRow([1, 2, 3, 4], 0); ArrangeRow([0, 5, 6, 7], Row + Gap); }
         return finalSize;
     }
 }

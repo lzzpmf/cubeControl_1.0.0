@@ -83,6 +83,8 @@ internal static class DocumentationTests
             invalidWindow.Close();
             window = new DocumentationWindow(documentRoot) { ShowInTaskbar = false };
             window.Show(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Check(window.Content is Grid chrome && chrome.Children.OfType<Wpf.Ui.Controls.TitleBar>().Any(),
+                "documentation uses a shared title bar outside the scaled content");
             var reader = (RichTextBox)window.FindName("Reader");
             var list = (ListBox)window.FindName("DocumentsList");
             var search = (TextBox)window.FindName("SearchBox");

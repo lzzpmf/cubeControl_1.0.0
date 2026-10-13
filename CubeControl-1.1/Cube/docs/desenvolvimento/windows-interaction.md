@@ -23,7 +23,7 @@ O player organiza tempo/tom, transporte e mixer/metrônomo em grupos adaptativos
 
 Rolar para cima aumenta e para baixo diminui. Os handlers de `MainWindow.BackingMenus.cs` acumulam deltas fracionados até 120 unidades por passo, com acumuladores independentes e limpeza ao sair do controle. `EditorPageWheel` preserva esses alvos, evitando rolagem da página. Velocidade e pitch exigem faixa selecionada e reutilizam os setters existentes. BPM respeita o modo independente ou **Acompanhar faixa**. Clicar continua abrindo as opções de tempo/tom ou a edição de BPM.
 
-O mixer tem largura máxima de 620 DIPs e faders horizontais. Cada canal tem um único mute junto ao percentual, disponível nos modos Compacto e Expandido, com tooltip e nome acessível de silenciar/restaurar som. Os três mutes são independentes. Expandido acrescenta comandos de monitor/metrônomo e medidores: entrada antes do volume; saída com faixa e click sincronizado. Reset restaura 30/0/30% e preserva mute; duplo clique restaura o fader individual.
+O mixer tem largura máxima de 620 DIPs, faders horizontais e um único layout. Cada canal tem um mute junto ao percentual, com tooltip e nome acessível de silenciar/restaurar som. Os três mutes são independentes. Os comandos de monitor/metrônomo ficam sempre disponíveis. Os medidores atrás dos faders mostram picos de amostra separados após volume e mute, de −60 a 0 dBFS; a saturação da entrada é detectada antes do volume. A atualização visual ocorre aproximadamente a cada 33 ms, com queda de 24 dB/s e retenção de pico e saturação por um segundo. Reset restaura 30/0/30% e preserva mute; duplo clique restaura o fader individual.
 
 O toggle de fones no campo de busca vincula `AppendBackingTrack` e acrescenta “backing track” à consulta. Ativado, usa `CubeAccent`, texto sobre destaque e marca de confirmação; desativado, aparência neutra sem a marca. `AutomationProperties.ItemStatus` informa Ligado/Desligado com localização. A indicação combina forma e cor.
 
@@ -58,3 +58,15 @@ Os modos são argumentos de `Cube.Desktop.Tests`, executado conforme o [guia Win
 Na seção IRs, selecione um dos cinco trechos de guitarra e a saída USB de áudio do pedal. A reprodução requer conexão MIDI operacional e uma prévia de IR confirmada em RAM. O WAV cru é processado pelo pedal, mantendo os efeitos atuais. Volume inicial: 30%; repetição ativada.
 
 Trocar o IR pausa e silencia o áudio durante a transferência, retomando na mesma posição somente após confirmação. Trocar o trecho reinicia sua reprodução; pausar preserva a posição e parar volta ao início. Sair de IRs, trocar a saída, desconectar, encerrar a prévia ou fechar o app interrompe a pré-escuta. Backing Tracks, prévias do YouTube e pré-escuta de IRs não tocam simultaneamente. Nenhum preset ou slot é salvo automaticamente.
+
+## Navegação, documentação e biblioteca compartilhada
+
+A roda sobre a barra principal troca de aba a cada 120 unidades, sem circular nos extremos; fora dela, a rolagem atual permanece. Alt isolado é consumido na janela principal, sem remover foco; Tab/Shift+Tab e combinações do sistema permanecem disponíveis. Tooltips duram cinco segundos desde a exibição, após o atraso inicial de 1,2 segundo.
+
+A documentação usa FluentWindow e TitleBar compartilhados; a barra fica fora do conteúdo escalado. Buscas de IRs, playlist, YouTube e documentação usam os estilos compartilhados de cápsula. Em Buscar faixas, o botão que acrescenta backing track fica fora do campo, à direita, com espaçamento de 8 DIPs. A lista local e os resultados/downloads usam linhas compactas; apenas os resultados exibem a waveform lateral quando há espaço e dados.
+
+Gerenciar IRs compartilha uma IrLibraryViewModel entre análise/prévia individual e packs. Entrar em Packs invalida carregamentos individuais pendentes; não encerra uma prévia já ativa. Os 34 packs preservam seus grupos do catálogo; editar predefinidos cria cópia. As ações de aplicar, restaurar, salvar e descartar ficam após os slots.
+
+No player, a troca para uma saída válida preserva a posição e a intenção de reproduzir ou permanecer pausado. Entrada não interrompe a faixa; monitoração ativa é restabelecida. REC continua capturando somente a entrada e impede sua troca durante captura/finalização. Abertura de dispositivos pode causar uma breve lacuna; falhas/desconexões continuam usando o tratamento de erro.
+
+A análise musical offline tem identidade de cache versionada, até cinco trechos de 20 segundos, reamostragem antialiasing, fluxo espectral e consenso para BPM; cromas de 36 posições por oitava e correção de desvio de afinação para tom. Confianças são heurísticas, não probabilidades calibradas. Faixas novas não recebem afinação nem preset automaticamente; correções manuais prevalecem.

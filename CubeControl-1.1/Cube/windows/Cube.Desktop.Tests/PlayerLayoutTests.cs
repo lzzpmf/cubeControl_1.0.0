@@ -53,10 +53,10 @@ internal static class PlayerLayoutTests
     public static async Task Run()
     {
         // Exercise both sides of the transport breakpoint, including its second row.
-        foreach (double width in new[] { 200d, 343d, 344d, 500d })
+        foreach (double width in new[] { 200d, 391d, 392d, 500d })
         {
             var transport = new BackingTransportPanel();
-            for (int i = 0; i < 7; i++) transport.Children.Add(new Border { Width = i == 2 ? 56 : 40, Height = 72 });
+            for (int i = 0; i < 8; i++) transport.Children.Add(new Border { Width = i == 2 ? 56 : 40, Height = 72 });
             transport.Measure(new Size(width, double.PositiveInfinity));
             transport.Arrange(new Rect(0, 0, width, transport.DesiredSize.Height));
             foreach (FrameworkElement child in transport.Children) Contained(child, transport, $"transport/{width}");
@@ -159,6 +159,12 @@ internal static class PlayerLayoutTests
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 window.UpdateLayout();
                 string scenario = $"{theme}-{language}-{width}-{zoom}";
+                var query = (FrameworkElement)window.FindName("BackingYouTubeSearch");
+                var append = (FrameworkElement)window.FindName("BackingTrackSearchToggle");
+                var searchRow = (FrameworkElement)append.Parent;
+                Contained(query, searchRow, scenario); Contained(append, searchRow, scenario);
+                Check(query.TranslatePoint(new Point(query.ActualWidth, 0), searchRow).X <= append.TranslatePoint(new Point(), searchRow).X,
+                    scenario + ": backing-track toggle stays outside the search field");
                 if (width == 1600 && zoom == 100 && language == "pt-BR")
                 {
                     var searchToggle = (ToggleButton)window.FindName("BackingTrackSearchToggle");
@@ -211,9 +217,8 @@ internal static class PlayerLayoutTests
                 Check(faders.Length == 3 && faders.All(f => f.Orientation == Orientation.Horizontal), scenario + ": horizontal mixer");
                 foreach (var fader in faders) Contained(fader, mixer, scenario);
                 Disjoint(faders, mixer, scenario);
-                foreach (bool expanded in new[] { false, true })
                 {
-                    mixerModel.MixerExpanded = expanded; window.UpdateLayout();
+                    window.UpdateLayout();
                     foreach (var control in Find<FrameworkElement>(mixer).Where(c => c.IsVisible && c is Button or TextBox or BackingFader)) Contained(control, mixer, scenario);
                     var mixerBitmap = new RenderTargetBitmap((int)Math.Ceiling(mixer.ActualWidth), (int)Math.Ceiling(mixer.ActualHeight), 96, 96, PixelFormats.Pbgra32);
                     var mixerVisual = new DrawingVisual();
@@ -224,7 +229,7 @@ internal static class PlayerLayoutTests
                     }
                     mixerBitmap.Render(mixerVisual);
                     var mixerPng = new PngBitmapEncoder(); mixerPng.Frames.Add(BitmapFrame.Create(mixerBitmap));
-                    using var mixerFile = File.Create(Path.Combine(reports, $"mixer-{scenario}-{expanded}.png")); mixerPng.Save(mixerFile);
+                    using var mixerFile = File.Create(Path.Combine(reports, $"mixer-{scenario}.png")); mixerPng.Save(mixerFile);
                 }
                 mixer.Visibility = Visibility.Collapsed;
                 window.UpdateLayout();

@@ -1,0 +1,53 @@
+{
+  "state": "pedal-off-repeat",
+  "started_utc": "2026-10-12T20:59:07.529807+00:00",
+  "duration_seconds": 30,
+  "devices": [
+    {
+      "address": "70:09:71:B6:EF:E1",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "117": [
+          "4204018066700971b6efe1720971b6efe001970000000000"
+        ]
+      },
+      "service_data": {},
+      "count": 33,
+      "rssi_min": -71,
+      "rssi_max": -59
+    },
+    {
+      "address": "DA:71:D4:87:EE:9B",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "76": [
+          "12020002"
+        ]
+      },
+      "service_data": {},
+      "count": 1,
+      "rssi_min": -99,
+      "rssi_max": -99
+    },
+    {
+      "address": "94:A9:90:A7:B1:E2",
+      "names": [
+        "MI_60Q1252054RK168"
+      ],
+      "services": [
+        "000000ee-0000-1000-8000-00805f9b34fb"
+      ],
+      "manufacturer_data": {
+        "12621": [
+          "7c8c4a0000"
+        ]
+      },
+      "service_data": {},
+      "count": 2,
+      "rssi_min": -96,
+      "rssi_max": -96
+    }
+  ]
+}

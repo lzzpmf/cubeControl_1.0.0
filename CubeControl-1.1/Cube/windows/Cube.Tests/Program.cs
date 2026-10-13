@@ -28,6 +28,8 @@ if (args.Contains("--delay-only")) { await DelayTests.Run(Check); Console.WriteL
 if (args.Contains("--reverb-only")) { await ReverbTests.Run(Check); Console.WriteLine($"{passed} reverb checks passed."); return; }
 if (args.Contains("--chorus-preview-only")) { await ChorusPreviewTests.Run(Check); Console.WriteLine($"{passed} chorus preview checks passed."); return; }
 if (args.Contains("--chorus-only")) { await ChorusTests.Run(Check); Console.WriteLine($"{passed} chorus checks passed."); return; }
+await CommunicationPerformanceTests.Run(Check);
+if (args.Contains("--communication-only")) { Console.WriteLine($"{passed} communication checks passed."); return; }
 await PhaserTests.Run(Check);
 if (args.Contains("--phaser-only")) { Console.WriteLine($"{passed} phaser checks passed."); return; }
 void Reject(Action action, string name) { try { action(); } catch (Exception ex) when (ex is FormatException or ArgumentOutOfRangeException) { Check(true, name); return; } throw new Exception(name); }

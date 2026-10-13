@@ -46,7 +46,7 @@ public sealed class GearImageButton : Wpf.Ui.Controls.Button
         art.RenderTransformOrigin = new Point(.5, .5);
         if (art.RenderTransform is not System.Windows.Media.ScaleTransform scale)
             art.RenderTransform = scale = new System.Windows.Media.ScaleTransform(1, 1);
-        double target = IsInteractive && IsEnabled && (IsMouseOver || IsKeyboardFocusWithin) && SurfaceMotion.Allowed ? 1.19025 : 1;
+        double target = IsEnabled && (IsMouseOver || IsKeyboardFocusWithin) && SurfaceMotion.Allowed ? 1.19025 : 1;
         foreach (var property in new[] { System.Windows.Media.ScaleTransform.ScaleXProperty, System.Windows.Media.ScaleTransform.ScaleYProperty })
         {
             if (!SurfaceMotion.Allowed) { scale.BeginAnimation(property, null); scale.SetValue(property, target); }

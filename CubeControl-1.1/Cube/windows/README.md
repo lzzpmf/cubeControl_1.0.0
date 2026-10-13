@@ -92,7 +92,7 @@ dotnet run --project .\CubeControl-1.1\Cube\windows\Cube.Desktop.Tests -c Releas
 
 `Cube.Tests` exercita codecs, perfil, sessão, fila e operações com conexão falsa. `Cube.Desktop.Tests` usa WPF; a maioria dos modos usa transporte simulado, mas os modos `--hardware-*` abaixo acessam o pedal real. Alguns modos abrem janelas e produzem capturas locais. Escolha um modo por execução: o despacho usa precedência fixa, não combina suítes quando recebe vários filtros.
 
-Filtros de `Cube.Tests`, passados após `--`: `--ir-packs-only`, `--effects-firmware-b-only`, `--delay-only`, `--reverb-only`, `--chorus-preview-only`, `--chorus-only` e `--phaser-only`. Por exemplo:
+Filtros de `Cube.Tests`, passados após `--`: `--communication-only`, `--ir-packs-only`, `--effects-firmware-b-only`, `--delay-only`, `--reverb-only`, `--chorus-preview-only`, `--chorus-only` e `--phaser-only`. Por exemplo:
 
 ```powershell
 dotnet run --project .\CubeControl-1.1\Cube\windows\Cube.Tests -c Release -- --delay-only
@@ -181,3 +181,11 @@ Verificação direcionada: `dotnet run --project .\CubeControl-1.1\Cube\windows\
 Guias pt-BR/en-US têm fontes únicas em `../docs/usuario`. O projeto publica o catálogo e esses arquivos em `Assets/Documents/guias`, junto aos PDFs preservados em `Assets/Documents/manuais`. O build executa `scripts/Validate-Documentation.ps1 -PackageRoot` antes de aceitar o pacote.
 
 Na raiz, use `python scripts/qa/validate_document_links.py` para links do acervo e `dotnet run --project CubeControl-1.1/Cube/windows/Cube.Desktop.Tests -c Release -- --documentation-only` para catálogo, leitura, busca, erros, idiomas e renderizações. As capturas ficam em `C:/CubeControl-Build/documentation-qa`. A central abre em janela não modal a partir de Dispositivo e ajuda e não depende do pedal.
+
+### Recursos e cobertura das alterações recentes
+
+As artes REC de BackingTrack e de cada acabamento são recursos WPF embutidos pelo projeto, não arquivos externos a copiar manualmente. `Build-CubeControl.ps1` exige sua presença antes de compilar. Os novos controles e serviços C# entram pelo SDK; o catálogo de 34 packs, traduções e guias mantêm o fluxo de publicação existente.
+
+Após autorização para executar, os modos existentes cobrem as regressões: `--assets-only` confere PNGs embutidos e REC por acabamento; `--curated-packs-only` confere os 34 packs e grupos; `--player-layout-only` confere o mixer único e o botão externo à busca; `--documentation-only` confere a barra compartilhada; `--backing-practice-only` inclui a análise musical, vínculos vazios e a resposta temporal dos medidores. Não é necessário um novo comando de execução.
+
+Essas alterações de cobertura foram revisadas estaticamente, sem execução nesta revisão. Validação de precisão em músicas reais, WASAPI, troca física de dispositivos, temas/DPI e gravação no pedal permanece separada.

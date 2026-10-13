@@ -112,15 +112,28 @@ public sealed partial class CubeSession : IDisposable
     public async Task WriteLive(int slot, int offset, int value, CancellationToken ct = default)
         => await WriteLiveChecked(slot, offset, value, null, ct);
 
-    public async Task<byte[]> WriteLiveChecked(int slot, int offset, int value, byte[]? expected, CancellationToken ct = default)
+    public Task<byte[]> WriteLiveChecked(int slot, int offset, int value, byte[]? expected, CancellationToken ct = default)
+        => WriteLiveCore(slot, offset, value, expected, checkBeforeWrite: true, ct);
+
+    // Interactive one-byte edits intentionally replace this parameter. Confirm the entire bank
+    // afterwards instead of reading it twice. Bulk restoration keeps WriteLiveChecked.
+    public Task<byte[]> WriteLiveConfirmed(int slot, int offset, int value, byte[] expected, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        CubeBabyProfile.ValidateBank(expected);
+        return WriteLiveCore(slot, offset, value, expected, checkBeforeWrite: false, ct);
+    }
+
+    private async Task<byte[]> WriteLiveCore(int slot, int offset, int value, byte[]? expected, bool checkBeforeWrite, CancellationToken ct)
     {
         uint address = CubeBabyProfile.LiveAddress(slot, offset);
         if (value < 0 || value > CubeBabyProfile.Parameters[offset].Maximum) throw new ArgumentOutOfRangeException(nameof(value));
+        expected = expected?.ToArray();
         await gate.WaitAsync(ct);
         try
         {
             RequireIdentity();
-            if (expected != null && !(await ReadInternal(0, 48, ct)).SequenceEqual(expected))
+            if (checkBeforeWrite && expected != null && !(await ReadInternal(0, 48, ct)).SequenceEqual(expected))
                 throw new InvalidOperationException("O banco mudou no aparelho. Releia antes de continuar.");
             await WriteInternal(address, [(byte)value], ct);
             // Physical test: high-address reads return zero; the bank at address 0 reflects live edits.

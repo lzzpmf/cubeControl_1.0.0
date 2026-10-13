@@ -189,7 +189,7 @@
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Border x:Name="NavigationHeader" VerticalAlignment="Center" Background="Transparent" Padding="0" Margin="0">
-     <ListBox x:Name="Navigation" PreviewMouseRightButtonDown="IgnoreSelectorRightClick" PreviewMouseRightButtonUp="IgnoreSelectorRightClick" SelectedIndex="0" SelectionChanged="NavigationChanged" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Navegação principal'}">
+     <ListBox x:Name="Navigation" PreviewMouseWheel="NavigationWheel" MouseLeave="NavigationLeave" PreviewMouseRightButtonDown="IgnoreSelectorRightClick" PreviewMouseRightButtonUp="IgnoreSelectorRightClick" SelectedIndex="0" SelectionChanged="NavigationChanged" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Navegação principal'}">
       <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
       <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
        <Setter Property="FocusVisualStyle" Value="{x:Null}"/><Setter Property="Padding" Value="12,10"/><Setter Property="MinHeight" Value="72"/><Setter Property="Margin" Value="0,0,8,4"/>
@@ -416,14 +416,29 @@
           <TextBlock Text="{loc:Translate Value={Binding MatchDescription}}" Foreground="{DynamicResource Muted}" Margin="0,12,0,0" TextWrapping="Wrap" Style="{StaticResource CaptionText}"/>
          </StackPanel></Border>
          <StackPanel Visibility="{Binding IsCabinet,Converter={StaticResource Visible}}" Margin="0,4,0,0">
-          <ui:CardAction x:Name="CabinetManageIrsCard" Style="{StaticResource SettingsAction}" Click="ManageIrsClick" AutomationProperties.Name="{loc:Translate Text='Gerenciar IRs'}">
+          <local:AdaptivePanel Breakpoint="680" FirstShare="0.5">
+           <StackPanel HorizontalAlignment="Left" MaxWidth="360" Margin="0,0,16,0">
+          <ui:CardAction x:Name="CabinetManageIrsCard" Style="{StaticResource SettingsAction}" HorizontalAlignment="Left" MaxWidth="360" Click="ManageIrsClick" AutomationProperties.Name="{loc:Translate Text='Gerenciar IRs'}">
            <ui:CardAction.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSoundWaveCircle24}" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon>
            <StackPanel><TextBlock Text="{loc:Translate Text='Gerenciar IRs'}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap"/><TextBlock Text="{loc:Translate Text='Carregue, ouça e grave novos arquivos na área IRs.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
           </ui:CardAction>
-          <ui:CardAction x:Name="CabinetAssociationsCard" Style="{StaticResource SettingsAction}" Click="MatchSettingsClick" IsEnabled="{Binding CanMatch}" AutomationProperties.Name="{loc:Translate Text='Associações de amplificadores'}">
+          <ui:CardAction x:Name="CabinetAssociationsCard" Style="{StaticResource SettingsAction}" HorizontalAlignment="Left" MaxWidth="360" Click="MatchSettingsClick" IsEnabled="{Binding CanMatch}" AutomationProperties.Name="{loc:Translate Text='Associações de amplificadores'}">
            <ui:CardAction.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconLink24}" Style="{StaticResource QuickActionIcon}"/></ui:CardAction.Icon>
            <StackPanel><TextBlock Text="{loc:Translate Text='Associações de amplificadores'}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap"/><TextBlock Text="{loc:Translate Text='Configure as associações entre amplificadores e gabinetes.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
           </ui:CardAction>
+           </StackPanel>
+           <Border Style="{StaticResource Card}" VerticalAlignment="Top" Margin="0,0,0,8">
+            <StackPanel>
+             <TextBlock Text="{loc:Translate Text='IR aleatório'}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap"/>
+             <TextBlock Text="{loc:Translate Text='Grava um IR da biblioteca no slot atual com distância entre 40% e 80%.'}" Style="{StaticResource HelpText}" Margin="0,4,0,12"/>
+             <TextBlock Text="{loc:Translate Value={Binding RandomIrDestination}}" Style="{StaticResource HelpText}" Margin="0,0,0,8"/>
+             <ui:Button Command="{Binding RandomizeCabinetIr}" HorizontalAlignment="Left" AutomationProperties.Name="{loc:Translate Text='Sortear e aplicar IR aleatório'}" ToolTip="{loc:Translate Text='Substitui o IR do slot atual sem confirmação adicional. O conteúdo anterior é mantido em memória nesta sessão.'}">
+              <TextBlock Text="{loc:Translate Text='Sortear e aplicar'}" TextWrapping="Wrap"/>
+             </ui:Button>
+             <TextBlock Text="{loc:Translate Value={Binding RandomIrResult}}" Style="{StaticResource HelpText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
+            </StackPanel>
+           </Border>
+          </local:AdaptivePanel>
           <ui:Button x:Name="RefreshCabinetsButton" Content="{loc:Translate Text='Atualizar Gabinetes'}" Command="{Binding RefreshInventory}" HorizontalAlignment="Left" Margin="0,8,0,0" ToolTip="{loc:Translate Text='Lê os slots do pedal para atualizar a identificação dos IRs.'}" AutomationProperties.Name="{loc:Translate Text='Atualizar Gabinetes'}">
            <ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowSync24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon>
           </ui:Button>
@@ -446,15 +461,16 @@
     <ScrollViewer x:Name="IrScroll" local:SurfaceMotion.Enabled="True" local:SurfaceMotion.Offset="8" PreviewMouseWheel="PageMouseWheel" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="0,0,0,24">
      <TextBlock Text="{loc:Translate Text='Gerenciar IRs'}" TextWrapping="Wrap" Margin="0,0,0,6" Style="{StaticResource TitleText}"/>
      <TextBlock Text="{loc:Translate Text='Ouça um arquivo no pedal antes de substituir um slot. Prévia e gravação são ações separadas.'}" Foreground="{DynamicResource Muted}" Margin="0,0,0,12" TextWrapping="Wrap" Style="{StaticResource BodyText}"/>
-     <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,12"><StackPanel Grid.IsSharedSizeScope="True">
-      <TextBlock Text="{loc:Translate Text='1 · Escolher IR'}" Style="{StaticResource HelpText}" Margin="0,0,0,8"/>
-      <local:AdaptivePanel FirstShare="0.38" Breakpoint="900">
+     <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,12">
+      <local:AdaptivePanel FirstShare="0.3" Breakpoint="1040">
        <StackPanel IsEnabled="{Binding CanChooseIr}" Margin="0,0,16,12">
         <Grid Margin="0,0,0,8"><Grid.RowDefinitions><RowDefinition Height="Auto" SharedSizeGroup="IrSectionHeader"/></Grid.RowDefinitions>
          <TextBlock Text="{loc:Translate Text='Biblioteca'}" VerticalAlignment="Center" Style="{StaticResource BodyStrongText}"/>
         </Grid>
-        <local:IrLibraryBrowser x:Name="SingleIrLibrary" DataContext="{Binding IrLibrary}"/>
+        <local:IrLibraryBrowser PreviewMouseLeftButtonDown="SharedIrLibraryMouseDown" PreviewMouseMove="SharedIrLibraryMouseMove" x:Name="SingleIrLibrary" DataContext="{Binding IrLibrary}"/>
        </StackPanel>
+       <TabControl x:Name="IrWorkspaceTabs" SelectedIndex="{Binding IrWorkspaceTab,Mode=TwoWay}" Background="Transparent" BorderThickness="0" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Área de trabalho de IRs'}">
+        <TabItem Header="{loc:Translate Text='Análise e prévia individual'}"><StackPanel Margin="0,12,0,0">
        <StackPanel Margin="0,0,0,12">
         <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto" SharedSizeGroup="IrSectionHeader"/></Grid.RowDefinitions>
          <TextBlock VerticalAlignment="Center" Margin="0,0,12,0" TextWrapping="Wrap">
@@ -481,8 +497,6 @@
        <TextBlock Text="{loc:Translate Text='Forma de onda das 512 amostras preparadas · amplitude ajustada apenas na visualização'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/>
       </StackPanel></Expander>
        </StackPanel>
-      </local:AdaptivePanel>
-     </StackPanel></Border>
      <ui:InfoBar x:Name="IrStatusNotice" IsOpen="True" IsClosable="False" Message="{loc:Translate Value={Binding Ir.State}}" Margin="0,0,0,12">
       <ui:InfoBar.Style><Style TargetType="ui:InfoBar" BasedOn="{StaticResource {x:Type ui:InfoBar}}">
        <Setter Property="Severity" Value="Informational"/>
@@ -520,14 +534,14 @@
        <ui:Button ToolTip="{loc:Translate Text='Escolha um backup de IR para restaurar seu conteúdo no pedal.'}" Content="{loc:Translate Text='Restaurar backup de IR'}" Command="{Binding RestoreIr}" Margin="0,12,0,0" HorizontalAlignment="Left"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
       </StackPanel></Border>
      </local:AdaptivePanel>
-     <Border Style="{StaticResource Card}" Margin="0,0,0,12" DataContext="{Binding IrAudition}" MaxWidth="900" x:Name="IrAuditionCard"><StackPanel>
+     <Border Style="{StaticResource Card}" Margin="0,0,0,12" DataContext="{Binding IrAudition}" HorizontalAlignment="Stretch" x:Name="IrAuditionCard"><StackPanel>
       <WrapPanel><StackPanel Orientation="Horizontal" Margin="0,0,16,4"><ui:SymbolIcon Style="{StaticResource CubeEmphasisIcon}" Symbol="{StaticResource CubeIconHeadphonesSoundWave24}" Margin="0,0,8,0"/><TextBlock Text="{loc:Translate Text='Pré-escuta'}" Style="{StaticResource SectionTitle}"/></StackPanel><TextBlock Text="{loc:Translate Value={Binding ConnectionLabel}}" Style="{StaticResource HelpText}" VerticalAlignment="Center"/></WrapPanel>
       <TextBlock Text="{loc:Translate Text='Ouça sua guitarra com o IR e os efeitos atuais do pedal.'}" Style="{StaticResource HelpText}" Margin="0,4,0,16"/>
-      <local:AdaptivePanel x:Name="IrAuditionSelectors" Breakpoint="520" FirstShare="0.4">
-       <StackPanel Margin="0,0,12,12"><TextBlock Text="{loc:Translate Text='Gravação'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+      <local:AdaptivePanel x:Name="IrAuditionSelectors" Breakpoint="520" FirstShare="0.5" Margin="-8,0">
+       <StackPanel Margin="8,0,8,12"><TextBlock Text="{loc:Translate Text='Gravação'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
         <ComboBox x:Name="IrAuditionTrackSelector" ItemsSource="{Binding Tracks}" SelectedItem="{Binding SelectedTrack}" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ToolTip="{loc:Translate Value={Binding SelectedTrack.Name}}" AutomationProperties.Name="{loc:Translate Text='Gravação'}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Name}}" TextTrimming="CharacterEllipsis"/></DataTemplate></ComboBox.ItemTemplate></ComboBox>
        </StackPanel>
-       <StackPanel Margin="0,0,0,12"><TextBlock Text="{loc:Translate Text='Saída USB do pedal'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
+       <StackPanel Margin="8,0,8,12"><TextBlock Text="{loc:Translate Text='Saída USB do pedal'}" Style="{StaticResource HelpText}" Margin="0,0,0,4"/>
         <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
          <ComboBox x:Name="IrAuditionOutputSelector" ItemsSource="{Binding Outputs}" SelectedItem="{Binding SelectedOutput}" MinWidth="0" Margin="0" HorizontalAlignment="Stretch" ToolTip="{Binding SelectedOutput.Name}" AutomationProperties.Name="{loc:Translate Text='Saída USB do pedal'}"><ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/></DataTemplate></ComboBox.ItemTemplate></ComboBox>
          <TextBlock Text="{loc:Translate Text='Selecionar saída'}" IsHitTestVisible="False" VerticalAlignment="Center" Margin="12,0,32,0"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource HelpText}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding SelectedOutput}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
@@ -539,13 +553,15 @@
       <Border BorderBrush="{DynamicResource CubeBorder}" BorderThickness="0,1,0,0" Padding="0,16,0,0"><StackPanel>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock Text="{loc:Translate Text='Reprodução'}" Style="{StaticResource BodyStrongText}"/><TextBlock Grid.Column="1" Text="{Binding TimeLabel}" FontFamily="Consolas" Style="{StaticResource HelpText}"/></Grid>
        <ProgressBar Value="{Binding Progress,Mode=OneWay}" Maximum="100" Height="4" Margin="0,12" AutomationProperties.Name="{loc:Translate Text='Posição da reprodução'}"/>
-       <local:AdaptivePanel Breakpoint="460" FirstShare="0.45">
-        <StackPanel Orientation="Horizontal" Margin="0,0,12,8">
-         <ui:Button Command="{Binding PlayPause}" Appearance="Primary" Width="48" Height="48" Padding="0" Margin="0,0,8,0" ToolTip="{loc:Translate Value={Binding PlayLabel}}" AutomationProperties.Name="{loc:Translate Value={Binding PlayLabel}}"><ui:SymbolIcon><ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource CubeEmphasisIcon}"><Setter Property="Symbol" Value="{StaticResource CubeIconPlay24}"/><Style.Triggers><DataTrigger Binding="{Binding IsPlaying}" Value="True"><Setter Property="Symbol" Value="{StaticResource CubeIconPause24}"/></DataTrigger></Style.Triggers></Style></ui:SymbolIcon.Style></ui:SymbolIcon></ui:Button>
-         <ui:Button Command="{Binding Stop}" Style="{StaticResource CubeIconButtonStyle}" Appearance="Transparent" BorderThickness="0" Margin="0,0,8,0" ToolTip="{loc:Translate Text='Parar'}" AutomationProperties.Name="{loc:Translate Text='Parar'}"><ui:SymbolIcon Symbol="{StaticResource CubeIconStop24}"/></ui:Button>
-         <ui:Button x:Name="IrAuditionLoopButton" Click="IrAuditionLoopClick" ToolTip="{loc:Translate Text='Loop'}" AutomationProperties.Name="{loc:Translate Text='Loop'}"><ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}"><Setter Property="Margin" Value="0"/><Setter Property="Appearance" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="AutomationProperties.ItemStatus" Value="{loc:Translate Text='Desligado'}"/><Style.Triggers><DataTrigger Binding="{Binding Loop}" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeAccent}"/><Setter Property="AutomationProperties.ItemStatus" Value="{loc:Translate Text='Ligado'}"/></DataTrigger></Style.Triggers></Style></ui:Button.Style><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowSync24}"/></ui:Button>
+       <local:AdaptivePanel Breakpoint="460" FirstShare="0.5" Margin="-8,0">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,0,8,8">
+         <Button x:Name="IrAuditionPlayButton" Style="{StaticResource PlayerArtButton}" Margin="0,0,16,0" VerticalAlignment="Center" Command="{Binding PlayPause}" Width="56" Height="56" ToolTip="{loc:Translate Value={Binding PlayLabel}}" AutomationProperties.Name="{loc:Translate Value={Binding PlayLabel}}">
+           <local:BackingButtonFace IsActive="True"><local:BackingButtonFace.Style><Style TargetType="local:BackingButtonFace"><Setter Property="Art" Value="play"/><Setter Property="Glyph" Value="▶"/><Style.Triggers><DataTrigger Binding="{Binding IsPlaying}" Value="True"><Setter Property="Art" Value="pause"/><Setter Property="Glyph" Value="Ⅱ"/></DataTrigger></Style.Triggers></Style></local:BackingButtonFace.Style></local:BackingButtonFace>
+          </Button>
+         <Button Command="{Binding Stop}" Style="{StaticResource PlayerArtButton}" Margin="0,0,16,0" VerticalAlignment="Center" ToolTip="{loc:Translate Text='Parar'}" AutomationProperties.Name="{loc:Translate Text='Parar'}"><local:BackingButtonFace Art="stop" Glyph="■"/></Button>
+         <Button x:Name="IrAuditionLoopButton" Click="IrAuditionLoopClick" Margin="0" VerticalAlignment="Center" ToolTip="{loc:Translate Text='Loop'}" AutomationProperties.Name="{loc:Translate Text='Loop'}"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource PlayerArtButton}"><Setter Property="AutomationProperties.ItemStatus" Value="{loc:Translate Text='Desligado'}"/><Style.Triggers><DataTrigger Binding="{Binding Loop}" Value="True"><Setter Property="AutomationProperties.ItemStatus" Value="{loc:Translate Text='Ligado'}"/></DataTrigger></Style.Triggers></Style></Button.Style><local:BackingButtonFace Art="loop" Glyph="↻" IsActive="{Binding Loop}"/></Button>
         </StackPanel>
-        <Grid MaxWidth="280" HorizontalAlignment="Stretch" Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="48"/></Grid.ColumnDefinitions><ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker224}"/>
+        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="8,0,8,8"><Grid.ColumnDefinitions><ColumnDefinition Width="24"/><ColumnDefinition Width="*"/><ColumnDefinition Width="48"/></Grid.ColumnDefinitions><ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker224}"/>
          <local:BackingFader x:Name="IrAuditionVolume" Grid.Column="1" Orientation="Horizontal" Height="32" Minimum="0" Maximum="100" Value="{Binding Volume}" ToolTip="{Binding Volume,StringFormat={}{0:0}%}" AutomationProperties.Name="{loc:Translate Text='Volume'}"/>
          <TextBlock Grid.Column="2" Text="{Binding Volume,StringFormat={}{0:0}%}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
         </Grid>
@@ -554,7 +570,13 @@
       <TextBlock Text="{loc:Translate Value={Binding ContextStatus}}" Style="{StaticResource HelpText}" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
       <StackPanel Orientation="Horizontal" Margin="0,8,0,0"><TextBlock Text="{loc:Translate Text='Sinal enviado à saída'}" Style="{StaticResource HelpText}" Margin="0,0,8,0"/><ProgressBar Value="{Binding OutputLevel,Mode=OneWay}" Maximum="100" Height="4" Width="80" AutomationProperties.Name="{loc:Translate Text='Sinal enviado à saída'}"/></StackPanel>
      </StackPanel></Border>
-     <local:IrPackEditor x:Name="IrPacksCard" DataContext="{Binding PackEditor}" Margin="0,0,0,12"/>
+        </StackPanel></TabItem>
+        <TabItem Header="{loc:Translate Text='Packs de IRs (8 slots)'}">
+         <local:IrPackEditor x:Name="IrPacksCard" DataContext="{Binding PackEditor}" Margin="0,12,0,0"/>
+        </TabItem>
+       </TabControl>
+      </local:AdaptivePanel>
+     </Border>
     </StackPanel></ScrollViewer>
    </TabItem>
 
@@ -593,7 +615,7 @@
         <WrapPanel.ContextMenu><ContextMenu/></WrapPanel.ContextMenu>
         <StackPanel Width="240" Margin="0,0,16,8">
          <TextBlock Text="{loc:Translate Text='Saída de áudio'}" Style="{StaticResource BodyText}" Margin="0,0,0,4"/>
-         <ComboBox MinHeight="40" ItemsSource="{Binding Outputs}" SelectedItem="{Binding SelectedOutput}" IsEnabled="{Binding CanChangeRecordingOutput}" DisplayMemberPath="Name" ToolTip="{Binding OutputName}" AutomationProperties.Name="{loc:Translate Text='Saída do acompanhamento'}"/>
+         <ComboBox MinHeight="40" ItemsSource="{Binding Outputs}" SelectedItem="{Binding SelectedOutput}" DisplayMemberPath="Name" ToolTip="{Binding OutputName}" AutomationProperties.Name="{loc:Translate Text='Saída do acompanhamento'}"/>
         </StackPanel>
         <StackPanel Width="240" Margin="0,0,16,8">
          <TextBlock Text="{loc:Translate Text='Entrada da guitarra'}" Style="{StaticResource BodyText}" Margin="0,0,0,4"/>
@@ -601,23 +623,6 @@
         </StackPanel>
         <ui:Button VerticalAlignment="Bottom" MinHeight="40" Margin="0,0,0,8" Content="{loc:Translate Text='Adicionar faixas'}" Command="{Binding AddFiles}"/>
        </WrapPanel>
-       <Border Style="{StaticResource Card}" Margin="0,12,0,0">
-        <StackPanel>
-         <TextBlock Text="{loc:Translate Text='Gravação'}" Style="{StaticResource BodyStrongText}"/>
-         <TextBlock Text="{loc:Translate Text='Fonte da gravação'}" Style="{StaticResource BodyText}" Margin="0,8,0,4"/>
-         <ComboBox ItemsSource="{Binding RecordingSources}" SelectedItem="{Binding SelectedRecordingSource}" IsEnabled="{Binding CanChangeRecordingInput}" MinHeight="40" MaxWidth="560" HorizontalAlignment="Left" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Fonte da gravação'}">
-          <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
-         </ComboBox>
-         <TextBlock Text="{loc:Translate Value={Binding RecordingHelp}}" Style="{StaticResource HelpText}" Margin="0,8,0,12"/>
-         <WrapPanel>
-          <ui:Button Content="{loc:Translate Value={Binding RecordingLabel}}" Command="{Binding ToggleRecording}" Style="{StaticResource CubeButtonStyle}" Margin="0,0,12,8"/>
-          <TextBlock Text="{Binding RecordingTime}" Visibility="{Binding IsRecording,Converter={StaticResource Visible}}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center" Margin="0,0,12,8" AutomationProperties.Name="{loc:Translate Text='Tempo de gravação'}"/>
-          <ui:Button Content="{loc:Translate Text='Mostrar gravação'}" Command="{Binding OpenRecording}" Style="{StaticResource CubeButtonStyle}" Margin="0,0,12,8"/>
-          <ui:Button Content="{loc:Translate Text='Adicionar gravação à playlist'}" Command="{Binding AddRecording}" Style="{StaticResource CubeButtonStyle}" Margin="0,0,0,8"/>
-         </WrapPanel>
-         <TextBlock Text="{Binding LastRecording}" ToolTip="{Binding LastRecording}" TextWrapping="Wrap" Style="{StaticResource HelpText}"/>
-        </StackPanel>
-       </Border>
        <Grid x:Name="BackingLayout" Margin="0,12,0,0">
         <Grid.ColumnDefinitions><ColumnDefinition x:Name="BackingListColumn" Width="0"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -660,7 +665,6 @@
          <ContentControl x:Name="BackingTransportHost" HorizontalContentAlignment="Stretch">
        <Border x:Name="BackingTransportRack" Style="{StaticResource Card}" Padding="16,8" Tag="player" ContextMenuOpening="BackingContextOpening"><Border.ContextMenu><ContextMenu/></Border.ContextMenu><Border.Resources>
 <Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Setter Property="Margin" Value="0"/></Style>
-<Style x:Key="PlayerArtButton" TargetType="Button" BasedOn="{StaticResource BackingArtButton}"><Setter Property="BorderThickness" Value="0"/></Style>
 <Style x:Key="PlayerIconButton" TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}"><Setter Property="Margin" Value="0"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Appearance" Value="Transparent"/></Style>
 </Border.Resources><StackPanel><local:BackingCommandLayout><Border x:Name="BackingTempoPitchPanel"><StackPanel VerticalAlignment="Center">
  <StackPanel.Resources>
@@ -695,7 +699,17 @@
 <Grid><Grid.RowDefinitions><RowDefinition Height="56"/><RowDefinition Height="16"/></Grid.RowDefinitions><Button Style="{StaticResource PlayerArtButton}" Margin="0" VerticalAlignment="Center" Command="{Binding Stop}" ToolTip="{loc:Translate Text='Parar'}" AutomationProperties.Name="{loc:Translate Text='Parar'}" ><local:BackingButtonFace Art="stop" Glyph="■"/></Button></Grid>
 <Grid><Grid.RowDefinitions><RowDefinition Height="56"/><RowDefinition Height="16"/></Grid.RowDefinitions><Button Command="{Binding Next}" Style="{StaticResource PlayerArtButton}" Margin="0" VerticalAlignment="Center" ToolTip="{loc:Translate Text='Próxima faixa'}" AutomationProperties.Name="{loc:Translate Text='Próxima faixa'}"><local:BackingButtonFace Art="next" Glyph="⏭"/></Button></Grid>
 <Grid><Grid.RowDefinitions><RowDefinition Height="56"/><RowDefinition Height="16"/></Grid.RowDefinitions><Button x:Name="BackingLoopButton" Click="BackingLoopClick" IsEnabled="{Binding CanLoop}" VerticalAlignment="Center" Margin="0" ToolTip="{loc:Translate Text='Loop A/B'}" AutomationProperties.Name="{loc:Translate Text='Loop A/B'}"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource PlayerArtButton}"><Style.Triggers><DataTrigger Binding="{Binding IsLooping}" Value="True"><Setter Property="AutomationProperties.ItemStatus" Value="{loc:Translate Text='Ligado'}"/></DataTrigger></Style.Triggers></Style></Button.Style><local:BackingButtonFace IsActive="{Binding IsLooping}" Art="loop" Glyph="↻"/></Button><TextBlock Grid.Row="1" HorizontalAlignment="Center"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource CaptionText}"><Setter Property="Text" Value="A/B"/><Style.Triggers><DataTrigger Binding="{Binding IsLooping}" Value="True"><Setter Property="Text" Value="{loc:Translate Text='Ligado'}"/><Setter Property="Foreground" Value="{DynamicResource CubeAccent}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></Grid>
-         </local:BackingTransportPanel><StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+<Grid><Grid.RowDefinitions><RowDefinition Height="56"/><RowDefinition Height="16"/></Grid.RowDefinitions>
+ <Button Command="{Binding ToggleRecording}" Style="{StaticResource PlayerArtButton}" Margin="0" VerticalAlignment="Center" ToolTipService.ShowOnDisabled="True" ToolTip="{loc:Translate Value={Binding RecordingHelp}}" AutomationProperties.Name="{loc:Translate Value={Binding RecordingLabel}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding RecordingState}}"><local:BackingButtonFace Art="record" Glyph="&#x25CF;" IsActive="{Binding IsRecording}"/></Button>
+ <TextBlock Grid.Row="1" Text="REC" Style="{StaticResource CaptionText}" HorizontalAlignment="Center"/>
+</Grid>
+         </local:BackingTransportPanel>
+<WrapPanel HorizontalAlignment="Center" Visibility="{Binding IsRecording,Converter={StaticResource Visible}}" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite">
+ <Ellipse Width="8" Height="8" Fill="{DynamicResource CubeRecordingIndicator}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+ <TextBlock Text="{loc:Translate Value={Binding RecordingState}}" Style="{StaticResource CaptionText}" Margin="0,0,8,0"/>
+ <TextBlock Text="{Binding RecordingTime}" Style="{StaticResource CaptionText}" FontFamily="Consolas" AutomationProperties.Name="{loc:Translate Text='Tempo de gravação'}"/>
+</WrapPanel>
+<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 <TextBlock Text="{Binding TimeLabel}" FontFamily="Consolas" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="0,0,8,0"/>
 <ui:Button Command="{Binding MarkStart}" Content="A" Padding="4,0" MinWidth="32" MinHeight="24" ToolTip="{Binding RangeLabel}" AutomationProperties.Name="{loc:Translate Text='Definir A'}"/>
 <ui:Button Command="{Binding MarkEnd}" Content="B" Padding="4,0" MinWidth="32" MinHeight="24" ToolTip="{Binding RangeLabel}" AutomationProperties.Name="{loc:Translate Text='Definir B'}"/>
@@ -721,32 +735,31 @@
  <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <StackPanel Orientation="Horizontal"><ui:SymbolIcon Symbol="{StaticResource CubeIconOptions24}" Style="{StaticResource CubeNavigationIcon}" Margin="0,0,8,0"/><TextBlock Text="{loc:Translate Text='Mixer'}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center"/></StackPanel>
  <ui:Button Grid.Column="1" Click="BackingMixerClick" Style="{StaticResource PlayerIconButton}" ToolTip="{loc:Translate Text='Fechar'}" AutomationProperties.Name="{loc:Translate Text='Fechar'}"><ui:SymbolIcon Symbol="{StaticResource CubeIconDismiss24}"/></ui:Button></Grid>
- <WrapPanel Margin="0,0,0,8">
-<ui:Button Content="{loc:Translate Text='Compacto'}" Tag="compact" Click="BackingMixerModeClick" Margin="0,0,8,4"><ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Setter Property="Appearance" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Style.Triggers><DataTrigger Binding="{Binding MixerExpanded}" Value="False"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></ui:Button.Style></ui:Button><ui:Button Content="{loc:Translate Text='Expandido'}" Tag="expanded" Click="BackingMixerModeClick" Margin="0,0,8,4"><ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Setter Property="Appearance" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Style.Triggers><DataTrigger Binding="{Binding MixerExpanded}" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></ui:Button.Style></ui:Button></WrapPanel><StackPanel Margin="0,0,0,8">
+ <StackPanel Margin="0,0,0,8">
  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><ui:SymbolIcon Symbol="{StaticResource CubeIconMusicNote224}" Style="{StaticResource CubeNavigationIcon}" Margin="0,0,8,0"/><TextBlock Text="{loc:Translate Text='Faixa'}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center"/></StackPanel>
  <StackPanel Grid.Column="1" Orientation="Horizontal"><TextBox Width="48" Padding="4" BorderThickness="0" Background="Transparent" TextAlignment="Right" Text="{Binding Volume,Mode=TwoWay,UpdateSourceTrigger=LostFocus,StringFormat={}{0:0}}" KeyDown="BackingNumberKey" AutomationProperties.Name="{loc:Translate Text='Volume: Faixa'}"/><TextBlock Text="%" VerticalAlignment="Center" Margin="4,0,0,0"/><ui:Button Margin="8,0,0,0" Tag="track" Click="BackingMixerMuteClick" AutomationProperties.ItemStatus="{Binding IsMuted}"><ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource PlayerIconButton}"><Setter Property="ToolTip" Value="{loc:Translate Text='Silenciar canal: Faixa'}"/><Setter Property="AutomationProperties.Name" Value="{loc:Translate Text='Silenciar canal: Faixa'}"/><Style.Triggers><DataTrigger Binding="{Binding IsMuted}" Value="True"><Setter Property="ToolTip" Value="{loc:Translate Text='Restaurar som: Faixa'}"/><Setter Property="AutomationProperties.Name" Value="{loc:Translate Text='Restaurar som: Faixa'}"/><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></DataTrigger></Style.Triggers></Style></ui:Button.Style><ui:SymbolIcon><ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource CubeNavigationIcon}"><Setter Property="Symbol" Value="{StaticResource CubeIconSpeaker224}"/><Style.Triggers><DataTrigger Binding="{Binding IsMuted}" Value="True"><Setter Property="Symbol" Value="{StaticResource CubeIconSpeakerMute24}"/></DataTrigger></Style.Triggers></Style></ui:SymbolIcon.Style></ui:SymbolIcon></ui:Button></StackPanel>
  </Grid>
- <local:BackingFader Orientation="Horizontal" Height="32" Minimum="0" Maximum="100" Value="{Binding Volume}" Tag="track" PreviewMouseLeftButtonDown="BackingMixerFaderReset" ToolTip="{loc:Translate Text='Duplo clique para restaurar o volume padrão'}" AutomationProperties.Name="{loc:Translate Text='Volume: Faixa'}"/>
+ <local:BackingFader Orientation="Horizontal" Height="52" ShowMeter="True" MeterReading="{Binding TrackMeter}" Minimum="0" Maximum="100" Value="{Binding Volume}" Tag="track" PreviewMouseLeftButtonDown="BackingMixerFaderReset" ToolTip="{loc:Translate Text='Duplo clique para restaurar o volume padrão'}" AutomationProperties.HelpText="{loc:Translate Text='Pico digital após volume e mute, de -60 a 0 dBFS'}" AutomationProperties.Name="{loc:Translate Text='Volume: Faixa'}"/><TextBlock Text="{loc:Translate Text='Saturação do canal'}" Style="{StaticResource HelpText}" Foreground="{DynamicResource CubeWarning}" Visibility="{Binding TrackMeter.Clipping,Converter={StaticResource Visible}}"/>
  </StackPanel><StackPanel Margin="0,0,0,8">
  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><ui:SymbolIcon Symbol="{StaticResource CubeIconGuitar24}" Style="{StaticResource CubeNavigationIcon}" Margin="0,0,8,0"/><TextBlock Text="{loc:Translate Text='Guitarra'}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center"/></StackPanel>
  <StackPanel Grid.Column="1" Orientation="Horizontal"><TextBox Width="48" Padding="4" BorderThickness="0" Background="Transparent" TextAlignment="Right" Text="{Binding MonitorVolume,Mode=TwoWay,UpdateSourceTrigger=LostFocus,StringFormat={}{0:0}}" KeyDown="BackingNumberKey" AutomationProperties.Name="{loc:Translate Text='Volume: Guitarra'}"/><TextBlock Text="%" VerticalAlignment="Center" Margin="4,0,0,0"/><ui:Button Margin="8,0,0,0" Tag="guitar" Click="BackingMixerMuteClick" AutomationProperties.ItemStatus="{Binding MonitorMuted}"><ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource PlayerIconButton}"><Setter Property="ToolTip" Value="{loc:Translate Text='Silenciar canal: Guitarra'}"/><Setter Property="AutomationProperties.Name" Value="{loc:Translate Text='Silenciar canal: Guitarra'}"/><Style.Triggers><DataTrigger Binding="{Binding MonitorMuted}" Value="True"><Setter Property="ToolTip" Value="{loc:Translate Text='Restaurar som: Guitarra'}"/><Setter Property="AutomationProperties.Name" Value="{loc:Translate Text='Restaurar som: Guitarra'}"/><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></DataTrigger></Style.Triggers></Style></ui:Button.Style><ui:SymbolIcon><ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource CubeNavigationIcon}"><Setter Property="Symbol" Value="{StaticResource CubeIconSpeaker224}"/><Style.Triggers><DataTrigger Binding="{Binding MonitorMuted}" Value="True"><Setter Property="Symbol" Value="{StaticResource CubeIconSpeakerMute24}"/></DataTrigger></Style.Triggers></Style></ui:SymbolIcon.Style></ui:SymbolIcon></ui:Button></StackPanel>
  </Grid>
- <local:BackingFader Orientation="Horizontal" Height="32" Minimum="0" Maximum="100" Value="{Binding MonitorVolume}" Tag="guitar" PreviewMouseLeftButtonDown="BackingMixerFaderReset" ToolTip="{loc:Translate Text='Duplo clique para restaurar o volume padrão'}" AutomationProperties.Name="{loc:Translate Text='Volume: Guitarra'}"/>
- <WrapPanel Visibility="{Binding MixerExpanded,Converter={StaticResource Visible}}">
+ <local:BackingFader Orientation="Horizontal" Height="52" ShowMeter="True" MeterReading="{Binding GuitarMeter}" Minimum="0" Maximum="100" Value="{Binding MonitorVolume}" Tag="guitar" PreviewMouseLeftButtonDown="BackingMixerFaderReset" ToolTip="{loc:Translate Text='Duplo clique para restaurar o volume padrão'}" AutomationProperties.HelpText="{loc:Translate Text='Pico digital após volume e mute, de -60 a 0 dBFS'}" AutomationProperties.Name="{loc:Translate Text='Volume: Guitarra'}"/><TextBlock Text="{loc:Translate Text='Saturação do canal'}" Style="{StaticResource HelpText}" Foreground="{DynamicResource CubeWarning}" Visibility="{Binding GuitarMeter.Clipping,Converter={StaticResource Visible}}"/>
+ <WrapPanel>
 
 <ui:Button Command="{Binding ToggleMonitor}" Content="{loc:Translate Text='Monitor da guitarra'}" Appearance="Transparent" BorderThickness="0" AutomationProperties.ItemStatus="{Binding IsMonitoring}"/>
-</WrapPanel><StackPanel Visibility="{Binding MixerExpanded,Converter={StaticResource Visible}}"><TextBlock Text="{loc:Translate Text='Pico no limite da entrada'}" Foreground="{DynamicResource CubeWarning}" Visibility="{Binding InputClipping,Converter={StaticResource Visible}}"/><TextBlock Text="{loc:Translate Text='Sinal de entrada · antes do volume'}" Style="{StaticResource HelpText}"/><ProgressBar Value="{Binding InputLevel,Mode=OneWay}" Maximum="100" Height="4" Margin="0,4,0,0" AutomationProperties.Name="{loc:Translate Text='Nível da guitarra'}"/></StackPanel></StackPanel><StackPanel Margin="0,0,0,8">
+</WrapPanel><StackPanel><TextBlock Text="{loc:Translate Text='Pico no limite da entrada'}" Foreground="{DynamicResource CubeWarning}" Visibility="{Binding InputClipping,Converter={StaticResource Visible}}"/></StackPanel></StackPanel><StackPanel Margin="0,0,0,8">
  <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
  <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><Control Style="{StaticResource CubeMetronomeIcon}" Margin="0,0,8,0"/><TextBlock Text="{loc:Translate Text='Metrônomo'}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center"/></StackPanel>
  <StackPanel Grid.Column="1" Orientation="Horizontal"><TextBox Width="48" Padding="4" BorderThickness="0" Background="Transparent" TextAlignment="Right" Text="{Binding MetronomeVolume,Mode=TwoWay,UpdateSourceTrigger=LostFocus,StringFormat={}{0:0}}" KeyDown="BackingNumberKey" AutomationProperties.Name="{loc:Translate Text='Volume: Metrônomo'}"/><TextBlock Text="%" VerticalAlignment="Center" Margin="4,0,0,0"/><ui:Button Margin="8,0,0,0" Tag="click" Click="BackingMixerMuteClick" AutomationProperties.ItemStatus="{Binding MetronomeMuted}"><ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource PlayerIconButton}"><Setter Property="ToolTip" Value="{loc:Translate Text='Silenciar canal: Metrônomo'}"/><Setter Property="AutomationProperties.Name" Value="{loc:Translate Text='Silenciar canal: Metrônomo'}"/><Style.Triggers><DataTrigger Binding="{Binding MetronomeMuted}" Value="True"><Setter Property="ToolTip" Value="{loc:Translate Text='Restaurar som: Metrônomo'}"/><Setter Property="AutomationProperties.Name" Value="{loc:Translate Text='Restaurar som: Metrônomo'}"/><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></DataTrigger></Style.Triggers></Style></ui:Button.Style><ui:SymbolIcon><ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon" BasedOn="{StaticResource CubeNavigationIcon}"><Setter Property="Symbol" Value="{StaticResource CubeIconSpeaker224}"/><Style.Triggers><DataTrigger Binding="{Binding MetronomeMuted}" Value="True"><Setter Property="Symbol" Value="{StaticResource CubeIconSpeakerMute24}"/></DataTrigger></Style.Triggers></Style></ui:SymbolIcon.Style></ui:SymbolIcon></ui:Button></StackPanel>
  </Grid>
- <local:BackingFader Orientation="Horizontal" Height="32" Minimum="0" Maximum="100" Value="{Binding MetronomeVolume}" Tag="click" PreviewMouseLeftButtonDown="BackingMixerFaderReset" ToolTip="{loc:Translate Text='Duplo clique para restaurar o volume padrão'}" AutomationProperties.Name="{loc:Translate Text='Volume: Metrônomo'}"/>
- <WrapPanel Visibility="{Binding MixerExpanded,Converter={StaticResource Visible}}">
+ <local:BackingFader Orientation="Horizontal" Height="52" ShowMeter="True" MeterReading="{Binding ClickMeter}" Minimum="0" Maximum="100" Value="{Binding MetronomeVolume}" Tag="click" PreviewMouseLeftButtonDown="BackingMixerFaderReset" ToolTip="{loc:Translate Text='Duplo clique para restaurar o volume padrão'}" AutomationProperties.HelpText="{loc:Translate Text='Pico digital após volume e mute, de -60 a 0 dBFS'}" AutomationProperties.Name="{loc:Translate Text='Volume: Metrônomo'}"/><TextBlock Text="{loc:Translate Text='Saturação do canal'}" Style="{StaticResource HelpText}" Foreground="{DynamicResource CubeWarning}" Visibility="{Binding ClickMeter.Clipping,Converter={StaticResource Visible}}"/>
+ <WrapPanel>
 
 <ui:Button Command="{Binding ToggleMetronome}" Content="{Binding MetronomeToggleLabel}" Appearance="Transparent" BorderThickness="0"/>
-</WrapPanel></StackPanel><StackPanel Visibility="{Binding MixerExpanded,Converter={StaticResource Visible}}" Margin="0,0,0,8"><TextBlock Text="{loc:Translate Text='Sinal de saída · faixa + click sincronizado'}" Style="{StaticResource HelpText}"/><ProgressBar Value="{Binding TrackLevel,Mode=OneWay}" Maximum="100" Height="4" Margin="0,4,0,0" AutomationProperties.Name="{loc:Translate Text='Sinal de saída · faixa + click sincronizado'}"/></StackPanel>
+</WrapPanel></StackPanel>
 <WrapPanel><ui:Button Click="BackingMixerResetClick" Content="{loc:Translate Text='Resetar volumes'}" ToolTip="{loc:Translate Text='Faixa 30%, guitarra 0%, metrônomo 30%. Preserva mute.'}"/><TextBlock Text="{loc:Translate Value={Binding OutputName}}" Style="{StaticResource HelpText}" VerticalAlignment="Center" Margin="12,0,0,0" MaxWidth="180" TextTrimming="CharacterEllipsis"/></WrapPanel>
 </StackPanel></Border></StackPanel></Border>
       </ContentControl>
@@ -757,33 +770,29 @@
          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
          <Border x:Name="BackingPlaylistPanel" Style="{StaticResource Card}" VerticalAlignment="Top"><StackPanel>
           <TextBlock Text="{loc:Translate Text='Playlist'}" Style="{StaticResource SectionTitle}" Margin="0,0,0,12"/>
-        <ui:AutoSuggestBox x:Name="BackingTrackSearch" Loaded="IrLibrarySearchLoaded" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Filtrar playlist'}" ToolTip="{loc:Translate Text='Filtrar playlist'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Filtrar playlist'}">
-         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSearch24}" FontSize="{DynamicResource CubeIconSizeAction}" Width="20" Height="20" VerticalAlignment="Center" Margin="0,2,0,0"/></ui:AutoSuggestBox.Icon>
-         <ui:AutoSuggestBox.Resources>
-          <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
-          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="Transparent"/>
-          <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
-         </ui:AutoSuggestBox.Resources>
+        <ui:AutoSuggestBox x:Name="BackingTrackSearch" Style="{StaticResource CubeSearchAutoSuggestBoxStyle}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Filtrar playlist'}" ToolTip="{loc:Translate Text='Filtrar playlist'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Filtrar playlist'}">
+         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSearch24}" FontSize="{DynamicResource CubeIconSizeAction}" Width="20" Height="20" VerticalAlignment="Center"/></ui:AutoSuggestBox.Icon>
         </ui:AutoSuggestBox>
          <ListBox x:Name="BackingTrackList" ItemsSource="{Binding FilteredTracks}" SelectedItem="{Binding SelectedTrack,Mode=OneWay}" SelectionChanged="BackingSelectionChanged" MaxHeight="480" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled" PreviewMouseLeftButtonDown="BackingTrackDragStart" PreviewMouseMove="BackingTrackDragMove" MouseDoubleClick="BackingTrackDoubleClick" PreviewMouseRightButtonDown="BackingTrackContext" Tag="track" ContextMenuOpening="BackingContextOpening" AutomationProperties.Name="{loc:Translate Text='Lista de backing tracks'}"><ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
-          <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource SelectionTile}"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="MinHeight" Value="72"/><Setter Property="Padding" Value="8"/></Style></ListBox.ItemContainerStyle>
-          <ListBox.ItemTemplate><DataTemplate><Grid ToolTip="{Binding Source}"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-           <StackPanel Margin="0,4,8,4"><TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextTrimming="CharacterEllipsis"/><TextBlock Text="{Binding MetadataLabel}" Style="{StaticResource SelectionSecondaryText}" Margin="0,4,0,0" TextWrapping="Wrap"/><TextBlock Text="{Binding Tuning}" Style="{StaticResource SelectionSecondaryText}" TextTrimming="CharacterEllipsis"/></StackPanel>
+          <ListBox.ItemContainerStyle><StaticResource ResourceKey="CompactMusicListItem"/></ListBox.ItemContainerStyle>
+          <ListBox.ItemTemplate><DataTemplate><Grid ToolTip="{Binding Source}" SizeChanged="BackingPlaylistItemSizeChanged">
+           <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+           <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
+            <TextBlock Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" MaxHeight="40" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+            <TextBlock Text="{Binding MetadataLabel}" Style="{StaticResource SelectionSecondaryText}" Margin="0,2,0,0" TextWrapping="Wrap" ToolTip="{Binding MetadataLabel}"/>
+           </StackPanel>
+           <TextBlock Grid.Column="1" Text="{Binding LengthLabel}" Style="{StaticResource SelectionSecondaryText}" VerticalAlignment="Center"/>
           </Grid></DataTemplate></ListBox.ItemTemplate>
          </ListBox>
          </StackPanel></Border>
          <Border x:Name="BackingYouTubePanel" Grid.Column="2" Style="{StaticResource Card}" VerticalAlignment="Top"><StackPanel>
           <TextBlock Text="{loc:Translate Text='Buscar faixas'}" Style="{StaticResource SectionTitle}" Margin="0,0,0,12"/>
         <Grid Margin="0,0,0,8">
-        <ui:AutoSuggestBox x:Name="BackingYouTubeSearch" Loaded="BackingMusicSearchLoaded" Text="{Binding YouTubeQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar faixas'}" ToolTip="{loc:Translate Text='Buscar faixas'}" Margin="0" AutomationProperties.Name="{loc:Translate Text='Buscar faixas'}">
-         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSearch24}" FontSize="{DynamicResource CubeIconSizeAction}" Width="20" Height="20" VerticalAlignment="Center" Margin="0,2,0,0"/></ui:AutoSuggestBox.Icon>
-         <ui:AutoSuggestBox.Resources>
-          <SolidColorBrush x:Key="TextControlFocusedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
-          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="Transparent"/>
-          <SolidColorBrush x:Key="TextControlElevationBorderBrush" Color="{DynamicResource ControlStrokeColorDefault}"/>
-         </ui:AutoSuggestBox.Resources>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <ui:AutoSuggestBox x:Name="BackingYouTubeSearch" Style="{StaticResource CubeSearchAutoSuggestBoxStyle}" Text="{Binding YouTubeQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar faixas'}" ToolTip="{loc:Translate Text='Buscar faixas'}" Margin="0" AutomationProperties.Name="{loc:Translate Text='Buscar faixas'}">
+         <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSearch24}" FontSize="{DynamicResource CubeIconSizeAction}" Width="20" Height="20" VerticalAlignment="Center"/></ui:AutoSuggestBox.Icon>
         </ui:AutoSuggestBox>
-         <ToggleButton x:Name="BackingTrackSearchToggle" IsChecked="{Binding AppendBackingTrack,Mode=TwoWay}" Width="32" Height="32" MinHeight="32" Padding="0" Margin="0,0,40,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+         <ToggleButton x:Name="BackingTrackSearchToggle" Grid.Column="1" IsChecked="{Binding AppendBackingTrack,Mode=TwoWay}" Width="40" Height="40" MinHeight="40" Padding="0" Margin="8,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center"
           ToolTip="{loc:Translate Text='Acrescentar backing track ao termo da busca'}" AutomationProperties.Name="{loc:Translate Text='Acrescentar backing track ao termo da busca'}">
           <ToggleButton.Style>
            <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">

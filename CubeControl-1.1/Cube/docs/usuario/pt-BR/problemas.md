@@ -12,8 +12,8 @@ Ajustes ao vivo não equivalem a gravação persistente. Salve o banco para A/B/
 ## Uma faixa não toca
 Confira se o MP3/WAV ainda existe no caminho original e se a saída de áudio está disponível. Verifique volume e mute. Busca do YouTube precisa de rede; reprodução local não.
 
-## A gravação combinada não tem guitarra
-Confira a entrada selecionada, o monitor e o mute do canal Guitarra no mixer. O modo combinado liga o monitor e eleva seu volume para 50% se estiver em 0%, mas não remove o mute. Inicie a reprodução da faixa separadamente quando estiver pronto. Se o monitor for interrompido durante a gravação combinada, a gravação também é interrompida; preserve o WAV recuperável indicado na mensagem. Veja [Gravar](backing-tracks.md#gravar).
+## REC indisponível ou gravação sem áudio
+Selecione uma entrada válida acima do player e confira se ela recebe sinal no Windows. REC captura somente essa entrada; volume, mute e monitor do mixer não determinam o áudio gravado. Backing track e metrônomo não são incluídos automaticamente. REC novamente salva a gravação em uma nova faixa; Parar também encerra a reprodução. Se a entrada desconectar ou houver falha, preserve o WAV recuperável indicado. Arquivos sem amostras não geram faixa; se o WAV foi salvo mas a playlist falhou, a mensagem informa o caminho preservado. Veja [Gravar](backing-tracks.md#gravar).
 
 ## O WAV exportado soa diferente do player
 A exportação ignora volume e mute. Velocidade e transposição só entram quando a opção correspondente é marcada no diálogo. A seleção A/B define o trecho exportado mesmo com loop desligado. Consulte [Exportar](backing-tracks.md#exportar).

@@ -1,0 +1,67 @@
+{
+  "state": "pedal-on",
+  "started_utc": "2026-10-12T20:57:26.867702+00:00",
+  "duration_seconds": 30,
+  "devices": [
+    {
+      "address": "69:FC:7B:B5:EA:43",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "76": [
+          "0002151ca92e23f0874df7b9a2fd4b716a4bf6919d000003"
+        ]
+      },
+      "service_data": {},
+      "count": 5,
+      "rssi_min": -76,
+      "rssi_max": -75
+    },
+    {
+      "address": "70:09:71:B6:EF:E1",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "117": [
+          "4204018066700971b6efe1720971b6efe001970000000000"
+        ]
+      },
+      "service_data": {},
+      "count": 29,
+      "rssi_min": -74,
+      "rssi_max": -59
+    },
+    {
+      "address": "94:A9:90:A7:B1:E2",
+      "names": [
+        "MI_60Q1252054RK168"
+      ],
+      "services": [
+        "000000ee-0000-1000-8000-00805f9b34fb"
+      ],
+      "manufacturer_data": {
+        "12621": [
+          "7c8c4a0000"
+        ]
+      },
+      "service_data": {},
+      "count": 3,
+      "rssi_min": -98,
+      "rssi_max": -96
+    },
+    {
+      "address": "84:FC:E6:A0:11:42",
+      "names": [],
+      "services": [],
+      "manufacturer_data": {
+        "12621": [
+          "7c8c4a0000"
+        ]
+      },
+      "service_data": {},
+      "count": 1,
+      "rssi_min": -99,
+      "rssi_max": -99
+    }
+  ]
+}

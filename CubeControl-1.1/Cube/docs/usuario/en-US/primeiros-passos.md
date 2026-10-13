@@ -23,3 +23,6 @@ For connection issues, see [Troubleshooting](problemas.md).
 
 ## Find help
 Documentation Center search matches catalog titles, summaries and keywords, not the full guide text. Every space-separated term must match; case and accents are ignored. If the selected language is unavailable, the app uses Brazilian Portuguese or, failing that, the first available version. Preserved manuals describe their source versions; use the Center’s guides for current app workflows.
+
+## Navigation and help
+With the pointer over the main navigation bar, the mouse wheel moves between the five tabs and stops at either end. Outside the bar, scrolling continues to affect the page or control. Use Tab and Shift+Tab for keyboard navigation; Alt alone does not activate navigation cues. Tooltips appear after 1.2 seconds and disappear five seconds after appearing; a new hover can show them again. The documentation window follows the app theme, with zoom applied to its reading content.

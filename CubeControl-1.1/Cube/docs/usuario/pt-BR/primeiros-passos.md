@@ -23,3 +23,6 @@ Se a conexão falhar, consulte [Problemas comuns](problemas.md).
 
 ## Encontrar ajuda
 A busca da Central de Documentação procura no título, resumo e palavras-chave do catálogo, não no texto integral dos guias. Todos os termos separados por espaço precisam corresponder; maiúsculas e acentos são ignorados. Se não houver versão no idioma selecionado, o app usa português brasileiro ou, na ausência dele, a primeira versão disponível. Os manuais preservados descrevem suas versões de origem; para os fluxos atuais do aplicativo, use os guias da Central.
+
+## Navegar e consultar ajuda
+Com o cursor sobre a barra principal, a roda do mouse avança ou retorna entre as cinco abas e para nos extremos. Fora da barra, a roda continua atuando sobre a página ou o controle. Use Tab e Shift+Tab para navegar pelo teclado; Alt sozinho não ativa marcações de navegação. As dicas aparecem após 1,2 segundo e desaparecem cinco segundos depois de exibidas; um novo hover permite exibi-las novamente. A janela de documentação acompanha o tema do app, com zoom aplicado ao conteúdo de leitura.
