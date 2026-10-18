@@ -10,14 +10,16 @@ public sealed partial class CubeSession
     {
         uint address = AmpAddress(slot);
         await gate.WaitAsync(ct);
-        try { RequireIdentity(); return await ReadChunks(0, address, AmpImage.Size, ct); }
+        try {
+            using var measurement = MeasureOperation(); RequireIdentity(); return await ReadChunks(0, address, AmpImage.Size, ct); }
         finally { gate.Release(); }
     }
 
     public async Task<byte[]> ReadAmpRam(CancellationToken ct = default)
     {
         await gate.WaitAsync(ct);
-        try { RequireIdentity(); return await ReadChunks(4, 0x1C, AmpImage.BodyLength, ct); }
+        try {
+            using var measurement = MeasureOperation(); RequireIdentity(); return await ReadChunks(4, 0x1C, AmpImage.BodyLength, ct); }
         finally { gate.Release(); }
     }
 
@@ -34,6 +36,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity();
             var before = await ReadChunks(4, 0x1C, AmpImage.BodyLength, ct);
             if (preserve != null) await preserve(before.ToArray());
@@ -68,6 +71,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity();
             var current = await ReadChunks(0, address, AmpImage.Size, ct);
             if (!current.SequenceEqual(baseline)) throw new InvalidOperationException("O slot de amp mudou. Leia novamente.");

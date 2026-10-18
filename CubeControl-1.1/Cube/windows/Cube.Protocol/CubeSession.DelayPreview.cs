@@ -8,6 +8,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var snapshot = await ReadDelayCore(ct);
             if (physicalSlot is < 0 or > 2 || !snapshot.PhysicalState.SequenceEqual(new byte[] { (byte)physicalSlot, 1 }))
                 throw new IOException("Selecione na aplicação o preset ativo fisicamente e use modo PRESET.");
@@ -65,6 +66,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var before = await ReadDelayCore(ct, effectControlsOnly: true);
             CheckDelayContext(recovery, before, recovering: false);
             if (parameters == recovery.Target) return recovery; // Fresh context already confirmed; no mutation.
@@ -85,6 +87,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var before = await ReadDelayCore(ct, effectControlsOnly: true);
             CheckDelayContext(recovery, before, recovering: true);
             var original = DelayParameters.Read(recovery.OriginalDsp);
@@ -103,10 +106,7 @@ public sealed partial class CubeSession
         foreach (var (offset, length) in DelayParameters.Fields)
         {
             if (expected.AsSpan(offset, length).SequenceEqual(after.AsSpan(offset, length))) continue;
-            if (!(await ReadInternal(0, 48, ct)).SequenceEqual(before.Bank) ||
-                !(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4)).SequenceEqual(before.PhysicalState) ||
-                !(await ReadChunks(4, 0x694, 0x4C, ct)).AsSpan().SequenceEqual(expected.AsSpan(0x694, 0x4C)))
-                throw new IOException("Contexto mudou entre escritas; prévia interrompida e backup preservado.");
+            // Context is checked once before this batch and verified after all ACKs.
             await AmpAck(CubePacket.Write(4, (uint)offset, after.AsSpan(offset, length)), ct);
             after.AsSpan(offset, length).CopyTo(expected.AsSpan(offset, length));
         }

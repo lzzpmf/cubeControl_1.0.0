@@ -32,7 +32,7 @@ public sealed class LanguageService : INotifyPropertyChanged
 
     public LanguageService(string? catalogDirectory = null, string? settingsPath = null)
     {
-        preferencePath = settingsPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl", "language-v1.json");
+        preferencePath = settingsPath ?? Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl", "language-v1.json");
         packs["pt-BR"] = new() { Code = "pt-BR", Name = "Português (Brasil)" };
         string directory = catalogDirectory ?? Path.Combine(AppContext.BaseDirectory, "Localization");
         if (Directory.Exists(directory)) foreach (string path in Directory.EnumerateFiles(directory, "*.json"))

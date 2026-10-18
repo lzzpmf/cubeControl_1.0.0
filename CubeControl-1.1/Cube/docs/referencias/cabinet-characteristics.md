@@ -21,6 +21,8 @@ A apresentação atual está em [VisualCatalogViewModel.cs](../../windows/Cube.D
 
 ## Limites da identificação
 
+A [auditoria das imagens de IRs de 18/10/2026](ir-artwork-audit/README.md) cobre os 958 WAVs distribuídos e as 16 identidades BFI/BFIN, com inventário por arquivo, fontes e decisões de arte. A quantidade de falantes conhecida tem precedência sobre correspondências genéricas de nome. BFIN e configurações desconhecidas usam uma frente opaca neutra; a identificação por hash não comprova o modelo físico do gabinete.
+
 - Deliverance: a página disponível descreve a Series II. Apenas formato 2×12 e frente reta foram utilizados como referência da família. Não atribuímos seus FANE F70G, potência ou resposta específica à captura antiga do Cube Baby.
 - Soldano: o modelo/ano exato da captura não está documentado. Usamos apenas configuração e disposição do gabinete de referência, sem afirmar falantes ou microfone.
 - Marshall 1960AV: usamos a nomenclatura oficial G12-Vintage; não repetimos a simplificação Vintage 30 do catálogo local anterior.

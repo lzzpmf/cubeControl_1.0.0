@@ -306,10 +306,28 @@ public sealed class EffectGraphEditor : Grid
                 bool active = option.Tag is int value && selected.Value == value;
                 string label = option.Tag is int choice ? selected.Key == "Waveform" ? choice == 0 ? "Original" : "Triangular" : choice.ToString()
                     : selected.Value == 0 ? "Retomar modulação" : "Congelar fase";
-                option.Content = T(label);
+                var choiceLabel = new TextBlock { Text = T(label), Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
+                var choiceMarker = new Border { Width = 3, Height = 16, CornerRadius = new CornerRadius(2), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Visibility = active ? Visibility.Visible : Visibility.Collapsed, IsHitTestVisible = false };
+                choiceMarker.SetResourceReference(Border.BackgroundProperty, active ? "CubeSelectionIndicator" : "CubeFocus");
+                // Keep a single cue when the selected choice also has keyboard focus.
+                var markerStyle = new Style(typeof(Border));
+                markerStyle.Setters.Add(new Setter(FrameworkElement.HeightProperty, 16.0));
+                markerStyle.Setters.Add(new Setter(UIElement.VisibilityProperty, active ? Visibility.Visible : Visibility.Collapsed));
+                var markerFocus = new DataTrigger { Binding = new Binding(nameof(IsKeyboardFocused)) { Source = option }, Value = true };
+                markerFocus.Setters.Add(new Setter(FrameworkElement.HeightProperty, 24.0));
+                markerFocus.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Visible));
+                markerStyle.Triggers.Add(markerFocus);
+                choiceMarker.ClearValue(FrameworkElement.HeightProperty);
+                choiceMarker.ClearValue(UIElement.VisibilityProperty);
+                choiceMarker.Style = markerStyle;
+                option.FocusVisualStyle = null;
+                option.SetResourceReference(Control.ForegroundProperty, active ? "CubeSelectedText" : "CubeText");
+                var choiceContent = new Grid();
+                choiceContent.Children.Add(choiceLabel); choiceContent.Children.Add(choiceMarker);
+                option.Content = choiceContent;
                 option.FontWeight = active ? FontWeights.Bold : FontWeights.Normal;
                 option.Background = active ? Brush("CubeSelected") : Brushes.Transparent;
-                option.BorderBrush = active ? Signal : Brushes.Transparent;
+                option.BorderThickness = new Thickness(0);
                 AutomationProperties.SetName(option, $"{T(selected.Name)}: {T(label)}");
                 AutomationProperties.SetItemStatus(option, active ? T("Selecionado") : "");
             }
@@ -754,7 +772,7 @@ public sealed class EffectGraphEditor : Grid
             bool active = owner.selected == this;
             dc.DrawEllipse(active ? owner.Signal : owner.Brush("CubeInset"), new Pen(owner.Signal, active || IsMouseOver ? 2.5 : 1.5), new Point(18, 18), IsMouseOver ? 7 : 5, IsMouseOver ? 7 : 5);
             if (active) dc.DrawEllipse(null, new Pen(owner.Signal, 1), new Point(18, 18), 9, 9);
-            if (IsKeyboardFocused) dc.DrawRoundedRectangle(null, new Pen(owner.Brush("CubeFocus"), 1.5) { DashStyle = DashStyles.Dot }, new Rect(2, 2, 32, 32), 5, 5);
+            if (IsKeyboardFocused) dc.DrawRoundedRectangle(owner.Brush("CubeFocus"), null, new Rect(0, 6, 3, 24), 2, 2);
         }
         protected override AutomationPeer OnCreateAutomationPeer() => new GraphNodePeer(this);
 

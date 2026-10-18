@@ -11,14 +11,14 @@ internal static class BackingPerformanceTests
     {
         Cube.Desktop.Appearance.ThemeService.Instance.Initialize();
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-backing-profile-" + Guid.NewGuid().ToString("N")));
-        var window = new MainWindow(model) { Width = 1280, Height = 900 };
+        var window = new MainWindow(model, initializeDevices: false) { Width = 1280, Height = 900 };
         window.Show();
         try
         {
             var tabs = (TabControl)window.FindName("Tabs");
             string? source = Environment.GetEnvironmentVariable("CUBE_BACKING_PROFILE_AUDIO");
             if (source == null || !File.Exists(source)) throw new InvalidOperationException("Set CUBE_BACKING_PROFILE_AUDIO to a local MP3/WAV.");
-            if (Environment.GetCommandLineArgs().Contains("--backing-preview"))
+            if (TestCatalog.Arguments.Contains("--backing-preview"))
             {
                 tabs.SelectedIndex = 2;
                 window.BackingTracks.AddPaths([source]);
@@ -34,7 +34,7 @@ internal static class BackingPerformanceTests
                     bitmap.Render(window);
                     var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
                     encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                    string reports = "C:/CubeControl-Build/backing-validation/reports";
+                    string reports = TestPaths.Report("C:/CubeControl-Build/backing-validation/reports");
                     Directory.CreateDirectory(reports);
                     using var image = File.Create(Path.Combine(reports, "backing-real-track.png"));
                     encoder.Save(image);

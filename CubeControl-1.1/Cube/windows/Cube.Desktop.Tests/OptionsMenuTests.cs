@@ -29,7 +29,7 @@ internal static class OptionsMenuTests
     public static async Task Run()
     {
         string temporary = Path.Combine(Path.GetTempPath(), "cube-options-" + Guid.NewGuid().ToString("N"));
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/options-menu"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/options-menu")); Directory.CreateDirectory(folder);
         int initialZoom = ZoomService.Instance.Percent;
         ZoomService.Instance.Preview(100);
         var initialTheme = ThemeService.Instance.Mode;
@@ -39,7 +39,7 @@ internal static class OptionsMenuTests
         using var session = new CubeSession(fake); await session.Identify();
         using var model = new EditorViewModel(temporary);
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false };
         window.SelectZoom = ZoomService.Instance.Preview;
         window.SelectControlFinish = ThemeService.Instance.PreviewFinish;
         window.Show(); await Task.Delay(150); while (model.Busy) await Task.Delay(30);

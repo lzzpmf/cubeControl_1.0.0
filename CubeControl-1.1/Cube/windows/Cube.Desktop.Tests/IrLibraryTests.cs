@@ -43,7 +43,7 @@ internal static class IrLibraryTests
         library.Search = "";
         foreach (var entry in library.Entries)
             Check(IrAudio.Decode(await File.ReadAllBytesAsync(entry.FullPath)).Prepare().Length == 512, "decode and prepare " + entry.Name);
-        if (Environment.GetCommandLineArgs().Contains("--ir-catalog-only")) return;
+        if (TestCatalog.Arguments.Contains("--ir-catalog-only")) return;
         Check(new IrLibraryViewModel(() => true, Path.Combine(folder, "missing")).Entries.Count == 0, "missing library is nonfatal");
         Check(new IrLibraryViewModel(() => true, folder).Entries.Count == 0, "empty library is nonfatal");
         foreach (string name in new[] { "A", "B/nested" })

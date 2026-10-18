@@ -86,6 +86,7 @@ public sealed partial class EditorViewModel
 
     private void PhaserEdited()
     {
+        if (retiringAdvanced[2]) return;
         if (!PhaserPreviewActive || phaserStopped || !IsModulationPreviewAudible(2))
         {
             if (!phaserStopped) Phaser.Message = "Edição local alterada · ainda não aplicada nem exportada.";
@@ -141,33 +142,39 @@ public sealed partial class EditorViewModel
 
     public async Task EndPhaserPreviewAsync()
     {
-        phaserMonitorStop?.Cancel();
-        if (phaserMonitorTask != null) await phaserMonitorTask;
-        phaserMonitorTask = null;
-        phaserMonitorStop?.Dispose(); phaserMonitorStop = null;
+        retiringAdvanced[2] = true;
         phaserPending = false;
-        if (!Busy && phaserSendTask != null) await phaserSendTask;
-        if (phaserRecovery == null) return;
-        if (session == null) throw new IOException("Reconecte o pedal para restaurar o phaser. Snapshot preservado em memória nesta sessão.");
-        if (await RetireObsoleteAdvancedRecoveryAsync(2)) return;
-        if (!phaserStopped && !IsModulationPreviewAudible(2))
-        {
-            phaserRecovery = null;
-            Phaser.Message = "Prévia encerrada. O outro efeito de modulação permanece selecionado; edição local preservada.";
-            Refresh();
-            return;
-        }
-        phaserStopped = true;
         try
         {
-            await session.RestorePhaserPreview(phaserRecovery);
-            Phaser.Load(phaserRecovery.Identity, PhaserParameters.Read(phaserRecovery.OriginalDsp));
-            phaserRecovery = null; phaserStopped = false;
-            Phaser.Message = "Phaser original restaurado e conferido. Edição local disponível.";
-            RecordOperation("Prévia de phaser encerrada; parâmetros anteriores restaurados.");
+            phaserMonitorStop?.Cancel();
+            if (phaserMonitorTask != null) await phaserMonitorTask;
+            phaserMonitorTask = null;
+            phaserMonitorStop?.Dispose(); phaserMonitorStop = null;
+            phaserPending = false;
+            if (!Busy && phaserSendTask != null) await phaserSendTask;
+            if (phaserRecovery == null) return;
+            if (session == null) throw new IOException("Reconecte o pedal para restaurar o phaser. Snapshot preservado em memória nesta sessão.");
+            if (await RetireObsoleteAdvancedRecoveryAsync(2)) return;
+            if (!phaserStopped && !IsModulationPreviewAudible(2))
+            {
+                phaserRecovery = null;
+                Phaser.Message = "Prévia encerrada. O outro efeito de modulação permanece selecionado; edição local preservada.";
+                Refresh();
+                return;
+            }
+            phaserStopped = true;
+            try
+            {
+                await session.RestorePhaserPreview(phaserRecovery);
+                Phaser.Load(phaserRecovery.Identity, PhaserParameters.Read(phaserRecovery.OriginalDsp));
+                phaserRecovery = null; phaserStopped = false;
+                Phaser.Message = "Phaser original restaurado e conferido. Edição local disponível.";
+                RecordOperation("Prévia de phaser encerrada; parâmetros anteriores restaurados.");
+            }
+            catch { Phaser.Message = "Restauração não confirmada. O snapshot do phaser continua em memória nesta sessão."; throw; }
+            finally { Refresh(); }
         }
-        catch { Phaser.Message = "Restauração não confirmada. O snapshot do phaser continua em memória nesta sessão."; throw; }
-        finally { Refresh(); }
+        finally { retiringAdvanced[2] = false; }
     }
 
     public async Task RestorePhaserAsync()

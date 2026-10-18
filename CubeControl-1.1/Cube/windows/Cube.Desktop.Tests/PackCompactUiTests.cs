@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -32,14 +32,16 @@ internal static class PackCompactUiTests
         var editor = model.PackEditor;
         await editor.SelectAsync(model.IrPacks.First(p => p.Definition != null && p.Group != "Meus packs"));
         editor.SelectedIr = editor.PackLibrary.Entries.First();
+        var fixtureIr = editor.SelectedIr;
         for (int i = 0; i < 8; i++) editor.AssignIr(i, editor.SelectedIr);
         var old = Application.Current.MainWindow;
         var theme = ThemeService.Instance.Mode; var language = LanguageService.Instance.Language; var zoom = ZoomService.Instance.Percent;
         var window = new MainWindow(model, initializeDevices: false) { Width = 1600, Height = 1000, ShowInTaskbar = false };
         Application.Current.MainWindow = window; window.Show();
         ((TabControl)window.FindName("Tabs")).SelectedIndex = 1;
+        ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 1;
         var view = (IrPackEditor)window.FindName("IrPacksCard");
-        string folder = "C:/CubeControl-Build/reports/ir-pack-compact"; Directory.CreateDirectory(folder);
+        string folder = TestPaths.Report("C:/CubeControl-Build/reports/ir-pack-compact"); Directory.CreateDirectory(folder);
         try
         {
             foreach (var (code, percent, mode, width, contrast) in new[] {
@@ -49,6 +51,7 @@ internal static class PackCompactUiTests
             {
                 LanguageService.Instance.Preview(code); ZoomService.Instance.Preview(percent); ThemeService.Instance.Preview(mode);
                 if (contrast) Wpf.Ui.Appearance.ApplicationThemeManager.Apply(Wpf.Ui.Appearance.ApplicationTheme.HighContrast);
+                ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 1;
                 window.Width = width; window.Height = width == 640 ? 480 : 1000;
                 await Task.Delay(250); window.UpdateLayout();
                 if (code == "en-US") Check(Find<TextBlock>(view).Any(t => t.Text == "Drag an IR onto a slot. Drag cabinet cards to swap their positions."), "mounted drag instructions switch to English");
@@ -61,8 +64,8 @@ internal static class PackCompactUiTests
                 var reviewBounds = reviewButton.TransformToAncestor(view).TransformBounds(new Rect(reviewButton.RenderSize));
                 var restoreBounds = restoreButton.TransformToAncestor(view).TransformBounds(new Rect(restoreButton.RenderSize));
                 var gridBounds = grid.TransformToAncestor(view).TransformBounds(new Rect(grid.RenderSize));
-                Check(reviewBounds.Bottom <= gridBounds.Top && restoreBounds.Bottom <= gridBounds.Top && !reviewBounds.IntersectsWith(restoreBounds) && restoreButton.IsVisible,
-                    "review and restoration are visible, distinct actions above the cabinet grid");
+                Check(reviewBounds.Top >= gridBounds.Bottom && restoreBounds.Top >= gridBounds.Bottom && !reviewBounds.IntersectsWith(restoreBounds) && restoreButton.IsVisible,
+                    "apply and restoration are visible, distinct actions below the cabinet grid");
                 if (width == 1600) Check(Math.Abs(reviewBounds.Top - restoreBounds.Top) < 1, "main actions align side by side in wide layouts");
 
                 var cards = Find<Border>(view).Where(b => b.Name == "SlotCard").OrderBy(b => ((IrPackSlotViewModel)b.DataContext).Index).ToArray();
@@ -72,24 +75,29 @@ internal static class PackCompactUiTests
                     var a = cards[0].TransformToAncestor(grid).Transform(new Point());
                     var b = cards[3].TransformToAncestor(grid).Transform(new Point());
                     var c = cards[4].TransformToAncestor(grid).Transform(new Point());
-                    Check(Math.Abs(a.Y - b.Y) < 1 && c.Y > a.Y && grid.ActualHeight < 430, "compact mounting grid fits eight cards in two short rows");
+                    Check(Math.Abs(a.Y - b.Y) < 1 && c.Y > a.Y && cards.All(card => card.TransformToAncestor(grid).Transform(new Point()).Y + card.ActualHeight <= grid.ActualHeight + 1), "mounting grid fits eight volume-editable cards in two rows without clipping");
                 }
+                ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 0;
+                await Task.Delay(100); window.UpdateLayout();
                 var audition = (Border)window.FindName("IrAuditionCard");
                 var fader = Find<BackingFader>(audition).Single();
                 Check(fader.Orientation == Orientation.Horizontal && fader.ActualHeight >= 32 && fader.Template.FindName("PART_Track", fader) is System.Windows.Controls.Primitives.Track { Orientation: Orientation.Horizontal }, "audition uses a real horizontal themed fader");
-                Check(Find<Wpf.Ui.Controls.SymbolIcon>(audition).Any(f => f.Symbol == Wpf.Ui.Controls.SymbolRegular.Play24) && Find<Wpf.Ui.Controls.SymbolIcon>(audition).Any(f => f.Symbol == Wpf.Ui.Controls.SymbolRegular.Stop24), "audition uses Fluent transport icons");
+                Check(Find<BackingButtonFace>(audition).Any(f => f.Art == "play") && Find<BackingButtonFace>(audition).Any(f => f.Art == "stop"), "audition shares the player transport artwork");
+                ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 1;
+                await Task.Delay(100); window.UpdateLayout();
                 cards[0].BringIntoView(); window.Activate(); cards[0].Focus(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var trash = Find<Wpf.Ui.Controls.Button>(cards[0]).Single();
                 Check(trash.IsVisible && trash.IsEnabled, $"focused card exposes accessible trash action (focus={cards[0].IsKeyboardFocusWithin}, visibility={trash.Visibility}, enabled={trash.IsEnabled}, editable={editor.CanEdit})");
                 cards[0].RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(window), 0, Key.Delete) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
                 Check(!editor.Slots[0].HasEntry, "Delete removes only the focused slot");
-                editor.AssignIr(0, editor.SelectedIr!);
+                Check(editor.AssignIr(0, fixtureIr), "refill removed card with the original fixture independently of library selection");
                 view.BringIntoView(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout();
                 var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                 bitmap.Render(window); var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
                 string target = Path.Combine(folder, $"mount-{code}-{percent}-{mode}-{contrast}.png");
                 using (var output = File.Create(target)) png.Save(output);
                 Console.WriteLine("SCREENSHOT " + target);
+                ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 0; window.UpdateLayout();
                 audition.BringIntoView(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout();
                 bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
                 png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
@@ -99,6 +107,7 @@ internal static class PackCompactUiTests
             }
             LanguageService.Instance.Preview("pt-BR"); ZoomService.Instance.Preview(100); ThemeService.Instance.Preview(ThemeMode.Dark);
             window.Width = 1600; window.Height = 1000;
+            ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 1; window.UpdateLayout();
             var destination = Find<Border>(view).Single(b => b.Name == "SlotCard" && ((IrPackSlotViewModel)b.DataContext).Index == 2);
             var sourceType = typeof(IrPackEditor).GetNestedType("SlotDrag", BindingFlags.NonPublic)!;
             var libraryType = typeof(IrPackEditor).GetNestedType("LibraryDrag", BindingFlags.NonPublic)!;
@@ -112,14 +121,14 @@ internal static class PackCompactUiTests
             editor.Slots[0].DistanceValue = 17; editor.Slots[2].DistanceValue = 81;
             var slotData = new DataObject(sourceType, Activator.CreateInstance(sourceType, editor, 0)!);
             var over = Args(slotData); Drag("SlotDragOver", over);
-            Check(over.Effects == DragDropEffects.Move && (string?)destination.Tag == "Drop", "typed slot drag highlights an accepted destination");
-            Drag("SlotDragLeave", over); Check(destination.Tag == null, "leaving a destination clears drag feedback without changing content");
+            Check(over.Effects == DragDropEffects.Move && DragFeedback.IsVisible, "typed slot drag highlights an accepted destination");
+            Drag("SlotDragLeave", over); Check(!DragFeedback.IsVisible, "leaving a destination clears drag feedback without changing content");
             Drag("SlotDrop", Args(slotData));
             Check(editor.Slots[2].Entry!.Distance == 17 && editor.Slots[0].Entry!.Distance == 81, "slot drop handler swaps IRs and distances");
             var entry = editor.PackLibrary.Entries.Last();
             var libraryData = new DataObject(libraryType, Activator.CreateInstance(libraryType, editor, entry)!);
             Drag("SlotDrop", Args(libraryData));
-            Check(editor.Slots[2].Entry!.RelativePath.Replace('\\', '/') == entry.RelativePath.Replace('\\', '/') && editor.Slots[2].Entry!.Distance == 50, "library drop handler assigns selected source with default distance");
+            Check(editor.Slots[2].Entry!.RelativePath.Replace('\\', '/') == entry.RelativePath.Replace('\\', '/') && editor.Slots[2].Entry!.Distance == 80, "library drop handler assigns selected source with default distance");
             var beforeDrop = editor.Draft().Entries.ToArray();
             var external = new DataObject(DataFormats.FileDrop, new[] { "outside.wav" });
             var invalid = Args(external); Drag("SlotDrop", invalid);

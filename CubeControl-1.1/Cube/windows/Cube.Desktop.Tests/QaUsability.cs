@@ -21,6 +21,14 @@ internal static class QaUsability
 {
     private static readonly List<string> unhandled = [];
     private static string? currentDirectory;
+    internal static Task RunAll()
+    {
+        string batteries = string.Join(",", Cases().SelectMany(c => c.Batteries).Distinct());
+        string output = Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "qa-results");
+        int result = RunMain(["--qa", "--batteries", batteries, "--results", output]);
+        if (result != 0) throw new InvalidOperationException("QA cases failed; see " + output);
+        return Task.CompletedTask;
+    }
     public static int RunMain(string[] args)
     {
         if (args.Contains("--list")) return QaRunner.Run("usability", args, Cases()).GetAwaiter().GetResult();

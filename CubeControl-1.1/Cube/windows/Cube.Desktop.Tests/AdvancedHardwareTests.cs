@@ -26,7 +26,7 @@ internal static class AdvancedHardwareTests
         await model.AttachSession(session);
         if (recoveryOnly)
         {
-            string pending = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl", "pending-chorus-preview.json");
+            string pending = Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl", "pending-chorus-preview.json");
             File.Copy(pending, Path.Combine(folder, "pending-chorus-preview.json"));
             await (Task)typeof(EditorViewModel).GetMethod("LoadPendingChorus", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(model, null)!;
         }

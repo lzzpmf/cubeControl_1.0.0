@@ -16,7 +16,7 @@ internal static class ChainTests
         musical.ChorusDial.Value = 6; musical.PhaserDial.Value = 2;
         Check(writes.Count == 0, "both inactive cards prepare amounts without MIDI");
         musical.ChorusEnabled = true;
-        Check(writes.Count == 1 && writes[^1] == (new ParameterKey(2, 8), 5) && !musical.PhaserEnabled, "Chorus maps position 6 to raw 5 on original preset C");
+        Check(writes.Count == 1 && writes[^1] == (new ParameterKey(2, 8), 1) && !musical.PhaserEnabled, "Chorus maps position 6 to raw 1 on original preset C");
         musical.PhaserDial.Value = 7;
         Check(writes.Count == 1 && musical.ChorusEnabled && musical.ChorusDial.Value == 6, "editing inactive Phaser preserves active Chorus sound and amount");
         musical.PhaserEnabled = true;
@@ -26,7 +26,7 @@ internal static class ChainTests
         musical.PhaserEnabled = false;
         Check(writes.Count == 3 && writes[^1].Value == 8 && !musical.ChorusEnabled && !musical.PhaserEnabled, "shared bypass sends raw 8");
         musical.ChorusEnabled = true;
-        Check(writes[^1].Value == 5 && musical.PhaserDial.Value == 7, "reactivation restores the independent prepared values");
+        Check(writes[^1].Value == 1 && musical.PhaserDial.Value == 7, "reactivation restores the independent prepared values");
         preset.Parameters[8].Load(11);
         Check(musical.PhaserEnabled && musical.PhaserDial.Value == 3 && !musical.ChorusEnabled, "device bank values update the correct card");
         preset.Parameters[11].Load(0); writes.Clear();

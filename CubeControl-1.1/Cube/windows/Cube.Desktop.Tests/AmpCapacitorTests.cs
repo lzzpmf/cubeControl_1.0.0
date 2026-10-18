@@ -108,8 +108,8 @@ internal static class AmpCapacitorTests
                 var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                 bitmap.Render(window);
                 var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-                Directory.CreateDirectory("C:/CubeControl-Build/reports/capacitors");
-                using var output = File.Create($"C:/CubeControl-Build/reports/capacitors/response-{width}.png");
+                Directory.CreateDirectory(TestPaths.Report("C:/CubeControl-Build/reports/capacitors"));
+                using var output = File.Create(TestPaths.Report($"C:/CubeControl-Build/reports/capacitors/response-{width}.png"));
                 encoder.Save(output);
             }
             await RenderCards(editor, model);
@@ -175,7 +175,7 @@ internal static class AmpCapacitorTests
                             var bitmap = new RenderTargetBitmap((int)gallery.ActualWidth, (int)gallery.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                             bitmap.Render(gallery);
                             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
-                            using var output = File.Create($"C:/CubeControl-Build/reports/capacitors/cards-{theme}-{width}-{scale * 100:0}-{bottom}.png");
+                            using var output = File.Create(TestPaths.Report($"C:/CubeControl-Build/reports/capacitors/cards-{theme}-{width}-{scale * 100:0}-{bottom}.png"));
                             png.Save(output);
                         }
                     }

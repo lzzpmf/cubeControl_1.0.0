@@ -14,29 +14,39 @@ The backward and forward buttons skip five seconds. They display icons only; hov
 
 Under **Tempo & pitch**, scroll over the percentage to change speed in 1% steps, from 50% to 150%. Scroll over the semitone value to change pitch in steps of 1 semitone, from −6 to +6. Scrolling up increases the value; scrolling down decreases it. A selected track is required. Click either value to open its options and restore speed or pitch. Scrolling over these controls changes the value without scrolling the page.
 
-Selecting another valid output resumes the track at its current position without requiring Play again; opening the device may cause a brief interruption. A paused track stays paused. Changing input does not pause the track, and monitoring is restored if it was enabled. Input selection is locked during REC. A disconnected or failed device may interrupt audio; check the message and selected output.
+Outside recording, selecting another valid output resumes the track at its current position without requiring Play again; opening the device may cause a brief interruption. A paused track stays paused. Changing input does not pause the track, and monitoring is restored if it was enabled. Input and output selection are locked during REC. A disconnected or failed device may interrupt audio; check the message and selected output.
 
 ## Mixer
 
 Open the mixer with the settings icon beside the metronome. Each channel — **Track**, **Guitar**, and **Metronome** — has a horizontal fader, an editable percentage, and a mute button beside the value. The button itself shows the muted state, without a separate duplicate indicator. Channel mutes are independent and preserve their volume settings.
 
-The mixer has a single layout, with monitoring and metronome commands always available. Behind each fader, a meter shows that channel's digital peak after volume and mute, from −60 to 0 dBFS, with a one-second peak hold. Track and click are measured separately; the guitar shows a level only while monitoring is active. The input clipping warning remains independent of guitar volume. These are sample peaks, not true-peak or calibrated analog VU measurements. **Reset volumes** restores track to 30%, guitar to 0%, and metronome to 30%, preserving mutes. Double-click a fader to restore only that channel's default volume.
+The mixer has a single layout, with monitoring and metronome commands always available. Behind each fader, a meter shows that channel's digital peak after volume and mute, from −60 to 0 dBFS, with a one-second peak hold. Track and click are measured separately; the guitar shows a level only while monitoring is active. The input clipping warning remains independent of guitar volume. These are sample peaks, not true-peak or calibrated analog VU measurements. **Reset volumes** restores track to 30%, guitar to 0%, and metronome to 100%, preserving mutes. Double-click a fader to restore only that channel's default volume.
+
+## Sessions and tracks
+
+Each playlist song opens a session with synchronized backing audio and recordings. **Add track**, or dropping files onto session tracks, imports audio into that session; adding files to the playlist creates separate songs. Selecting a track changes the editing target without interrupting other tracks.
+
+Each track has **Mute**, **Solo** and volume. Multiple solos are allowed; when any solo is active, only soloed tracks are heard. Mute takes priority. The Track mixer channel controls the combined session; monitoring and metronome remain separate. Drag songs or tracks to reorder them: the insertion line and label show the destination, with scrolling near the edges. Escape cancels. Move up/down buttons provide an alternative. Vertical order does not change start time.
+
+The playlist saves sessions, order, mute/solo, volume and take parameters. Older playlists migrate to one session per file with a `.v1.bak` copy; old recordings are not automatically associated. Missing files remain listed; use **Locate track audio**. Removing a track does not delete its WAV.
 
 ## Record
-Choose **Guitar input** above the player and press **REC**, after Loop. Recording starts immediately without a dialog and captures only that input. It does not automatically include the backing track, metronome or output sounds. The WAV uses the device's WASAPI capture format.
 
-REC does not start track playback or change monitoring, mute or volumes. During capture, the button is active and the player shows **Recording** and elapsed time. Input changes are blocked until completion; playback output can still change. Direct capture is independent of monitor volume and mute. If the device itself provides a mix at its input, that mix will be captured.
+Choose an input and output, then press **REC**. Playback starts at the cursor and a new track appears immediately, with a growing waveform from captured samples. Capture records only the input, using the device's WASAPI format; it does not automatically include backing tracks, metronome or monitoring. A mix supplied by the device itself is recorded as received.
 
-Press **REC** again to stop recording only; **Stop** stops playback and recording, even without a selected track. After finalizing the WAV header, the app adds one new track at the end of the playlist. Current selection and playback are preserved; an empty playlist selects the recording without playing it automatically.
+During REC, input/output switching, seeking, looping, speed, pitch and session switching are locked. Mute, solo and reordering remain available. YouTube preview is blocked to avoid pausing playback. Recording is continuous, without loop takes. Starting with altered speed/pitch is supported; these settings are stored for subsequent aligned and transposed playback.
 
-Files receive a timestamp and unique identifier in `Recordings` under the current data directory; simulation uses its separate directory. Use **Show file** in the track menu to locate the WAV. Closing the app finalizes capture and registers the track before saving the playlist. Files without samples do not create tracks. On failure, preserve the recoverable WAV shown in the message; it is not reported as a completed recording. If only playlist insertion or persistence fails, a separate message confirms that the WAV was saved.
+**Follow recording** keeps the recording end visible when zoomed in. Navigating the overview or changing zoom disables following; enable it again to resume. Positive **Latency compensation (ms)** values shift the take earlier; negative values shift it later. Configure this before recording. Alignment uses capture timestamps and the player clock, but physical accuracy depends on the device and requires listening to a take.
+
+Press REC again to finalize and pause playback; **Stop** finalizes and returns to the beginning. The same track changes from recording to finalizing and saved. Recording without a selected song creates a session. Empty captures do not become valid tracks. Interruptions preserve the reported recoverable WAV and label the track as interrupted. Playlist save failures are reported separately from audio save failures.
+
+Files receive a timestamp and unique identifier in `Recordings` under the data directory. Closing the app finalizes capture. The visual envelope uses bounded memory and nominal 50 ms updates rather than loading the entire recording into RAM.
 
 ## Export
-Export produces a 16-bit PCM WAV. With valid A and B markers, it exports one pass through the section, even when looping is off; without a valid section, it exports the entire track. The minimum interval between A and B is 0.1 seconds.
 
-The dialog's option to apply speed and pitch without volume/mute starts unchecked. Check it to include speed and pitch adjustments; leave it unchecked to keep the original speed and pitch. Player volume and mute do not affect export. Guitar, metronome and sounds from other apps are also excluded. REC captures only the selected input.
+Choose **Session mix** or **Selected track**. Both produce 16-bit PCM stereo WAV at 48 kHz. The mix respects alignment, track mute/solo and volumes, and overall volume/mute; it excludes monitoring and the metronome. Isolated export ignores playback mute/solo and volume.
 
-The app prevents choosing an audio file in the playlist as the destination. Another existing file can be replaced after confirmation in the save dialog; choose a new name to preserve it. Replacement happens only when export completes. Canceling preserves the previous destination. Removing a track from the list does not delete its audio file.
+A valid A/B range exports one pass even when looping is disabled; without a valid range, export uses the available duration. Applying speed and pitch uses current session settings; disabling it uses 100% and original pitch while compensating for take settings. Export preserves source files and supports cancellation.
 
 ## YouTube
 Search and download require internet and use tools included in the package. Choose your own or authorized content. A network failure should not replace an existing file. Importing does not start playback automatically.
@@ -61,4 +71,7 @@ With **Follow track** on, the metronome uses the detected or corrected BPM and f
 Preferences, manual BPM and alignment per file are remembered, but the metronome always opens stopped. Changing mode stops clicks. Selecting another valid output restores the metronome if it was enabled. WAV export and REC do not automatically include the metronome.
 
 ## Session and files
-Playlist order and paths are saved in `backing-playlist-v1.json` after completed recordings and when closing the app. Missing files remain listed so you can use **Locate again**. Selection, output and playback adjustments remain session-only; the old `backing-tracks-v1.json` is neither loaded nor updated. Metronome preferences, manual BPM and beat alignment per file, plus the YouTube download folder and completed-download records, are stored separately. Downloaded audio remains in your chosen folder; the list is not a backup of files. See [Privacy](privacidade.md) for storage and external services.
+
+`backing-playlist-v1.json` retains its filename for location compatibility and now stores session format version 2: order, files, tracks, mute/solo, volumes, take offsets and parameters, session speed/pitch and latency compensation. Organization and mix changes are persisted, and closing saves again. Selection, output and playback state are not restored. The old `backing-tracks-v1.json` is not loaded or updated. Metronome preferences, per-file BPM/alignment and download records remain separate. The playlist references audio files; it is not their backup. See [Privacy](privacidade.md).
+
+Metronome sounds, including non-silent custom WAVs, are peak-normalized to 0 dBFS before the fader. The default and reset level is 100%; previously saved volumes are preserved. Lowering the fader lowers the output peak. Peak normalization does not equalize perceived loudness across timbres.

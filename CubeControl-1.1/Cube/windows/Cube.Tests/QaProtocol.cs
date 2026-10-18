@@ -11,7 +11,12 @@ internal static class QaProtocol
 {
     private static void Check(bool condition, string message) => QaContext.Check(condition, message);
     private static QaCase Test(string id, string name, string batteries, Func<QaContext, Task> run) => new(id, name, batteries.Split(','), run);
-    public static Task<int> Run(string[] args) => QaRunner.Run("protocol", args, Cases());
+    public static Task<int> Run(string[] args)
+    {
+        if (args.Length == 3 && args[1] == "--all")
+            args = ["--qa", "--batteries", string.Join(",", Cases().SelectMany(c => c.Batteries).Distinct()), "--results", args[2]];
+        return QaRunner.Run("protocol", args, Cases());
+    }
     private static QaCase[] Cases() =>
     [
         Test("wire-roundtrip", "SysEx round-trip, fragment boundaries and checksum", "QA-MIDI-001", c =>

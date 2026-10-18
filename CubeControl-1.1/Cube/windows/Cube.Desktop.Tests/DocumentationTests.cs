@@ -22,7 +22,7 @@ internal static class DocumentationTests
         int count = 0;
         void Check(bool condition, string message)
         { if (!condition) throw new Exception(message); count++; Console.WriteLine("PASS " + message); }
-        var rootArgument = Environment.GetCommandLineArgs().FirstOrDefault(a => a.StartsWith("--documentation-root=", StringComparison.Ordinal));
+        var rootArgument = TestCatalog.Arguments.FirstOrDefault(a => a.StartsWith("--documentation-root=", StringComparison.Ordinal));
         string documentRoot = rootArgument == null ? AssetPaths.Documents : rootArgument["--documentation-root=".Length..];
         var catalog = DocumentCatalog.Load(documentRoot);
         Check(catalog.Documents.Length >= 18, "published catalog includes guides and all three PDFs");

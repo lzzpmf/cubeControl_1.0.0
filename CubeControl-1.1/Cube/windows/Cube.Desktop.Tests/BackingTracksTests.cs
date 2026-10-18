@@ -13,7 +13,7 @@ using NAudio.CoreAudioApi;
 internal static class BackingTracksTests
 {
     private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); Console.WriteLine("PASS " + message); }
-    public static async Task Run()
+    public static async Task Run(bool includeDevice = true)
     {
         string folder = Path.Combine(Path.GetTempPath(), "cube-backing-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(folder);
         try
@@ -88,10 +88,10 @@ internal static class BackingTracksTests
                 Check(restored.Tracks.Count == 0 && restored.Position == 0, "playlist restoration is deferred until initialization");
             }
             Check(BackingTracksViewModel.FormatTime(3661) == "01:01:01", "time labels handle tracks longer than one hour");
-            await CheckSilentTransport(source);
+            if (includeDevice) await CheckSilentTransport(source); else Console.WriteLine("EXCLUDED audio-device: physical playback/loopback");
             await Render(source, folder);
             if (File.Exists(Path.Combine(AppContext.BaseDirectory, "CubeBackingDsp.dll"))) await CheckDsp(source, folder);
-            else Console.WriteLine("NOT VALIDATED native DSP: CubeBackingDsp.dll is unavailable; pitch and processed export acceptance remains open.");
+            else throw new FileNotFoundException("Offline DSP validation requires CubeBackingDsp.dll in the test output.");
         }
         finally { Directory.Delete(folder, true); }
     }
@@ -119,6 +119,15 @@ internal static class BackingTracksTests
         {
             string target = Path.Combine(folder, "processed.wav");
             await BackingAudioProcessing.Export(source, target, 0, 2, speed, pitch, true, CancellationToken.None);
+            File.Copy(target, TestPaths.Report(FormattableString.Invariant($"C:/CubeControl-Build/dsp/processed-{speed}-{pitch}.wav")), true);
+            VerifyProcessedTone(target, speed, pitch);
+        }
+        string sessionTarget = Path.Combine(folder, "session-pitch.wav");
+        await BackingSessionAudio.Export([new(Guid.NewGuid(), source)], sessionTarget, 0, 2, .5, -6, 1, CancellationToken.None);
+        VerifyProcessedTone(sessionTarget, .5, -6);
+    }
+    private static void VerifyProcessedTone(string target, double speed, double pitch)
+    {
             using var reader = new BackingDecoder(target); var sample = reader.Format; var buffer = new float[(int)(reader.Duration * sample.SampleRate + 1) * sample.Channels]; int read = reader.Read(buffer);
             Check(Math.Abs(reader.Duration - 2 / speed) < .01, $"processed duration at {speed:P0}, {pitch} semitones");
             int first = (int)(sample.SampleRate * .25), last = read / sample.Channels - first; var crossings = new List<double>();
@@ -128,8 +137,7 @@ internal static class BackingTracksTests
                 if (previous < 0 && current >= 0) crossings.Add(f - 1 - previous / (current - previous));
             }
             double frequency = (crossings.Count - 1) * sample.SampleRate / (crossings[^1] - crossings[0]);
-            Check(Math.Abs(1200 * Math.Log2(frequency / (440 * Math.Pow(2, pitch / 12)))) < 5, "processed pitch within 5 cents");
-        }
+            Check(Math.Abs(1200 * Math.Log2(frequency / (440 * Math.Pow(2, pitch / 12)))) < 5, $"processed pitch within 5 cents at {speed}/{pitch}: {frequency:F3} Hz, {1200 * Math.Log2(frequency / (440 * Math.Pow(2, pitch / 12))):F3} cents");
     }
     private static async Task CheckSilentTransport(string source)
     {
@@ -159,12 +167,12 @@ internal static class BackingTracksTests
     private static async Task Render(string source, string folder)
     {
         using var model = new EditorViewModel(Path.Combine(folder, "ui"));
-        var window = new MainWindow(model); window.Show();
+        var window = new MainWindow(model, false); window.Show();
         try
         {
             var tabs = (TabControl)window.FindName("Tabs"); tabs.SelectedIndex = 2;
             window.BackingTracks.AddPaths([source]); await Wait(() => window.BackingTracks.Duration > 0);
-            string reports = "C:/CubeControl-Build/backing-validation/reports"; Directory.CreateDirectory(reports);
+            string reports = TestPaths.Report("C:/CubeControl-Build/backing-validation/reports"); Directory.CreateDirectory(reports);
             foreach (var (width, height) in new[] { (1280, 720), (640, 480), (1800, 1000) })
             {
                 window.Width = width; window.Height = height; await Task.Delay(150); window.UpdateLayout();

@@ -26,7 +26,7 @@ public sealed class GearItem(string id, int value, string name, string category,
     public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindCabinet(cabinetId) != null
         ? "Características do modelo de referência; a captura do IR pode variar."
         : kind == "cab" && CabinetArtwork.ForIr(null, name) != null
-            ? "Arte ilustrativa baseada no nome do IR; não confirma o gabinete da captura." : null;
+            ? "Arte ilustrativa baseada nos metadados ou no nome do IR; não confirma o gabinete da captura." : null;
     public string Kind => kind;
     public string Color => Appearance.ThemeService.ModuleColor(color);
     public void RefreshColor() => Notify(nameof(Color));
@@ -48,16 +48,8 @@ public sealed class GearItem(string id, int value, string name, string category,
         "phaser" => "phaserCuvave.png",
         "delay" => "delayCuvave.png",
         "reverb" => "reverbCuvave.png",
-        "pack-bfi-cab-0" => "Line 6 Vetta.png",
-        "pack-bfi-cab-1" => "Marshall 1960AV.png",
-        "pack-bfi-cab-2" => "Marshall 1960A 4×12 com G12T-75.png",
-        "pack-bfi-cab-3" => "VHT Deliverance.png",
-        "pack-bfi-cab-4" => "Soldano.png",
-        "pack-bfi-cab-5" => "Peavey 5150 + Mesa Oversized.png",
-        "pack-bfi-cab-6" => "JSX KT77 + Mesa Stiletto AKG C1000.png",
-        "pack-bfi-cab-7" => "Diezel V30 SM57 (Soldano HR PowerAmp).png",
-        string key when key.StartsWith("pack-bfin-cab-", StringComparison.Ordinal) => CabinetArtwork.Generic,
-        _ when kind == "cab" => CabinetArtwork.ForIr(null, name) ?? CabinetArtwork.Generic,
+        _ when kind == "cab" => CabinetArtwork.ForIdentity(cabinetId ?? id)
+            ?? CabinetArtwork.ForIr(null, name) ?? CabinetArtwork.Generic,
         _ => "not-provided.png"
     }));
     // Brief effect explanations; sources in docs/referencias/effect-descriptions.md.

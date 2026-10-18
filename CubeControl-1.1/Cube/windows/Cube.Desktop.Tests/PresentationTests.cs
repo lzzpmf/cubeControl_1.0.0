@@ -21,14 +21,14 @@ internal static class PresentationTests
         using var session = new CubeSession(fake); await session.Identify();
         using var model = new EditorViewModel(temporary);
         await model.Execute(() => model.AttachSession(session));
-        var window = new Cube.Desktop.MainWindow(model);
+        var window = new Cube.Desktop.MainWindow(model, false);
         window.Show();
         await Task.Delay(150);
         while (model.Busy) await Task.Delay(30);
         var tabs = (TabControl)window.FindName("Tabs");
         if (tabs.SelectedIndex != 0 || tabs.SelectedContent == null) throw new Exception("Pedalboard must be visible without clicking navigation after connection.");
         Console.WriteLine("PASS pedalboard content selected automatically after connection");
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/ux-3.3.1/fixture"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/ux-3.3.1/fixture")); Directory.CreateDirectory(folder);
         var busyGate = new TaskCompletionSource();
         var busyOperation = model.Execute(() => busyGate.Task);
         try

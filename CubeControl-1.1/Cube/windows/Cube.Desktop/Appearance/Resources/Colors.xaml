@@ -1,4 +1,9 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:local="clr-namespace:Cube.Desktop.Controls" xmlns:loc="clr-namespace:Cube.Desktop.Localization" xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+<CornerRadius x:Key="CubeCardCornerRadius">14</CornerRadius>
+<CornerRadius x:Key="CubeControlCornerRadius">4</CornerRadius>
+<CornerRadius x:Key="CubeCardLeftCornerRadius">14,0,0,14</CornerRadius>
+<CornerRadius x:Key="CubeCardTopCornerRadius">14,14,0,0</CornerRadius>
+<CornerRadius x:Key="CubeCardBottomCornerRadius">0,0,14,14</CornerRadius>
 <!-- Semantic aliases refreshed by ThemeService after WPF UI changes theme. -->
 <sys:String x:Key="CubePalette.CubeCanvas">ApplicationBackgroundBrush</sys:String>
 <sys:String x:Key="CubePalette.CubeText">TextFillColorPrimaryBrush</sys:String>
@@ -39,4 +44,5 @@
 <Color x:Key="CubeKnobBottom.Light">#C6D0D8</Color>
 <Color x:Key="CubeKnobTrack.Dark">#666666</Color>
 <Color x:Key="CubeKnobTrack.Light">#8798A3</Color>
+<SolidColorBrush x:Key="CubeSelectionIndicator" Color="{DynamicResource SystemAccentColor}"/>
 </ResourceDictionary>

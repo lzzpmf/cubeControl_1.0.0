@@ -13,7 +13,7 @@
   <ItemsControl ItemsSource="{Binding Slots}">
    <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:IrPackGridPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
    <ItemsControl.ItemTemplate><DataTemplate>
-    <Border Background="{DynamicResource CubeInset}" CornerRadius="10" Padding="12" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
+    <Border Background="{DynamicResource CubeInset}" CornerRadius="{DynamicResource CubeCardCornerRadius}" Padding="12" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
      <StackPanel>
       <CheckBox Content="{Binding Title}" IsChecked="{Binding Selected}" IsEnabled="{Binding Available}" AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Name}"/>
       <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" Height="40" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" Margin="0,4,0,0"/>

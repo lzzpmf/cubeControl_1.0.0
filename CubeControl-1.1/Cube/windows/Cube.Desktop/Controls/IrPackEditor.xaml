@@ -14,7 +14,7 @@
   <TextBlock Text="{loc:Translate Text='Escolha um pack ou monte até oito IRs. Revise a seleção e a distância antes de aplicar.'}" Style="{StaticResource HelpText}" Margin="0,4,0,8"/>
   <TextBlock Text="{loc:Translate Text='1 · Escolher pack'}" Style="{StaticResource CaptionText}" Margin="0,0,0,8"/>
   <local:AdaptivePanel FirstShare="0.5" Breakpoint="560">
-   <Grid MaxWidth="320" HorizontalAlignment="Stretch" Margin="0,0,16,8">
+   <Grid HorizontalAlignment="Stretch" Margin="0,0,16,8">
    <ComboBox x:Name="PackSelector" ItemsSource="{Binding Owner.IrPackGroups}" SelectedItem="{Binding SelectedCatalogPack, Mode=OneWay}" SelectionChanged="PackSelectionChanged" IsEnabled="{Binding Owner.CanChooseIr}" MinWidth="0" AutomationProperties.Name="{loc:Translate Text='Pack de IRs'}">
     <ComboBox.ItemTemplate><DataTemplate><TextBlock TextTrimming="CharacterEllipsis"><TextBlock.Style><Style TargetType="TextBlock">
      <Setter Property="Text" Value="{loc:Translate Value={Binding Name}}"/><Setter Property="ToolTip" Value="{loc:Translate Value={Binding Name}}"/>
@@ -50,7 +50,7 @@
     <ItemsControl ItemsSource="{Binding Slots}">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:IrPackGridPanel MinimumCardWidth="180"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
-      <Border x:Name="SlotCard" CornerRadius="10" Padding="12" Focusable="True" AllowDrop="True"
+      <Border FocusVisualStyle="{DynamicResource DefaultControlFocusVisualStyle}" x:Name="SlotCard" CornerRadius="{DynamicResource CubeCardCornerRadius}" Padding="12" Focusable="True" AllowDrop="True"
        PreviewMouseLeftButtonDown="SlotMouseDown" PreviewMouseMove="SlotMouseMove" PreviewKeyDown="SlotKeyDown"
        DragOver="SlotDragOver" DragLeave="SlotDragLeave" Drop="SlotDrop"
        AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Name}">
@@ -59,8 +59,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}"/>
         <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
         <Style.Triggers>
-         <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource CubeFocus}"/><Setter Property="BorderThickness" Value="2"/></Trigger>
-         <Trigger Property="Tag" Value="Drop"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="BorderBrush" Value="{DynamicResource CubeFocus}"/><Setter Property="BorderThickness" Value="2"/></Trigger>
+         <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></Trigger>
         </Style.Triggers>
        </Style></Border.Style>
        <Border.ContextMenu><ContextMenu DataContext="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource Self}}">
@@ -76,10 +75,9 @@
          <local:GearArt Kind="cab" Image="{Binding Image}" Accent="{DynamicResource CubeAccent}" Height="88" Margin="0,4,0,8" ToolTip="{loc:Translate Value={Binding ImageHint}}" AutomationProperties.HelpText="{loc:Translate Value={Binding ImageHint}}"/>
          <TextBlock Text="{loc:Translate Value={Binding Name}}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="40" ToolTip="{Binding Name}"/>
          <TextBlock Text="{Binding CaptureSummary}" Style="{StaticResource PackNotice}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-         <StackPanel Orientation="Horizontal" Margin="0,8,0,4">
-          <TextBlock Text="{loc:Translate Text='Distância'}" Style="{StaticResource HelpText}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-          <TextBox Text="{Binding Distance,Mode=TwoWay,UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding CanSetDistance}" Width="56" AutomationProperties.Name="{loc:Translate Text='Distância do microfone'}" AutomationProperties.HelpText="{Binding Title}"/>
-          <TextBlock Text="%" Style="{StaticResource HelpText}" VerticalAlignment="Center" Margin="4,0,0,0"/>
+         <StackPanel Margin="0,8,0,4" HorizontalAlignment="Center">
+          <TextBlock Text="{loc:Translate Text='Volume'}" Style="{StaticResource HelpText}" HorizontalAlignment="Center"/>
+          <local:Knob Value="{Binding DistanceValue,Mode=TwoWay}" Minimum="0" Maximum="99" StepSize="1" Width="94" Height="94" Accent="{DynamicResource CubeAccent}" IsEnabled="{Binding CanSetDistance}" ToolTip="{Binding DistanceValue,StringFormat={}{0:0}%}" AutomationProperties.Name="{loc:Translate Text='Volume'}" AutomationProperties.HelpText="{Binding Title}"/>
          </StackPanel>
          <TextBlock Text="{loc:Translate Value={Binding Problem}}" Style="{StaticResource PackNotice}" MaxHeight="32" TextTrimming="CharacterEllipsis" ToolTip="{Binding Problem}"/>
         </StackPanel>
@@ -94,10 +92,7 @@
          </Style></ui:Button.Style>
          <ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconDelete24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon>
         </ui:Button>
-        <Border Background="{DynamicResource CubeSelected}" CornerRadius="8" VerticalAlignment="Center" Padding="8" IsHitTestVisible="False">
-         <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Tag,ElementName=SlotCard}" Value="Drop"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>
-         <TextBlock Text="{loc:Translate Text='Usar neste slot'}" Foreground="{DynamicResource CubeSelectedText}" HorizontalAlignment="Center"/>
-        </Border>
+
        </Grid>
       </Border>
      </DataTemplate></ItemsControl.ItemTemplate>
@@ -106,7 +101,7 @@
     <TextBlock Text="{loc:Translate Text='Ajuste a distância nos cartões ou na revisão antes de aplicar.'}" Style="{StaticResource HelpText}" Margin="0,0,0,16"/>
   <WrapPanel x:Name="PackActions" Margin="0,12,0,4" HorizontalAlignment="Right">
    <WrapPanel Margin="0,0,16,8">
-    <ui:Button x:Name="ReviewPackButton" Content="{loc:Translate Text='Revisar e aplicar'}" Command="{Binding Owner.ApplyIrPack}" Appearance="Primary" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Compara os oito slots com o pack escolhido e aplica somente os selecionados.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
+    <ui:Button x:Name="ReviewPackButton" Content="{loc:Translate Text='Aplicar'}" Command="{Binding Owner.ApplyIrPack}" Appearance="Primary" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Aplica os IRs preenchidos e seus volumes nos slots do pedal.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
     <ui:Button x:Name="RestorePackButton" Content="{loc:Translate Text='Restaurar IRs originais'}" Command="{Binding Owner.RestoreOriginalIrs}" Margin="0,0,0,8" ToolTip="{loc:Translate Text='Disponível quando os arquivos originais BFI/BFIN estão instalados.'}" ToolTipService.ShowOnDisabled="True"/>
    </WrapPanel>
    <WrapPanel Margin="0,0,0,8">

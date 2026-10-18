@@ -14,29 +14,39 @@ Os botões de voltar e avançar saltam cinco segundos. Eles aparecem somente com
 
 Em **Tempo e tom**, role a roda do mouse sobre o percentual para alterar a velocidade de 1 em 1%, entre 50% e 150%. Sobre o valor em semitons, cada passo aumenta ou diminui o pitch em 1 semitom, entre −6 e +6. Rolar para cima aumenta; para baixo diminui. É necessário selecionar uma faixa. Clique nos valores para abrir as opções e restaurar velocidade ou tom. A roda sobre esses controles ajusta o valor sem rolar a página.
 
-Ao escolher outra saída válida, a faixa continua a partir da posição atual, sem exigir Reproduzir novamente; pode haver uma breve interrupção durante a abertura do dispositivo. Uma faixa pausada permanece pausada. Trocar a entrada não pausa a faixa, e a monitoração é restabelecida se estava ligada. A entrada fica bloqueada durante REC. Desconexão ou falha de dispositivo pode interromper o áudio e exige conferir a mensagem e a saída selecionada.
+Fora de REC, ao escolher outra saída válida, a faixa continua a partir da posição atual, sem exigir Reproduzir novamente; pode haver uma breve interrupção durante a abertura do dispositivo. Uma faixa pausada permanece pausada. Trocar a entrada não pausa a faixa, e a monitoração é restabelecida se estava ligada. Entrada e saída ficam bloqueadas durante REC. Desconexão ou falha de dispositivo pode interromper o áudio e exige conferir a mensagem e a saída selecionada.
 
 ## Mixer
 
 Abra o mixer pelo ícone de ajustes ao lado do metrônomo. Cada canal — **Faixa**, **Guitarra** e **Metrônomo** — tem um fader horizontal, um percentual editável e um botão de mute alinhado ao valor. O próprio botão mostra o estado silenciado; não há um segundo indicador separado. Os mutes são independentes e preservam os volumes escolhidos.
 
-O mixer tem um único layout, com os comandos de monitoração e metrônomo sempre disponíveis. Atrás de cada fader, o medidor mostra o pico digital daquele canal após volume e mute, na escala de −60 a 0 dBFS, com retenção de pico por um segundo. Faixa e click são medidos separadamente; a guitarra só apresenta nível enquanto a monitoração estiver ativa. O aviso de saturação da entrada permanece independente do volume da guitarra. São picos de amostra, não medições de true peak ou VU analógico calibrado. **Resetar volumes** restaura faixa em 30%, guitarra em 0% e metrônomo em 30%, preservando os mutes. Um duplo clique no fader restaura apenas o volume daquele canal.
+O mixer tem um único layout, com os comandos de monitoração e metrônomo sempre disponíveis. Atrás de cada fader, o medidor mostra o pico digital daquele canal após volume e mute, na escala de −60 a 0 dBFS, com retenção de pico por um segundo. Faixa e click são medidos separadamente; a guitarra só apresenta nível enquanto a monitoração estiver ativa. O aviso de saturação da entrada permanece independente do volume da guitarra. São picos de amostra, não medições de true peak ou VU analógico calibrado. **Resetar volumes** restaura faixa em 30%, guitarra em 0% e metrônomo em 100%, preservando os mutes. Um duplo clique no fader restaura apenas o volume daquele canal.
+
+## Sessões e pistas
+
+Cada música da playlist abre uma sessão com backing track e gravações sincronizadas. **Adicionar pista**, ou soltar arquivos sobre as pistas, importa áudio para essa sessão; adicionar arquivos à playlist cria músicas separadas. Selecionar uma pista muda o alvo de edição sem interromper as demais.
+
+Cada pista tem **Mute**, **Solo** e volume. Vários solos podem estar ativos; somente essas pistas serão ouvidas. Mute prevalece sobre solo. O canal Faixa do mixer controla o conjunto; monitoração e metrônomo continuam separados. Arraste músicas ou pistas para reordenar: a linha e o rótulo indicam onde serão inseridas, com rolagem nas bordas. Esc cancela. Os botões de mover para cima/baixo oferecem uma alternativa. A ordem não altera o início temporal.
+
+A playlist salva sessões, ordem, mute/solo, volumes e parâmetros da tomada. O formato anterior é migrado para uma sessão por arquivo, com cópia `.v1.bak`; gravações antigas não são associadas automaticamente. Arquivos ausentes permanecem listados; use **Localizar áudio da pista**. Remover a pista não apaga o WAV.
 
 ## Gravar
-Escolha **Entrada da guitarra** acima do player e pressione **REC**, após Loop. A gravação começa imediatamente, sem diálogo, e captura somente essa entrada. Não inclui automaticamente backing track, metrônomo ou sons da saída. O formato WAV segue o formato de captura WASAPI do dispositivo.
 
-REC não inicia a faixa nem altera monitor, mute ou volumes. Durante a captura, o botão fica ativo e o player mostra **Gravando áudio** e o tempo decorrido. A entrada fica bloqueada até concluir; você pode trocar a saída de reprodução. A captura direta não depende do volume ou mute do monitor. Se o dispositivo fornecer uma mistura na própria entrada, essa mistura fará parte da captura.
+Escolha entrada e saída e pressione **REC**. O transporte começa no cursor e uma nova pista aparece imediatamente com a waveform crescendo a partir das amostras capturadas. A captura grava apenas a entrada, no formato WASAPI do dispositivo; não inclui automaticamente backing track, metrônomo ou monitoração. Uma mistura fornecida pelo próprio dispositivo será capturada como recebida.
 
-Pressione **REC** novamente para encerrar somente a gravação; **Parar** encerra a reprodução e a gravação, inclusive sem faixa selecionada. Após finalizar o cabeçalho WAV, o app adiciona uma nova faixa ao fim da playlist. A seleção e a reprodução atuais são preservadas; se a playlist estava vazia, a gravação é selecionada, sem tocar automaticamente.
+Durante REC, entrada, saída, seek, loop, velocidade, tom e troca de sessão ficam bloqueados. Mute, solo e reordenação continuam disponíveis. A prévia do YouTube fica bloqueada para não pausar o transporte. A tomada é contínua, sem gravação em voltas. É possível iniciar com velocidade/tom alterados; esses parâmetros são registrados para manter a reprodução posterior alinhada e afinada.
 
-Os arquivos recebem data/hora e identificador único em `Recordings`, no diretório de dados da execução; a simulação usa seu próprio diretório. Use **Mostrar arquivo** no menu da faixa para localizar o WAV. Fechar o app finaliza a captura e registra a faixa antes de salvar a playlist. Arquivos sem amostras não geram faixas. Em falhas, preserve o WAV recuperável indicado; ele não é apresentado como gravação concluída. Se somente a inclusão ou persistência da playlist falhar, a mensagem informa que o WAV foi salvo.
+**Acompanhar gravação** mantém a ponta visível quando ampliada. Navegar no overview ou alterar zoom desativa o acompanhamento; marque novamente para retomar. **Compensação de latência (ms)** antecipa a tomada com valores positivos e a atrasa com negativos. Configure antes de gravar. O alinhamento usa timestamps de captura e o relógio do player, mas sua precisão física depende do dispositivo e deve ser conferida ouvindo uma tomada.
+
+REC novamente finaliza e pausa o transporte; **Stop** finaliza e retorna ao início. A mesma pista passa de gravando para finalizando e salva. Sem música selecionada, cria-se uma sessão para a gravação. Capturas vazias não criam pistas válidas. Interrupções preservam o WAV recuperável indicado e identificam a pista como interrompida. Falha ao salvar a playlist é informada separadamente do salvamento do áudio.
+
+Os arquivos recebem data/hora e identificador único em `Recordings` no diretório de dados. Fechar o app finaliza a captura. O envelope visual usa memória limitada e atualização nominal de 50 ms, sem carregar toda a gravação na RAM.
 
 ## Exportar
-A exportação gera WAV PCM de 16 bits. Com A e B válidos, exporta uma passagem do trecho, mesmo se a repetição estiver desligada; sem um trecho válido, exporta a faixa inteira. O intervalo mínimo entre A e B é 0,1 segundo.
 
-No diálogo, **Aplicar velocidade e tom (sem volume/mute)** começa desmarcado. Marque para incluir os ajustes de velocidade e transposição; deixe desmarcado para manter a velocidade e o tom originais. Volume e mute do player não entram na exportação, que também não inclui guitarra, metrônomo ou sons de outros aplicativos. REC captura somente a entrada selecionada.
+Escolha **Mixagem da sessão** ou **Pista selecionada**. Ambas geram WAV PCM de 16 bits, estéreo, a 48 kHz. A mixagem respeita alinhamento, mute/solo, volumes das pistas e volume/mute geral; exclui monitoração e metrônomo. A pista isolada ignora mute/solo e volume de reprodução.
 
-O aplicativo impede usar como destino um áudio presente na playlist. Outro arquivo existente pode ser substituído após a confirmação no diálogo de salvar; escolha um nome novo para preservá-lo. A substituição só ocorre ao concluir a exportação. Cancelar mantém o destino anterior. Remover uma faixa da lista não apaga o áudio.
+Um intervalo A/B válido exporta uma passagem mesmo com loop desligado; sem intervalo válido, usa a duração disponível. Aplicar velocidade e tom usa os ajustes da sessão; desmarcada, a opção usa 100% e tom original, compensando os parâmetros registrados nas tomadas. A exportação preserva os arquivos de origem e pode ser cancelada.
 
 ## YouTube
 A busca e o download precisam de internet e usam ferramentas incluídas no pacote. Escolha conteúdo próprio ou autorizado. Uma falha de rede não deve substituir um arquivo já existente. Importar não inicia reprodução automaticamente.
@@ -58,7 +68,10 @@ Use **Ligar metrônomo** sem **Acompanhar faixa** para praticar mesmo com a play
 
 Com **Acompanhar faixa**, o metrônomo usa o BPM detectado ou corrigido e acompanha a velocidade, pausa, seek e loop da faixa local. Use **Marcar primeiro tempo aqui** ou **Primeiro tempo (s)** para alinhar a grade. **Contagem (compassos)** aceita 0, 1 ou 2 e prepara o início; retomar pausa e repetir o loop não refaz a contagem. A prévia do YouTube não oferece sincronização; o modo independente continua disponível.
 
-Preferências, BPM manual e alinhamento por arquivo são lembrados, mas o metrônomo sempre abre parado. Trocar de modo interrompe os cliques. Ao escolher outra saída válida, o app restabelece o metrônomo se estava ligado. Exportar WAV e gravar com REC não incluem automaticamente o metrônomo.
+Preferências, BPM manual e alinhamento por arquivo são lembrados, mas o metrônomo sempre abre parado. Trocar de modo interrompe os cliques. Fora de REC, ao escolher outra saída válida, o app restabelece o metrônomo se estava ligado. Exportar WAV e gravar com REC não incluem automaticamente o metrônomo.
 
 ## Sessão e arquivos
-A ordem e os caminhos da playlist são salvos em `backing-playlist-v1.json` após gravações concluídas e ao fechar o app. Arquivos ausentes continuam na lista para usar **Localizar novamente**. Seleção, saída e ajustes de reprodução permanecem apenas na sessão; o antigo `backing-tracks-v1.json` não é carregado nem atualizado. As preferências do metrônomo, seu BPM manual e alinhamento por arquivo, além da pasta e dos registros de downloads do YouTube, são guardados separadamente. Os áudios baixados permanecem na pasta escolhida; a lista não é um backup dos arquivos. Consulte [Privacidade](privacidade.md) para armazenamento e serviços externos.
+
+`backing-playlist-v1.json` mantém o nome por compatibilidade de localização e passa a armazenar o formato de sessões versão 2: ordem, arquivos, pistas, mute/solo, volumes, início e parâmetros das tomadas, velocidade/tom da sessão e compensação de latência. Mudanças de organização e mix são persistidas e o fechamento salva novamente. Seleção, saída e estado de reprodução não são restaurados. O antigo `backing-tracks-v1.json` não é carregado nem atualizado. Preferências do metrônomo, BPM/alinhamento por arquivo e registros de downloads continuam separados. A playlist referencia os áudios e não é um backup deles. Consulte [Privacidade](privacidade.md).
+
+Os sons do metrônomo, incluindo WAVs personalizados não silenciosos, têm pico normalizado a 0 dBFS antes do fader. O padrão e o reset do metrônomo são 100%; volumes já salvos são preservados. Reduzir o fader reduz o pico de saída. A normalização de pico não iguala o volume percebido dos timbres.

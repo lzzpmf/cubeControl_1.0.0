@@ -226,7 +226,7 @@ internal static class YouTubePreviewTests
                 var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)Math.Ceiling(card.ActualWidth * factor), (int)Math.Ceiling(card.ActualHeight * factor), 96 * factor, 96 * factor, System.Windows.Media.PixelFormats.Pbgra32);
                 bitmap.Render(drawing);
                 var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                using var file = System.IO.File.Create($"C:/CubeControl-Build/youtube-validation/reports/{state}-card-{mode}-{locale}-{scale}.png"); encoder.Save(file);
+                using var file = System.IO.File.Create(TestPaths.Report($"C:/CubeControl-Build/youtube-validation/reports/{state}-card-{mode}-{locale}-{scale}.png")); encoder.Save(file);
             }
         }
         finally
@@ -268,7 +268,7 @@ internal static class YouTubePreviewTests
         var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
         bitmap.Render(window);
         var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-        using (var image = System.IO.File.Create("C:/CubeControl-Build/youtube-validation/reports/youtube-download.png")) encoder.Save(image);
+        using (var image = System.IO.File.Create(TestPaths.Report("C:/CubeControl-Build/youtube-validation/reports/youtube-download.png"))) encoder.Save(image);
         ((Wpf.Ui.Controls.Button)card.FindName("DownloadButton")).RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
         await download; await Task.Delay(30);
         Check(!progress.IsVisible && !progress.IsIndeterminate, "download indicator stops animating after cancellation");

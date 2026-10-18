@@ -37,6 +37,7 @@ public sealed partial class CubeSession : IDisposable
         {
             foreach (var bytes in assembler.Feed(data))
             {
+                diagnosticRxBytes += bytes.Length;
                 Log?.Invoke("RX " + Convert.ToHexString(bytes));
                 try
                 {
@@ -57,6 +58,9 @@ public sealed partial class CubeSession : IDisposable
         {
             byte[] bytes = UsbSysEx.Encode(packet);
             Log?.Invoke("TX " + Convert.ToHexString(bytes));
+            if (packet.Command == 0x23) diagnosticReads++;
+            else if (packet.Command != 0x11) diagnosticWrites++;
+            diagnosticTxBytes += bytes.Length;
             connection.Send(bytes);
             return await waiter.Task.WaitAsync(Timeout, ct).ConfigureAwait(false);
         }
@@ -69,6 +73,7 @@ public sealed partial class CubeSession : IDisposable
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var reply = await Exchange(CubePacket.Identify(), p => p.Command == 0x11 && p.Payload.Length > 0, ct);
             string name = Encoding.ASCII.GetString(reply.Payload.TakeWhile(b => b is >= 32 and <= 126).ToArray()).Trim();
             identified = name.Equals("CubeBaby", StringComparison.OrdinalIgnoreCase)
@@ -97,7 +102,8 @@ public sealed partial class CubeSession : IDisposable
     public async Task<byte[]> ReadBank(CancellationToken ct = default)
     {
         await gate.WaitAsync(ct);
-        try { RequireIdentity(); return await ReadInternal(0, 48, ct); }
+        try {
+            using var measurement = MeasureOperation(); RequireIdentity(); return await ReadInternal(0, 48, ct); }
         finally { gate.Release(); }
     }
 
@@ -132,6 +138,7 @@ public sealed partial class CubeSession : IDisposable
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity();
             if (checkBeforeWrite && expected != null && !(await ReadInternal(0, 48, ct)).SequenceEqual(expected))
                 throw new InvalidOperationException("O banco mudou no aparelho. Releia antes de continuar.");
@@ -162,6 +169,7 @@ public sealed partial class CubeSession : IDisposable
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity();
             var current = await ReadInternal(0, 48, ct);
             if (!current.SequenceEqual(baseline)) throw new InvalidOperationException("O banco mudou no aparelho. Releia antes de salvar.");

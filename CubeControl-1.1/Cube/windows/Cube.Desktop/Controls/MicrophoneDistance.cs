@@ -42,7 +42,7 @@ public sealed class MicrophoneDistance : Viewbox
         Stretch = Stretch.Uniform;
         StretchDirection = StretchDirection.DownOnly;
         HorizontalAlignment = HorizontalAlignment.Stretch;
-        var cabinet = new Image { Source = Load("gabineteGenerico.png"), Width = 250, Height = 215, Stretch = Stretch.Uniform, IsHitTestVisible = false, RenderTransformOrigin = new Point(.5, .5), RenderTransform = new ScaleTransform(-1, 1) };
+        var cabinet = new Image { Source = Load(ViewModels.CabinetArtwork.Generic), Width = 250, Height = 215, Stretch = Stretch.Uniform, IsHitTestVisible = false, RenderTransformOrigin = new Point(.5, .5), RenderTransform = new ScaleTransform(-1, 1) };
         Canvas.SetLeft(cabinet, 40); Canvas.SetTop(cabinet, 2); scene.Children.Add(cabinet);
 
         var picture = new FrameworkElementFactory(typeof(Image));
@@ -52,7 +52,7 @@ public sealed class MicrophoneDistance : Viewbox
         picture.SetValue(RenderTransformProperty, new ScaleTransform(-1, 1));
         var frame = new FrameworkElementFactory(typeof(Border));
         frame.SetValue(Border.BorderThicknessProperty, new Thickness(0));
-        frame.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+        frame.SetResourceReference(Border.CornerRadiusProperty, "CubeControlCornerRadius");
         frame.SetValue(Border.BorderBrushProperty, Brushes.Transparent);
         frame.SetValue(Border.BackgroundProperty, Brushes.Transparent);
         frame.SetValue(IsHitTestVisibleProperty, false);
@@ -67,6 +67,7 @@ public sealed class MicrophoneDistance : Viewbox
             Width = 100, Height = 91, Cursor = GrabCursors.OpenHand, Focusable = true,
             FocusVisualStyle = null, Template = template
         };
+        microphone.SetResourceReference(FrameworkElement.FocusVisualStyleProperty, "DefaultControlFocusVisualStyle");
         microphone.SetBinding(AutomationProperties.NameProperty, new Binding("[Distância do microfone]") { Source = LanguageService.Instance });
         microphone.SetBinding(AutomationProperties.HelpTextProperty, new Binding("[Use as setas para ajustar; solte a tecla para ouvir. Home e End selecionam os limites.]") { Source = LanguageService.Instance });
         scene.Children.Add(microphone);

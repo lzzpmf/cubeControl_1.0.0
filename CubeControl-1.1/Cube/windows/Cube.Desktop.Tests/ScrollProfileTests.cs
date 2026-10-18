@@ -16,7 +16,7 @@ internal static class ScrollProfileTests
         using var fake = new FakeConnection(); using var session = new CubeSession(fake); await session.Identify();
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-scroll-profile-" + Guid.NewGuid().ToString("N")));
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { Width = 1280, Height = 720, ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { Width = 1280, Height = 720, ShowInTaskbar = false };
         window.Show(); await Task.Delay(300); window.UpdateLayout();
         var scroll = (ScrollViewer)window.FindName("WorkspaceScroll");
         var intervals = new List<double>();
@@ -45,8 +45,8 @@ internal static class ScrollProfileTests
             var report = new { Width = window.ActualWidth, Height = window.ActualHeight, RenderTier = RenderCapability.Tier >> 16,
                 MotionAllowed = SurfaceMotion.Allowed, Samples = intervals.Count, MedianFrameMilliseconds = Percentile(.5),
                 P95FrameMilliseconds = Percentile(.95), Note = "WPF Rendering callback intervals in this run, not display-present FPS or a hardware guarantee." };
-            Directory.CreateDirectory("C:/CubeControl-Build/reports/interaction");
-            File.WriteAllText("C:/CubeControl-Build/reports/interaction/scroll-profile.json", JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+            Directory.CreateDirectory(TestPaths.Report("C:/CubeControl-Build/reports/interaction"));
+            File.WriteAllText(TestPaths.Report("C:/CubeControl-Build/reports/interaction/scroll-profile.json"), JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
             Console.WriteLine(JsonSerializer.Serialize(report));
         }
         finally { CompositionTarget.Rendering -= Frame; window.Close(); }

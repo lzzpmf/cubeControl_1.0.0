@@ -13,6 +13,10 @@ namespace Cube.Desktop.Controls;
 public sealed class BackingWaveform : FrameworkElement
 {
     public static readonly DependencyProperty PeaksProperty = DependencyProperty.Register(nameof(Peaks), typeof(float[]), typeof(BackingWaveform), new FrameworkPropertyMetadata(Array.Empty<float>(), FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
+    public static readonly DependencyProperty PeakOffsetProperty = DependencyProperty.Register(nameof(PeakOffset), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
+    public static readonly DependencyProperty PeakDurationProperty = DependencyProperty.Register(nameof(PeakDuration), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
+    public double PeakOffset { get => (double)GetValue(PeakOffsetProperty); set => SetValue(PeakOffsetProperty, value); }
+    public double PeakDuration { get => (double)GetValue(PeakDurationProperty); set => SetValue(PeakDurationProperty, value); }
     public static readonly DependencyProperty DurationProperty = DependencyProperty.Register(nameof(Duration), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
     public static readonly DependencyProperty PositionProperty = Register(nameof(Position), 0);
     public static readonly DependencyProperty RangeStartProperty = Register(nameof(RangeStart), double.NaN);
@@ -185,7 +189,7 @@ public sealed class BackingWaveform : FrameworkElement
             dc.DrawRectangle(null, new Pen(accent, 2), new Rect(left, 1, Math.Max(1, right - left), ActualHeight - 2));
         }
         if (!IsOverview && double.IsFinite(hover)) Text(BackingTracksViewModel.FormatTime(drag != 0 ? preview : hover, true), X(hover) + 8, ActualHeight - 19);
-        if (IsKeyboardFocused) dc.DrawRoundedRectangle(null, new Pen(accent, 1), new Rect(1, 1, ActualWidth - 2, ActualHeight - 2), 8, 8);
+        if (IsKeyboardFocused) dc.DrawRoundedRectangle(ResourceBrush("CubeFocus", accent), null, new Rect(0, Math.Max(0, (ActualHeight - 24) / 2), 3, Math.Min(24, ActualHeight)), 2, 2);
     }
     private void BuildWaveImages(Brush neutral, Brush accent, DpiScale dpi)
     {
@@ -205,8 +209,12 @@ public sealed class BackingWaveform : FrameworkElement
             var peaks = Peaks;
             for (int i = 0; i < bars && peaks.Length > 0; i++)
             {
-                int first = Math.Clamp((int)((VisibleStart + i * VisibleDuration / bars) / Duration * peaks.Length), 0, peaks.Length - 1);
-                int last = Math.Min(peaks.Length, Math.Max(first + 1, (int)((VisibleStart + (i + 1) * VisibleDuration / bars) / Duration * peaks.Length)));
+                double peakDuration = PeakDuration > 0 ? PeakDuration : Duration;
+                double from = VisibleStart + i * VisibleDuration / bars - PeakOffset;
+                double to = VisibleStart + (i + 1) * VisibleDuration / bars - PeakOffset;
+                if (to <= 0 || from >= peakDuration || peakDuration <= 0) continue;
+                int first = Math.Clamp((int)(from / peakDuration * peaks.Length), 0, peaks.Length - 1);
+                int last = Math.Min(peaks.Length, Math.Max(first + 1, (int)(to / peakDuration * peaks.Length)));
                 float peak = 0;
                 bool available = false;
                 for (int j = first; j < last; j++)

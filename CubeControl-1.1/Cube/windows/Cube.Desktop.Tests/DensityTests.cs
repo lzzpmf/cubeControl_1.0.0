@@ -34,13 +34,13 @@ internal static class DensityTests
     public static async Task Run()
     {
         string temporary = Path.Combine(Path.GetTempPath(), "cube-density-" + Guid.NewGuid().ToString("N"));
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/density-3.3.22"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/density-3.3.22")); Directory.CreateDirectory(folder);
         using var fake = new FakeConnection();
         fake.Bank[0] = 2; fake.Bank[1] = 4; fake.Bank[2] = 8; fake.Bank[8] = 8;
         using var session = new CubeSession(fake); await session.Identify();
         using var model = new EditorViewModel(temporary);
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false };
         Check(window.Width == 1280 && window.Height == 720, "default requested window is 1280x720");
         Check(WindowWorkArea.Fit(new Size(1280,720), new Size(1200,672)) == new Size(1200,672), "initial window respects smaller usable monitor area");
         window.Show(); await Task.Delay(150); while (model.Busy) await Task.Delay(30);
@@ -68,7 +68,7 @@ internal static class DensityTests
                 for (int tab=0; tab<3; tab++)
                 {
                     tabs.SelectedIndex=tab; outer.ScrollToTop(); await Settle();
-                    Check(Math.Abs(Scale(knob,window)-.9)<.001, $"single 90% client scale {theme}/{language}/{tab}");
+                    Check(Math.Abs(Scale(client,window)-.9)<.001, $"single 90% client scale {theme}/{language}/{tab}");
                     Check(outer.ExtentWidth<=outer.ViewportWidth+1,"no horizontal overflow");
                     Capture($"{theme}-{language}-tab{tab}");
                 }
@@ -122,25 +122,36 @@ internal static class DensityTests
             Check(apply.ActualWidth < 240 && cancel.ActualWidth < 240 && apply.ActualHeight >= 36, "gallery actions size to content instead of stretching across dialog");
             Capture("gallery"); dialog.Hide(); await shown;
             var message=new Wpf.Ui.Controls.MessageBox { Owner=window, Title="Confirmation", Content="Test message", PrimaryButtonText="Confirm", CloseButtonText="Cancel" };
-            var messageShown = message.ShowDialogAsync(); await Task.Delay(100); await Settle();
-            var content=(ContentPresenter)message.Template.FindName("ContentPresenter",message);
-            Check(Math.Abs(Scale(content,message)-.9)<.001,"WPF UI confirmation content is 90%");
-            Check(Find<Wpf.Ui.Controls.Button>(message).Where(b=>b.Content?.ToString()=="Confirm").All(b=>Math.Abs(Scale(b,message)-.9)<.001),"WPF UI confirmation buttons are 90%");
-            Check(Find<Wpf.Ui.Controls.TitleBar>(message).All(t=>Math.Abs(Scale(t,message)-1)<.001),"confirmation title bar remains unscaled");
-            Find<Wpf.Ui.Controls.Button>(message).Single(b => b.Content?.ToString() == "Cancel")
-                .RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
-            await messageShown;
+            var inspected = new TaskCompletionSource();
+            // ShowDialogAsync enters a nested modal dispatcher before returning.
+            // Schedule assertions from Loaded so the modal can be checked and closed.
+            message.Loaded += async (_, _) =>
+            {
+                try
+                {
+                    await Task.Delay(100); message.UpdateLayout();
+                    var content=(ContentPresenter)message.Template.FindName("ContentPresenter",message);
+                    Check(Math.Abs(Scale(content,message)-.9)<.001,"WPF UI confirmation content is 90%");
+                    Check(Find<Wpf.Ui.Controls.Button>(message).Where(b=>b.Content?.ToString()=="Confirm").All(b=>Math.Abs(Scale(b,message)-.9)<.001),"WPF UI confirmation buttons are 90%");
+                    Check(Find<Wpf.Ui.Controls.TitleBar>(message).All(t=>Math.Abs(Scale(t,message)-1)<.001),"confirmation title bar remains unscaled");
+                    var close = Find<Wpf.Ui.Controls.Button>(message).Single(b => b.Content?.ToString() == "Cancel");
+                    close.Command.Execute(close.CommandParameter);
+                    inspected.SetResult();
+                }
+                catch (Exception error) { inspected.SetException(error); ((Window)message).Close(); }
+            };
+            await message.ShowDialogAsync(); await inspected.Task;
             var rootGrid=(Grid)window.Content;
             foreach(double simulatedDpi in new[]{1.25,1.5,2.0})
             {
                 rootGrid.LayoutTransform=new ScaleTransform(simulatedDpi,simulatedDpi); await Settle();
-                Check(Math.Abs(Scale(knob,window)-.9*simulatedDpi)<.001,"density composes once with simulated DPI "+simulatedDpi);
+                Check(Math.Abs(Scale(client,window)-.9*simulatedDpi)<.001,"density composes once with simulated DPI "+simulatedDpi);
             }
             rootGrid.LayoutTransform=Transform.Identity;
             foreach(var (width,height) in new[]{(640,480),(1280,720),(1920,1080),(1280,720)})
             {
                 window.Width=width; window.Height=height; await Settle();
-                Check(Math.Abs(Scale(knob,window)-.9)<.001,"resize preserves scale "+width);
+                Check(Math.Abs(Scale(client,window)-.9)<.001,"resize preserves scale "+width);
                 Check(outer.ExtentWidth<=outer.ViewportWidth+1,"resize has no horizontal overflow");
             }
             Check(fake.Writes==0,"density, popups and navigation send no MIDI edits");

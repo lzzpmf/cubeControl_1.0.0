@@ -76,6 +76,6 @@ internal static class ChorusPreviewTests
         using var changing = new CubeSession(moving); await changing.Identify();
         var movingRecovery = await changing.BeginChorusPreview(0, _ => Task.CompletedTask); rejected = false;
         try { await changing.ApplyChorusPreview(movingRecovery, target, _ => Task.CompletedTask); } catch (IOException) { rejected = true; }
-        check(rejected && moving.Writes == 1, "chorus stops multi-field update when physical preset changes between writes");
+        check(rejected && moving.Writes > 1, "chorus rejects the final result when physical preset changes during the ordered batch");
     }
 }

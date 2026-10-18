@@ -87,6 +87,7 @@ public sealed partial class EditorViewModel
 
     private void ReverbEdited()
     {
+        if (retiringAdvanced[4]) return;
         if (!ReverbPreviewActive || reverbStopped || !IsAdvancedEffectAudible(4))
         {
             if (!reverbStopped) Reverb.Message = "Edição local alterada · ainda não aplicada nem exportada.";
@@ -142,33 +143,39 @@ public sealed partial class EditorViewModel
 
     public async Task EndReverbPreviewAsync()
     {
-        reverbMonitorStop?.Cancel();
-        if (reverbMonitorTask != null) await reverbMonitorTask;
-        reverbMonitorTask = null;
-        reverbMonitorStop?.Dispose(); reverbMonitorStop = null;
+        retiringAdvanced[4] = true;
         reverbPending = false;
-        if (!Busy && reverbSendTask != null) await reverbSendTask;
-        if (reverbRecovery == null) return;
-        if (session == null) throw new IOException("Reconecte o pedal para restaurar o reverb. Snapshot preservado em memória nesta sessão.");
-        if (await RetireObsoleteAdvancedRecoveryAsync(4)) return;
-        if (!reverbStopped && !IsAdvancedEffectAudible(4))
-        {
-            reverbRecovery = null;
-            Reverb.Message = "Prévia encerrada. O efeito permanece desligado; edição local preservada.";
-            Refresh();
-            return;
-        }
-        reverbStopped = true;
         try
         {
-            await session.RestoreReverbPreview(reverbRecovery);
-            Reverb.Load(reverbRecovery.Identity, ReverbParameters.Read(reverbRecovery.OriginalDsp));
-            reverbRecovery = null; reverbStopped = false;
-            Reverb.Message = "Reverb original restaurado e conferido. Edição local disponível.";
-            RecordOperation("Prévia de reverb encerrada; parâmetros anteriores restaurados.");
+            reverbMonitorStop?.Cancel();
+            if (reverbMonitorTask != null) await reverbMonitorTask;
+            reverbMonitorTask = null;
+            reverbMonitorStop?.Dispose(); reverbMonitorStop = null;
+            reverbPending = false;
+            if (!Busy && reverbSendTask != null) await reverbSendTask;
+            if (reverbRecovery == null) return;
+            if (session == null) throw new IOException("Reconecte o pedal para restaurar o reverb. Snapshot preservado em memória nesta sessão.");
+            if (await RetireObsoleteAdvancedRecoveryAsync(4)) return;
+            if (!reverbStopped && !IsAdvancedEffectAudible(4))
+            {
+                reverbRecovery = null;
+                Reverb.Message = "Prévia encerrada. O efeito permanece desligado; edição local preservada.";
+                Refresh();
+                return;
+            }
+            reverbStopped = true;
+            try
+            {
+                await session.RestoreReverbPreview(reverbRecovery);
+                Reverb.Load(reverbRecovery.Identity, ReverbParameters.Read(reverbRecovery.OriginalDsp));
+                reverbRecovery = null; reverbStopped = false;
+                Reverb.Message = "Reverb original restaurado e conferido. Edição local disponível.";
+                RecordOperation("Prévia de reverb encerrada; parâmetros anteriores restaurados.");
+            }
+            catch { Reverb.Message = "Restauração não confirmada. O snapshot do reverb continua em memória nesta sessão."; throw; }
+            finally { Refresh(); }
         }
-        catch { Reverb.Message = "Restauração não confirmada. O snapshot do reverb continua em memória nesta sessão."; throw; }
-        finally { Refresh(); }
+        finally { retiringAdvanced[4] = false; }
     }
 
     public async Task RestoreReverbAsync()

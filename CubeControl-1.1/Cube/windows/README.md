@@ -189,3 +189,9 @@ As artes REC de BackingTrack e de cada acabamento são recursos WPF embutidos pe
 Após autorização para executar, os modos existentes cobrem as regressões: `--assets-only` confere PNGs embutidos e REC por acabamento; `--curated-packs-only` confere os 34 packs e grupos; `--player-layout-only` confere o mixer único e o botão externo à busca; `--documentation-only` confere a barra compartilhada; `--backing-practice-only` inclui a análise musical, vínculos vazios e a resposta temporal dos medidores. Não é necessário um novo comando de execução.
 
 Essas alterações de cobertura foram revisadas estaticamente, sem execução nesta revisão. Validação de precisão em músicas reais, WASAPI, troca física de dispositivos, temas/DPI e gravação no pedal permanece separada.
+
+### Sessões com pistas e gravação incremental
+
+O modo `--backing-session-only` prepara cobertura para mistura sincronizada, offsets, mute/solo, velocidade/tom relativos, exportação, envelope limitado, migração da playlist e cálculo de inserção com filtros. `--backing-recording-only` mantém a cobertura do escritor WAV; gravação sincronizada exige entrada e saída. Os cenários de packs agora verificam feedback em adorner independente da borda.
+
+Esses testes foram preparados, mas não executados nesta alteração, assim como nenhum build. Quando houver autorização, compilar pelo fluxo documentado e executar os modos pertinentes. A DLL nativa precisa ser reconstruída: os limites internos relativos passaram a 1/3–3× e ±12 semitons, enquanto os controles da sessão permanecem em 50–150% e ±6 semitons. Captura longa, latência, desconexão, renderização, alto contraste e interação por teclado exigem verificação posterior.

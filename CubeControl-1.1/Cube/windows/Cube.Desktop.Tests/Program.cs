@@ -13,32 +13,15 @@ internal static class Program
     [STAThread]
     static int Main()
     {
-        if (Environment.GetCommandLineArgs().Contains("--midi-ports-only"))
-        {
-            try { MidiPortSelectionTests.Run(); return 0; }
-            catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
-        }
-        if (Environment.GetCommandLineArgs().Contains("--backing-recording-only"))
-        {
-            try { BackingRecordingTests.Run().GetAwaiter().GetResult(); return 0; }
-            catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
-        }
-        if (Environment.GetCommandLineArgs().Contains("--firmware-worker-only"))
-        {
-            try { FirmwareWorkerTests.Run().GetAwaiter().GetResult(); return 0; }
-            catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
-        }
-        if (Environment.GetCommandLineArgs().Contains("--usability")) return QaUsability.RunMain(Environment.GetCommandLineArgs().Skip(1).ToArray());
-        if (Environment.GetCommandLineArgs().Contains("--qa")) return QaDesktop.RunMain(Environment.GetCommandLineArgs().Skip(1).ToArray());
-        var app = new Cube.Desktop.App { ShutdownMode = ShutdownMode.OnExplicitShutdown }; app.InitializeComponent();
-        SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
-        Task run = Environment.GetCommandLineArgs().Contains("--player-layout-only") ? PlayerLayoutTests.Run() : Environment.GetCommandLineArgs().Contains("--overdriven-only") ? OverdrivenLibraryTests.Run() : Environment.GetCommandLineArgs().Contains("--documentation-only") ? DocumentationTests.Run() : Environment.GetCommandLineArgs().Contains("--ir-audition-only") ? IrAuditionTests.Run() : Environment.GetCommandLineArgs().Contains("--image-picker-only") ? GearImagePickerTests.Run() : Environment.GetCommandLineArgs().Contains("--assets-only") ? AssetLoadingTests.Run() : Environment.GetCommandLineArgs().Contains("--youtube-preview-live") ? YouTubePreviewTests.RunLive() : Environment.GetCommandLineArgs().Contains("--youtube-only") ? YouTubeTests.Run() : (Environment.GetCommandLineArgs().Contains("--backing-profile") || Environment.GetCommandLineArgs().Contains("--backing-preview")) ? BackingPerformanceTests.Run() : Environment.GetCommandLineArgs().Contains("--pack-workflow-only") ? PackWorkflowTests.Run() : Environment.GetCommandLineArgs().Contains("--pack-review-ui-only") ? PackReviewUiTests.Run() : Environment.GetCommandLineArgs().Contains("--curated-packs-only") ? CuratedPackTests.Run() : Environment.GetCommandLineArgs().Contains("--live-session-only") ? LiveSessionTests.Run() : Environment.GetCommandLineArgs().Contains("--factory-irs-only") ? FactoryIrSelectionTests.Run() : Environment.GetCommandLineArgs().Contains("--amp-capacitors-only") ? AmpCapacitorTests.Run() : Environment.GetCommandLineArgs().Contains("--hardware-effect-cards") ? AdvancedHardwareTests.Run(cardFlow: true) : Environment.GetCommandLineArgs().Contains("--hardware-advanced-recovery") ? AdvancedHardwareTests.Run(recoveryOnly: true) : Environment.GetCommandLineArgs().Contains("--hardware-advanced-lifecycle") ? AdvancedHardwareTests.Run() : Environment.GetCommandLineArgs().Contains("--advanced-lifecycle-only") ? AdvancedLifecycleTests.Run() : Environment.GetCommandLineArgs().Contains("--advanced-interaction-only") ? AdvancedInteractionTests.Run() : Environment.GetCommandLineArgs().Contains("--backing-responsive") ? BackingResponsivenessTests.Run() : Environment.GetCommandLineArgs().Contains("--metronome-only") ? MetronomeTests.Run() : Environment.GetCommandLineArgs().Contains("--backing-practice-only") ? BackingPracticeTests.Run() : Environment.GetCommandLineArgs().Contains("--backing-only") ? BackingTracksTests.Run() : Environment.GetCommandLineArgs().Contains("--effects-firmware-b-only") ? EffectsFirmwareBDesktopTests.Run() : Environment.GetCommandLineArgs().Contains("--delay-only") ? DelayDesktopTests.Run() : Environment.GetCommandLineArgs().Contains("--reverb-only") ? ReverbDesktopTests.Run() : Environment.GetCommandLineArgs().Contains("--chorus-only") ? ChorusDesktopTests.Run() : Environment.GetCommandLineArgs().Contains("--phaser-only") ? PhaserDesktopTests.Run() : Environment.GetCommandLineArgs().Contains("--carousel-only") ? GearCarouselTests.Run() : Environment.GetCommandLineArgs().Contains("--artwork-only") ? GearArtworkTests.Run() : Environment.GetCommandLineArgs().Contains("--buttons-only") ? ButtonSizingTests.Run() : Environment.GetCommandLineArgs().Contains("--effects-only") ? EffectVisualizationTests.Run() : Environment.GetCommandLineArgs().Contains("--chevrons-only") ? ChevronTests.Run() : Environment.GetCommandLineArgs().Contains("--scroll-profile") ? ScrollProfileTests.Run() : Environment.GetCommandLineArgs().Contains("--snackbar-only") ? SnackbarTests.Run() : Environment.GetCommandLineArgs().Contains("--auto-connect-only") ? AutoConnectionTests.Run() : Environment.GetCommandLineArgs().Contains("--save-presets-only") ? SavePresetsTests.Run() : Environment.GetCommandLineArgs().Contains("--motion-only") ? MotionTests.Run() : Environment.GetCommandLineArgs().Contains("--ir-library-ui") ? IrLibraryUiTests.Run() : (Environment.GetCommandLineArgs().Contains("--ir-library-only") || Environment.GetCommandLineArgs().Contains("--ir-catalog-only")) ? IrLibraryTests.Run() : Environment.GetCommandLineArgs().Contains("--progress-only") ? ProgressPresentationTests.Run() : Environment.GetCommandLineArgs().Contains("--options-menu-only") ? OptionsMenuTests.Run() : Environment.GetCommandLineArgs().Contains("--ui-audit") ? UiAuditTests.Run() : Environment.GetCommandLineArgs().Contains("--microphone-only") ? MicrophoneTests.Run() : Environment.GetCommandLineArgs().Contains("--knob-wheel-only") ? KnobWheelTests.Run() : Environment.GetCommandLineArgs().Contains("--density-only") ? DensityTests.Run() : (Environment.GetCommandLineArgs().Contains("--zoom-compact-only") || Environment.GetCommandLineArgs().Contains("--zoom-dialogs-only") || Environment.GetCommandLineArgs().Contains("--zoom-only") || Environment.GetCommandLineArgs().Contains("--responsive-only") || Environment.GetCommandLineArgs().Contains("--volume-only")) ? ResponsiveTests.Run() : Environment.GetCommandLineArgs().Contains("--wheel-only") ? WheelTests.Run() : Environment.GetCommandLineArgs().Contains("--chain-only") ? ChainTests.Run() : Environment.GetCommandLineArgs().Contains("--presentation-render") ? PresentationTests.RenderFixture() : Environment.GetCommandLineArgs().Contains("--theme-only") ? ThemeTests.Run() : Environment.GetCommandLineArgs().Contains("--localization-only") ? LocalizationTests.Run() : Run(); run.ContinueWith(_ => app.Dispatcher.BeginInvokeShutdown(DispatcherPriority.Background), TaskScheduler.Default);
-        Dispatcher.Run();
-        try { run.GetAwaiter().GetResult(); return 0; } catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
+        string[] args = Environment.GetCommandLineArgs().Skip(1).ToArray();
+        // Specialized QA runners retain their own argument validation and reporting.
+        if (args.FirstOrDefault() == "--usability") return QaUsability.RunMain(args);
+        if (args.FirstOrDefault() == "--qa") return QaDesktop.RunMain(args);
+        return TestCatalog.Execute(args);
     }
-    static async Task Run()
+    internal static async Task Run()
     {
-        if (!Environment.GetCommandLineArgs().Contains("--editor-only"))
+        if (!TestCatalog.Arguments.Contains("--editor-only"))
         {
             await IrLibraryTests.Run();
             await PresentationTests.Run();
@@ -81,7 +64,7 @@ internal static class Program
             Check(GearItem.ReadImage(png) != null, "custom PNG decodes independently of original file handle");
             Check(Enumerable.Range(0, 9).All(i => new GearItem($"amp-{i}", i, "", "", "amp", "").DefaultImage != null), "all nine bundled amp photos are available in output");
             Check(Enumerable.Range(0, 8).All(i => new GearItem("content-hash", 8, "", "", "cab", "", cabinetId: $"pack-bfi-cab-{i}").DefaultImage != null), "eight factory cabinet photos follow identity even in another slot");
-            Check(new GearItem("custom-content", 1, "", "", "cab", "").DefaultImage == null && new GearItem("unlisted-effect", 1, "", "", "phaser", "").DefaultImage == null, "unknown content and equipment without photos retain generic artwork");
+            Check(new GearItem("custom-content", 1, "", "", "cab", "").DefaultImage != null && new GearItem("unlisted-effect", 1, "", "", "phaser", "").DefaultImage == null, "unknown content and equipment without photos retain generic artwork");
             using var fake = new FakeConnection();
             for (int i = 0; i < 8; i++) fake.Flash[i * 4096] = (byte)(i + 1);
             fake.Bank[8] = 8; fake.Bank[10] = 0;
@@ -108,7 +91,7 @@ internal static class Program
             Check(!model.Busy && !model.ReadingInventory && model.CanEdit, "connection finishes and releases editing after inventory completes");
             Check(fake.Writes == 0 && model.CanMatch, "connect inventories IRs without any writes");
             Check(model.ConnectionSummary == "Conectado por USB" && !model.HasEditNotice, "connection and editor availability reflect confirmed session");
-            Check(model.InventoryStatus.Contains("8 slots lidos") && model.InventoryStatus.Contains("0 referências"), "read inventory does not imply known factory equipment");
+            Check(model.InventoryStatus.Contains("8 slots lidos") && model.InventoryStatus.Contains("0 IRs de packs reconhecidos"), "read inventory does not imply known factory equipment");
             Check(model.IrAvailability == "Selecione um WAV para ouvir ou gravar.", "IR actions explain the missing file prerequisite");
             Check(model.Cabinets[1].Name != "Meu cabinet antigo", "legacy IR name is ignored");
             var rows = model.CreateMatchRows(); rows[0].Selected = rows[0].Choices.First(c => c.Value == 3); rows[2].Selected = rows[2].Choices.First(c => c.Value == 5); model.SaveMatches(rows);

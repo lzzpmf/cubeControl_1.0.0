@@ -36,7 +36,7 @@ internal static class ThemeTests
         var window = new Window { Width = 540, Height = 520, Content = panel, ShowInTaskbar = false, Title = "Player finishes" };
         window.SetResourceReference(Window.BackgroundProperty, "CubeCanvas");
         window.Show();
-        string folder = "C:/CubeControl-Build/reports/control-finishes";
+        string folder = TestPaths.Report("C:/CubeControl-Build/reports/control-finishes");
         Directory.CreateDirectory(folder);
         byte[] Pixels(Visual visual, int width, int height)
         {
@@ -89,7 +89,7 @@ internal static class ThemeTests
     private static async Task CheckControlFinishes(ThemeService service, EditorViewModel model, Knob existingKnob)
     {
         void Check(bool valid, string label) { if (!valid) throw new Exception(label); Console.WriteLine("PASS " + label); }
-        string folder = "C:/CubeControl-Build/reports/control-finishes";
+        string folder = TestPaths.Report("C:/CubeControl-Build/reports/control-finishes");
         Directory.CreateDirectory(folder);
         var panel = new WrapPanel { Margin = new Thickness(20) };
         var dial = new Knob { Width = 94, Height = 94, Maximum = 127, Value = 64 };
@@ -253,8 +253,8 @@ internal static class ThemeTests
             }
             ApplicationThemeManager.Apply(ApplicationTheme.HighContrast);
             Check(ReferenceEquals(Application.Current.Resources["CubeBorder"], SystemColors.WindowTextBrush),
-                "high contrast restores system-colored custom control outlines");
-            Check((Thickness)Application.Current.Resources["CubeSurfaceBorderThickness"] == new Thickness(1), "high contrast cards have visible outlines");
+                "high contrast retains system-colored functional drawing strokes");
+            Check((Thickness)Application.Current.Resources["CubeSurfaceBorderThickness"] == new Thickness(0), "high contrast surfaces remain borderless");
             Check(ReferenceEquals(Application.Current.Resources["CubeDisabledText"], SystemColors.GrayTextBrush), "high contrast disabled text uses Windows palette");
             service.Preview(ThemeMode.Dark);
             Check(!Application.Current.Resources.Keys.Cast<object>().Contains("ButtonBorderBrushDisabled"), "theme service leaves native control borders to WPF UI");

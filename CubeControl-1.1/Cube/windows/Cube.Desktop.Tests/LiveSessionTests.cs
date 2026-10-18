@@ -32,7 +32,7 @@ internal static class LiveSessionTests
             string validLegacyRecovery = "";
             using (var model = new EditorViewModel(folder))
             {
-                await model.Initialize();
+                // Local construction already loads preferences; skip physical MIDI discovery.
                 Check(model.ErrorMessage == "" && !model.HasBank && !model.Ir.PreviewActive && !model.Chorus.Loaded,
                     "legacy recovery does not populate or block a new session");
                 Check(!model.AutomaticCabinetMatching, "matching starts at its session default");
@@ -67,7 +67,7 @@ internal static class LiveSessionTests
             File.WriteAllText(Path.Combine(folder, "pending-ir-preview.json"), "{}");
             using (var fresh = new EditorViewModel(folder))
             {
-                await fresh.Initialize();
+                // Skip physical MIDI discovery.
                 Check(!fresh.HasBank && !fresh.Delay.Loaded && !fresh.DelayPreviewActive && !fresh.AutomaticCabinetMatching,
                     "reopening has no bank, draft, preview or matching state");
                 Check(fresh.ErrorMessage == "" && !fresh.Ir.PreviewActive,

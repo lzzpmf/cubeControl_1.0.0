@@ -1,0 +1,95 @@
+<!--
+    This Source Code Form is subject to the terms of the MIT License.
+    If a copy of the MIT was not distributed with this file, You can obtain one at https://opensource.org/licenses/MIT.
+    Copyright (C) Leszek Pomianowski and WPF UI Contributors.
+    All Rights Reserved.
+-->
+
+<!-- Adapted for cubeControl: borderless surfaces; native interaction parts retained. -->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Wpf.Ui.Controls;assembly=Wpf.Ui">
+
+    <ControlTemplate x:Key="CubeNullViewItemTemplate" TargetType="{x:Type controls:ListViewItem}">
+        <Border
+            x:Name="Border"
+            Margin="0"
+            Padding="0"
+            Background="{TemplateBinding Background}"
+            BorderThickness="0"
+            CornerRadius="{TemplateBinding Border.CornerRadius}">
+            <Grid>
+                <ContentPresenter Margin="{TemplateBinding Padding}" />
+                <Border x:Name="ActiveRectangle" Style="{DynamicResource CubeSelectionMarker}"/>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ListViewItemBackgroundPointerOver}" />
+            </MultiTrigger>
+            <Trigger Property="IsSelected" Value="True">
+ <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
+ <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeSelected}" />
+            </Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="Border" Property="Background" Value="Transparent"/></Trigger>
+</ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="CubeGridViewItemTemplate" TargetType="{x:Type controls:ListViewItem}">
+        <Border
+            x:Name="Border"
+            Margin="0"
+            Padding="0"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding Border.BorderBrush}"
+            BorderThickness="0"
+            CornerRadius="{TemplateBinding Border.CornerRadius}">
+            <Grid>
+                <controls:GridViewRowPresenter
+                    Margin="{TemplateBinding Padding}"
+                    VerticalAlignment="{TemplateBinding Control.VerticalContentAlignment}"
+                    Columns="{TemplateBinding GridView.ColumnCollection}"
+                    Content="{TemplateBinding ContentControl.Content}" />
+                <Border x:Name="ActiveRectangle" Style="{DynamicResource CubeSelectionMarker}"/>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsEnabled" Value="True" />
+                    <Condition Property="IsMouseOver" Value="True" />
+                </MultiTrigger.Conditions>
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ListViewItemBackgroundPointerOver}" />
+            </MultiTrigger>
+            <Trigger Property="IsSelected" Value="True">
+ <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
+ <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeSelected}" />
+            </Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="Border" Property="Background" Value="Transparent"/></Trigger>
+</ControlTemplate.Triggers>
+    </ControlTemplate>
+
+    <Style x:Key="CubeListViewItemStyle" TargetType="{x:Type controls:ListViewItem}">
+        <Setter Property="Foreground" Value="{DynamicResource ListViewItemForeground}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}" />
+        <Setter Property="Margin" Value="0,0,0,2" />
+        <Setter Property="Padding" Value="12,4"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Path=ViewState, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="Default">
+                <Setter Property="Template" Value="{DynamicResource CubeNullViewItemTemplate}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=ViewState, RelativeSource={RelativeSource AncestorType={x:Type ListView}}}" Value="GridView">
+                <Setter Property="Template" Value="{DynamicResource CubeGridViewItemTemplate}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style BasedOn="{StaticResource CubeListViewItemStyle}" TargetType="{x:Type controls:ListViewItem}" />
+
+</ResourceDictionary>

@@ -205,6 +205,7 @@ public sealed class BackingFader : Slider
     }
     public BackingFader()
     {
+        SetResourceReference(FocusVisualStyleProperty, "CubeParameterFocusVisualStyle");
         Loaded += (_, _) => { ThemeService.Instance.Changed += RefreshTemplate; RefreshTemplate(); };
         Unloaded += (_, _) => ThemeService.Instance.Changed -= RefreshTemplate;
     }

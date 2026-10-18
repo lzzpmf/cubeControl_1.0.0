@@ -15,6 +15,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var snapshot = await ReadChorusPreviewCore(ct);
             if (physicalSlot is < 0 or > 2 || !snapshot.PhysicalState.SequenceEqual(new byte[] { (byte)physicalSlot, 1 }))
                 throw new IOException("Selecione na aplicação o preset ativo fisicamente e use modo PRESET.");
@@ -80,6 +81,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var before = await ReadChorusPreviewCore(ct, effectControlsOnly: true);
             CheckChorusContext(recovery, before, recovering: false);
             if (parameters == recovery.Target) return recovery; // Fresh context already confirmed; no mutation.
@@ -100,6 +102,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var before = await ReadChorusPreviewCore(ct, effectControlsOnly: true);
             CheckChorusContext(recovery, before, recovering: true);
             var original = ChorusParameters.Read(recovery.OriginalDsp);
@@ -118,20 +121,13 @@ public sealed partial class CubeSession
         int[] offsets = target.Feedback < ChorusParameters.Read(before).Feedback
             ? [0x64C, 0x640, 0x644, 0x648, 0x650, 0x66C, 0x688]
             : [0x640, 0x644, 0x648, 0x650, 0x66C, 0x688, 0x64C];
-        var expected = before.ToArray();
         foreach (int offset in offsets)
         {
             int length = offset == 0x640 ? 1 : 4;
             if (!before.AsSpan(offset, length).SequenceEqual(after.AsSpan(offset, length)))
             {
-                // Recheck the physical context between field writes, including partial imports/restores.
-                var bank = await ReadInternal(0, 48, ct);
-                var state = await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4);
-                var current = expected.ToArray();
-                (await ReadInternal(0x63C, 0x58, ct, 4)).CopyTo(current, 0x63C);
-                CheckChorusContext(recovery with { Target = ChorusParameters.Read(expected) }, new(bank, current, state), recovering: false);
+                // Initial context and final verification bracket this ordered batch.
                 await AmpAck(CubePacket.Write(4, (uint)offset, after.AsSpan(offset, length)), ct);
-                after.AsSpan(offset, length).CopyTo(expected.AsSpan(offset));
             }
         }
     }

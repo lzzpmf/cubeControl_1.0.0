@@ -24,7 +24,7 @@ internal static class ButtonSizingTests
     public static async Task Run()
     {
         var previous = ThemeService.Instance.Mode;
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/button-sizing"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/button-sizing")); Directory.CreateDirectory(folder);
         var panel = new StackPanel { Margin = new Thickness(24) };
         var buttons = new List<Button>();
         foreach (var appearance in new[] { ControlAppearance.Primary, ControlAppearance.Secondary, ControlAppearance.Transparent })

@@ -12,18 +12,18 @@ Escolha um WAV de resposta de impulso pela interface e observe a compatibilidade
 Importar para um slot e gravar são operações no aparelho. Exporte ou preserve o backup do conteúdo anterior antes de substituí-lo. Consulte os avisos e o slot indicado na confirmação.
 
 ## Pré-escuta com guitarra gravada
-Selecione um dos cinco trechos de guitarra e escolha a saída USB de áudio do pedal. É necessário ter conexão MIDI operacional e prévia de IR confirmada em RAM. O computador reproduz o WAV cru; o processamento é feito pelo pedal, com seus efeitos atuais. A lista de saídas é a do Windows: escolher outra saída não aplica o IR por software. O volume começa em 30% e a repetição vem ligada.
+Selecione um dos cinco trechos de guitarra e escolha a saída USB de áudio do pedal. É necessário ter conexão MIDI operacional; não é necessário carregar um IR. Sem prévia de IR, você ouve o preset atual. A pré-escuta acompanha as alterações aplicadas à cadeia, inclusive as prévias do Criador de amps; edições que ficaram apenas no computador ainda não alteram o som. Uma prévia de IR interrompida precisa ser confirmada ou restaurada antes de iniciar. O computador reproduz o WAV cru; o processamento é feito pelo pedal, com seus efeitos atuais. A lista de saídas é a do Windows: escolher outra saída não aplica o IR por software. O volume começa em 30% e a repetição vem ligada.
 
-Trocar o IR pausa e silencia a pré-escuta durante a transferência; a reprodução só retoma na mesma posição após confirmação. Pausar conserva a posição; parar volta ao início. Trocar de trecho durante a reprodução reinicia com o novo trecho. Sair da seção IRs, trocar de saída, desconectar ou encerrar a prévia interrompe a reprodução. Backing Tracks, prévias do YouTube e pré-escuta de IRs não tocam simultaneamente.
+Trocar o IR pausa e silencia a pré-escuta durante a transferência; a reprodução só retoma na mesma posição após confirmação. Pausar conserva a posição; parar volta ao início. Trocar de trecho durante a reprodução reinicia com o novo trecho. A reprodução continua ao navegar para a Pedaleira ou o Criador de amps, com controles compactos para pausar e parar. Encerrar a prévia de IR pausa durante a restauração e retoma o preset restaurado após confirmação. Trocar de saída, desconectar ou fechar o app interrompe a reprodução. Backing Tracks, prévias do YouTube e pré-escuta de IRs não tocam simultaneamente.
 
 ## Montar e aplicar packs
-O catálogo inclui **34 packs predefinidos**, agrupados por marca, estilo e guitarra, com oito slots e distância inicial de 50%. As descrições são sugestões de uso, não simulações de guitarra ou homologação por audição. Packs pessoais aparecem em **Meus packs**.
+O catálogo inclui **34 packs predefinidos**, agrupados por marca, estilo e guitarra, com oito slots e distância inicial de 80%. As descrições são sugestões de uso, não simulações de guitarra ou homologação por audição. Packs pessoais aparecem em **Meus packs**.
 
 Em **Packs de IRs**, escolha qualquer pack e edite diretamente. A primeira alteração em um predefinido cria uma montagem independente e mostra o aviso amarelo **Criando pack**; o original permanece intacto. Para começar vazio, remova os IRs dos oito slots. Arraste um arquivo da biblioteca para o cartão de destino. Arrastar entre cartões troca os IRs e suas distâncias. A lixeira aparece ao passar o mouse ou focar o cartão; também é possível remover com Delete. O menu de contexto oferece alternativas pelo teclado. Slots vazios preservam o conteúdo atual do pedal. Montar e buscar não iniciam prévia nem gravam no aparelho.
 
-Use **Revisar e aplicar** para escolher quais IRs enviar e ajustar a distância de cada um, de 0 a 99. Esses ajustes valem somente para aquela aplicação: não modificam o pack salvo. O app compara os destinos com o pedal e evita gravar conteúdo idêntico. A confirmação final indica os slots que serão substituídos. Cancelar preserva sua montagem.
+Ajuste o **Volume** diretamente no knob de cada card, de 0 a 99% (distância no protocolo). O valor aparece no tooltip e acompanha a montagem ao salvar o pack. Clique em **Aplicar** para enviar os slots preenchidos: aparece apenas a confirmação da ação, com **OK** ou **Sair**. O app compara os destinos, preserva um backup e evita gravar conteúdo idêntico. Slots vazios permanecem intactos; corrija ou remova referências ausentes antes de aplicar.
 
-As ações **Revisar e aplicar** e **Restaurar IRs originais** ficam abaixo da grade. **Salvar pack** solicita nome e descrição em uma janela e guarda a montagem para reutilização; não é obrigatório salvar antes de aplicar. Salvar uma montagem baseada em predefinido cria um pack pessoal; salvar alterações em um pessoal atualiza esse pack. Descartar restaura o pack de origem. Ao trocar um pack com alterações, escolha **Salvar**, **Descartar** ou **Cancelar**.
+As ações **Aplicar** e **Restaurar IRs originais** ficam abaixo da grade. **Salvar pack** solicita nome e descrição em uma janela e guarda a montagem para reutilização; não é obrigatório salvar antes de aplicar. Salvar uma montagem baseada em predefinido cria um pack pessoal; salvar alterações em um pessoal atualiza esse pack. Descartar restaura o pack de origem. Ao trocar um pack com alterações, escolha **Salvar**, **Descartar** ou **Cancelar**.
 
 **Exportar** cria um `.cubeirpack.zip` com os WAVs, que pode ser importado em outro computador. **Importar** abre uma montagem para revisão, sem salvá-la nem aplicá-la automaticamente; os WAVs importados ficam nos dados do usuário e aparecem também na biblioteca individual. Arquivos antigos `.cubeirpack.json` continuam aceitos, mas dependem dos WAVs referenciados. Referências ausentes são indicadas nos cartões e não podem ser selecionadas para aplicação.
 
@@ -35,7 +35,7 @@ WAVs individuais e os WAVs de um pack portátil têm limite de 32 MiB por arquiv
 Aplicar um pack grava um slot por vez. Se houver falha, a mensagem lista os slots concluídos; a operação não desfaz automaticamente os slots já gravados. Confira o resultado antes de repetir. As cópias automáticas anteriores permanecem somente na memória da sessão; exporte backups que precisar conservar.
 
 ## Sortear um IR no gabinete
-Na cadeia de efeitos, em **Gabinete**, **Sortear e aplicar** escolhe um arquivo de toda a biblioteca, incluindo importados e ignorando filtros, e uma distância inteira entre 40% e 80%. O destino é o gabinete do preset atual, não o slot escolhido separadamente na página IRs. A operação grava diretamente, sem confirmação adicional, e aplica em RAM para ouvir imediatamente; não salva o preset nem altera o estado ligado/desligado do IR. Repetições são possíveis.
+Na cadeia de efeitos, em **Gabinete**, **Sortear e aplicar** escolhe um arquivo de toda a biblioteca, incluindo importados e ignorando filtros, e um volume inteiro entre 66% e 85% (parâmetro chamado distância no protocolo). O destino é o gabinete do preset atual, não o slot escolhido separadamente na página IRs. A operação grava diretamente, sem confirmação adicional, e aplica em RAM para ouvir imediatamente; não salva o preset nem altera o estado ligado/desligado do IR. Repetições são possíveis.
 
 É necessário estar conectado, com banco carregado, slot válido e biblioteca disponível. O arquivo é validado antes da gravação. Se a gravação concluir, mas a aplicação imediata falhar, a mensagem informa essa diferença: o slot já foi substituído. As cópias anteriores ficam apenas na memória da sessão.
 
@@ -61,7 +61,7 @@ borda externa. Outros códigos, como P12 e P25, não têm localização exata
 comprovada nessa imagem. A foto original não é incluída no app.
 
 A distância no nome é aproximada e em **milímetros**. Ela descreve a captura e
-não altera o controle **Distance** de 0–100 do pedal. Sufixos como LC45, EQ, P0,
+não altera o controle **Distance** de 0–99 do aplicativo. Sufixos como LC45, EQ, P0,
 CUT1 e UA610 identificam variantes; não implicam processamento aplicado pelo
 app. SP1-PREVIEW indica arquivos de preview, cada um identificado pelo próprio
 microfone e nome original.

@@ -32,19 +32,19 @@ internal static class ResponsiveTests
     public static async Task Run()
     {
         string temporary = Path.Combine(Path.GetTempPath(), "cube-responsive-" + Guid.NewGuid().ToString("N"));
-        bool compactOnly = Environment.GetCommandLineArgs().Contains("--zoom-compact-only");
-        bool dialogsOnly = Environment.GetCommandLineArgs().Contains("--zoom-dialogs-only");
-        bool zoomOnly = compactOnly || dialogsOnly || Environment.GetCommandLineArgs().Contains("--zoom-only");
+        bool compactOnly = TestCatalog.Arguments.Contains("--zoom-compact-only");
+        bool dialogsOnly = TestCatalog.Arguments.Contains("--zoom-dialogs-only");
+        bool zoomOnly = compactOnly || dialogsOnly || TestCatalog.Arguments.Contains("--zoom-only");
         int originalZoom = ZoomService.Instance.Percent;
-        bool volumeOnly = Environment.GetCommandLineArgs().Contains("--volume-only");
-        string folder = Path.GetFullPath(volumeOnly ? "C:/CubeControl-Build/reports/volume-3.3.21" : "C:/CubeControl-Build/reports/responsive-3.3.19");
+        bool volumeOnly = TestCatalog.Arguments.Contains("--volume-only");
+        string folder = Path.GetFullPath(volumeOnly ? TestPaths.Report("C:/CubeControl-Build/reports/volume-3.3.21") : TestPaths.Report("C:/CubeControl-Build/reports/responsive-3.3.19"));
         Directory.CreateDirectory(folder);
         using var fake = new FakeConnection();
         fake.Bank[0] = 2; fake.Bank[1] = 4; fake.Bank[2] = 8; fake.Bank[8] = 8;
         using var session = new CubeSession(fake); await session.Identify();
         using var model = new EditorViewModel(temporary);
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false };
         window.Show();
         await Task.Delay(150);
         while (model.Busy) await Task.Delay(30);

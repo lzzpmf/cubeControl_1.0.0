@@ -33,8 +33,13 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
     public string PlayLabel => IsPlaying ? "Pausar" : "Reproduzir";
     public string Status { get => status; private set => Set(ref status, value); }
     public string TimeLabel => $"{TimeSpan.FromSeconds(audio.Snapshot.Position):mm\\:ss} / {TimeSpan.FromSeconds(duration):mm\\:ss}";
-    public bool CanStart => !disposed && !suspended && owner.CanOperate && owner.Ir.PreviewActive && owner.Ir.PreviewConfirmed && selected != null && output != null;
-    private bool opening, hasError;
+    public bool CanStart => !disposed && !suspended && owner.CanOperate && (!owner.Ir.PreviewActive || owner.Ir.PreviewConfirmed) && selected != null && output != null;
+    private bool opening, hasError, panelVisible = true;
+    public bool PanelVisible { get => panelVisible; set { if (Set(ref panelVisible, value)) Notify(nameof(ShowMiniPlayer)); } }
+    public bool ShowMiniPlayer => !PanelVisible && (opening || audio.Snapshot.State is BackingPlaybackState.Playing or BackingPlaybackState.Paused);
+    private readonly BackingMeterEnvelope outputEnvelope = new();
+    private BackingMeterReading outputMeter = BackingMeterReading.Silent;
+    public BackingMeterReading OutputMeter { get => outputMeter; private set => Set(ref outputMeter, value); }
     private double outputLevel;
     public double OutputLevel { get => outputLevel; private set => Set(ref outputLevel, value); }
     public double Progress => duration > 0 ? Math.Clamp(audio.Snapshot.Position / duration * 100, 0, 100) : 0;
@@ -46,7 +51,7 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
         : output == null ? "Selecione a saída USB de áudio do pedal."
         : suspended ? "Pré-escuta pausada durante a transferência do IR."
         : !owner.CanOperate ? "Aguarde o pedal ficar disponível."
-        : !owner.Ir.PreviewActive || !owner.Ir.PreviewConfirmed ? "Confirme a prévia do IR em RAM para iniciar."
+        : owner.Ir.PreviewActive && !owner.Ir.PreviewConfirmed ? "Confirme ou restaure a prévia do IR interrompida para iniciar."
         : selected == null ? "Selecione uma gravação."
         : opening ? "Abrindo a saída de áudio…"
         : IsPlaying ? "Pré-escuta pelo pedal · efeitos atuais mantidos"
@@ -97,9 +102,11 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
     private void IrChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => Refresh();
     private void Refresh()
     {
-        Notify(nameof(IsPlaying)); Notify(nameof(PlayLabel)); Notify(nameof(TimeLabel)); Notify(nameof(CanStart));
+        Notify(nameof(ShowMiniPlayer)); Notify(nameof(IsPlaying)); Notify(nameof(PlayLabel)); Notify(nameof(TimeLabel)); Notify(nameof(CanStart));
         if (audio.Snapshot.State == BackingPlaybackState.Error) Status = "Saída de áudio indisponível. Selecione a saída e tente novamente.";
-        OutputLevel = IsPlaying ? Math.Max(OutputLevel * .65, Math.Clamp(audio.ConsumePeak(), 0, 1) * 100) : 0;
+        float peak = audio.ConsumePeak();
+        OutputMeter = outputEnvelope.Update(peak, IsPlaying, System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
+        OutputLevel = IsPlaying ? Math.Clamp(peak, 0, 1) * 100 : 0;
         Notify(nameof(Progress)); Notify(nameof(ConnectionLabel)); Notify(nameof(OutputStateLabel)); Notify(nameof(ContextStatus));
         CommandManager.InvalidateRequerySuggested();
     }
@@ -155,7 +162,7 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
     {
         suspended = false;
         await audio.Volume(volume / 100, false);
-        if (success && version == generation && owner.Connected && owner.Ir.PreviewConfirmed && owner.Ir.PreviewActive)
+        if (success && version == generation && owner.Connected && (!owner.Ir.PreviewActive || owner.Ir.PreviewConfirmed))
             await audio.Play();
         else if (!success) { hasError = true; Status = "Pré-escuta pausada: a transferência do IR não foi confirmada."; }
     });

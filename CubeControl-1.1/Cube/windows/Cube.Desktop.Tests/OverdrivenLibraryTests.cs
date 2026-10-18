@@ -99,7 +99,7 @@ internal static class OverdrivenLibraryTests
             var reference = store.Reference(0, distant.RelativePath, distant.Name);
             var pack = new IrPackDefinition { Name = "Capture distance test", Entries = [reference] };
             var resolved = store.Resolve(pack);
-            Check(reference.Distance == 50 && resolved.Problem == "" && resolved.Sectors[0].SequenceEqual(IrAudio.Decode(File.ReadAllBytes(distant.FullPath)).Sector(50)),
+            Check(reference.Distance == 80 && resolved.Problem == "" && resolved.Sectors[0].SequenceEqual(IrAudio.Decode(File.ReadAllBytes(distant.FullPath)).Sector(80)),
                 "pack hashes and paths resolve; physical 150 mm never initializes pedal Distance");
             File.Copy(candidate.FullPath, Path.Combine(temp, "external.wav"));
             var imported = new IrLibraryViewModel(() => true, root, temp, packPicker: true);
@@ -189,7 +189,7 @@ internal static class OverdrivenLibraryTests
             details.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseDownEvent });
             Check(model.IrLibrary.Selected == candidate && model.WriteCommandCount == 0, "opening capture details preserves selected IR without MIDI commands");
             details.IsExpanded = true;
-            string report = "C:/CubeControl-Build/reports/overdriven-library";
+            string report = TestPaths.Report("C:/CubeControl-Build/reports/overdriven-library");
             Directory.CreateDirectory(report);
             foreach (string language in new[] { "pt-BR", "en-US" })
             foreach (var theme in new[] { ThemeMode.Light, ThemeMode.Dark })

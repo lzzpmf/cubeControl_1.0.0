@@ -20,7 +20,7 @@ internal static class IrLibraryUiTests
         window.Show(); await Task.Delay(250); while (model.Busy) await Task.Delay(25);
         ((TabControl)window.FindName("Tabs")).SelectedIndex = 1;
         var tree = (TreeView)window.FindName("IrLibraryTree");
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/ir-library-ui"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/ir-library-ui")); Directory.CreateDirectory(folder);
         async Task Settle() { window.UpdateLayout(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout(); }
         try
         {
@@ -49,17 +49,20 @@ internal static class IrLibraryUiTests
             if (model.Ir.SourcePath != expectedNext) throw new Exception("Keyboard selection must load the next IR.");
             Console.WriteLine("PASS keyboard navigation loads library IR");
             var audio = model.Ir.Audio;
-            var individualSelection = model.IrLibrary.Selected;
-            var packCard = (Cube.Desktop.Controls.IrPackEditor)window.FindName("IrPacksCard");
-            var packBrowser = (Cube.Desktop.Controls.IrLibraryBrowser)packCard.FindName("PackLibrary");
-            packBrowser.Tree.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.PreviewMouseDownEvent });
+            var workspaceTabs = (TabControl)window.FindName("IrWorkspaceTabs");
+            workspaceTabs.SelectedIndex = 1; await Settle();
+            if (!ReferenceEquals(model.PackEditor.PackLibrary, model.IrLibrary))
+                throw new Exception("Pack editing must reuse the shared library");
             model.PackEditor.PackLibrary.Selected = model.PackEditor.PackLibrary.Entries[0];
-            model.PackEditor.Search = "Vox";
-            await Settle();
-            if (model.IrLibrary.Selected != individualSelection || model.IrLibrary.Search != "" || model.Ir.Audio != audio)
-                throw new Exception("Pack library search and pointer selection must preserve the individual library selection and audio.");
+            await model.PendingLibraryLoad;
+            model.PackEditor.Search = "Vox"; await Settle();
+            if (model.IrLibrary.Search != "Vox" || model.Ir.Audio != audio)
+                throw new Exception("Pack selection and shared search must preserve individual preview audio");
             model.PackEditor.Search = "";
-            Console.WriteLine("PASS shared libraries keep independent selection, search and preview state");
+            workspaceTabs.SelectedIndex = 0; await Settle();
+            collection = (TreeViewItem)tree.ItemContainerGenerator.ContainerFromIndex(0);
+            collection.IsExpanded = true; await Settle();
+            Console.WriteLine("PASS shared library switches context without loading pack selections into individual preview");
             foreach (string outside in new[] { "IrLibrarySearch", "HeaderGrid" })
             {
                 collection.IsSelected = true; await Settle();

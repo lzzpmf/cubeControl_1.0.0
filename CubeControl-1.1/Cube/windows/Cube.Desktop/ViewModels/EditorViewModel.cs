@@ -91,9 +91,9 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public EditorViewModel(string? dataDirectory = null, Cube.Desktop.Services.IIrAuditionService? auditionService = null)
     {
         IrAudition = new IrAuditionViewModel(this, auditionService);
-        DataDirectory = dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl");
+        DataDirectory = dataDirectory ?? Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl");
 #if CUBE_SIMULATION
-        DataDirectory = dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl-Simulation");
+        DataDirectory = dataDirectory ?? Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl-Simulation");
         for (int slot = 0; slot < 3; slot++)
         {
             simulatedDevice.Bank[slot * 16] = (byte)(slot * 2);
@@ -159,7 +159,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     private int previewCheckStage;
     private async Task CheckPreviewInBackground(int stage, Func<Task> check)
     {
-        if (previewCheckTask != null) return;
+        if (Busy || retiringAdvanced.Any(value => value) || previewCheckTask != null) return;
         previewCheckStage = stage;
         previewCheckTask = check();
         try { await previewCheckTask; }
@@ -538,7 +538,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     {
         int generation = ++transferGeneration;
         Ir.HasMeasuredProgress = false; Ir.Progress = 0; Ir.TransferActive = true;
-        return new Progress<TransferProgress>(value => { if (generation == transferGeneration && Busy && Ir.TransferActive) Ir.Report(value); });
+        return new TransferProgressThrottle(value => { if (generation == transferGeneration && Busy && Ir.TransferActive) Ir.Report(value); });
     }
     private Task PreviewAsync() => PreviewCoreAsync(null);
     private async Task PreviewCoreAsync(Func<bool>? stillSelected)
@@ -593,15 +593,21 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     private async Task RestorePreviewAsync()
     {
-        await IrAudition.StopAsync();
         if (originalRam == null) return;
-        BusyDetail = "Restaurando IR anterior…";
-        if (session == null) throw new IOException("Reconecte para restaurar o IR anterior. O snapshot foi preservado.");
-        if (ramIdentity != session.IdentityHex) throw new InvalidOperationException("Conecte o aparelho correspondente ao snapshot de prévia.");
-        Ir.PreviewConfirmed = false;
-        await session.ApplyIrRam(originalRam, Progress());
-        originalRam = null; ramIdentity = null;
-        Ir.PreviewActive = false; Ir.State = "IR anterior restaurado e conferido."; Status = Ir.State; Refresh();
+        var auditionVersion = await IrAudition.SuspendForTransfer();
+        bool restored = false;
+        try
+        {
+            BusyDetail = "Restaurando IR anterior…";
+            if (session == null) throw new IOException("Reconecte para restaurar o IR anterior. O snapshot foi preservado.");
+            if (ramIdentity != session.IdentityHex) throw new InvalidOperationException("Conecte o aparelho correspondente ao snapshot de prévia.");
+            Ir.PreviewConfirmed = false;
+            await session.ApplyIrRam(originalRam, Progress());
+            originalRam = null; ramIdentity = null;
+            Ir.PreviewActive = false; Ir.State = "IR anterior restaurado e conferido."; Status = Ir.State;
+            restored = true; Refresh();
+        }
+        finally { await IrAudition.CompleteTransfer(auditionVersion, restored); }
     }
     private Task BackupIr(int slot, byte[] bytes)
     {
@@ -710,12 +716,15 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         IrPack pack;
         if (packEditor != null && ReferenceEquals(packEditor.Current, SelectedIrPack))
             pack = PackStore.Resolve(packEditor.ApplicationDraft());
-        else pack = SelectedIrPack ?? throw new InvalidOperationException("Selecione um pack de IRs.");
+        else
+        {
+            pack = SelectedIrPack ?? throw new InvalidOperationException("Selecione um pack de IRs.");
+            if (pack.Definition != null) pack = PackStore.Resolve(pack.Definition);
+        }
         await ApplyPreparedIrPackAsync(pack);
     }
     private async Task ApplyPreparedIrPackAsync(IrPack pack, bool restoration = false)
     {
-        if (pack.Definition != null) pack = PackStore.Resolve(pack.Definition);
         // Legacy selection hooks are retained for callers/tests; the new review supports per-slot repair states.
         if (ChoosePackIrSlots != null && pack.Problem.Length > 0) throw new FormatException("Pendências: " + pack.Problem);
         var originals = new byte[8][];
@@ -748,10 +757,14 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         else
         {
             if (pack.Definition == null) throw new InvalidOperationException("Use Restaurar IRs originais para packs binários.");
-            var review = new IrPackReviewViewModel(pack.Definition, PackStore, originals, PackEditor);
-            if (!await ShowPackReview(review)) { Status = "Aplicação de IRs cancelada."; return; }
-            if (!review.CanContinue) throw new InvalidOperationException("Selecione ao menos um IR disponível.");
-            pack = PackStore.Resolve(review.SelectedDefinition());
+            // Optional host hook; the app edits volumes directly on the pack cards.
+            if (ReviewPack != null)
+            {
+                var review = new IrPackReviewViewModel(pack.Definition, PackStore, originals, PackEditor);
+                if (!await ReviewPack(review)) { Status = "Aplicação de IRs cancelada."; return; }
+                if (!review.CanContinue) throw new InvalidOperationException("Selecione ao menos um IR disponível.");
+                pack = PackStore.Resolve(review.SelectedDefinition());
+            }
             if (pack.Problem.Length > 0) throw new FormatException("Pendências: " + pack.Problem);
             different = Differences(pack); selection = pack.Definition!.Entries.Select(e => e.Slot).ToArray();
         }
@@ -759,7 +772,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         if (selection.Any(i => i < 0 || i >= 8 || !pack.HasSlot(i) || pack.Sectors[i].Length != 4096)) throw new InvalidOperationException("Seleção de IRs inválida.");
         var selected = selection.Distinct().Order().Where(i => different[i]).ToArray();
         if (selected.Length == 0) { Status = Ir.State = "Os slots preenchidos já correspondem ao pack selecionado. Nenhuma gravação necessária."; Completed(Status); return; }
-        if (!await Ask($"Aplicar {pack.Name} nos slots: {string.Join(", ", selected.Select(i => i + 1))}?\nOs IRs atuais foram preservados em memória nesta sessão. Somente os slots selecionados serão substituídos.")) return;
+        if (!await (restoration || ChoosePackIrSlots != null || ReviewPack != null ? Ask : ConfirmPackApply)($"Aplicar {pack.Name} nos slots: {string.Join(", ", selected.Select(i => i + 1))}?\nOs IRs atuais foram preservados em memória nesta sessão. Somente os slots selecionados serão substituídos.")) return;
         if (!await ConfirmAdvancedPreviewChangeAsync()) return;
         await RestorePreviewAsync();
         var completedSlots = new List<int>();
@@ -787,6 +800,12 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Ir.SlotInfo = $"{pack.Name} aplicado e conferido nos slots: {string.Join(", ", selected.Select(i => i + 1))}."; Status = Ir.State = Ir.SlotInfo;
         Completed(Status);
     }
+    public Func<string, Task<bool>> ConfirmPackApply { get; set; } = async message =>
+    {
+        var dialog = new Controls.PackDialog(LanguageService.T("Aplicar"),
+            new System.Windows.Controls.TextBlock { Text = LanguageService.T(message), TextWrapping = TextWrapping.Wrap }, primary: "OK", close: "Sair");
+        return await dialog.ShowAsync() == Controls.PackDialogChoice.Primary;
+    };
     public Func<string, Task<bool>> Ask { get; set; } = async message =>
     {
         var dialog = new Wpf.Ui.Controls.MessageBox { PrimaryButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Checkmark24), CloseButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24), Title = "CubeControl", Content = LanguageService.T(message), PrimaryButtonText = LanguageService.T("Confirmar"), CloseButtonText = LanguageService.T("Cancelar"), Owner = Application.Current.MainWindow };

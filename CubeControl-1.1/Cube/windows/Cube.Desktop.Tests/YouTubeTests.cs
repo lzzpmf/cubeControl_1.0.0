@@ -91,7 +91,7 @@ internal static class YouTubeTests
                 uiFake.Calls[0].Result.SetResult(Enumerable.Range(0, 10).Select(i => video with { Id = $"testvideo{i:00}", Title = $"{i + 1}. Backing track with a long title for responsive layout verification", Channel = "Test channel" }).ToArray());
                 await Task.Delay(30);
                 await YouTubePreviewTests.PrepareWaveFixture(window.BackingTracks);
-                string reports = "C:/CubeControl-Build/youtube-validation/reports"; Directory.CreateDirectory(reports);
+                string reports = TestPaths.Report("C:/CubeControl-Build/youtube-validation/reports"); Directory.CreateDirectory(reports);
                 foreach (var theme in new[] { "Dark", "Light", "HighContrast" })
                     foreach (int width in new[] { 1280, 640 })
                     {
@@ -162,7 +162,7 @@ internal static class YouTubeTests
                 var toggle = (System.Windows.Controls.Primitives.ToggleButton)window.FindName("BackingTrackSearchToggle");
                 var search = (Wpf.Ui.Controls.AutoSuggestBox)window.FindName("BackingYouTubeSearch");
                 var toggleBounds = toggle.TransformToAncestor(search.Parent as System.Windows.Media.Visual).TransformBounds(new System.Windows.Rect(toggle.RenderSize));
-                Check(toggleBounds.Left >= 0 && toggleBounds.Right <= search.ActualWidth + 1 && toggle.ActualHeight >= 32, "search toggle stays within field");
+                Check(toggleBounds.Left >= 0 && toggleBounds.Right <= ((System.Windows.FrameworkElement)search.Parent).ActualWidth + 1 && toggleBounds.Left >= search.ActualWidth && toggle.ActualHeight >= 32, "search toggle fits beside the field without overlap");
                 toggle.Focus();
                 Check(toggle.IsKeyboardFocused && new System.Windows.Automation.Peers.ToggleButtonAutomationPeer(toggle).GetPattern(System.Windows.Automation.Peers.PatternInterface.Toggle) != null, "search option exposes keyboard focus and toggle state");
                 var mosaic = (System.Windows.Controls.ItemsControl)window.FindName("YouTubeMosaic");
@@ -178,7 +178,7 @@ internal static class YouTubeTests
                     previousBottom = position.Y + card.ActualHeight;
                     Check(!Children<System.Windows.Controls.Image>(card).Any(), "track rows have no video artwork");
                     var wave = Children<Cube.Desktop.Controls.BackingWaveform>(card).Single();
-                    Check(wave.ActualHeight == 30 && !wave.IsHitTestVisible && !wave.Focusable, "preview waveform stays compact and read-only");
+                    Check(wave.Height == 28 && (!wave.IsVisible || wave.ActualHeight == 28) && !wave.IsHitTestVisible && !wave.Focusable, "preview waveform stays compact and read-only when shown");
                     foreach (string action in new[] { "PreviewButton", "DownloadButton" })
                     {
                         var control = (System.Windows.FrameworkElement)card.FindName(action);
@@ -204,7 +204,7 @@ internal static class YouTubeTests
                     bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
                     bitmap.Render(composition);
                     var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder(); encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                    using var screenshot = File.Create("C:/CubeControl-Build/youtube-validation/reports/youtube-English-200.png"); encoder.Save(screenshot);
+                    using var screenshot = File.Create(TestPaths.Report("C:/CubeControl-Build/youtube-validation/reports/youtube-English-200.png")); encoder.Save(screenshot);
                 }
                 var preview = (Wpf.Ui.Controls.Button)cards[0].FindName("PreviewButton");
                 Check(preview.ToolTip?.ToString() == (language == "en-US" ? "Preview audio" : "Pré-ouvir"), "preview action is translated");

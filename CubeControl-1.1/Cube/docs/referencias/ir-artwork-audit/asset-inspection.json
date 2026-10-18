@@ -1,0 +1,57 @@
+[
+  {
+    "image": "zilla-fatboy-2x12.png",
+    "size": [
+      1595,
+      986
+    ],
+    "alphaExtrema": [
+      0,
+      255
+    ]
+  },
+  {
+    "image": "de112-ported-1x12.png",
+    "size": [
+      1312,
+      1199
+    ],
+    "alphaExtrema": [
+      0,
+      255
+    ]
+  },
+  {
+    "image": "m212-vintage-2x12.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaExtrema": [
+      0,
+      254
+    ]
+  },
+  {
+    "image": "mesa-rectifier-1x12.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaExtrema": [
+      0,
+      254
+    ]
+  },
+  {
+    "image": "cabinet-unknown.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "alphaExtrema": [
+      0,
+      254
+    ]
+  }
+]

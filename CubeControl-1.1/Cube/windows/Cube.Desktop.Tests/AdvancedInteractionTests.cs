@@ -82,7 +82,7 @@ internal static class AdvancedInteractionTests
                     var bitmap = new RenderTargetBitmap((int)editor.ActualWidth, (int)editor.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                     bitmap.Render(editor);
                     var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
-                    string folder = "C:/CubeControl-Build/advanced-ux/reports"; Directory.CreateDirectory(folder);
+                    string folder = TestPaths.Report("C:/CubeControl-Build/advanced-ux/reports"); Directory.CreateDirectory(folder);
                     using var output = File.Create(Path.Combine(folder, $"{kind}-{width}.png")); png.Save(output);
                 }
             }

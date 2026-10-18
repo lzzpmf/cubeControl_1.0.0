@@ -22,8 +22,8 @@ internal static class DelayDesktopTests
         using var model = new EditorViewModel(directory);
         await model.AttachSession(session);
         await model.ReadDelayAsync();
-        Check(model.DelayPreviewActive && model.CanEditDelay && !model.CanEdit && !model.CanUseAmp && !model.CanOperate && !model.CanStartPhaser && !model.CanStartChorus && !model.CanStartReverb,
-            "delay preview excludes preset edits and amp/IR operations");
+        Check(model.DelayPreviewActive && model.CanEditDelay && model.CanEdit && model.CanUseAmp && model.CanOperate && model.CanStartPhaser && model.CanStartChorus && model.CanStartReverb,
+            "delay preview preserves live preset controls and allows independent effect sessions");
         Check(!File.Exists(Path.Combine(directory, "pending-delay-preview.json")), "delay snapshot stays in memory");
         model.Delay.Mix = 10; model.Delay.Mix = 20; model.Delay.Mix = 30;
         for (int i = 0; i < 200 && (DelayParameters.Read(fake.Dsp).Mix != 0.3f || model.Busy); i++) await Task.Delay(10);
@@ -33,11 +33,10 @@ internal static class DelayDesktopTests
         view.SetResourceReference(Control.ForegroundProperty, "CubeText");
         var host = new Window { Content = view, Width = 600, Height = 900, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false, SizeToContent = SizeToContent.Height };
         host.Show();
-        ((Expander)view.Content).IsExpanded = true;
         await Task.Delay(400);
         view.Measure(new Size(560, 900)); view.Arrange(new Rect(0, 0, 560, view.DesiredSize.Height)); view.UpdateLayout();
         Check(view.ActualHeight > 300 && view.ActualHeight < 1200, $"delay editor lays out without clipping ({view.ActualHeight})");
-        string render = Path.GetFullPath("C:/CubeControl-Build/delay-research/delay-editor.png"); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
+        string render = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/delay-research/delay-editor.png")); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
         var bitmap = new RenderTargetBitmap(560, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(view);
         var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
@@ -46,7 +45,7 @@ internal static class DelayDesktopTests
         view.Width = 320; host.Width = 360;
         await Task.Delay(150);
         view.Measure(new Size(320, double.PositiveInfinity)); view.Arrange(new Rect(0, 0, 320, view.DesiredSize.Height)); view.UpdateLayout();
-        Check(((Expander)view.Content).Header.ToString() == "Delay creator" && view.ActualHeight < 1280,
+        Check(((Grid)view.Content).Children.OfType<WrapPanel>().First().Children.OfType<Wpf.Ui.Controls.Button>().Any(b => Equals(b.Content, "Read current effect")) && view.ActualHeight < 1280,
             "delay compact editor translates live and wraps content");
         Check(LanguageService.T("Profundidade da modulação (% do original)") == "Modulation depth (% of stock)", "delay parameter labels translated");
         var compact = new RenderTargetBitmap(320, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
@@ -64,7 +63,7 @@ internal static class DelayDesktopTests
         model.Dispose(); // Abnormal shutdown ends the app session; only the current pedal RAM survives.
         using var reopened = new EditorViewModel(directory);
         int writes = fake.Writes;
-        await reopened.Initialize();
+        // Construction loads local state; do not enumerate physical MIDI ports here.
         Check(!reopened.DelayPreviewActive && !reopened.CanEditDelay && fake.Writes == writes,
             "restart ignores previous session without reapplying controls");
         var third = new CubeSession(fake); await third.Identify(); await reopened.AttachSession(third);
@@ -101,7 +100,7 @@ internal static class DelayDesktopTests
         string invalidPath = Path.Combine(invalidDirectory, "pending-delay-preview.json");
         await File.WriteAllTextAsync(invalidPath, "{}");
         using var invalid = new EditorViewModel(invalidDirectory);
-        try { await invalid.Initialize(); } catch (Exception) { }
+        // Legacy recovery is checked without physical port discovery.
         var invalidSession = new CubeSession(fake); await invalidSession.Identify(); await invalid.AttachSession(invalidSession);
         Check(invalid.CanStartDelay && invalid.CanStartPhaser && invalid.CanStartChorus && invalid.CanStartReverb && invalid.CanUseAmp &&
             await File.ReadAllTextAsync(invalidPath) == "{}", "malformed legacy recovery does not block previews");
@@ -110,11 +109,13 @@ internal static class DelayDesktopTests
         using var closeModel = new EditorViewModel(Path.Combine(directory, "closing"));
         await closeModel.AttachSession(closeSession);
         // Construct the real window without showing it or enabling automatic USB connection.
-        var main = new Cube.Desktop.MainWindow(closeModel);
+        var main = new Cube.Desktop.MainWindow(closeModel, false);
         closeModel.SelectedStage = 3;
         await closeModel.ReadDelayAsync();
         closeModel.Delay.Depth = 50;
         for (int i = 0; i < 200 && (DelayParameters.Read(closeFake.Dsp).Depth != 0.05f || closeModel.Busy); i++) await Task.Delay(10);
+        closeModel.Ask = _ => Task.FromResult(true);
+        main.Show();
         main.Close();
         for (int i = 0; i < 200 && closeModel.DelayPreviewActive; i++) await Task.Delay(10);
         Check(!closeModel.DelayPreviewActive && DelayParameters.Read(closeFake.Dsp).Depth == 0.1f &&

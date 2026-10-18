@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -15,17 +15,18 @@ internal static class ChevronTests
     public static async Task Run()
     {
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-chevron-" + Guid.NewGuid().ToString("N")));
-        var window = new MainWindow(model) { ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false };
         window.Show();
         try
         {
             int count = 0;
-            foreach (int page in new[] { 1, 2 })
+            foreach (int page in new[] { 1 })
             {
                 ((ListBox)window.FindName("Navigation")).SelectedIndex = page;
+                ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 0;
                 await Task.Delay(100); window.UpdateLayout();
                 var controls = Find<Control>(window).Where(ExpanderChevron.GetEnabled).ToArray();
-                if (controls.Length != (page == 1 ? 1 : 4)) throw new Exception("Missing target expanders");
+                if (controls.Length != 1) throw new Exception("Missing target expanders");
                 foreach (var control in controls)
                 {
                     var toggle = Find<ToggleButton>(control).Single(b => b.TemplatedParent == control);

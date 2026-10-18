@@ -29,7 +29,7 @@ internal sealed class ZoomSettings
 internal sealed class ZoomService
 {
     public static ZoomService Instance { get; } = new();
-    private readonly string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl", "zoom-v1.json");
+    private readonly string path = Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl", "zoom-v1.json");
     public int Percent { get; private set; }
     public event Action? Changed;
     private ZoomService() => Percent = ZoomSettings.Load(path);

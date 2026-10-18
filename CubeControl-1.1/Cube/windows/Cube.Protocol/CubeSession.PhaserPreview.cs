@@ -8,6 +8,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var snapshot = await ReadPhaserCore(ct);
             if (physicalSlot is < 0 or > 2 || !snapshot.PhysicalState.SequenceEqual(new byte[] { (byte)physicalSlot, 1 }))
                 throw new IOException("Selecione na aplicação o preset ativo fisicamente e use modo PRESET.");
@@ -71,6 +72,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var before = await ReadPhaserCore(ct, effectControlsOnly: true);
             CheckPhaserContext(recovery, before, recovering: false);
             if (parameters == recovery.Target) return recovery; // Fresh context already confirmed; no mutation.
@@ -91,6 +93,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             var before = await ReadPhaserCore(ct, effectControlsOnly: true);
             CheckPhaserContext(recovery, before, recovering: true);
             var original = PhaserParameters.Read(recovery.OriginalDsp);

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -17,7 +17,7 @@ using ThemeMode = Cube.Desktop.Appearance.ThemeMode;
 internal static class MetronomeTests
 {
     private static void Check(bool condition, string label) { if (!condition) throw new Exception(label); Console.WriteLine("PASS " + label); }
-    public static async Task Run()
+    public static async Task Run(bool includeDevice = true)
     {
         var settings = new MetronomeSettings(true, 137, 4);
         foreach (var (beats, eighth) in new[] { (2, false), (3, false), (4, false), (6, true) })
@@ -72,7 +72,7 @@ internal static class MetronomeTests
             Check(rejected, "invalid WAV rejected");
             using (var model = new BackingTracksViewModel(folder))
             {
-                Check(!model.FollowTrack && !model.MetronomeEnabled && model.MetronomeBpm == 120 && model.MetronomeVolume == 30, "fresh defaults and no autoplay");
+                Check(!model.FollowTrack && !model.MetronomeEnabled && model.MetronomeBpm == 120 && model.MetronomeVolume == 100, "fresh defaults and no autoplay");
                 var indicators = model.MetronomeBeatMarkers;
                 var changes = new List<string?>();
                 model.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
@@ -108,7 +108,7 @@ internal static class MetronomeTests
             string legacy = Path.Combine(folder, "legacy"); Directory.CreateDirectory(legacy);
             File.WriteAllText(Path.Combine(legacy, "backing-metronome-v1.json"), "{\"Version\":1,\"Bpm\":135}");
             using (var old = new BackingTracksViewModel(legacy)) Check(old.MetronomeSound == "Click" && old.MetronomeBpm == 135, "legacy preferences retain tempo and default to Click");
-            await Audio(source, folder);
+            if (includeDevice) await Audio(source, folder); else Console.WriteLine("EXCLUDED audio-device: physical playback/loopback");
             await Render(folder);
         }
         finally { Directory.Delete(folder, true); }
@@ -134,7 +134,7 @@ internal static class MetronomeTests
         await engine.Configure(.75, 0, true, .2, .3); await engine.Seek(.2); await engine.Play(); await Task.Delay(600);
         Check(engine.Snapshot.Repetitions >= 2 && !engine.IsCountingIn, "speed and A/B loops do not repeat count-in");
         await engine.ReleaseOutput(); Check(!engine.IsCountingIn && engine.Snapshot.OutputId == null, "release cancels audio/count-in");
-        if (Environment.GetCommandLineArgs().Contains("--metronome-loopback")) await Loopback(endpoint, folder);
+        if (TestCatalog.Arguments.Contains("--metronome-loopback")) await Loopback(endpoint, folder);
         using var independent = new BackingTracksViewModel(Path.Combine(folder, "independent")) { IsMuted = true, MetronomeMuted = true, SelectedOutput = new(endpoint, "Fixture") };
         independent.ToggleMetronome.Execute(null); await Wait(() => independent.MetronomeEnabled); await Task.Delay(180);
         Check(independent.Tracks.Count == 0 && independent.MetronomeBeat > 0, "independent WASAPI plays without a track");
@@ -200,15 +200,15 @@ internal static class MetronomeTests
         Check(clicks.Count >= 3 && markers.Count >= 3, "real loopback contains click and reference track");
         Check(clicks.Zip(clicks.Skip(1)).All(pair => Math.Abs(pair.Second - pair.First - .5) < .03), "real output click intervals match 120 BPM");
         Check(markers.All(marker => clicks.Any(click => Math.Abs(click - marker) < .03)), "clicks align with reference track first-beat offset");
-        string reports = "C:/CubeControl-Build/metronome-validation/reports"; Directory.CreateDirectory(reports);
+        string reports = TestPaths.Report("C:/CubeControl-Build/metronome-validation/reports"); Directory.CreateDirectory(reports);
         File.Copy(capture.TemporaryPath, Path.Combine(reports, "metronome-reference-loopback.wav"), true);
     }
     private static async Task Render(string folder)
     {
         ThemeService.Instance.ReadWindowsTransparency = () => false;
         using var model = new EditorViewModel(Path.Combine(folder, "render"));
-        var window = new MainWindow(model); window.Show();
-        string reports = "C:/CubeControl-Build/metronome-validation/reports"; Directory.CreateDirectory(reports);
+        var window = new MainWindow(model, false); window.Show();
+        string reports = TestPaths.Report("C:/CubeControl-Build/metronome-validation/reports"); Directory.CreateDirectory(reports);
         try
         {
             ((TabControl)window.FindName("Tabs")).SelectedIndex = 2;

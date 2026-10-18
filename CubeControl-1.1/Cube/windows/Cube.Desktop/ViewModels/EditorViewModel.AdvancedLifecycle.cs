@@ -5,6 +5,7 @@ namespace Cube.Desktop.ViewModels;
 
 public sealed partial class EditorViewModel
 {
+    private readonly bool[] retiringAdvanced = new bool[5];
     private readonly SemaphoreSlim advancedLifecycle = new(1);
     private readonly string[] advancedErrors = ["", "", "", "", ""];
     public IReadOnlyList<string> AdvancedErrors => advancedErrors;

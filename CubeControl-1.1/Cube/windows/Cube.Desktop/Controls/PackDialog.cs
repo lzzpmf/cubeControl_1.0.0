@@ -10,13 +10,13 @@ internal sealed class PackDialog
 {
     private readonly Wpf.Ui.Controls.ContentDialog? dialog;
     private readonly Wpf.Ui.Controls.MessageBox? fallback;
-    public PackDialog(string title, object content, string primary = "Continuar", string secondary = "", double width = 680)
+    public PackDialog(string title, object content, string primary = "Continuar", string secondary = "", double width = 680, string close = "Cancelar")
     {
         if (Application.Current.MainWindow is MainWindow window && window.FindName("DialogHost") is Wpf.Ui.Controls.ContentDialogHost host)
             dialog = new(host) { Title = title, Content = content, PrimaryButtonText = primary,
-                SecondaryButtonText = secondary, CloseButtonText = "Cancelar", DialogMaxWidth = width, DialogMaxHeight = 900 };
+                SecondaryButtonText = secondary, CloseButtonText = close, DialogMaxWidth = width, DialogMaxHeight = 900 };
         else fallback = new() { Title = LanguageService.T(title), Content = content, PrimaryButtonText = LanguageService.T(primary),
-            SecondaryButtonText = LanguageService.T(secondary), CloseButtonText = LanguageService.T("Cancelar"), Owner = Application.Current.MainWindow };
+            SecondaryButtonText = LanguageService.T(secondary), CloseButtonText = LanguageService.T(close), Owner = Application.Current.MainWindow };
     }
     public bool IsPrimaryEnabled
     {

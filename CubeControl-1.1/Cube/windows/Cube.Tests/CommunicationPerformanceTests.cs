@@ -39,14 +39,16 @@ internal static class CommunicationPerformanceTests
                 "effect preparation reads only bank, alias and physical selection");
             counted.Reads.Clear();
             recovery = await session.ApplyChorusPreview(recovery, recovery.Target with { Depth = 0.2f }, _ => Task.CompletedTask);
-            check(counted.Reads.Count == 19 && counted.Reads.Where(r => r.Region == 4 && r.Address < 0xF70)
+            check(counted.Reads.Count == 16 && counted.Reads.Where(r => r.Region == 4 && r.Address < 0xF70)
                 .All(r => r.Address >= 0x63C && r.Address + r.Length <= 0x764),
-                "single chorus control uses 19 bounded reads instead of 83 full-capture reads");
+                "single chorus control uses 16 bounded reads instead of 19 with per-field checks");
             check(recovery.OriginalDsp.SequenceEqual(initial), "optimized edits retain the complete original recovery snapshot");
             counted.Reads.Clear(); int writes = fake.Writes;
             recovery = await session.ApplyChorusPreview(recovery, recovery.Target, _ => throw new Exception("No new recovery intent needed"));
             check(fake.Writes == writes && counted.Reads.Count == 8, "unchanged effect confirms fresh context once without writing");
+            counted.Reads.Clear();
             await session.RestoreChorusPreview(recovery);
+            check(counted.Reads.Count == 16, "restore brackets changed fields with initial and final captures only");
             check(ChorusParameters.Read(fake.Dsp) == ChorusParameters.Read(initial), "optimized restore returns original parameters");
             recovery = recovery with { Target = ChorusParameters.Read(initial) };
             bool rejected = false;
@@ -54,6 +56,38 @@ internal static class CommunicationPerformanceTests
             try { await session.ApplyChorusPreview(recovery, recovery.Target with { Depth = 0.2f }, _ => Task.CompletedTask); }
             catch (IOException) { rejected = true; }
             check(rejected, "compact capture still detects a different effect block changing during write");
+        }
+        using (var fake = new DelayConnection())
+        using (var counted = new CountingConnection(fake))
+        using (var session = new CubeSession(counted))
+        {
+            fake.Activate(); await session.Identify();
+            var recovery = await session.BeginDelayPreview(0, _ => Task.CompletedTask);
+            counted.Reads.Clear();
+            recovery = await session.ApplyDelayPreview(recovery, new DelayParameters(9601, 0.123f, 0.05f, 0.005f, 0.321f), _ => Task.CompletedTask);
+            int batchReads = counted.Reads.Count;
+            counted.Reads.Clear();
+            await session.RestoreDelayPreview(recovery);
+            check(batchReads == 16 && counted.Reads.Count == 16,
+                "Delay multi-field update and restore each use two bounded captures (16 reads)");
+            check(DelayParameters.Read(fake.Dsp) == DelayParameters.Read(recovery.OriginalDsp),
+                "Delay optimized restore preserves original parameters");
+        }
+        using (var fake = new ReverbConnection())
+        using (var counted = new CountingConnection(fake))
+        using (var session = new CubeSession(counted))
+        {
+            fake.Activate(); await session.Identify();
+            var recovery = await session.BeginReverbPreview(0, _ => Task.CompletedTask);
+            counted.Reads.Clear();
+            recovery = await session.ApplyReverbPreview(recovery, new ReverbParameters(0.5f, 0.275f, 1, 40, 5), _ => Task.CompletedTask);
+            int batchReads = counted.Reads.Count;
+            counted.Reads.Clear();
+            await session.RestoreReverbPreview(recovery);
+            check(batchReads == 16 && counted.Reads.Count == 16,
+                "Reverb multi-field update and restore each use two bounded captures (16 reads)");
+            check(ReverbParameters.Read(fake.Dsp) == ReverbParameters.Read(recovery.OriginalDsp),
+                "Reverb optimized restore preserves original parameters");
         }
     }
 

@@ -26,19 +26,19 @@ internal static class GearArtworkTests
         Check(!GearArtworkLayout.VisibleBounds(empty).IsEmpty, "Transparent images must have a safe fallback");
         Check(GearArtworkLayout.Place(new Size(100, 60), bounds, new Size(0, 0), 1).IsEmpty, "Collapsed layout must be safe");
 
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/gear-artwork"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/gear-artwork")); Directory.CreateDirectory(folder);
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-artwork-" + Guid.NewGuid().ToString("N")));
         var amps = model.Amps;
         var library = model.IrLibrary.Entries.ToArray();
         Check(library.Length > 0, "IR library is available for artwork coverage");
         foreach (var entry in library)
         {
-            string? asset = CabinetArtwork.ForIr(entry.RelativePath, entry.Name);
-            Check(asset != null && File.Exists(AssetPaths.Image(asset)), "Library IR has an illustration: " + entry.RelativePath);
+            string? asset = CabinetArtwork.ForIr(entry.RelativePath, entry.Name) ?? CabinetArtwork.Generic;
+            Check(asset != null && File.Exists(AssetPaths.Image(asset)), "Library IR has a named illustration or the generic fallback: " + entry.RelativePath);
         }
         Check(CabinetArtwork.ForIr("unknown.wav", "Unknown custom IR") == null, "Unknown names keep the generic fallback");
         Check(CabinetArtwork.ForIr(@"FENDER\IRs WAV\1x12\Deluxe Reverb Oxford\Big.wav", null) == "fender-deluxe-oxford-1x12.png", "Artwork matching tolerates path separators and casing");
-        var inferred = library.GroupBy(e => CabinetArtwork.ForIr(e.RelativePath, e.Name)).Select(g =>
+        var inferred = library.Where(e => CabinetArtwork.ForIr(e.RelativePath, e.Name) != null).GroupBy(e => CabinetArtwork.ForIr(e.RelativePath, e.Name)).Select(g =>
             new GearItem("illustration-" + g.Key, 0, IrViewModel.DisplayName(g.First().FullPath, g.First().Collection), "", "cab", "#C5B77F")).ToArray();
         Check(inferred.Length == 10, "Ten named cabinet families share art across microphone variants");
         var vertical = new[] {

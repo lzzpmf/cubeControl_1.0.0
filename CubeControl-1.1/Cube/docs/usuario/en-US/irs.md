@@ -12,18 +12,18 @@ Choose an impulse-response WAV in the interface and check the reported compatibi
 Importing to a slot and writing are device operations. Export or preserve the backup of the previous contents before replacement. Read the messages and the destination slot in the confirmation.
 
 ## Audition with recorded guitar
-Select one of the five guitar recordings and choose the pedal’s USB audio output. An operational MIDI connection and a confirmed IR RAM preview are required. The computer plays the raw WAV; the pedal processes it with its current effects. Outputs come from Windows: choosing another output does not apply the IR in software. Volume starts at 30% and looping is enabled.
+Select one of the five guitar recordings and choose the pedal’s USB audio output. An operational MIDI connection is required, but loading an IR is optional. Without an IR preview you hear the current preset. Audition follows changes applied to the effect chain, including Amp Creator previews; edits that remain only on the computer do not affect the sound. An interrupted IR preview must be confirmed or restored before starting. The computer plays the raw WAV; the pedal processes it with its current effects. Outputs come from Windows: choosing another output does not apply the IR in software. Volume starts at 30% and looping is enabled.
 
-Changing the IR pauses and mutes audition during transfer; playback resumes at the same position only after confirmation. Pause keeps the position; Stop returns to the beginning. Changing the recording during playback restarts with the new recording. Leaving IRs, changing output, disconnecting or ending preview stops playback. Backing Tracks, YouTube previews and IR audition do not play simultaneously.
+Changing the IR pauses and mutes audition during transfer; playback resumes at the same position only after confirmation. Pause keeps the position; Stop returns to the beginning. Changing the recording during playback restarts with the new recording. Playback continues when navigating to the pedalboard or Amp Creator, with compact pause and stop controls. Ending IR preview pauses during restoration and resumes the restored preset after confirmation. Changing output, disconnecting or closing the app stops playback. Backing Tracks, YouTube previews and IR audition do not play simultaneously.
 
 ## Build and apply packs
-The catalog includes **34 predefined packs**, grouped by brand, style and guitar, with eight slots and an initial distance of 50%. Descriptions suggest uses; they do not simulate guitar models or imply listening validation. Personal packs appear under **My packs**.
+The catalog includes **34 predefined packs**, grouped by brand, style and guitar, with eight slots and an initial distance of 80%. Descriptions suggest uses; they do not simulate guitar models or imply listening validation. Personal packs appear under **My packs**.
 
 In **IR packs**, choose any pack and edit it directly. The first change to a predefined pack creates an independent draft and shows the yellow **Creating pack** notice; the original stays intact. Remove all eight IRs to start empty. Drag a library file onto the destination card. Dragging between cards swaps their IRs and distances. The trash icon appears on hover or keyboard focus; Delete also removes an IR. The context menu provides keyboard alternatives. Empty slots preserve the pedal's current contents. Building and searching do not start a preview or write to the device.
 
-Use **Review and apply** to select the IRs to send and adjust each distance from 0 to 99. These adjustments apply only to this operation; they do not change the saved pack. The app compares destinations with the pedal and skips identical contents. The final confirmation lists the slots to replace. Canceling preserves your draft.
+Adjust **Volume** directly with each card’s knob, from 0 to 99% (distance in the protocol). Its value appears in the tooltip and is stored when saving the pack. Click **Apply** to send populated slots: only an action confirmation appears, with **OK** or **Exit**. The app compares destinations, keeps a backup and skips identical contents. Empty slots remain unchanged; fix or remove missing references before applying.
 
-The **Review and apply** and **Restore original IRs** actions appear below the grid. **Save pack** asks for a name and description in a popup and stores your draft for reuse; saving is optional before applying. Saving a draft based on a predefined pack creates a personal pack; saving changes to a personal pack updates it. Discarding restores the source pack. When switching a changed pack, choose **Save**, **Discard**, or **Cancel**.
+The **Apply** and **Restore original IRs** actions appear below the grid. **Save pack** asks for a name and description in a popup and stores your draft for reuse; saving is optional before applying. Saving a draft based on a predefined pack creates a personal pack; saving changes to a personal pack updates it. Discarding restores the source pack. When switching a changed pack, choose **Save**, **Discard**, or **Cancel**.
 
 **Export** creates a `.cubeirpack.zip` containing the WAVs, which can be imported on another computer. **Import** opens a draft for review without automatically saving or applying it. Imported WAVs are stored in user data and also appear in the individual library. Older `.cubeirpack.json` files remain supported but require their referenced WAVs. Missing references are shown on cards and cannot be selected for application.
 
@@ -35,7 +35,7 @@ Individual WAVs and WAVs in a portable pack are limited to 32 MiB per file. The 
 Applying a pack writes one slot at a time. If it fails, the message lists completed slots; it does not automatically undo slots already written. Check the result before retrying. Automatic copies of previous contents remain only in session memory; export backups you need to keep.
 
 ## Random cabinet IR
-In the effect chain, under **Cabinet**, **Randomize and apply** chooses from the entire library, including imports and ignoring search filters, with an integer distance from 40% to 80%. The destination is the current preset cabinet, not the separately selected slot on the IR page. It writes directly without another confirmation and applies in RAM for immediate use; it does not save the preset or change the IR section on/off state. Repeats are possible.
+In the effect chain, under **Cabinet**, **Randomize and apply** chooses from the entire library, including imports and ignoring search filters, with an integer volume from 66% to 85% (the protocol calls this parameter distance). The destination is the current preset cabinet, not the separately selected slot on the IR page. It writes directly without another confirmation and applies in RAM for immediate use; it does not save the preset or change the IR section on/off state. Repeats are possible.
 
 A working connection, loaded bank, valid slot and available library are required. The file is validated before writing. If writing succeeds but immediate application fails, the message distinguishes the two: the slot has already been replaced. Previous contents are retained only in session memory.
 
@@ -61,7 +61,7 @@ edge. Other codes, such as P12 and P25, have no exact documented location in
 that image. The original photo is not bundled with the app.
 
 Filename distances are approximate **millimeters**. They describe the capture
-and do not change the pedal's 0–100 **Distance** control. Suffixes such as LC45,
+and do not change the app's 0–99 **Distance** control. Suffixes such as LC45,
 EQ, P0, CUT1 and UA610 identify variants, without triggering processing in the
 app. SP1-PREVIEW marks preview files, each identified by its own microphone and
 original name.

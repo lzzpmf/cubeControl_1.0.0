@@ -17,7 +17,7 @@ internal static class SnackbarTests
     {
         void Check(bool ok, string name) { if (!ok) throw new Exception(name); Console.WriteLine("PASS " + name); }
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-snackbar-" + Guid.NewGuid().ToString("N")));
-        var window = new MainWindow(model) { Width = 640, Height = 720, ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { Width = 640, Height = 720, ShowInTaskbar = false };
         var messages = new List<UserNotification>();
         model.NotificationRequested += messages.Add;
         window.Show();
@@ -54,7 +54,7 @@ internal static class SnackbarTests
             var bounds = bar.TransformToAncestor(window).TransformBounds(new Rect(bar.RenderSize));
             Check(bounds.Left >= 0 && bounds.Right <= window.ActualWidth + 1 && bounds.Bottom <= window.ActualHeight + 1,
                 name + " fits window");
-            string directory = Path.GetFullPath("C:/CubeControl-Build/reports/snackbar-3.3.65"); Directory.CreateDirectory(directory);
+            string directory = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/snackbar-3.3.65")); Directory.CreateDirectory(directory);
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(window);
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));

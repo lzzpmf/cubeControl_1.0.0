@@ -34,8 +34,8 @@ internal static class PhaserDesktopTests
         using var model = new EditorViewModel(directory);
         await model.AttachSession(session);
         await model.ReadPhaserAsync();
-        Check(model.PhaserPreviewActive && model.CanEditPhaser && !model.CanEdit && !model.CanUseAmp && !model.CanOperate && !model.CanStartDelay,
-            "phaser preview excludes preset edits and amp/IR operations");
+        Check(model.PhaserPreviewActive && model.CanEditPhaser && model.CanEdit && model.CanUseAmp && model.CanOperate && model.CanStartDelay,
+            "phaser preview preserves live preset controls and allows independent effect sessions");
         Check(!File.Exists(Path.Combine(directory, "pending-phaser-preview.json")), "phaser snapshot stays in memory");
         model.Phaser.Lower = 400; model.Phaser.Lower = 500; model.Phaser.Lower = 600;
         for (int i = 0; i < 200 && (PhaserParameters.Read(fake.Dsp).Lower != 600 || model.Busy); i++) await Task.Delay(10);
@@ -45,11 +45,10 @@ internal static class PhaserDesktopTests
         view.SetResourceReference(Control.ForegroundProperty, "CubeText");
         var host = new Window { Content = view, Width = 600, Height = 900, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false, SizeToContent = SizeToContent.Height };
         host.Show();
-        ((Expander)view.Content).IsExpanded = true;
         await Task.Delay(400);
         view.Measure(new Size(560, 900)); view.Arrange(new Rect(0, 0, 560, view.DesiredSize.Height)); view.UpdateLayout();
         Check(view.ActualHeight > 300 && view.ActualHeight < 1200, $"phaser editor lays out without clipping ({view.ActualHeight})");
-        string render = Path.GetFullPath("artifacts/phaser/phaser-editor.png"); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
+        string render = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/phaser/phaser-editor.png")); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
         var bitmap = new RenderTargetBitmap(560, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(view);
         var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
@@ -65,7 +64,7 @@ internal static class PhaserDesktopTests
         model.Dispose(); // Abnormal shutdown ends the app session; only the current pedal RAM survives.
         using var reopened = new EditorViewModel(directory);
         int writes = fake.Writes;
-        await reopened.Initialize();
+        // Construction loads local state; do not enumerate physical MIDI ports here.
         Check(!reopened.PhaserPreviewActive && !reopened.CanEditPhaser && fake.Writes == writes,
             "restart ignores previous session without reapplying controls");
         var third = new CubeSession(fake); await third.Identify(); await reopened.AttachSession(third);

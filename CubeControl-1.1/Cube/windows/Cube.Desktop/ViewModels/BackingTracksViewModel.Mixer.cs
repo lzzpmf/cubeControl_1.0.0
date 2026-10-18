@@ -43,6 +43,6 @@ public sealed partial class BackingTracksViewModel
     }
     public void ResetMixerVolumes()
     {
-        Volume = 30; MonitorVolume = 0; MetronomeVolume = 30;
+        Volume = 30; MonitorVolume = 0; MetronomeVolume = 100;
     }
 }

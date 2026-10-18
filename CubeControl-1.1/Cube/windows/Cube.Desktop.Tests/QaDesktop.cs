@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -19,6 +20,14 @@ using static Cube.Qa.QaContext;
 
 internal static class QaDesktop
 {
+    internal static Task RunAll()
+    {
+        string batteries = string.Join(",", Cases().SelectMany(c => c.Batteries).Distinct());
+        string output = Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "qa-results");
+        int result = RunMain(["--qa", "--batteries", batteries, "--results", output]);
+        if (result != 0) throw new InvalidOperationException("QA cases failed; see " + output);
+        return Task.CompletedTask;
+    }
     public static int RunMain(string[] args)
     {
         if (args.Contains("--list")) return QaRunner.Run("desktop", args, Cases()).GetAwaiter().GetResult();
@@ -112,7 +121,7 @@ internal static class QaDesktop
             // Invalid IR reaches no real enumeration: exercise parser directly, then VM errors through Execute.
             string path = c.FilePath("pending-ir-preview.json"); await File.WriteAllTextAsync(path, "{}");
             using var model = new EditorViewModel(c.DirectoryPath);
-            await model.Initialize();
+            // Local construction already loads preferences; skip physical MIDI discovery.
             Check(!model.Busy && model.ErrorMessage.Length == 0 && !model.Ir.PreviewActive && File.Exists(path), "Legacy recovery must be ignored and left untouched");
         }),
         Test("parameter-inputs", "Finite values, clamping and culture-specific drafts", "QA-INP-001,QA-UI-003", c =>
@@ -152,7 +161,7 @@ internal static class QaDesktop
         }),
         Test("navigation-loop", "Unshown shell navigation keeps shared state and single host", "QA-NAV-001,QA-NAV-002,QA-NAV-003", async c =>
         {
-            using var model = new EditorViewModel(c.DirectoryPath); var window = new MainWindow(model);
+            using var model = new EditorViewModel(c.DirectoryPath); var window = new MainWindow(model, false);
             try
             {
                 var nav = (ListBox)window.FindName("Navigation"); var tabs = (TabControl)window.FindName("Tabs");
@@ -189,8 +198,10 @@ internal static class QaDesktop
             }
             using (var reopened = new BackingTracksViewModel(folder))
             {
+                typeof(BackingTracksViewModel).GetMethod("LoadRecordingPlaylist", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(reopened, null);
                 await WaitUntil(() => reopened.Duration > 0);
-                Check(reopened.Tracks[0].Source == b && reopened.Volume == 43 && reopened.IsMuted, "Playlist settings lost");
+                Check(reopened.Tracks[0].Source == b && reopened.Tracks[1].Source == a, "Playlist order lost");
+                Check(reopened.Volume == 30 && !reopened.IsMuted, "Playback mixer must start at its session defaults");
                 reopened.RemoveTrack.Execute(null); await Task.Delay(50);
                 Check(File.Exists(b) && reopened.Tracks.Count == 1, "Remove deleted source or wrong reference");
             }

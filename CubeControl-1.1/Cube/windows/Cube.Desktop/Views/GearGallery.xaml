@@ -10,15 +10,15 @@
       <Setter Property="MinHeight" Value="36"/><Setter Property="MinWidth" Value="72"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
       <Setter Property="Foreground" Value="{DynamicResource CubeText}"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
-       <Border x:Name="FilterSurface" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Grid>
+       <Border x:Name="FilterSurface" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}">
         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
        </Border>
-       <ControlTemplate.Triggers>
+       <Border x:Name="FilterFocus" BorderBrush="{DynamicResource CubeFocus}" BorderThickness="1" CornerRadius="{DynamicResource CubeControlCornerRadius}" Visibility="Collapsed" IsHitTestVisible="False"/></Grid><ControlTemplate.Triggers>
         <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="FilterSurface" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}"/></Trigger>
         <Trigger Property="IsSelected" Value="True"><Setter TargetName="FilterSurface" Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger>
-        <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="FilterSurface" Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/><Setter Property="FontWeight" Value="Bold"/></Trigger>
-        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/></Trigger>
+        <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="FilterFocus" Property="Visibility" Value="Visible"/></Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="FilterFocus" Property="Visibility" Value="Collapsed"/></Trigger>
        </ControlTemplate.Triggers>
       </ControlTemplate></Setter.Value></Setter>
      </Style>

@@ -30,6 +30,18 @@ internal static class QaRunner
     internal static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
     public static async Task<int> Run(string host, string[] args, IReadOnlyList<QaCase> cases)
     {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (int i = 0; i < args.Length; i++)
+        {
+            string arg = args[i];
+            bool valued = arg is "--batteries" or "--results";
+            if (!seen.Add(arg) || (!valued && arg is not ("--qa" or "--usability" or "--list" or "--exception-probe"))
+                || (valued && (i + 1 >= args.Length || args[++i].StartsWith("--", StringComparison.Ordinal))))
+            { Console.Error.WriteLine("Unknown, duplicated or incomplete QA argument: " + arg); return 2; }
+        }
+        if ((seen.Contains("--qa") && seen.Contains("--usability"))
+            || (seen.Contains("--list") && seen.Overlaps(["--batteries", "--results", "--exception-probe"])))
+        { Console.Error.WriteLine("Incompatible QA arguments."); return 2; }
         string? Value(string key) { int i = Array.IndexOf(args, key); return i >= 0 && i + 1 < args.Length ? args[i + 1] : null; }
         if (args.Contains("--list"))
         {
@@ -40,7 +52,7 @@ internal static class QaRunner
         if (requested.Count == 0 || Value("--results") is not { } output)
         { Console.Error.WriteLine("Use --qa --batteries QA-XXX-001,... --results <new-directory>, or --qa --list."); return 2; }
         var selected = cases.Where(c => c.Batteries.Any(requested.Contains)).ToArray();
-        if (selected.Length == 0) { Console.Error.WriteLine("No implemented cases match the selection in this host."); return 2; }
+        if (requested.Except(cases.SelectMany(c => c.Batteries), StringComparer.Ordinal).Any() || selected.Length == 0) { Console.Error.WriteLine("No implemented cases match the selection in this host."); return 2; }
         output = Path.GetFullPath(output);
         if (Directory.Exists(output) || File.Exists(output)) { Console.Error.WriteLine("Results directory must not already exist."); return 2; }
         Directory.CreateDirectory(output);

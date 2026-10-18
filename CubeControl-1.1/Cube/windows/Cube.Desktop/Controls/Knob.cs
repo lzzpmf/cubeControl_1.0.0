@@ -68,7 +68,8 @@ public sealed class Knob : FrameworkElement
     private bool gestureActive;
     public Knob()
     {
-        Focusable = true; FocusVisualStyle = null; Cursor = Cursors.Hand; MinWidth = 48; MinHeight = 48;
+        Focusable = true; Cursor = Cursors.Hand; MinWidth = 48; MinHeight = 48;
+        SetResourceReference(FocusVisualStyleProperty, "CubeParameterFocusVisualStyle");
         // Smooth the official textures when reduced and rotated at UI sizes.
         RenderOptions.SetBitmapScalingMode(this, BitmapScalingMode.HighQuality);
         SetResourceReference(ThemeRevisionProperty, "CubeThemeRevision");

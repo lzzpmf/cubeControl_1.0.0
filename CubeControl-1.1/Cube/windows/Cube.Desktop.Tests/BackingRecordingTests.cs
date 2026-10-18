@@ -35,7 +35,9 @@ internal static class BackingRecordingTests
             var input = new BackingOutput("test", "Test input");
             model.Inputs.Add(input);
             model.SelectedInput = input;
-            Check(model.ToggleRecording.CanExecute(null) && model.CanChangeRecordingInput, "recording available without backing track or output");
+            Check(!model.ToggleRecording.CanExecute(null) && model.CanChangeRecordingInput, "synchronized recording requires an output clock");
+            model.SelectedOutput = new BackingOutput("test-output", "Test output");
+            Check(model.ToggleRecording.CanExecute(null), "recording is available with input and output without a backing track");
             model.SelectedInput = null;
             Check(!model.ToggleRecording.CanExecute(null), "recording requires the selected input");
             model.SelectedInput = input;

@@ -12,7 +12,8 @@ public interface IIrAuditionService : IDisposable
     Task Volume(double volume, bool muted);
 }
 
-// Raw playback only: the selected hardware processes the signal with its RAM IR.
+// Raw playback only: the pedal processes the signal with its current preset and effect chain,
+// including confirmed RAM previews. Loading a replacement IR is not required.
 public sealed class IrAuditionService : IIrAuditionService
 {
     private readonly BackingAudioEngine engine = new();

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Input;
@@ -56,7 +56,7 @@ public sealed partial class BackingTracksViewModel
     private MetronomeSampleProvider? metronomeProvider;
     private BackingLevelMeter? metronomeLevelMeter;
     private bool followTrack, metronomeEnabled, metronomeAccent = true;
-    private double metronomeBpm = 120, metronomeVolume = 30;
+    private double metronomeBpm = 120, metronomeVolume = 100;
     private string metronomeMeter = "4/4";
     private int countInBars, metronomeBeat;
     private int metronomeGeneration;
@@ -133,7 +133,7 @@ public sealed partial class BackingTracksViewModel
                 followTrack = saved.Follow;
                 metronomeBpm = double.IsFinite(saved.Bpm) ? Math.Clamp(saved.Bpm, 20, 300) : 120;
                 metronomeMeter = MetronomeMeters.Contains(saved.Meter) ? saved.Meter : "4/4";
-                metronomeAccent = saved.Accent; metronomeVolume = double.IsFinite(saved.Volume) ? Math.Clamp(saved.Volume, 0, 100) : 30;
+                metronomeAccent = saved.Accent; metronomeVolume = double.IsFinite(saved.Volume) ? Math.Clamp(saved.Volume, 0, 100) : 100;
                 countInBars = Math.Clamp(saved.CountIn, 0, 2);
                 foreach (var entry in saved.Offsets ?? []) if (double.IsFinite(entry.Value) && entry.Value >= 0) metronomeOffsets[entry.Key] = entry.Value;
                 foreach (var entry in saved.TrackBpms ?? []) if (double.IsFinite(entry.Value) && entry.Value is >= 20 and <= 300) metronomeTrackBpms[entry.Key] = entry.Value;

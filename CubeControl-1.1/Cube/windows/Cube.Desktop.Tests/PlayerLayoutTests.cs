@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -64,7 +64,7 @@ internal static class PlayerLayoutTests
         }
 
         string folder = Path.Combine(Path.GetTempPath(), "cube-player-layout-" + Guid.NewGuid().ToString("N"));
-        string reports = "C:/CubeControl-Build/reports/player-layout";
+        string reports = TestPaths.Report("C:/CubeControl-Build/reports/player-layout");
         Directory.CreateDirectory(reports);
         int originalZoom = ZoomService.Instance.Percent;
         string originalLanguage = LanguageService.Instance.Language;
@@ -135,15 +135,15 @@ internal static class PlayerLayoutTests
             mixerModel.IsMuted = false;
             Check(mixerModel.MonitorMuted && mixerModel.MetronomeMuted, "track mute is independent from guitar and click");
             mixerModel.ResetMixerVolumes();
-            Check(mixerModel.Volume == 30 && mixerModel.MonitorVolume == 0 && mixerModel.MetronomeVolume == 30 && mixerModel.MonitorMuted && mixerModel.MetronomeMuted, "reset restores defaults and preserves mute");
+            Check(mixerModel.Volume == 30 && mixerModel.MonitorVolume == 0 && mixerModel.MetronomeVolume == 100 && mixerModel.MonitorMuted && mixerModel.MetronomeMuted, "reset restores defaults and preserves mute");
             mixerModel.MonitorMuted = false; mixerModel.MetronomeMuted = false;
             var configureClick = typeof(BackingTracksViewModel).GetMethod("MetronomeConfiguration", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
             mixerModel.IsMuted = true;
             var clickSettings = (Cube.Desktop.Services.MetronomeSettings)configureClick.Invoke(mixerModel, new object[] { true })!;
-            Check(clickSettings.Volume == .3, "track mute preserves independent click gain");
+            Check(clickSettings.Volume == 1, "track mute preserves independent click gain");
             mixerModel.MetronomeMuted = true;
             clickSettings = (Cube.Desktop.Services.MetronomeSettings)configureClick.Invoke(mixerModel, new object[] { false })!;
-            Check(clickSettings.Volume == 0 && mixerModel.MetronomeVolume == 30, "click mute silences synchronized click without changing fader");
+            Check(clickSettings.Volume == 0 && mixerModel.MetronomeVolume == 100, "click mute silences synchronized click without changing fader");
             mixerModel.IsMuted = false; mixerModel.MetronomeMuted = false;
 
 

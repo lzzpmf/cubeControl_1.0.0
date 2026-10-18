@@ -14,6 +14,8 @@ internal sealed class BackingDspHandle : SafeHandleZeroOrMinusOneIsInvalid
         private const string Library = "CubeBackingDsp";
         [DllImport(Library, EntryPoint = "backing_create", CallingConvention = CallingConvention.Cdecl)]
         internal static extern BackingDspHandle Create(int channels, int sampleRate);
+        [DllImport(Library, EntryPoint = "backing_create_offline", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern BackingDspHandle CreateOffline(int channels, int sampleRate);
         [DllImport(Library, EntryPoint = "backing_destroy", CallingConvention = CallingConvention.Cdecl)]
         internal static extern void Destroy(IntPtr handle);
         [DllImport(Library, EntryPoint = "backing_prepare", CallingConvention = CallingConvention.Cdecl)]
@@ -64,20 +66,20 @@ internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
     private readonly int channels, rate;
     public WaveFormat WaveFormat => decoder.Format;
     public double Duration => decoder.Duration;
-    public BackingAudioProcessing(string path, double start, double end, double speed, double pitch, bool looping = false, double loopStart = 0)
+    public BackingAudioProcessing(string path, double start, double end, double speed, double pitch, bool looping = false, double loopStart = 0, bool relativeParameters = false, bool offline = false)
     {
         decoder = new(path);
         try
         {
             channels = WaveFormat.Channels; rate = WaveFormat.SampleRate;
-            this.speed = Math.Clamp(speed, .5, 1.5); this.pitch = Math.Clamp(pitch, -6, 6);
+            this.speed = Math.Clamp(speed, relativeParameters ? 1d / 3 : .5, relativeParameters ? 3 : 1.5); this.pitch = Math.Clamp(pitch, relativeParameters ? -12 : -6, relativeParameters ? 12 : 6);
             this.looping = looping;
             this.end = (long)Math.Round(Math.Min(end, Duration) * rate);
             this.loopStart = (long)Math.Round(Math.Max(0, loopStart) * rate);
             if (this.end <= 0 || (looping && this.end - this.loopStart < rate / 10)) throw new InvalidDataException("Invalid audio range.");
             if (this.speed != 1 || this.pitch != 0)
             {
-                dsp = BackingDspHandle.Native.Create(channels, rate);
+                dsp = offline ? BackingDspHandle.Native.CreateOffline(channels, rate) : BackingDspHandle.Native.Create(channels, rate);
                 if (dsp.IsInvalid) throw new InvalidOperationException("DSP initialization failed.");
             }
             Begin((long)Math.Round(Math.Clamp(start, 0, this.end / (double)rate) * rate));
@@ -165,14 +167,14 @@ internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
     }
     public void Dispose() { dsp?.Dispose(); decoder.Dispose(); }
 
-    public static Task<(double Duration, float[] Peaks)> Analyze(string path, CancellationToken cancellation) => Task.Run(() =>
+    public static Task<(double Duration, float[] Peaks)> Analyze(string path, CancellationToken cancellation, int maximumBins = 8 * 1024 * 1024) => Task.Run(() =>
     {
         using var source = new BackingDecoder(path);
         int channels = source.Format.Channels, rate = source.Format.SampleRate;
         // A single envelope is capped as well as the aggregate cache.
         double duration = source.Duration;
         double totalFrames = Math.Max(1, duration * rate);
-        int bins = (int)Math.Clamp(Math.Ceiling(duration * 100), 1, 8 * 1024 * 1024);
+        int bins = (int)Math.Clamp(Math.Ceiling(duration * 100), 1, maximumBins);
         var peaks = new float[bins]; var block = new float[4096 * channels];
         long frame = 0;
         int read;
@@ -195,7 +197,7 @@ internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
         string temporary = Path.Combine(Path.GetDirectoryName(destination)!, "." + Path.GetFileName(destination) + "." + Guid.NewGuid().ToString("N") + ".tmp");
         try
         {
-            using (var audio = new BackingAudioProcessing(source, start, end, processed ? speed : 1, processed ? pitch : 0))
+            using (var audio = new BackingAudioProcessing(source, start, end, processed ? speed : 1, processed ? pitch : 0, offline: true))
             {
                 ISampleProvider provider = processed ? new BackingPeakGuard(audio) : audio;
                 using var writer = new WaveFileWriter(temporary, new WaveFormat(audio.WaveFormat.SampleRate, 16, audio.WaveFormat.Channels));

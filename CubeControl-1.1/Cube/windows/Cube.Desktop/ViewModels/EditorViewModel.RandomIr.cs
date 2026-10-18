@@ -21,7 +21,7 @@ public sealed partial class EditorViewModel
         if (!CanRandomizeCabinetIr) return;
         int slot = CurrentCabinetSlot;
         var entry = IrLibrary.Entries[Random.Shared.Next(IrLibrary.Entries.Count)];
-        int distance = Random.Shared.Next(40, 81);
+        int distance = Random.Shared.Next(66, 86);
         randomizingIr = true;
         RandomIrResult = "";
         try

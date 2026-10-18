@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Cube.Desktop.Services;
 using Cube.Desktop.ViewModels;
 using Cube.Protocol;
@@ -23,10 +23,19 @@ internal static class IrAuditionTests
             Check(player.Tracks.Count == 5 && player.Loop && player.Volume == 30, "five clips and agreed defaults");
             player.SelectedOutput = new("fake-output", "Pedal");
             Check(player.OutputStateLabel == "Saída selecionada" && player.ConnectionLabel == "Pedal desconectado", "output selection does not imply pedal connection");
-            await player.ToggleAsync(); Check(!player.IsPlaying, "no playback without operational MIDI and RAM preview");
+            await player.ToggleAsync(); Check(!player.IsPlaying, "no playback without operational MIDI");
             using var connection = new FakeConnection(); using var session = new CubeSession(connection); await session.Identify();
             await owner.Execute(() => owner.AttachSession(session));
             var before = await session.ReadIrRam();
+            int presetWrites = owner.WriteCommandCount;
+            Check(player.CanStart && !owner.Ir.PreviewActive, "current preset can be auditioned without loading an IR");
+            await player.ToggleAsync();
+            Check(player.IsPlaying && audio.Opens == 1, "raw playback starts for the current preset");
+            Check(owner.WriteCommandCount == presetWrites, "starting preset audition does not write device state");
+            player.PanelVisible = false;
+            Check(player.IsPlaying && player.ShowMiniPlayer, "audition remains available outside the IR page");
+            player.PanelVisible = true;
+            await player.ToggleAsync();
             var ir = new IrAudio(48000, 1, 32, "Float", [1, 0, 0]);
             await owner.Execute(() => owner.LoadWavAndPreviewAsync("test-ir.wav", ir));
             int writes = owner.WriteCommandCount;
@@ -49,7 +58,7 @@ internal static class IrAuditionTests
             player.SelectedOutput = null; await player.StopAsync(); Check(!player.IsPlaying && !player.CanStart, "output loss stops and disables playback");
             player.SelectedOutput = new("fake-output", "Pedal"); await player.ToggleAsync();
             await owner.Execute(owner.EndPreviewAsync);
-            Check(!player.IsPlaying, "ending RAM preview stops audition");
+            Check(player.IsPlaying && player.CanStart && !owner.Ir.PreviewActive, "ending RAM preview resumes audition of the restored preset");
             var after = await session.ReadIrRam();
             Check(before.Flag == after.Flag && before.Payload.SequenceEqual(after.Payload), "ending preview restores original RAM");
             Check(owner.WriteCommandCount == writes, "audition does not save slots or presets");
@@ -59,9 +68,17 @@ internal static class IrAuditionTests
             window.Show();
             try
             {
-                ((System.Windows.Controls.TabControl)window.FindName("Tabs")).SelectedIndex = 1;
+                var tabs = (System.Windows.Controls.TabControl)window.FindName("Tabs");
+                tabs.SelectedIndex = 1;
+                foreach (int page in new[] { 0, 3 })
+                {
+                    tabs.SelectedIndex = page;
+                    await player.PendingOperation;
+                    Check(player.IsPlaying && player.ShowMiniPlayer, "pedalboard and amp creator navigation preserve audition");
+                }
+                tabs.SelectedIndex = 1;
                 var card = (System.Windows.FrameworkElement)window.FindName("IrAuditionCard");
-                string reports = "C:/CubeControl-Build/reports/ir-audition"; Directory.CreateDirectory(reports);
+                string reports = TestPaths.Report("C:/CubeControl-Build/reports/ir-audition"); Directory.CreateDirectory(reports);
                 foreach (var language in new[] { "pt-BR", "en-US" })
                 foreach (var theme in new[] { Cube.Desktop.Appearance.ThemeMode.Light, Cube.Desktop.Appearance.ThemeMode.Dark })
                 foreach (int width in new[] { 640, 1280 })

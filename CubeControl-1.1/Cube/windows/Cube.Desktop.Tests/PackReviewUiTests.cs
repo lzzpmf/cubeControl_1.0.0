@@ -35,7 +35,8 @@ internal static class PackReviewUiTests
         var window = new MainWindow(model, initializeDevices: false) { Width = 1200, Height = 850, ShowInTaskbar = false };
         Application.Current.MainWindow = window; window.Show();
         ((TabControl)window.FindName("Tabs")).SelectedIndex = 1;
-        string folder = "C:/CubeControl-Build/reports/ir-pack-flow"; Directory.CreateDirectory(folder);
+        ((TabControl)window.FindName("IrWorkspaceTabs")).SelectedIndex = 1;
+        string folder = TestPaths.Report("C:/CubeControl-Build/reports/ir-pack-flow"); Directory.CreateDirectory(folder);
         try
         {
             foreach (var (code, percent, mode, width, highContrast) in new[] {
@@ -57,23 +58,16 @@ internal static class PackReviewUiTests
                 }
                 if (dialog == null) throw new Exception("Pack review did not open: " + model.ErrorMessage);
                 await Task.Delay(400); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout();
-                var content = Find<IrPackReview>(dialog).Single();
-                var review = (IrPackReviewViewModel)content.DataContext;
-                var grid = Find<IrPackGridPanel>(content).Single();
-                if (grid.ActualWidth >= 260 && grid.Children.Cast<UIElement>().Any(c => c.RenderSize.Width < 260))
-                    throw new Exception("Review compressed cabinet cards below their minimum width");
+                if (Find<IrPackReview>(dialog).Any() || Find<Knob>(dialog).Any())
+                    throw new Exception("Apply confirmation must keep editing on the pack cards");
+                if (dialog.Content is not TextBlock message || string.IsNullOrWhiteSpace(message.Text))
+                    throw new Exception("Apply confirmation must describe the destination slots");
                 var body = Find<ScrollViewer>(dialog).Single(s => s.Name == "PART_ContentScroll");
-                if (body.ViewportHeight < 48 || body.ScrollableWidth > 1 || content.ActualWidth > body.ViewportWidth + 1)
-                    throw new Exception($"Review viewport clipped at {code}/{percent}: {body.ViewportWidth} x {body.ViewportHeight}");
-                var knobs = Find<Knob>(content).ToArray();
-                if (knobs.Length != 8 || knobs.Any(k => !k.IsEnabled)) throw new Exception("Review must allow adjusting all eight IRs during processing lock");
-                var first = Find<CheckBox>(content).First(); first.Focus();
-                if (!first.IsKeyboardFocusWithin) throw new Exception("Review selection cannot receive keyboard focus");
-                first.SetCurrentValue(CheckBox.IsCheckedProperty, false);
-                if (review.Slots[0].Selected) throw new Exception("Review checkbox did not update the snapshot");
-                knobs[1].SetCurrentValue(Knob.ValueProperty, 23d);
-                if (review.Slots[1].Distance != 23 || model.PackEditor.Slots[1].Entry!.Distance != 50)
-                    throw new Exception("Review knob mutated the pack or failed to update its snapshot");
+                if (body.ViewportHeight < 20 || body.ScrollableWidth > 1)
+                    throw new Exception($"Confirmation viewport clipped at {code}/{percent}");
+                var close = (Control)dialog.Template.FindName("CloseButton", dialog);
+                close.Focus();
+                if (!close.IsKeyboardFocusWithin) throw new Exception("Confirmation cannot receive keyboard focus");
                 foreach (string name in new[] { "PrimaryButton", "CloseButton" })
                 {
                     var button = (FrameworkElement)dialog.Template.FindName(name, dialog);
@@ -92,7 +86,7 @@ internal static class PackReviewUiTests
                 Capture("start"); body.ScrollToEnd(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout(); Capture("end");
                 dialog.Hide(); await pending;
                 if (fake.Writes != 0 || model.PackEditor.Dirty) throw new Exception("Closing review wrote device state or changed the pack");
-                Console.WriteLine($"PASS pack review viewport, keyboard focus, snapshot controls and cancellation at {code}/{percent}/{mode}/{highContrast}");
+                Console.WriteLine($"PASS pack review viewport, keyboard focus, confirmation controls and cancellation at {code}/{percent}/{mode}/{highContrast}");
             }
         }
         finally

@@ -22,10 +22,19 @@ API BackingDsp * backing_create(int channels, int rate) noexcept {
     try { return channels > 0 && channels <= 32 && rate >= 8000 && rate <= 384000 ? new BackingDsp(channels, rate) : nullptr; }
     catch (...) { return nullptr; }
 }
+API BackingDsp * backing_create_offline(int channels, int rate) noexcept {
+    auto *p = backing_create(channels, rate);
+    if (!p) return nullptr;
+    try {
+        // Exports can use a longer analysis window without adding playback latency.
+        p->stretch.configure(channels, static_cast<int>(rate * 0.24), static_cast<int>(rate * 0.03));
+        return p;
+    } catch (...) { delete p; return nullptr; }
+}
 API void backing_destroy(BackingDsp *p) noexcept { delete p; }
 API int backing_prepare(BackingDsp *p, double speed, double semitones) noexcept {
     try {
-        if (!p || !std::isfinite(speed) || speed < .5 || speed > 1.5 || !std::isfinite(semitones) || std::abs(semitones) > 6) return -1;
+        if (!p || !std::isfinite(speed) || speed < 1.0 / 3.0 || speed > 3.0 || !std::isfinite(semitones) || std::abs(semitones) > 12) return -1;
         p->stretch.reset(); p->stretch.setTransposeSemitones(semitones);
         return p->stretch.outputSeekLength(speed);
     } catch (...) { return -1; }

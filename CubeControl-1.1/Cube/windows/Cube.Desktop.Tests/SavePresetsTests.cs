@@ -17,7 +17,7 @@ internal static class SavePresetsTests
         void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
         Check(!model.Save.CanExecute(null), "Disconnected save enabled");
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false };
         window.Show();
         async Task Settle() { while (model.Busy) await Task.Delay(25); CommandManager.InvalidateRequerySuggested(); await Task.Delay(80); window.UpdateLayout(); }
         await Settle();

@@ -1,4 +1,4 @@
-﻿using Cube.Desktop.Localization;
+using Cube.Desktop.Localization;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -103,11 +103,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         BackingMainWave.MenuRequested = (wave, time) => OpenBackingMenu(wave, "wave", time: time);
         BackingMainWave.ZoomRequested = (steps, fraction) =>
         {
-            if (!BackingTracks.CanSeek) return;
+            if (BackingTracks.Duration <= 0) return;
+            if (BackingTracks.IsRecording) BackingTracks.FollowRecording = false;
             double anchor = BackingTracks.ViewportStart + fraction * BackingTracks.ViewportDuration;
             BackingTracks.Zoom *= Math.Pow(2, steps);
             BackingTracks.ViewportStart = anchor - fraction * BackingTracks.ViewportDuration;
         };
+        BackingOverview.PreviewMouseLeftButtonDown += (_, _) => { if (BackingTracks.IsRecording) BackingTracks.FollowRecording = false; };
         BackingOverview.MenuRequested = (wave, time) => OpenBackingMenu(wave, "wave", time: time);
 
         Model.ConfirmIrWrite = ConfirmIrWriteAsync;
@@ -480,7 +482,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         Navigation.SelectedIndex = Tabs.SelectedIndex;
         BackingTracks.PageVisible = Tabs.SelectedIndex == 2;
-        if (Tabs.SelectedIndex != 1) _ = Model.IrAudition.StopAsync();
+        Model.IrAudition.PanelVisible = Tabs.SelectedIndex == 1;
         UpdateWorkspaceLayout();
         Workspace.MaxWidth = 1440;
         MoveFooterToPage();
@@ -836,52 +838,99 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var delta = e.GetPosition(BackingTrackList) - backingDragStart;
         if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
         var track = backingDragTrack; backingDragTrack = null;
-        DragDrop.DoDragDrop(BackingTrackList, new DataObject(typeof(BackingTrack), track), DragDropEffects.Move);
+        try { DragDrop.DoDragDrop(BackingTrackList, new DataObject(typeof(BackingTrack), track), DragDropEffects.Move); }
+        finally { Controls.DragFeedback.Clear(); BackingDropOverlay.Visibility = Visibility.Collapsed; }
     }
+    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluatePlaylistDrop(DragEventArgs e)
+    {
+        if (BackingTracks.CanEditSession && e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Any(IsBackingFile))
+            return (DragDropEffects.Copy, -1, null, false);
+        if (e.Data.GetData(typeof(BackingTrack)) is not BackingTrack track || !BackingTracks.Tracks.Contains(track))
+            return (DragDropEffects.None, -1, null, false);
+        Point point = e.GetPosition(BackingTrackList);
+        if (point.X < 0 || point.Y < 0 || point.X > BackingTrackList.ActualWidth || point.Y > BackingTrackList.ActualHeight)
+            return (DragDropEffects.None, -1, null, false);
+        var target = e.OriginalSource is DependencyObject source ? ItemsControl.ContainerFromElement(BackingTrackList, source) as ListBoxItem : null;
+        bool after = target != null && e.GetPosition(target).Y >= target.ActualHeight / 2;
+        int index = Controls.DropInsertion.Index(BackingTracks.Tracks.IndexOf(track), target?.DataContext is BackingTrack item ? BackingTracks.Tracks.IndexOf(item) : -1, after, BackingTracks.Tracks.Count);
+        return (index < 0 ? DragDropEffects.None : DragDropEffects.Move, index, target, after);
+    }
+    private static bool IsBackingFile(string path) => System.IO.File.Exists(path) && System.IO.Path.GetExtension(path).ToLowerInvariant() is ".mp3" or ".wav";
     private void BackingTracksDragOver(object sender, DragEventArgs e)
     {
-        bool files = e.Data.GetData(DataFormats.FileDrop) is string[] paths && paths.Any(p => System.IO.Path.GetExtension(p).ToLowerInvariant() is ".mp3" or ".wav");
-        e.Effects = files ? DragDropEffects.Copy : e.Data.GetDataPresent(typeof(BackingTrack)) ? DragDropEffects.Move : DragDropEffects.None;
-        BackingDropOverlay.Visibility = files ? Visibility.Visible : Visibility.Collapsed;
-        ClearBackingDropTarget();
-        if (!files && e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem target)
-        {
-            backingDropTarget = target;
-            target.BorderBrush = (Brush)FindResource("CubeAccent");
-            target.BorderThickness = e.GetPosition(target).Y < target.ActualHeight / 2 ? new Thickness(0, 2, 0, 0) : new Thickness(0, 0, 0, 2);
-        }
+        var result = EvaluatePlaylistDrop(e); e.Effects = result.Effect;
+        BackingDropOverlay.Visibility = Visibility.Collapsed;
+        UIElement target = result.Target ?? (UIElement)BackingTrackList;
+        string source = e.Data.GetData(typeof(BackingTrack)) is BackingTrack track ? track.Title : LanguageService.T("Arquivos de áudio");
+        string action = result.Effect == DragDropEffects.Copy ? LanguageService.T("Adicionar à playlist")
+            : result.Effect == DragDropEffects.None ? LanguageService.T("Destino inválido")
+            : result.Target?.DataContext is BackingTrack item ? LanguageService.T(result.After ? "Mover depois de" : "Mover antes de") + " “" + item.Title + "”"
+            : LanguageService.T("Mover para o fim");
+        Controls.DragFeedback.Show(target, source + " → " + action, e.GetPosition(target), result.Effect != DragDropEffects.None, result.Target == null ? null : result.After);
+        if (e.OriginalSource is DependencyObject origin) Controls.DragFeedback.AutoScroll(origin, e);
         e.Handled = true;
     }
     private void BackingTracksDrop(object sender, DragEventArgs e)
     {
-        BackingDropOverlay.Visibility = Visibility.Collapsed;
-        ClearBackingDropTarget();
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] files) BackingTracks.AddPaths(files);
-        else if (e.Data.GetData(typeof(BackingTrack)) is BackingTrack track)
-        {
-            int index = BackingTracks.Tracks.Count - 1;
-            if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem item && item.DataContext is BackingTrack target)
-            {
-                index = BackingTracks.Tracks.IndexOf(target);
-                if (e.GetPosition(item).Y >= item.ActualHeight / 2) index++;
-                if (BackingTracks.Tracks.IndexOf(track) < index) index--;
-                index = Math.Clamp(index, 0, BackingTracks.Tracks.Count - 1);
-            }
-            BackingTracks.MoveTrack(track, index);
-        }
+        var result = EvaluatePlaylistDrop(e); e.Effects = result.Effect;
+        Controls.DragFeedback.Clear(); BackingDropOverlay.Visibility = Visibility.Collapsed;
+        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) BackingTracks.AddPaths(files);
+        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingTrack)) is BackingTrack track) BackingTracks.MoveTrack(track, result.Index);
         e.Handled = true;
-    }
-    private ListBoxItem? backingDropTarget;
-    private void ClearBackingDropTarget()
-    {
-        backingDropTarget?.ClearValue(Control.BorderThicknessProperty);
-        backingDropTarget?.ClearValue(Control.BorderBrushProperty);
-        backingDropTarget = null;
     }
     private void BackingDragLeave(object sender, DragEventArgs e)
     {
-        if (!BackingPage.IsMouseOver) { BackingDropOverlay.Visibility = Visibility.Collapsed; ClearBackingDropTarget(); }
+        if (!BackingPage.IsMouseOver) { BackingDropOverlay.Visibility = Visibility.Collapsed; Controls.DragFeedback.Clear(); }
     }
+    private Point stemDragStart;
+    private BackingStem? stemDragCandidate;
+    private void BackingStemDragStart(object sender, MouseButtonEventArgs e)
+    {
+        stemDragCandidate = null;
+        if (BackingButtonAncestor(e.OriginalSource as DependencyObject) != null) return;
+        for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null && node != BackingStemList; node = VisualTreeHelper.GetParent(node))
+            if (node is Slider or TextBox) return;
+        stemDragStart = e.GetPosition(BackingStemList);
+        stemDragCandidate = e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingStemList, source) is ListBoxItem item ? item.DataContext as BackingStem : null;
+    }
+    private void BackingStemDragMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || stemDragCandidate == null) return;
+        var delta = e.GetPosition(BackingStemList) - stemDragStart;
+        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        var stem = stemDragCandidate; stemDragCandidate = null;
+        try { DragDrop.DoDragDrop(BackingStemList, new DataObject(typeof(BackingStem), stem), DragDropEffects.Move); }
+        finally { Controls.DragFeedback.Clear(); }
+    }
+    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluateStemDrop(DragEventArgs e)
+    {
+        if (BackingTracks.SessionStems is not { } stems) return (DragDropEffects.None, -1, null, false);
+        if (BackingTracks.CanEditSession && e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Any(IsBackingFile)) return (DragDropEffects.Copy, -1, null, false);
+        if (e.Data.GetData(typeof(BackingStem)) is not BackingStem stem || !stems.Contains(stem)) return (DragDropEffects.None, -1, null, false);
+        var target = e.OriginalSource is DependencyObject source ? ItemsControl.ContainerFromElement(BackingStemList, source) as ListBoxItem : null;
+        bool after = target != null && e.GetPosition(target).Y >= target.ActualHeight / 2;
+        int index = Controls.DropInsertion.Index(stems.IndexOf(stem), target?.DataContext is BackingStem item ? stems.IndexOf(item) : -1, after, stems.Count);
+        return (index < 0 ? DragDropEffects.None : DragDropEffects.Move, index, target, after);
+    }
+    private void BackingStemsDragOver(object sender, DragEventArgs e)
+    {
+        var result = EvaluateStemDrop(e); e.Effects = result.Effect;
+        UIElement target = result.Target ?? (UIElement)BackingStemList;
+        string source = e.Data.GetData(typeof(BackingStem)) is BackingStem stem ? stem.Title : LanguageService.T("Arquivos de áudio");
+        string action = result.Effect == DragDropEffects.Copy ? LanguageService.T("Adicionar pistas à sessão")
+            : result.Effect == DragDropEffects.None ? LanguageService.T("Destino inválido")
+            : result.Target?.DataContext is BackingStem item ? LanguageService.T(result.After ? "Mover depois de" : "Mover antes de") + " “" + item.Title + "”" : LanguageService.T("Mover para o fim");
+        Controls.DragFeedback.Show(target, source + " → " + action, e.GetPosition(target), result.Effect != DragDropEffects.None, result.Target == null ? null : result.After);
+        if (e.OriginalSource is DependencyObject origin) Controls.DragFeedback.AutoScroll(origin, e);
+        e.Handled = true;
+    }
+    private async void BackingStemsDrop(object sender, DragEventArgs e)
+    {
+        var result = EvaluateStemDrop(e); e.Effects = result.Effect; e.Handled = true; Controls.DragFeedback.Clear();
+        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) await BackingTracks.AddSessionFiles(files);
+        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingStem)) is BackingStem stem) BackingTracks.MoveStem(stem, result.Index);
+    }
+    private void BackingStemsDragLeave(object sender, DragEventArgs e) { if (!BackingStemList.IsMouseOver) Controls.DragFeedback.Clear(); e.Handled = true; }
     private FrameworkElement? backingViewportHost;
     private void BackingViewportSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(BackingPage.ActualWidth);
     private void BackingPageSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(e.NewSize.Width);
@@ -926,15 +975,24 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         backingDialogOpen = true;
         try
         {
-            var choice = new CheckBox { Content = LanguageService.T("Aplicar velocidade e tom (sem volume/mute)"), IsChecked = false, Margin = new Thickness(0, 8, 0, 8) };
-            var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T(BackingTracks.ExportLabel), Content = choice, PrimaryButtonText = LanguageService.T("Exportar"), CloseButtonText = LanguageService.T("Cancelar") };
-            return await dialog.ShowLocalizedAsync() == Wpf.Ui.Controls.ContentDialogResult.Primary ? choice.IsChecked == true : null;
+            var choice = new CheckBox { Content = LanguageService.T("Aplicar velocidade e tom da sessão"), IsChecked = false, Margin = new Thickness(0, 8, 0, 8) };
+            var mix = new RadioButton { Content = LanguageService.T("Mixagem da sessão"), IsChecked = BackingTracks.ExportMix, GroupName = "ExportTarget", Margin = new Thickness(0, 8, 0, 0) };
+            var isolated = new RadioButton { Content = LanguageService.T("Pista selecionada"), IsChecked = !BackingTracks.ExportMix, IsEnabled = BackingTracks.SelectedStem != null, GroupName = "ExportTarget" };
+            var panel = new StackPanel(); panel.Children.Add(mix); panel.Children.Add(isolated); panel.Children.Add(choice);
+            var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T(BackingTracks.ExportLabel), Content = panel, PrimaryButtonText = LanguageService.T("Exportar"), CloseButtonText = LanguageService.T("Cancelar") };
+            if (await dialog.ShowLocalizedAsync() != Wpf.Ui.Controls.ContentDialogResult.Primary) return null;
+            BackingTracks.ExportMix = mix.IsChecked == true;
+            return choice.IsChecked == true;
         }
         finally { backingDialogOpen = false; }
     }
     private void BackingKnobStart(object sender, RoutedEventArgs e) { BackingTracks.BeginParameterGesture(); e.Handled = true; }
     private void BackingKnobEnd(object sender, RoutedEventArgs e) { BackingTracks.EndParameterGesture(); e.Handled = true; }
-    private void BackingSelectionChanged(object sender, SelectionChangedEventArgs e) { if (e.AddedItems.Count > 0 && e.AddedItems[0] is BackingTrack track) BackingTracks.SelectedTrack = track; }
+    private void BackingSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.AddedItems.Count > 0 && e.AddedItems[0] is BackingTrack track) BackingTracks.SelectedTrack = track;
+        if (BackingTrackList.SelectedItem != BackingTracks.SelectedTrack) BackingTrackList.SetCurrentValue(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, BackingTracks.SelectedTrack);
+    }
     private void BackingKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Handled || backingDialogOpen) return;

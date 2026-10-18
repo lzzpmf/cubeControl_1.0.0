@@ -24,7 +24,7 @@ internal static class PackWorkflowTests
         editor.Slots[1].DistanceValue = 19;
         var firstEntry = editor.Slots[1].Entry!;
         var secondIr = editor.PackLibrary.Entries.First(e => e.RelativePath != editor.SelectedIr!.RelativePath);
-        Check(editor.AssignIr(3, secondIr) && editor.Slots[3].Entry!.Distance == 50, "library drop assigns a fresh IR at distance 50");
+        Check(editor.AssignIr(3, secondIr) && editor.Slots[3].Entry!.Distance == 80, "library drop assigns a fresh IR at distance 80");
         editor.Slots[3].DistanceValue = 83;
         var secondEntry = editor.Slots[3].Entry!;
         Check(editor.SwapSlots(1, 3) && editor.Slots[1].Entry!.Sha256 == secondEntry.Sha256 && editor.Slots[3].Entry!.Distance == 19 && editor.Slots[1].Entry!.Distance == 83,
@@ -88,7 +88,7 @@ internal static class PackWorkflowTests
         var predefined = editor.Current!;
         model.ReviewPack = review =>
         {
-            Check(review.Slots.All(s => s.Selected && s.Distance == 50), "review starts with all available entries and stored distances");
+            Check(review.Slots.All(s => s.Selected && s.Distance == 80), "review starts with all available entries and stored distances");
             review.SelectNone.Execute(null); Check(!review.CanContinue, "review blocks an empty selection");
             review.Slots[2].Selected = true; review.Slots[2].Distance = 99;
             Check(review.CanContinue && review.SelectedDefinition().Entries.Single().Distance == 99, "review snapshot combines selection and per-IR distance");
@@ -96,7 +96,7 @@ internal static class PackWorkflowTests
         };
         async Task Apply() => await (Task)typeof(EditorViewModel).GetMethod("ApplyIrPackAsync", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(model, null)!;
         await Apply(); Check(fake.Flash.SequenceEqual(before) && fake.Writes == 0, "canceling review sends no device write");
-        Check(predefined.Definition!.Entries.All(e => e.Distance == 50) && !editor.Dirty, "temporary review distances do not modify the predefined pack");
+        Check(predefined.Definition!.Entries.All(e => e.Distance == 80) && !editor.Dirty, "temporary review distances do not modify the predefined pack");
         editor.ChooseDraftDecision = () => Task.FromResult(PackDraftDecision.Discard);
         await editor.SelectAsync(null); editor.SelectedIr = editor.PackLibrary.Entries[0]; editor.Slots[4].UseIr.Execute(null);
         Check(model.ApplyIrPack.CanExecute(null), "unnamed unsaved draft can be applied");
@@ -114,7 +114,7 @@ internal static class PackWorkflowTests
         Check(readSlots.SetEquals(new uint[] { 4 }), "partial pack reads only its populated destination, including verification");
         fake.Observe = null;
         for (int i = 0; i < 8; i++) Check(fake.Flash.AsSpan(i * 4096, 4096).SequenceEqual(i == 4 ? expected.Sectors[i] : before.AsSpan(i * 4096, 4096)), "draft application preserves destination " + (i + 1));
-        Check(editor.Dirty && editor.Name == "" && editor.Slots[4].Entry!.Distance == 50 && fake.Writes > writes, "application leaves the unnamed draft and its saved distance intact");
+        Check(editor.Dirty && editor.Name == "" && editor.Slots[4].Entry!.Distance == 80 && fake.Writes > writes, "application leaves the unnamed draft and its saved distance intact");
         int erases = fake.Erases; await Apply(); Check(fake.Erases == erases, "identical adjusted sector is not rewritten");
         var missing = editor.ApplicationDraft() with { Entries = [editor.Slots[4].Entry! with { RelativePath = "missing.wav" }] };
         var reviewMissing = new IrPackReviewViewModel(missing, model.PackStore, Enumerable.Range(0, 8).Select(i => before.AsSpan(i*4096,4096).ToArray()).ToArray(), editor);

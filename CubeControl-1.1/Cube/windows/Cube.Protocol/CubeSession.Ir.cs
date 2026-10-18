@@ -22,7 +22,8 @@ public sealed partial class CubeSession
     public async Task<byte[]> ReadIrSlot(int slot, IProgress<TransferProgress>? progress = null, CancellationToken ct = default)
     {
         uint address = IrAddress(slot); await gate.WaitAsync(ct);
-        try { RequireIdentity(); return await ReadChunks(0, address, 4096, ct, progress); }
+        try {
+            using var measurement = MeasureOperation(); RequireIdentity(); return await ReadChunks(0, address, 4096, ct, progress); }
         finally { gate.Release(); }
     }
 
@@ -31,6 +32,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity(); var sectors = new byte[8][];
             for (int slot = 0; slot < 8; slot++)
             {
@@ -47,6 +49,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity();
             var flag = await ReadInternal(0x764, 1, ct, 4);
             return new(flag[0], await ReadChunks(4, 0x768, 2052, ct));
@@ -72,6 +75,7 @@ public sealed partial class CubeSession
         var payload = state.Payload.ToArray(); await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity(); await SetIrFlag(0, ct);
             for (int offset = 0; offset < payload.Length; offset += 128)
             {
@@ -98,6 +102,7 @@ public sealed partial class CubeSession
         await gate.WaitAsync(ct);
         try
         {
+            using var measurement = MeasureOperation();
             RequireIdentity(); var current = await ReadChunks(0, address, 4096, ct, progress);
             if (!current.SequenceEqual(baseline)) throw new InvalidOperationException("O slot IR mudou. Leia novamente antes de gravar.");
             await backup(current); // Failure here MUST prevent erase.

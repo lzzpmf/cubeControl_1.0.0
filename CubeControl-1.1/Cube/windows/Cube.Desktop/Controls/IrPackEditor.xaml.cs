@@ -1,3 +1,4 @@
+using Cube.Desktop.Localization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,7 +47,8 @@ public partial class IrPackEditor : UserControl
     private void SlotMouseDown(object sender, MouseButtonEventArgs e)
     {
         dragCandidate = null;
-        if (Ancestor<System.Windows.Controls.Primitives.ButtonBase>(e.OriginalSource as DependencyObject) != null) return;
+        if (Ancestor<System.Windows.Controls.Primitives.ButtonBase>(e.OriginalSource as DependencyObject) != null ||
+            Ancestor<Knob>(e.OriginalSource as DependencyObject) != null) return;
         if (sender is Border { DataContext: IrPackSlotViewModel slot } card)
         {
             card.Focus();
@@ -65,7 +67,7 @@ public partial class IrPackEditor : UserControl
         var candidate = dragCandidate; dragCandidate = null;
         var data = new DataObject(candidate.GetType(), candidate);
         try { DragDrop.DoDragDrop((DependencyObject)sender, data, candidate is LibraryDrag ? DragDropEffects.Copy : DragDropEffects.Move); }
-        finally { foreach (var card in Cards(this)) card.Tag = null; }
+        finally { DragFeedback.Clear(); foreach (var card in Cards(this)) card.Tag = null; }
         e.Handled = true;
     }
     private static IEnumerable<Border> Cards(DependencyObject root)
@@ -87,12 +89,22 @@ public partial class IrPackEditor : UserControl
     private void SlotDragOver(object sender, DragEventArgs e)
     {
         if (sender is Border { DataContext: IrPackSlotViewModel slot } card)
-        { e.Effects = DropEffect(e, slot); card.Tag = e.Effects == DragDropEffects.None ? null : "Drop"; }
+        {
+            e.Effects = DropEffect(e, slot);
+            string message = LanguageService.T("Destino inválido");
+            if (e.Effects == DragDropEffects.Copy && e.Data.GetData(typeof(LibraryDrag)) is LibraryDrag library)
+                message = library.Entry.Name + " → " + LanguageService.T(slot.HasEntry ? "Substituir" : "Adicionar") + " “" + slot.Title + ": " + slot.Name + "”";
+            else if (e.Effects == DragDropEffects.Move && e.Data.GetData(typeof(SlotDrag)) is SlotDrag source && DataContext is IrPackEditorViewModel model)
+                message = LanguageService.T("Trocar slots") + ": " + model.Slots[source.Index].Title + " → " + model.Slots[source.Index].Name + " ↔ " + slot.Title + " → " + slot.Name;
+            DragFeedback.Show(card, message, e.GetPosition(card), e.Effects != DragDropEffects.None);
+            DragFeedback.AutoScroll(card, e);
+        }
         e.Handled = true;
     }
-    private void SlotDragLeave(object sender, DragEventArgs e) { if (sender is Border card) card.Tag = null; e.Handled = true; }
+    private void SlotDragLeave(object sender, DragEventArgs e) { DragFeedback.Clear(); if (sender is Border card) card.Tag = null; e.Handled = true; }
     private void SlotDrop(object sender, DragEventArgs e)
     {
+        DragFeedback.Clear();
         if (sender is Border { DataContext: IrPackSlotViewModel slot } card && DataContext is IrPackEditorViewModel model)
         {
             card.Tag = null; e.Effects = DropEffect(e, slot);

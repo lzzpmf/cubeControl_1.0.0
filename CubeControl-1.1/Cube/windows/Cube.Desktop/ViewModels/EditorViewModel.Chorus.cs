@@ -87,6 +87,7 @@ public sealed partial class EditorViewModel
 
     private void ChorusEdited()
     {
+        if (retiringAdvanced[1]) return;
         if (!ChorusPreviewActive || chorusStopped || !IsModulationPreviewAudible(1))
         {
             if (!chorusStopped) Chorus.Message = "Edição local alterada · ainda não aplicada nem exportada.";
@@ -142,33 +143,39 @@ public sealed partial class EditorViewModel
 
     public async Task EndChorusPreviewAsync()
     {
-        chorusMonitorStop?.Cancel();
-        if (chorusMonitorTask != null) await chorusMonitorTask;
-        chorusMonitorTask = null;
-        chorusMonitorStop?.Dispose(); chorusMonitorStop = null;
+        retiringAdvanced[1] = true;
         chorusPending = false;
-        if (!Busy && chorusSendTask != null) await chorusSendTask;
-        if (chorusRecovery == null) return;
-        if (session == null) throw new IOException("Reconecte o pedal para restaurar o chorus. Snapshot preservado em memória nesta sessão.");
-        if (await RetireObsoleteAdvancedRecoveryAsync(1)) return;
-        if (!chorusStopped && !IsModulationPreviewAudible(1))
-        {
-            chorusRecovery = null;
-            Chorus.Message = "Prévia encerrada. O outro efeito de modulação permanece selecionado; edição local preservada.";
-            Refresh();
-            return;
-        }
-        chorusStopped = true;
         try
         {
-            await session.RestoreChorusPreview(chorusRecovery);
-            Chorus.Load(chorusRecovery.Identity, ChorusParameters.Read(chorusRecovery.OriginalDsp));
-            chorusRecovery = null; chorusStopped = false;
-            Chorus.Message = "Chorus original restaurado e conferido. Edição local disponível.";
-            RecordOperation("Prévia de chorus encerrada; parâmetros anteriores restaurados.");
+            chorusMonitorStop?.Cancel();
+            if (chorusMonitorTask != null) await chorusMonitorTask;
+            chorusMonitorTask = null;
+            chorusMonitorStop?.Dispose(); chorusMonitorStop = null;
+            chorusPending = false;
+            if (!Busy && chorusSendTask != null) await chorusSendTask;
+            if (chorusRecovery == null) return;
+            if (session == null) throw new IOException("Reconecte o pedal para restaurar o chorus. Snapshot preservado em memória nesta sessão.");
+            if (await RetireObsoleteAdvancedRecoveryAsync(1)) return;
+            if (!chorusStopped && !IsModulationPreviewAudible(1))
+            {
+                chorusRecovery = null;
+                Chorus.Message = "Prévia encerrada. O outro efeito de modulação permanece selecionado; edição local preservada.";
+                Refresh();
+                return;
+            }
+            chorusStopped = true;
+            try
+            {
+                await session.RestoreChorusPreview(chorusRecovery);
+                Chorus.Load(chorusRecovery.Identity, ChorusParameters.Read(chorusRecovery.OriginalDsp));
+                chorusRecovery = null; chorusStopped = false;
+                Chorus.Message = "Chorus original restaurado e conferido. Edição local disponível.";
+                RecordOperation("Prévia de chorus encerrada; parâmetros anteriores restaurados.");
+            }
+            catch { Chorus.Message = "Restauração não confirmada. O snapshot do chorus continua em memória nesta sessão."; throw; }
+            finally { Refresh(); }
         }
-        catch { Chorus.Message = "Restauração não confirmada. O snapshot do chorus continua em memória nesta sessão."; throw; }
-        finally { Refresh(); }
+        finally { retiringAdvanced[1] = false; }
     }
 
     public async Task RestoreChorusAsync()

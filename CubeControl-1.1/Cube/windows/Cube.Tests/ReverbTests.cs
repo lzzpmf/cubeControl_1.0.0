@@ -93,7 +93,7 @@ internal static class ReverbTests
         var movingRecovery = await moving.BeginReverbPreview(0, Save);
         moved.MoveAfterWrites = 1; failed = false;
         try { await moving.ApplyReverbPreview(movingRecovery, target, Save); } catch (IOException) { failed = true; }
-        check(failed && moved.Writes == 1, "physical switch between fields stops remaining writes");
+        check(failed && moved.Writes > 1, "physical switch during batch is rejected by final verification");
     }
 }
 

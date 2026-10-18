@@ -19,7 +19,7 @@ internal static class GearCarouselTests
         using var session = new CubeSession(fake); await session.Identify();
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-carousel-" + Guid.NewGuid().ToString("N")));
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { ShowInTaskbar = false, Width = 1280, Height = 900 };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false, Width = 1280, Height = 900 };
         window.Show(); await Task.Delay(150); while (model.Busy) await Task.Delay(20);
         var art = (GearArt)window.FindName("FocusedArt");
         var image = (GearImageButton)window.FindName("EquipmentImageButton");
@@ -52,7 +52,7 @@ internal static class GearCarouselTests
                 Check(fake.Writes == writes, "Animation frames must not generate MIDI writes");
             }
             model.SelectedStage = 0; await Settle(); image.BringIntoView(); await Task.Delay(250); await Settle();
-            string folder = Path.GetFullPath("C:/CubeControl-Build/reports/gear-carousel"); Directory.CreateDirectory(folder);
+            string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/gear-carousel")); Directory.CreateDirectory(folder);
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
             using (var stream = File.Create(Path.Combine(folder, "chevrons.png"))) png.Save(stream);

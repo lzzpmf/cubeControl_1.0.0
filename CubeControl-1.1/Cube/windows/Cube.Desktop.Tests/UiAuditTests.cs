@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Automation.Peers;
@@ -44,7 +44,7 @@ internal static class UiAuditTests
     public static async Task Run()
     {
         string temporary = Path.Combine(Path.GetTempPath(), "cube-ui-audit-" + Guid.NewGuid().ToString("N"));
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/wpf-ui-audit/after");
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/wpf-ui-audit/after"));
         Directory.CreateDirectory(folder);
         var previousTheme = ThemeService.Instance.Mode;
         string previousLanguage = LanguageService.Instance.Language;
@@ -54,7 +54,7 @@ internal static class UiAuditTests
         using var model = new EditorViewModel(temporary);
         await model.Execute(() => model.AttachSession(session));
         model.Ask = _ => Task.FromResult(true);
-        var window = new MainWindow(model) { ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false };
         window.Show();
         await Task.Delay(200); while (model.Busy) await Task.Delay(30);
         var tabs = (TabControl)window.FindName("Tabs");
@@ -83,14 +83,14 @@ internal static class UiAuditTests
                 LanguageService.Instance.Preview(language); await Settle();
                 Check(peer.GetName() == name && peer.GetAutomationControlType() == AutomationControlType.Slider, "microphone localized UIA name and slider role " + language);
             }
-            Check(range.Minimum == 0 && range.Maximum == 100 && range.SmallChange == 1, "microphone exposes real normalized limits without invented physical units");
+            Check(range.Minimum == 0 && range.Maximum == 99 && range.SmallChange == 1, "microphone exposes real normalized limits without invented physical units");
             range.SetValue(63);
             Check(model.Ir.Distance == 63 && fake.Writes == 0, "accessible distance prepares locally when preview is unavailable");
             scene.IsEnabled = false; Disabled(() => range.SetValue(40)); scene.ClearValue(UIElement.IsEnabledProperty);
             Check(range.Value == 63, "disabled microphone rejects accessibility edits");
             thumb.BringIntoView(); thumb.Focus(); await Settle();
             var focusFrame = (Border)thumb.Template.FindName("FocusFrame", thumb);
-            Check(thumb.IsKeyboardFocused && focusFrame.Background != null && focusFrame.Background != Brushes.Transparent && focusFrame.BorderThickness == new Thickness(0), "microphone keyboard focus uses a fill without an outline");
+            Check(thumb.IsKeyboardFocused && ReferenceEquals(thumb.FocusVisualStyle, window.FindResource("DefaultControlFocusVisualStyle")) && focusFrame.BorderThickness == new Thickness(0), "microphone keyboard focus uses the shared lateral indicator without an outline");
             Capture("microphone-focus");
 
             var knob = new Knob { Minimum = 0, Maximum = 127, Value = 10 };
@@ -166,12 +166,14 @@ internal static class UiAuditTests
                 foreach (var (width, height) in new[] { (640, 480), (920, 740), (1280, 720), (1920, 1080) })
                 {
                     window.Width = width; window.Height = height; await Settle();
-                    for (int screen = 0; screen < 8; screen++)
+                    for (int screen = 0; screen < 10; screen++)
                     {
                         tabs.SelectedIndex = screen < 6 ? 0 : screen - 5;
                         if (screen < 6) model.SelectedStage = screen;
-                        await Settle();
-                        var page = (ScrollViewer)window.FindName(new[] { "EditorScroll", "IrScroll", "HelpScroll" }[tabs.SelectedIndex]);
+                        await Task.Delay(300); await Settle();
+                        var page = tabs.SelectedIndex == 3 ? outer : (ScrollViewer)window.FindName(
+                            new[] { "EditorScroll", "IrScroll", "BackingTracksScroll", "", "HelpScroll" }[tabs.SelectedIndex]);
+                        Check(page.IsVisible, "visual audit inspects the visible page " + tabs.SelectedIndex);
                         if (outer.ExtentWidth > outer.ViewportWidth + 1 || page.ExtentWidth > page.ViewportWidth + 1)
                             throw new Exception($"Horizontal clipping {theme}/{language}/{width}/{screen}");
                         outer.ScrollToEnd(); page.ScrollToEnd(); await Settle();
@@ -187,7 +189,8 @@ internal static class UiAuditTests
                         new Cube.Desktop.Views.ConnectionDetails { DataContext = model } })
                     {
                         dialog = new Wpf.Ui.Controls.ContentDialog(host) { Title = "CubeControl", Content = content, CloseButtonText = "Cancelar", DialogMaxWidth = 900 };
-                        shown = dialog.ShowLocalizedAsync(); await Task.Delay(40); await Settle();
+                        shown = dialog.ShowLocalizedAsync(); await Task.Delay(350); await Settle();
+                        Check(dialog.IsVisible && dialog.Opacity >= .99, "dialog opening animation settled before capture");
                         if (content is Cube.Desktop.Views.ConnectionDetails ports)
                         {
                             foreach (string port in new[] { "InputPort", "OutputPort" })
@@ -209,7 +212,7 @@ internal static class UiAuditTests
                         if (Math.Abs(body.VerticalOffset - body.ScrollableHeight) > 1) throw new Exception("Dialog end is unreachable");
                         dialog.Hide(); await shown;
                     }
-                    Console.WriteLine($"PASS visual matrix {theme}/{language}/{width}: eight screens at 100/125/150/200 percent raster DPI and four dialogs");
+                    Console.WriteLine($"PASS visual matrix {theme}/{language}/{width}: ten screens at 100/125/150/200 percent raster DPI and four dialogs");
                 }
             }
             Check(fake.Writes == 0, "entire visual and accessibility audit leaves MIDI untouched");

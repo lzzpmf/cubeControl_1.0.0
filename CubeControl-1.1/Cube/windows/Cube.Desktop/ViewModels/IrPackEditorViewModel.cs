@@ -77,7 +77,8 @@ public sealed class IrPackEditorViewModel : Observable
             if (sector.Length == 4096 && IrPackCatalog.Identify(CabinetInventory.Hash(sector)) is { } match)
                 cabinetId = IrPackCatalog.CabinetId(match.Pack, match.Index);
         }
-        string? illustration = entry == null ? null : CabinetArtwork.ForIr(entry.RelativePath, entry.Name);
+        string? illustration = entry == null ? null : CabinetArtwork.ForIr(entry.RelativePath, entry.Name,
+            PackLibrary.Entries.FirstOrDefault(item => string.Equals(item.RelativePath, entry.RelativePath, StringComparison.OrdinalIgnoreCase))?.Metadata);
         string key = cabinetId ?? illustration ?? CabinetArtwork.Generic;
         if (!images.TryGetValue(key, out var image))
         {
@@ -288,17 +289,17 @@ public sealed class IrPackSlotViewModel : Observable
     public bool ShowRemove => Editable && HasEntry;
     public ImageSource? Image => editor.SlotImage(Index, Entry);
     public string ImageHint => Entry != null && CabinetArtwork.ForIr(Entry.RelativePath, Entry.Name) != null
-        ? "Arte ilustrativa baseada no nome do IR; não confirma o gabinete da captura."
+        ? "Arte ilustrativa baseada nos metadados ou no nome do IR; não confirma o gabinete da captura."
         : "Imagem de referência do gabinete.";
     public double DistanceValue
     {
-        get => Entry?.Distance ?? 50;
+        get => Entry?.Distance ?? 80;
         set { if (double.IsFinite(value)) Distance = Math.Clamp((int)Math.Round(value), 0, 99).ToString(); }
     }
     public bool CanSetDistance => editor.CanEdit && Entry != null;
     public string Distance
     {
-        get => (Entry?.Distance ?? 50).ToString();
+        get => (Entry?.Distance ?? 80).ToString();
         set
         {
             if (!CanSetDistance) return;

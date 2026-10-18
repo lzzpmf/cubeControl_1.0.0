@@ -11,6 +11,10 @@ public sealed class BackingRecording : IDisposable
     private readonly MMDevice device;
     private readonly WasapiRecorder capture;
     private readonly BackingRecordingWriter writer;
+    private readonly RecordingEnvelope envelope;
+    private double firstCaptureSeconds = double.NaN;
+    public double FirstCaptureSeconds => Volatile.Read(ref firstCaptureSeconds);
+    public float[] Peaks => envelope.Snapshot();
     private readonly object sync = new();
     private readonly TaskCompletionSource<Exception?> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private Exception? failure;
@@ -33,14 +37,20 @@ public sealed class BackingRecording : IDisposable
             catch { capture.Dispose(); throw; }
         }
         catch { device.Dispose(); throw; }
-        capture.DataAvailable += (data, flags, _, _) =>
+        envelope = new(capture.WaveFormat);
+        capture.DataAvailable += (data, flags, _, qpc) =>
         {
             try
             {
                 lock (sync)
                 {
                     if (closed || failure != null) return;
-                    writer.Write(data, (flags & AudioClientBufferFlags.Silent) != 0);
+                    if (writer.Seconds > 0 && (flags & AudioClientBufferFlags.DataDiscontinuity) != 0) throw new IOException("Capture discontinuity; recoverable audio retained.");
+                    if (double.IsNaN(firstCaptureSeconds))
+                        Volatile.Write(ref firstCaptureSeconds, qpc > 0 && (flags & AudioClientBufferFlags.TimestampError) == 0 ? qpc / 10000000d : System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency - data.Length / (double)capture.WaveFormat.AverageBytesPerSecond);
+                    bool silent = (flags & AudioClientBufferFlags.Silent) != 0;
+                    writer.Write(data, silent);
+                    envelope.Write(data, silent);
                 }
             }
             catch (Exception ex)
@@ -102,7 +112,7 @@ internal sealed class BackingRecordingWriter(string path, WaveFormat format) : I
         if (data.Length % format.BlockAlign != 0) throw new InvalidDataException("Incomplete audio frame.");
         if (silent)
         {
-            Span<byte> silence = stackalloc byte[4096]; silence.Clear();
+            Span<byte> silence = stackalloc byte[4096]; silence.Fill(format.BitsPerSample == 8 && format.Encoding == WaveFormatEncoding.Pcm ? (byte)128 : (byte)0);
             for (int remaining = data.Length; remaining > 0; remaining -= Math.Min(remaining, silence.Length))
                 writer.Write(silence[..Math.Min(remaining, silence.Length)]);
         }

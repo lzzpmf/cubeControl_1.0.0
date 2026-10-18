@@ -20,7 +20,9 @@ public sealed class BackingAudioEngine : IDisposable
     private MMDeviceEnumerator? enumerator;
     private MMDevice? device;
     private WasapiPlayer? output;
-    private BackingAudioProcessing? processing;
+    private BackingSessionAudio? processing;
+    private BackingStemSource[] stems = [];
+    private bool recordingClock;
     private ISampleProvider? provider;
     private AudioQueue? queue;
     private string? path, outputId;
@@ -52,18 +54,20 @@ public sealed class BackingAudioEngine : IDisposable
         snapshot = new(state, position, processing?.Duration ?? snapshot.Duration, device?.ID, generation, snapshot.Repetitions, error, path);
         Changed?.Invoke(snapshot);
     }
-    public Task Open(string file, string endpoint, double position, double rate, double semitones, bool loop, double a, double b, double level, bool mute) => Invoke(() =>
+    public Task Open(string file, string endpoint, double position, double rate, double semitones, bool loop, double a, double b, double level, bool mute, BackingStemSource[]? session = null) => Invoke(() =>
     {
+        stems = session ?? [new(Guid.NewGuid(), file)];
         path = file; outputId = endpoint; speed = rate; pitch = semitones; looping = loop; loopStart = a; loopEnd = b; volume = level; muted = mute;
         generation++; Rebuild(position, false);
     });
     public Task ConfigureMetronome(MetronomeSettings settings) => Invoke(() =>
     {
+        MetronomeClick.Prepare();
         if (!settings.Valid) throw new ArgumentException("Invalid metronome settings.");
         if (metronome == settings) return;
         var previous = metronome;
         metronome = settings;
-        if (output != null && (previous.Enabled != settings.Enabled || previous.Bpm != settings.Bpm
+        if (!recordingClock && output != null && (previous.Enabled != settings.Enabled || previous.Bpm != settings.Bpm
             || previous.Beats != settings.Beats || previous.EighthNotes != settings.EighthNotes || previous.Offset != settings.Offset))
         { UpdateClock(); Rebuild(snapshot.Position, snapshot.State == BackingPlaybackState.Playing); }
     });
@@ -84,6 +88,23 @@ public sealed class BackingAudioEngine : IDisposable
         speed = rate; pitch = semitones; looping = loop; loopStart = a; loopEnd = b;
         if (path != null && output != null) Rebuild(position, resume);
     });
+    public Task SetStemMix(BackingStemSource[] sources) => Invoke(() => { stems = sources; processing?.SetMix(sources); });
+    public Task SetRecordingClock(bool enabled) => Invoke(() =>
+    {
+        recordingClock = enabled;
+        if (processing != null) processing.KeepAlive = enabled;
+    });
+    public Task RefreshSession(BackingStemSource[] sources) => Invoke(() =>
+    {
+        UpdateClock(); stems = sources;
+        if (path != null && output != null) Rebuild(snapshot.Position, snapshot.State == BackingPlaybackState.Playing);
+    });
+    public async Task<(double Position, long Timestamp)> CaptureClock()
+    {
+        (double Position, long Timestamp) result = default;
+        await Invoke(() => { UpdateClock(); result = (snapshot.Position, System.Diagnostics.Stopwatch.GetTimestamp()); });
+        return result;
+    }
     public Task SetVolume(double level, bool mute) => Invoke(() => { volume = Math.Clamp(level, 0, 1); muted = mute; });
     public Task Stop() => Invoke(() => { if (path != null && output != null) Rebuild(looping ? loopStart : 0, false); });
     public Task ReleaseOutput() => Invoke(() => { UpdateClock(); CloseAudio(); Publish(BackingPlaybackState.Paused, snapshot.Position); });
@@ -106,13 +127,9 @@ public sealed class BackingAudioEngine : IDisposable
         CloseAudio(); Publish(BackingPlaybackState.Loading, position);
         enumerator ??= new MMDeviceEnumerator(); device = enumerator.GetDevice(outputId);
         if (device.State != DeviceState.Active) throw new InvalidOperationException("The selected output is unavailable.");
-        using (var decoder = new BackingDecoder(path))
-        {
-            double duration = decoder.Duration;
-            position = looping ? Math.Clamp(position, loopStart, Math.Max(loopStart, loopEnd - 1d / decoder.Format.SampleRate)) : Math.Clamp(position, 0, duration);
-            processing = new(path, position, looping ? loopEnd : duration, speed, pitch, looping, loopStart);
-        }
-        provider = speed != 1 || pitch != 0 ? new BackingPeakGuard(processing) : processing;
+        if (!recordingClock && !stems.Any(s => System.IO.File.Exists(s.Path))) throw new System.IO.FileNotFoundException("No session audio is available.");
+        processing = new(stems, position, looping ? loopEnd : double.PositiveInfinity, speed, pitch, looping, loopStart) { KeepAlive = recordingClock };
+        provider = processing;
         start = position; eof = false; gain = 0;
         renderedFrames = 0;
         countInFrames = countIn ? (long)Math.Round(metronome.CountInBars * metronome.Beats * metronome.Interval / speed * processing.WaveFormat.SampleRate) : 0;
@@ -159,7 +176,7 @@ public sealed class BackingAudioEngine : IDisposable
                     float trackSample = block[i + c] * gain;
                     trackMaximum = Math.Max(trackMaximum, Math.Abs(trackSample));
                     float mixed = trackSample + click;
-                    block[i + c] = metronome.Enabled ? Math.Clamp(mixed, -1, 1) : mixed;
+                    block[i + c] = Math.Clamp(mixed, -1, 1);
                 }
                 renderedFrames++;
             }
@@ -193,7 +210,7 @@ public sealed class BackingAudioEngine : IDisposable
             }
         }
         long previousRepetitions = snapshot.Repetitions;
-        snapshot = snapshot with { Position = Math.Min(processing.Duration, sourcePosition), Repetitions = repetitions };
+        snapshot = snapshot with { Position = recordingClock ? sourcePosition : Math.Min(processing.Duration, sourcePosition), Repetitions = repetitions };
         if (!IsCountingIn) MetronomeBeat = metronome.Enabled ? metronome.BeatAt(snapshot.Position) : 0;
         if (repetitions > previousRepetitions) LoopCompleted?.Invoke(generation, repetitions);
     }

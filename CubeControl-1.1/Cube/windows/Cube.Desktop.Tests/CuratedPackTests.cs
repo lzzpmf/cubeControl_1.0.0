@@ -42,7 +42,7 @@ internal static class CuratedPackTests
         foreach (var pack in curated)
         {
             Check(pack.Problem == "" && pack.Definition!.Entries.Length == 8 && pack.Sectors.All(s => s.Length == 4096), "all references resolve: " + pack.Name);
-            Check(pack.Definition!.Entries.All(e => e.Distance == 50), "default distance: " + pack.Name);
+            Check(pack.Definition!.Entries.All(e => e.Distance == 80), "default distance: " + pack.Name);
             Check(pack.Sectors.Select(CabinetInventory.Hash).Distinct().Count() == 8, "unique prepared sectors: " + pack.Name);
         }
         Check(curated.Select(p => p.Id).Distinct().Count() == curated.Length, "catalog IDs are unique");
@@ -217,7 +217,7 @@ internal static class CuratedPackTests
             {
                 ThemeService.Instance.Preview(theme); ZoomService.Instance.Preview(100);
                 scroll.ScrollToEnd(); page.UpdateLayout(); await System.Windows.Threading.Dispatcher.Yield();
-                Check(Find<Button>(card).Any(b => Equals(b.Content, LanguageService.T("Revisar e aplicar")) && b.IsVisible), "apply remains reachable at page end");
+                Check(Find<Button>(card).Any(b => Equals(b.Content, LanguageService.T("Aplicar")) && b.IsVisible), "apply remains reachable at page end");
                 var capture = new System.Windows.Media.Imaging.RenderTargetBitmap((int)page.ActualWidth, (int)page.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                 capture.Render(page); var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(capture));
                 string target = Path.Combine(data, $"ir-page-{theme}.png"); using (var file = File.Create(target)) png.Save(file);

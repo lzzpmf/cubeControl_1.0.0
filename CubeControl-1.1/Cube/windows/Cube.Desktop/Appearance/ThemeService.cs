@@ -56,7 +56,7 @@ public sealed class ThemeSettings
 public sealed class ThemeService
 {
     public static ThemeService Instance { get; } = new();
-    private readonly string settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CubeControl", "appearance-v1.json");
+    private readonly string settingsPath = Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl", "appearance-v1.json");
     private Window? window;
     private bool watching;
     private HwndSource? iconSource;
@@ -182,7 +182,7 @@ public sealed class ThemeService
         IsHighContrast = theme == ApplicationTheme.HighContrast;
         IsLight = theme == ApplicationTheme.Light;
         var resources = Application.Current.Resources;
-        resources["CubeSurfaceBorderThickness"] = new Thickness(1);
+        resources["CubeSurfaceBorderThickness"] = new Thickness(0);
         bool lightBackground = IsHighContrast
             ? SystemColors.WindowColor.R * 0.299 + SystemColors.WindowColor.G * 0.587 + SystemColors.WindowColor.B * 0.114 >= 128
             : IsLight;
@@ -217,6 +217,7 @@ public sealed class ThemeService
             resources["CubeSelectedText"] = SystemColors.HighlightTextBrush;
             resources["CubeDisabledText"] = SystemColors.GrayTextBrush;
         }
+        resources["CubeSelectionIndicator"] = IsHighContrast ? SystemColors.HighlightTextBrush : resources["CubeAccent"];
         ControlArtwork.Apply(resources, Finish, IsLight, IsHighContrast);
         RefreshBackdrop();
         resources["CubeThemeRevision"] = ++revision;

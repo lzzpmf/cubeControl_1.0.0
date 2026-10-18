@@ -138,8 +138,8 @@ internal static class AdvancedLifecycleTests
                 var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)card.ActualWidth, (int)card.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
                 bitmap.Render(card);
                 var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                Directory.CreateDirectory("C:/CubeControl-Build/advanced-card/reports");
-                using (var file = File.Create($"C:/CubeControl-Build/advanced-card/reports/card-{stage}.png")) png.Save(file);
+                Directory.CreateDirectory(TestPaths.Report("C:/CubeControl-Build/advanced-card/reports"));
+                using (var file = File.Create(TestPaths.Report($"C:/CubeControl-Build/advanced-card/reports/card-{stage}.png"))) png.Save(file);
                 Flip(); await Task.Delay(50);
             }
             model.SelectedStage = 1;
@@ -157,7 +157,7 @@ internal static class AdvancedLifecycleTests
                     var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap((int)card.ActualWidth, (int)card.ActualHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
                     bitmap.Render(card);
                     var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                    using var file = File.Create($"C:/CubeControl-Build/advanced-card/reports/card-{width}-{advancedFace}.png"); png.Save(file);
+                    using var file = File.Create(TestPaths.Report($"C:/CubeControl-Build/advanced-card/reports/card-{width}-{advancedFace}.png")); png.Save(file);
                 }
             }
         }

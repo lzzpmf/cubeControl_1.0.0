@@ -1,5 +1,6 @@
 ﻿param(
     [switch]$Simulation,
+    [switch]$CompileOnly,
     [switch]$Start,
     [string]$OutputRoot = 'C:\CubeControl-Build'
 )
@@ -114,6 +115,20 @@ try {
     $mutex = [Threading.Mutex]::new($false, 'Local\CubeControlBuild')
     $locked = $mutex.WaitOne(0)
     if (-not $locked) { throw 'Outro build do CubeControl esta em andamento.' }
+    if ($CompileOnly) {
+        if ($Start) { throw 'CompileOnly nao pode ser combinado com Start.' }
+        # Compile managed/WPF/native code without publishing or running verification suites.
+        $compileRoot = Join-Path $OutputRoot ('compile-' + [Guid]::NewGuid().ToString('N'))
+        Assert-ChildPath $compileRoot $OutputRoot
+        $compileArgs = @('build', $projectPath, '-c', $configuration, '-r', 'win-x64',
+            '--artifacts-path', $compileRoot)
+        if ($Simulation) { $compileArgs += '-p:CubeSimulation=true' }
+        & dotnet @compileArgs
+        if ($LASTEXITCODE -ne 0) { throw "Falha na compilacao: $compileRoot" }
+        Write-Host "Compilacao concluida, sem testes ou publicacao: $compileRoot"
+        $exitCode = 0
+        exit $exitCode
+    }
     if (Get-Process -Name CubeControl -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $executable }) {
         throw 'Feche esta edicao do CubeControl antes de reconstruir seu pacote.'
     }

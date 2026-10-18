@@ -11,7 +11,7 @@ using NAudio.Wave;
 
 internal static class BackingResponsivenessTests
 {
-    public static async Task Run()
+    public static async Task Run(bool includeDevice = true)
     {
         string folder = Path.Combine(Path.GetTempPath(), "cube-responsiveness-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
@@ -80,6 +80,8 @@ internal static class BackingResponsivenessTests
                 await Measure("pan", 40, i => model.ViewportStart = i * 4);
                 model.Zoom = 1;
                 await Measure("idle", 50, _ => { });
+                if (includeDevice)
+                {
                 await model.Initialize(); model.SelectedOutput = model.Outputs.FirstOrDefault();
                 if (model.SelectedOutput == null) Console.WriteLine("NOT VALIDATED: no WASAPI output for muted playback profiling.");
                 else
@@ -105,6 +107,8 @@ internal static class BackingResponsivenessTests
                     if (!model.IsPlaying) throw new Exception("Playback interrupted during interaction: " + model.Status);
                     model.Stop.Execute(null);
                 }
+                }
+                else Console.WriteLine("EXCLUDED audio-device: muted WASAPI responsiveness profile");
                 Console.WriteLine("PASS waveform responsiveness and cache regression checks");
             }
             finally

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Cube.Protocol;
 
-public sealed record IrPackEntry(int Slot, string RelativePath, string Sha256, string Name, int Distance = 50);
+public sealed record IrPackEntry(int Slot, string RelativePath, string Sha256, string Name, int Distance = 80);
 public sealed record IrPackDefinition
 {
     public int Version { get; init; } = 1;
@@ -35,7 +35,7 @@ public sealed partial class IrPackStore(string libraryDirectory, string dataDire
             || pack.Entries.Select(e => e.Slot).Distinct().Count() != pack.Entries.Length)
             throw new FormatException("Referência ou posição de IR inválida.");
     }
-    public IrPackEntry Reference(int slot, string relativePath, string name, int distance = 50)
+    public IrPackEntry Reference(int slot, string relativePath, string name, int distance = 80)
     {
         string path = ResolvePath(relativePath);
         if (new FileInfo(path).Length > 32 * 1024 * 1024) throw new FormatException("WAV excede 32 MB.");

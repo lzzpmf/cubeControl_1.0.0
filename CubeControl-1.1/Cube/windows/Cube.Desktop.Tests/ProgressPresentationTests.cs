@@ -14,7 +14,7 @@ internal static class ProgressPresentationTests
     {
         string path = Path.Combine(Path.GetTempPath(), "cube-progress-" + Guid.NewGuid().ToString("N"));
         using var model = new EditorViewModel(path);
-        var window = new MainWindow(model) { ShowInTaskbar = false, Width = 640, Height = 720 };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false, Width = 640, Height = 720 };
         window.Show();
         void Check(bool value, string name) { if (!value) throw new Exception(name); Console.WriteLine("PASS " + name); }
         void Set(string name, object value) => typeof(EditorViewModel).GetProperty(name)!.SetValue(model, value);
@@ -37,7 +37,7 @@ internal static class ProgressPresentationTests
             Check(Find<ProgressBar>(window).Where(c => !c.IsVisible).All(c => !c.IsIndeterminate), name + " hidden bars stop animating");
             foreach (var bar in Find<ProgressBar>(window).Where(c => c.IsVisible))
                 Check(bar.Template.FindName("PART_GlowRect", bar) != null, name + " has animation element");
-            string folder = Path.GetFullPath("C:/CubeControl-Build/reports/progress"); Directory.CreateDirectory(folder);
+            string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/progress")); Directory.CreateDirectory(folder);
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(window); var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
             using var file = File.Create(Path.Combine(folder, name + ".png")); png.Save(file);

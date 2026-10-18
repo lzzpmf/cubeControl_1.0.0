@@ -29,7 +29,7 @@ internal static class EffectVisualizationTests
     }
     public static async Task Run()
     {
-        string folder = Path.GetFullPath("C:/CubeControl-Build/reports/effect-visualizations"); Directory.CreateDirectory(folder);
+        string folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/effect-visualizations")); Directory.CreateDirectory(folder);
         var theme = ThemeService.Instance; var previousTheme = theme.Mode;
         string language = LanguageService.Instance.Language;
         using var fake = new FakeConnection();
@@ -37,7 +37,7 @@ internal static class EffectVisualizationTests
         using var session = new CubeSession(fake); await session.Identify();
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-effects-" + Guid.NewGuid().ToString("N")));
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { ShowInTaskbar = false, Width = 1280, Height = 900 };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false, Width = 1280, Height = 900 };
         window.Show(); await Task.Delay(150);
         while (model.Busy) await Task.Delay(30);
         var diagram = (EffectVisualization)window.FindName("EffectDiagram");

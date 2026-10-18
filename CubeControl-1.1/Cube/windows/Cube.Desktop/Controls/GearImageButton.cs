@@ -13,6 +13,7 @@ public sealed class GearImageButton : Wpf.Ui.Controls.Button
     public bool IsInteractive { get => (bool)GetValue(IsInteractiveProperty); set => SetValue(IsInteractiveProperty, value); }
     public GearImageButton()
     {
+        SetResourceReference(FocusVisualStyleProperty, "CubeParameterFocusVisualStyle");
         MouseEnter += (_, _) => UpdateZoom();
         MouseLeave += (_, _) => UpdateZoom();
         IsKeyboardFocusWithinChanged += (_, _) => UpdateZoom();

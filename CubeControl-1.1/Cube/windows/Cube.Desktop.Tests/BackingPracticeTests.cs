@@ -137,7 +137,7 @@ internal static class BackingPracticeTests
                 sectionShortcut.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
                 Check(model.Position == 40, "arrangement shortcut seeks to the existing named section");
                 model.Position = 24; model.IsLooping = true;
-                string reports = "C:/CubeControl-Build/backing-ui-review/compact-analysis"; Directory.CreateDirectory(reports);
+                string reports = TestPaths.Report("C:/CubeControl-Build/backing-ui-review/compact-analysis"); Directory.CreateDirectory(reports);
                 foreach (var expander in Find<Expander>((DependencyObject)window.FindName("BackingRacks"))) expander.IsExpanded = false;
                 foreach (var (theme, language) in new[] { ("Dark", "pt-BR"), ("Light", "en-US"), ("HighContrast", "en-US") })
                 {

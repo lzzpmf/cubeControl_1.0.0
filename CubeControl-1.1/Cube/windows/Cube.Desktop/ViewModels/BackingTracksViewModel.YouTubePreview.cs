@@ -54,6 +54,7 @@ public sealed partial class BackingTracksViewModel
 
     public async Task PreviewYouTube(YouTubeResult video, bool immediate = false)
     {
+        if (!CanEditSession) return;
         if (immediate && youtubePreview != null && YouTubePreviewId == video.Id)
         { previewPromotion?.TrySetResult(); return; }
         StopYouTubePreview();

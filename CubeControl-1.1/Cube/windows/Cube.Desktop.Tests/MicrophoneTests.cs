@@ -21,7 +21,7 @@ internal static class MicrophoneTests
         await session.Identify();
         using var model = new EditorViewModel(Path.Combine(Path.GetTempPath(), "cube-mic-" + Guid.NewGuid().ToString("N")));
         await model.Execute(() => model.AttachSession(session));
-        var window = new MainWindow(model) { ShowInTaskbar = false };
+        var window = new MainWindow(model, initializeDevices: false) { ShowInTaskbar = false };
         window.Show();
         await Task.Delay(250);
         while (model.Busy) await Task.Delay(30);
@@ -38,7 +38,7 @@ internal static class MicrophoneTests
         var focusFrame = (Border)thumb.Template.FindName("FocusFrame", thumb);
         if (!thumb.IsKeyboardFocused || focusFrame.Background is not SolidColorBrush { Color.A: 0 })
             throw new Exception("Focused microphone must retain a transparent background.");
-        var folder = Path.GetFullPath("C:/CubeControl-Build/reports/microphone-check");
+        var folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/microphone-check"));
         Directory.CreateDirectory(folder);
         foreach (var width in new[] { 1280, 680 })
         foreach (var distance in new[] { 0, 50, 99 })

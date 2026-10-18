@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -67,7 +67,7 @@ public sealed partial class BackingTracksViewModel
     public double ViewportStart { get => viewportStart; set { if (double.IsFinite(value)) Set(ref viewportStart, Math.Clamp(value, 0, Math.Max(0, Duration - ViewportDuration))); } }
     private void FollowWaveformPlayback()
     {
-        if (!IsPlaying || Zoom <= 1 || ViewportDuration <= 0) return;
+        if (IsRecording && !FollowRecording || !IsPlaying || Zoom <= 1 || ViewportDuration <= 0) return;
         // Advance in overlapping pages before the playhead reaches the edge.
         // Keeping the viewport still within a page avoids rebuilding wave geometry every tick.
         if (Position < ViewportStart || Position >= ViewportStart + ViewportDuration * .8)
@@ -88,7 +88,7 @@ public sealed partial class BackingTracksViewModel
     public double MonitorVolume { get => monitorVolume; set { if (!double.IsFinite(value)) return; Set(ref monitorVolume, Math.Clamp(value, 0, 100)); if (monitorGain != null) monitorGain.Volume = MonitorMuted ? 0 : (float)(monitorVolume / 100); } }
     public void SelectRange(double start, double end)
     {
-        if (SelectedTrack == null || !double.IsFinite(start) || !double.IsFinite(end) || start < 0 || end > Duration || end - start < .1 - 1e-9) return;
+        if (!CanEditSession || SelectedTrack == null || !double.IsFinite(start) || !double.IsFinite(end) || start < 0 || end > Duration || end - start < .1 - 1e-9) return;
         SelectedTrack.Start = start; SelectedTrack.End = end;
         if (IsLooping && (position < start || position >= end)) { position = start; Notify(nameof(Position)); Notify(nameof(TimeLabel)); }
         RangeChanged();
@@ -104,9 +104,9 @@ public sealed partial class BackingTracksViewModel
         PropertyChanged += (_, e) => { if (e.PropertyName is nameof(IsPlaying) or nameof(IsMonitoring)) RefreshMeters(); };
         LowerPitch = new UiCommand(() => Pitch--, () => SelectedTrack != null && Pitch > -6);
         RaisePitch = new UiCommand(() => Pitch++, () => SelectedTrack != null && Pitch < 6);
-        ZoomIn = new UiCommand(() => Zoom *= 2, () => CanSeek && Zoom < 16);
-        ZoomOut = new UiCommand(() => Zoom /= 2, () => CanSeek && Zoom > 1);
-        FitWaveform = new UiCommand(() => { Zoom = 1; ViewportStart = 0; }, () => CanSeek);
+        ZoomIn = new UiCommand(() => Zoom *= 2, () => Duration > 0 && Zoom < 16);
+        ZoomOut = new UiCommand(() => Zoom /= 2, () => Duration > 0 && Zoom > 1);
+        FitWaveform = new UiCommand(() => { Zoom = 1; ViewportStart = 0; }, () => Duration > 0);
         FilteredTracks = new ListCollectionView(Tracks);
         FilteredTracks.Filter = item => item is BackingTrack track && (track.Title.Contains(Search, StringComparison.CurrentCultureIgnoreCase) || track.Tuning.Contains(Search, StringComparison.CurrentCultureIgnoreCase));
         GoToA = new UiCommand(() => Position = RangeStart, () => double.IsFinite(RangeStart));

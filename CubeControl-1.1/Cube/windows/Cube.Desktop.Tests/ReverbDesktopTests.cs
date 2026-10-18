@@ -21,8 +21,8 @@ internal static class ReverbDesktopTests
         using var model = new EditorViewModel(directory);
         await model.AttachSession(session);
         await model.ReadReverbAsync();
-        Check(model.ReverbPreviewActive && model.CanEditReverb && !model.CanEdit && !model.CanUseAmp && !model.CanOperate && !model.CanStartPhaser && !model.CanStartChorus && !model.CanStartDelay,
-            "reverb preview excludes preset edits and amp/IR operations");
+        Check(model.ReverbPreviewActive && model.CanEditReverb && model.CanEdit && model.CanUseAmp && model.CanOperate && model.CanStartPhaser && model.CanStartChorus && model.CanStartDelay,
+            "reverb preview preserves live preset controls and allows independent effect sessions");
         Check(!File.Exists(Path.Combine(directory, "pending-reverb-preview.json")), "reverb snapshot stays in memory");
         model.Reverb.Wet = 10; model.Reverb.Wet = 20; model.Reverb.Wet = 30;
         for (int i = 0; i < 200 && (ReverbParameters.Read(fake.Dsp).Wet != 0.3f || model.Busy); i++) await Task.Delay(10);
@@ -32,11 +32,10 @@ internal static class ReverbDesktopTests
         view.SetResourceReference(Control.ForegroundProperty, "CubeText");
         var host = new Window { Content = view, Width = 600, Height = 900, Left = -10000, Top = -10000, ShowActivated = false, ShowInTaskbar = false, SizeToContent = SizeToContent.Height };
         host.Show();
-        ((Expander)view.Content).IsExpanded = true;
         await Task.Delay(400);
         view.Measure(new Size(560, 900)); view.Arrange(new Rect(0, 0, 560, view.DesiredSize.Height)); view.UpdateLayout();
         Check(view.ActualHeight > 300 && view.ActualHeight < 1200, $"reverb editor lays out without clipping ({view.ActualHeight})");
-        string render = Path.GetFullPath("C:/CubeControl-Build/reverb-research/reverb-editor.png"); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
+        string render = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reverb-research/reverb-editor.png")); Directory.CreateDirectory(Path.GetDirectoryName(render)!);
         var bitmap = new RenderTargetBitmap(560, (int)Math.Ceiling(view.ActualHeight), 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(view);
         var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
@@ -52,7 +51,7 @@ internal static class ReverbDesktopTests
         model.Dispose(); // Abnormal shutdown ends the app session; only the current pedal RAM survives.
         using var reopened = new EditorViewModel(directory);
         int writes = fake.Writes;
-        await reopened.Initialize();
+        // Construction loads local state; do not enumerate physical MIDI ports here.
         Check(!reopened.ReverbPreviewActive && !reopened.CanEditReverb && fake.Writes == writes,
             "restart ignores previous session without reapplying controls");
         var third = new CubeSession(fake); await third.Identify(); await reopened.AttachSession(third);
@@ -77,7 +76,7 @@ internal static class ReverbDesktopTests
         string invalidPath = Path.Combine(invalidDirectory, "pending-reverb-preview.json");
         await File.WriteAllTextAsync(invalidPath, "{}");
         using var invalid = new EditorViewModel(invalidDirectory);
-        try { await invalid.Initialize(); } catch (Exception) { }
+        // Legacy recovery is checked without physical port discovery.
         Check(!invalid.CanStartReverb && await File.ReadAllTextAsync(invalidPath) == "{}", "malformed recovery is preserved and cannot be overwritten");
         Console.WriteLine($"{passed} reverb desktop checks passed. Render: {render}");
     }

@@ -87,6 +87,7 @@ public sealed partial class EditorViewModel
 
     private void DelayEdited()
     {
+        if (retiringAdvanced[3]) return;
         if (!DelayPreviewActive || delayStopped || !IsAdvancedEffectAudible(3))
         {
             if (!delayStopped) Delay.Message = "Edição local alterada · ainda não aplicada nem exportada.";
@@ -142,33 +143,39 @@ public sealed partial class EditorViewModel
 
     public async Task EndDelayPreviewAsync()
     {
-        delayMonitorStop?.Cancel();
-        if (delayMonitorTask != null) await delayMonitorTask;
-        delayMonitorTask = null;
-        delayMonitorStop?.Dispose(); delayMonitorStop = null;
+        retiringAdvanced[3] = true;
         delayPending = false;
-        if (!Busy && delaySendTask != null) await delaySendTask;
-        if (delayRecovery == null) return;
-        if (session == null) throw new IOException("Reconecte o pedal para restaurar o delay. Snapshot preservado em memória nesta sessão.");
-        if (await RetireObsoleteAdvancedRecoveryAsync(3)) return;
-        if (!delayStopped && !IsAdvancedEffectAudible(3))
-        {
-            delayRecovery = null;
-            Delay.Message = "Prévia encerrada. A seção permanece desligada; edição local preservada.";
-            Refresh();
-            return;
-        }
-        delayStopped = true;
         try
         {
-            await session.RestoreDelayPreview(delayRecovery);
-            Delay.Load(delayRecovery.Identity, DelayParameters.Read(delayRecovery.OriginalDsp));
-            delayRecovery = null; delayStopped = false;
-            Delay.Message = "Delay original restaurado e conferido. Edição local disponível.";
-            RecordOperation("Prévia de delay encerrada; parâmetros anteriores restaurados.");
+            delayMonitorStop?.Cancel();
+            if (delayMonitorTask != null) await delayMonitorTask;
+            delayMonitorTask = null;
+            delayMonitorStop?.Dispose(); delayMonitorStop = null;
+            delayPending = false;
+            if (!Busy && delaySendTask != null) await delaySendTask;
+            if (delayRecovery == null) return;
+            if (session == null) throw new IOException("Reconecte o pedal para restaurar o delay. Snapshot preservado em memória nesta sessão.");
+            if (await RetireObsoleteAdvancedRecoveryAsync(3)) return;
+            if (!delayStopped && !IsAdvancedEffectAudible(3))
+            {
+                delayRecovery = null;
+                Delay.Message = "Prévia encerrada. A seção permanece desligada; edição local preservada.";
+                Refresh();
+                return;
+            }
+            delayStopped = true;
+            try
+            {
+                await session.RestoreDelayPreview(delayRecovery);
+                Delay.Load(delayRecovery.Identity, DelayParameters.Read(delayRecovery.OriginalDsp));
+                delayRecovery = null; delayStopped = false;
+                Delay.Message = "Delay original restaurado e conferido. Edição local disponível.";
+                RecordOperation("Prévia de delay encerrada; parâmetros anteriores restaurados.");
+            }
+            catch { Delay.Message = "Restauração não confirmada. O snapshot do delay continua em memória nesta sessão."; throw; }
+            finally { Refresh(); }
         }
-        catch { Delay.Message = "Restauração não confirmada. O snapshot do delay continua em memória nesta sessão."; throw; }
-        finally { Refresh(); }
+        finally { retiringAdvanced[3] = false; }
     }
 
     public async Task RestoreDelayAsync()

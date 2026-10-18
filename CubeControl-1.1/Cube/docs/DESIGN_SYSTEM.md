@@ -1,6 +1,6 @@
 # Design system do cubeControl
 
-[Documentação](README.md) · Revisão: 10/10/2026 · [Decisões históricas](historico/historico-interface.md)
+[Documentação](README.md) · Revisão: 16/10/2026 · [Decisões históricas](historico/historico-interface.md)
 
 Referência para manutenção da interface WPF/.NET 10 com WPF UI 4.3.0. Esta revisão separa o comportamento atual das decisões antigas, que incluíam regras posteriormente substituídas. Critérios de acessibilidade são metas de verificação, não uma declaração de conformidade já comprovada.
 
@@ -21,7 +21,7 @@ O [App.xaml](../windows/Cube.Desktop/App.xaml) carrega `ThemesDictionary` e `Con
 1. [Colors.xaml](../windows/Cube.Desktop/Appearance/Resources/Colors.xaml): mapeamentos semânticos `CubePalette.*` e paletas funcionais claras/escuras.
 2. [Typography.xaml](../windows/Cube.Desktop/Appearance/Resources/Typography.xaml): famílias, tamanhos, entrelinhas e estilos de texto.
 3. [Icons.xaml](../windows/Cube.Desktop/Appearance/Resources/Icons.xaml): identificadores `CubeIcon*`, tamanhos e estilos dos ícones Fluent.
-4. [Styles.xaml](../windows/Cube.Desktop/Appearance/Resources/Styles.xaml): estilos de componentes e templates compartilhados, incluindo controles musicais.
+4. [Styles.xaml](../windows/Cube.Desktop/Appearance/Resources/Styles.xaml): estilos de componentes e templates compartilhados, incluindo controles musicais. Carrega também os templates adaptados em `Appearance/Resources/Borderless/`, derivados do WPF UI 4.3.0, com chaves próprias `Cube*`, preservando as partes de interação da biblioteca.
 
 Os arquivos `colors.xaml`, `typography.xaml` e `icons.xaml` na raiz do repositório são páginas demonstrativas da galeria WPF UI. Não são dicionários carregados pelo aplicativo nem devem ser importados diretamente.
 
@@ -51,6 +51,14 @@ Reutilizar as chaves existentes, sem copiar valores para estilos locais. Recurso
 
 As paletas funcionais `Backing*`, dos gráficos e dos knobs permanecem em `Colors.xaml`; `ControlArtwork` pode aplicar cores e artes específicas do acabamento escolhido. Brushes de superfície do WPF UI podem ser translúcidos: avaliar contraste sobre o fundo efetivamente composto, não somente pelos canais RGB isolados.
 
+### Arredondamento de superf?cies e controles
+
+Usar `CubeCardCornerRadius` (14 DIPs) para cards, pain?is de agrupamento, expansores e superf?cies externas de di?logos, menus, tooltips e popups. Usar `CubeControlCornerRadius` (4 DIPs) para bot?es comuns, campos, buscas, filtros, abas, seletores, itens de menu e tiles, incluindo presets. As buscas seguem o mesmo raio dos campos, sem formato de c?psula. Cards de slots de packs usam 14; linhas compactas de m?sicas e resultados usam 4 por serem itens internos.
+
+Os recursos ficam em `Appearance/Resources/Colors.xaml`, carregado antes dos estilos. Reutilizar `DynamicResource` em XAML e `SetResourceReference` em C#. As variantes `CubeCardLeftCornerRadius`, `CubeCardTopCornerRadius` e `CubeCardBottomCornerRadius` preservam as jun??es retas entre partes de uma superf?cie; expansores dividem o raio compartilhado entre cabe?alho e conte?do. Camadas de foco, hover e sombra acompanham a geometria da superf?cie correspondente.
+
+Esta padroniza??o altera somente o arredondamento: n?o remove contornos nem modifica espessura, cor, preenchimento, dimens?es, espa?amento ou regras de foco e sele??o. Preservar artes e formas musicais de knobs, faders, switches, footswitches e transporte, al?m dos marcadores laterais, indicadores circulares e desenhos dos gr?ficos. O chrome nativo de janelas e o fallback de popups sem transpar?ncia conservam as limita??es da plataforma.
+
 ### Tipografia e componentes
 
 | Estilo/recurso | Especificação | Aplicação |
@@ -63,12 +71,12 @@ As paletas funcionais `Backing*`, dos gráficos e dos knobs permanecem em `Color
 | `BodyText` / `BodyStrongText` | 14, entrelinha 20; Normal / SemiBold | Corpo, nomes e títulos compactos |
 | `CaptionText` / `HelpText` | 12, entrelinha 16; ajuda em `Muted`, com quebra | Estado e orientação secundária |
 | `Card` | Raio 14, padding 24 | Superfície principal; faixa de presets usa padding 24,16 |
-| `SelectionTile` | Raio 10, padding interno 12, margem 0,0,8,8 | Seletores da cadeia e equivalentes |
-| `PresetTile` | Raio 8, altura 116, margem horizontal 18 | Especialização do seletor A/B/C |
+| `SelectionTile` | Raio 4, padding interno 12, margem 0,0,8,8 | Seletores da cadeia e equivalentes |
+| `PresetTile` | Raio 4, altura 116, margem horizontal 18 | Especialização do seletor A/B/C |
 | `CubeButtonStyle` | Altura mínima 40, padding 16,8, texto 14 | Comandos; preservar templates e estados WPF UI |
 | `CubeIconButtonStyle` | 40 × 40, padding 0 | Comandos somente com ícone e nome acessível |
 | `SettingsAction` | Altura mínima 64, padding 16,12 | Ações em cards |
-| `QuickAction` | Altura mínima 64, padding 12,10, raio 6, fundo transparente | Ações contextuais com ícone, título e ajuda |
+| `QuickAction` | Altura mínima 64, padding 12,10, raio 4, fundo transparente | Ações contextuais com ícone, título e ajuda |
 
 Todas as medidas são DIPs antes da escala de interface. Para compor novas seções, reutilizar os intervalos da referência: 4–8 entre elementos próximos, 12–16 entre grupos e 24 no interior de superfícies principais. A Pedaleira usa 6 entre título e descrição e 12 após a descrição. Não criar uma escala tipográfica ou densidade própria por página. Ícones seguem os recursos descritos abaixo.
 
@@ -117,7 +125,13 @@ Reutilizar `Knob`, `GearImageButton`, `GearArt` e os templates oficiais de switc
 
 O switch compartilhado tem altura mínima 32 e face de 56 × 26. Switches, faders, knobs e footswitches usam os recursos do acabamento selecionado, incluindo as artes oficiais e as alternativas de alto contraste. Esses elementos representam operações diferentes e não devem ser trocados entre si apenas por semelhança visual.
 
+Knobs e faders são controles de ajuste, não itens selecionáveis: não apresentar estado de seleção, preenchimento de seleção nem listra indicadora à esquerda ao clicar, arrastar ou receber foco. Esta regra inclui os faders desenhados pelo `Knob`, os sliders e o `BackingFader`. Preservar o foco funcional e os atalhos de teclado; somente a navegação por teclado apresenta o contorno discreto compartilhado `CubeParameterFocusVisualStyle`, com `CubeFocus`, sem marcador lateral. O foco de teclado não representa seleção do parâmetro. Preservar nomes e valores acessíveis, ajustes por mouse e alternativas de alto contraste.
+
 Equipamentos preservam proporção, transparência e cores da imagem. A área de arte da referência tem altura 240; não aplicar essa dimensão como obrigação para qualquer imagem do app. Quando há galeria, a imagem oferece clique para abrir a seleção e roda para trocar equipamento, com indicação e tooltip próprios. Personalização de imagem fica em um expansor secundário e informa que não altera o som.
+
+A imagem principal do gabinete e as demais imagens exibidas por `GearImageButton` não são itens selecionáveis: não apresentar faixa lateral nem preenchimento de seleção. Preservar clique, roda, menu de personalização e acesso por teclado. O foco de navegação por teclado usa apenas o contorno discreto de `CubeParameterFocusVisualStyle`; não representa seleção da imagem. Esta regra não altera a indicação do item escolhido dentro das galerias.
+
+As ilustrações de IRs devem respeitar quantidade e disposição dos falantes documentadas: não representar 2×12 com um falante, nem inferir 4×12 apenas pelo nome Rectifier. Reutilizar uma arte por família; microfone, distância e equalização não exigem nova imagem. Preservar o estilo da família e distinguir identificação confirmada, provável e desconhecida. Configuração conhecida sem modelo usa arte sem logotipo compatível; configuração desconhecida usa frente opaca sem cones aparentes. As artes são ilustrativas, não prova acústica ou identificação por conteúdo. Imagens personalizadas mantêm precedência. Fontes, inventário e prompts ficam na [auditoria das imagens de IRs](referencias/ir-artwork-audit/README.md).
 
 Diagramas de efeito acompanham os ajustes e são ilustrativos. Preservar a distinção entre o editor simples com knobs e os criadores gráficos com manipulação direta, descritos ao final deste documento.
 
@@ -153,6 +167,20 @@ Superfícies claras/escuras combinam preenchimento, espaçamento e contornos def
 
 Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](desenvolvimento/windows-interaction.md). Os callbacks de renderização não garantem FPS apresentados pelo monitor.
 
+### Transições de entrada das seções
+
+Usar o comportamento compartilhado [SurfaceMotion](../windows/Cube.Desktop/Controls/SurfaceMotion.cs) no contêiner principal de cada seção: `EditorScroll` (Pedaleira), `IrScroll` (IRs), `BackingPage` (Backing Tracks), `AmpEditorHost` (Criador de amps) e `HelpScroll` (Dispositivo e ajuda). Habilitar `SurfaceMotion.Enabled` e definir `SurfaceMotion.Offset="8"`: a entrada combina opacidade de zero até o valor original e deslocamento vertical de 8 até 0 DIPs, em 167 ms, com `CubicEase/EaseOut`. Não duplicar storyboards por página nem animar cada controle individualmente para produzir essa entrada.
+
+A transição ocorre no carregamento e quando a seção volta a ficar visível. Em `AmpEditorHost`, vincular `SurfaceMotion.Key` ao próprio `Content` para reproduzir a entrada quando o convite inicial é substituído pelo editor. Atualizações de valores e de áudio não devem disparar novamente a entrada da seção.
+
+O movimento é apenas de apresentação, sem alterar layout, foco, comandos ou processamento de áudio. O comportamento compartilhado cancela as animações ao ocultar ou descarregar a superfície e restaura sua opacidade e transformação originais. Respeitar a desativação das animações no Windows, alto contraste e renderização sem aceleração gráfica: nessas condições, exibir o conteúdo diretamente. `DesiredFrameRate=240` é uma meta de agendamento, não uma garantia de FPS apresentados pelo monitor.
+
+### Campos de busca e filtros
+
+Campos de busca e filtros não são itens selecionáveis de navegação e não devem apresentar faixa lateral nem preenchimento de seleção ao receber foco. Usar um contorno discreto de 1 DIP em `CubeFocus`, sem alterar as dimensões do conteúdo. Aplicar esta regra aos templates compartilhados de busca (`CubeSearchTextBoxStyle` e `CubeSearchAutoSuggestBoxStyle`), aos campos ComboBox e às especializações locais de filtros. O estado desabilitado não apresenta contorno de foco.
+
+Foco para edição, seleção do texto e escolha de uma opção são estados distintos. Preservar digitação, seleção de texto para copiar/editar, limpeza, sugestões e atalhos. As opções escolhidas dentro das listas suspensas e os filtros ativados continuam identificáveis; nos filtros por categoria, manter o preenchimento do filtro ativo, sem faixa lateral, e usar somente contorno para foco. Esta regra não remove os marcadores de seleção de abas, resultados, listas ou navegação.
+
 ## Componentes
 
 | Componente | Regra atual |
@@ -176,6 +204,24 @@ O transporte conserva suas artes próprias, sem legendas permanentes nos saltos 
 No mixer, usar um único layout com faders horizontais e um único mute por canal junto ao percentual. O botão comunica o estado e oferece a ação inversa no tooltip/nome acessível. O painel limita a largura a 620 DIPs e usa 8 DIPs entre grupos; monitoração e metrônomo ficam sempre disponíveis. Os medidores de pico digital ficam atrás dos faders, sem interceptar interação, com escala de −60 a 0 dBFS e retenção de pico por um segundo. Medir cada canal após volume e mute e manter o aviso de saturação da entrada separado. Preservar as artes dos faders, recursos semânticos e alternativa de alto contraste.
 
 O toggle de busca por backing track usa fundo `CubeAccent`, texto sobre destaque e check quando ligado, e aparência neutra sem check quando desligado. Preservar foco, comportamento de ToggleButton e estado localizado para automação. Detalhes de interação e verificação ficam em [Interação no Windows](desenvolvimento/windows-interaction.md#player-e-mixer-de-backing-tracks).
+
+### Pistas e gravação em tempo real
+
+A playlist reúne músicas; cada música abre uma sessão com backing track e gravações alinhadas no mesmo eixo temporal. Cada pista apresenta nome, waveform e controles individuais de mute, solo e volume. Seleção identifica a pista editada, sem silenciar as demais. Vários solos podem estar ligados; mute tem prioridade. O mixer geral permanece separado da monitoração e do metrônomo.
+
+REC cria uma pista visível imediatamente. A waveform reutiliza `BackingWaveform`, seus recursos de tema, cursor e escala; seus picos representam as amostras capturadas, inclusive silêncio. Estados gravando, finalizando, salva e interrompida usam texto localizado. A atualização visual nominal de 50 ms não é garantia de latência física ou FPS. Acompanhamento automático pode ser desligado e retomado. Não desenhar um progresso fictício nem mostrar uma gravação interrompida como concluída.
+
+### Feedback de arrastar e soltar
+
+Todos os fluxos de drag and drop usam uma camada visual compartilhada (`DragFeedback`), independente das bordas de seleção. O feedback contém a identidade do item arrastado e a ação prevista; não depende somente de cor ou do cursor do Windows.
+
+- **Reordenar:** linha de inserção antes/depois do destino, com indicação textual e rolagem automática nas bordas. A ordem visual não altera o tempo das pistas.
+- **Adicionar:** destacar a área receptora e identificar se o destino é a playlist, a sessão ou um slot vazio.
+- **Substituir:** destacar o item afetado e informar origem e destino antes de soltar.
+- **Trocar:** identificar os dois slots e a permuta de conteúdo; não apresentar a operação como simples substituição.
+- **Inválido:** informar destino inválido e rejeitar a operação. Cancelamento, saída do destino e conclusão removem o feedback.
+
+Usar `CubeAccent` para destinos válidos, `CubeDisabledText` para inválidos, `CubeFloatingSurface` e `CubeText` para o rótulo; esses recursos acompanham os temas e o alto contraste. O rótulo acompanha a posição de arraste dentro do destino. Não interceptar o mouse na camada visual. A prévia e o drop compartilham a avaliação de destino; soltar fora dele não modifica dados. Manter alternativas por botões, menus e teclado. No pack de IR, o drop altera somente o rascunho; aplicar ao pedal continua sendo uma ação separada.
 
 ## Progresso e mensagens
 
@@ -229,3 +275,13 @@ Registre novas decisões neste guia e mantenha histórico separado. Não altere 
 ## Criadores gráficos de efeitos
 
 Chorus, Phaser, Delay e Reverb usam manipulação direta de contornos, sem sliders, faders ou knobs internos. Os comandos usam botões e ícones WPF UI; os detalhes numéricos aparecem junto ao elemento selecionado. Alvos de 36 DIPs, foco visível e UI Automation compartilham as propriedades do modelo. Desenhos são ilustrativos e não animados; não representam medições. Os controles normais dos pedais permanecem separados. Consulte [mapeamentos e limitações](referencias/editores-graficos-de-efeitos.md).
+
+### Padrão compartilhado de VU
+
+Todos os indicadores de nível de áudio usam `BackingFaderMeter`, inclusive a pré-escuta de IR, integrado ao `BackingFader` quando houver controle de volume. Usar `BackingMeterEnvelope` para a escala de −60 a 0 dBFS, queda de 24 dB/s e retenção de pico por um segundo. Não usar barras de progresso percentuais para representar áudio. Preservar a origem da medição: na pré-escuta, o sinal enviado à saída, não o retorno processado pelo pedal. Os segmentos usam `CubeAccent`, alerta a partir de −6 dBFS com `CubeWarning`, marcador de pico com `CubeText` e recursos do sistema em alto contraste. O aviso textual de saturação acompanha o medidor; o fader mantém interação e nome acessível. Barras de progresso de reprodução, carregamento e exportação continuam separadas.
+
+Nos cards de packs de IR, usar o `Knob` compartilhado de 94 × 94 DIPs com rótulo Volume, passo de 1%, tooltip percentual e identificação acessível do slot; não exibir campo numérico editável. O gesto do knob não inicia arraste do card. Ajustes pertencem à montagem. A ação Aplicar usa uma confirmação textual com OK/Sair, sem repetir a grade de edição. Packs predefinidos e novos IRs inseridos começam em 80%; packs pessoais preservam valores salvos.
+
+## Regressão automatizada da aparência
+
+A suíte `borderless` carrega e aplica os templates em WPF e exercita seleção, foco, desabilitação, temas e componentes flutuantes. Complementa as suítes de tema, responsividade e usabilidade; não substitui inspeção visual. Execução e limites estáo na [matriz de cobertura](desenvolvimento/test-coverage.md).

@@ -55,9 +55,9 @@ Os modos são argumentos de `Cube.Desktop.Tests`, executado conforme o [guia Win
 
 ## Pré-escuta de IRs com guitarra gravada
 
-Na seção IRs, selecione um dos cinco trechos de guitarra e a saída USB de áudio do pedal. A reprodução requer conexão MIDI operacional e uma prévia de IR confirmada em RAM. O WAV cru é processado pelo pedal, mantendo os efeitos atuais. Volume inicial: 30%; repetição ativada.
+Na seção IRs, selecione um dos cinco trechos de guitarra e a saída USB de áudio do pedal. A reprodução requer conexão MIDI operacional, mas não exige IR carregado: sem prévia de IR, o pedal processa o WAV com o preset atual e os ajustes aplicados à cadeia, inclusive prévias de amps. Uma prévia de IR ativa e não confirmada continua bloqueando o início. O WAV cru é processado pelo pedal, mantendo os efeitos atuais. Volume inicial: 30%; repetição ativada.
 
-Trocar o IR pausa e silencia o áudio durante a transferência, retomando na mesma posição somente após confirmação. Trocar o trecho reinicia sua reprodução; pausar preserva a posição e parar volta ao início. Sair de IRs, trocar a saída, desconectar, encerrar a prévia ou fechar o app interrompe a pré-escuta. Backing Tracks, prévias do YouTube e pré-escuta de IRs não tocam simultaneamente. Nenhum preset ou slot é salvo automaticamente.
+Trocar o IR pausa e silencia o áudio durante a transferência, retomando na mesma posição somente após confirmação. Trocar o trecho reinicia sua reprodução; pausar preserva a posição e parar volta ao início. Navegar para a Pedaleira ou o Criador de amps mantém a pré-escuta e exibe controles compactos de pausa/parada. Restaurar o IR pausa a reprodução e retoma após confirmação; trocar a saída, desconectar ou fechar o app interrompe o áudio. Backing Tracks, prévias do YouTube e pré-escuta de IRs não tocam simultaneamente. Nenhum preset ou slot é salvo automaticamente.
 
 ## Navegação, documentação e biblioteca compartilhada
 
@@ -67,6 +67,26 @@ A documentação usa FluentWindow e TitleBar compartilhados; a barra fica fora d
 
 Gerenciar IRs compartilha uma IrLibraryViewModel entre análise/prévia individual e packs. Entrar em Packs invalida carregamentos individuais pendentes; não encerra uma prévia já ativa. Os 34 packs preservam seus grupos do catálogo; editar predefinidos cria cópia. As ações de aplicar, restaurar, salvar e descartar ficam após os slots.
 
-No player, a troca para uma saída válida preserva a posição e a intenção de reproduzir ou permanecer pausado. Entrada não interrompe a faixa; monitoração ativa é restabelecida. REC continua capturando somente a entrada e impede sua troca durante captura/finalização. Abertura de dispositivos pode causar uma breve lacuna; falhas/desconexões continuam usando o tratamento de erro.
+No player, a troca para uma saída válida preserva a posição e a intenção de reproduzir ou permanecer pausado. Entrada não interrompe a faixa; monitoração ativa é restabelecida. REC captura somente a entrada, cria uma pista sincronizada e bloqueia entrada, saída, seek, loop, velocidade, tom e troca de sessão durante captura/finalização. Abertura de dispositivos pode causar uma breve lacuna; falhas/desconexões continuam usando o tratamento de erro.
 
 A análise musical offline tem identidade de cache versionada, até cinco trechos de 20 segundos, reamostragem antialiasing, fluxo espectral e consenso para BPM; cromas de 36 posições por oitava e correção de desvio de afinação para tom. Confianças são heurísticas, não probabilidades calibradas. Faixas novas não recebem afinação nem preset automaticamente; correções manuais prevalecem.
+
+## Sessões de áudio e feedback de drop
+
+`BackingSessionAudio` mistura pistas em float estéreo a 48 kHz, com relógio comum, conversão de sample rate e ajuste de velocidade/tom relativo à tomada. Reprodução e exportação compartilham esse processamento. Mute precede solo; vários solos são permitidos. Decoders continuam avançando pistas silenciadas para preservar sincronização.
+
+`BackingRecording` acumula picos incrementais e registra o QPC do primeiro pacote WASAPI. A UI consulta o envelope a cada 50 ms; a duração deriva das amostras escritas. O envelope compacta picos ao atingir 32.768 bins. A compensação de latência é aplicada ao início da pista sem modificar o WAV. Precisão física, carga contínua e estabilidade de dispositivo dependem de validação posterior em hardware.
+
+`DragFeedback` desenha feedback em adorner independente da seleção. Playlist e pistas compartilham cálculo de inserção na coleção original, inclusive com filtro. O editor de packs informa adição, substituição ou troca antes do drop e não grava automaticamente no pedal. Cancelamento e saída do destino limpam a camada. Botões e menus mantêm alternativas ao gesto.
+
+Cobertura preparada em `--backing-session-only`: áudio sintético, envelope, persistência e cálculo de inserção. Os modos existentes de gravação e packs também precisam ser executados após autorização. Nenhum teste ou build foi executado nesta implementação. Conferir posteriormente temas, alto contraste, pt-BR/en-US, zoom, janela compacta, teclado, captura longa e desconexão.
+
+### Comunicação otimizada de prévias em RAM (validação pendente)
+
+Chorus, Delay e Reverb validam o contexto antes do lote, enviam somente campos diferentes em ordem com ACK e verificam o resultado ao final. Não releem banco, seleção física e bloco DSP entre campos. Phaser e amp já seguem a estratégia de diferenças; o IR mantém transferência e conferência completas. Mudanças físicas durante o lote podem ser detectadas somente ao final; não há promessa de impedir interferência intermediária.
+
+A retirada de prévias bloqueia novas edições durante a restauração. A monitoração não inicia consultas durante operações ocupadas ou retirada; uma consulta já iniciada termina antes da operação. As filas existentes consolidam valores pendentes. Progresso de IR/amp é publicado no máximo a cada 50 ms, preservando mudanças de etapa e conclusão. Packs são resolvidos uma vez por aplicação normal, mantendo nova resolução quando vierem do catálogo.
+
+O log `PERF` registra duração, leituras, comandos de escrita e bytes SysEx TX/RX por operação instrumentada, incluindo operações interrompidas (o registro não significa sucesso). Identificação não conta como escrita; registros/apagamentos contam. Tamanhos de blocos, timeouts e serialização permanecem iguais. Flash mantém comparação prévia, backup e readback. Nenhum cache é compartilhado entre sessões.
+
+Cobertura preparada em `CommunicationPerformanceTests`, `ChorusPreviewTests`, `DelayTests` e `ReverbTests`: limites de leituras, restauração, alterações externas e falhas. As suítes existentes de fila, amp, Phaser, IR e packs cobrem coalescência, ACK, timeout e recuperação. Não executadas nesta alteração. Após autorização, executar as suítes e medir no pedal início/retirada de cada prévia, leitura de slots, packs e presets; comparar contagem e duração, confirmar falhas e recuperação. Sem medições físicas, não afirmar ganho de tempo.

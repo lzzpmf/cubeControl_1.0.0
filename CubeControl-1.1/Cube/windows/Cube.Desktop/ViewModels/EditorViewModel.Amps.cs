@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using Cube.Protocol;
 using Microsoft.Win32;
 
@@ -56,7 +56,7 @@ public sealed partial class EditorViewModel
         if (e.PropertyName is nameof(Amp.Loaded) or nameof(Amp.Slot)) RefreshAmpAvailability();
     }
     private Task<bool>? ampPreviewTask;
-    private bool ampPreviewPending;
+    private bool ampPreviewPending, retiringAmp;
     private object? ampHistoryGroup;
     public bool IsAmpPreviewSending { get; private set; }
     public bool CanAdjustAmp => (!Busy || IsAmpPreviewSending) && Amp.Loaded;
@@ -66,6 +66,7 @@ public sealed partial class EditorViewModel
     private void AmpEdited() { InvalidateAmpSaved(); _ = PreviewAmpAsync(); }
     public Task<bool> PreviewAmpAsync()
     {
+        if (retiringAmp) return Task.FromResult(false);
         ampHistoryGroup = OperationGroup("AMP");
         ampPreviewPending = true;
         return ampPreviewTask ??= SendLatestAmpAsync();
@@ -198,11 +199,17 @@ public sealed partial class EditorViewModel
     }
     private async Task RestoreAmpCore()
     {
+        ampPreviewPending = false;
         if (ampOriginalRam == null) return;
+        retiringAmp = true;
+        try
+        {
         if (session == null || session.IdentityHex != ampPreviewIdentity) throw new ArgumentException("Reconecte o aparelho usado na prévia.");
         await session.ApplyAmpRam(ampOriginalRam);
         ampOriginalRam = null; ampPreviewIdentity = null;
         Notify(nameof(AmpPreviewActive)); Status = "RAM anterior restaurada e verificada.";
+        }
+        finally { retiringAmp = false; }
     }
 
     public async Task<bool?> WriteAmpAsync(Func<string, Task<bool>>? confirm = null)
@@ -223,7 +230,7 @@ public sealed partial class EditorViewModel
             {
                 ampSlotRecovery = bytes.ToArray();
                 await Task.CompletedTask;
-            }, new Progress<TransferProgress>(p => Status = $"{p.Stage}: {p.Done}/{p.Total}"));
+            }, new TransferProgressThrottle(p => Status = $"{p.Stage}: {p.Done}/{p.Total}"));
             completed = true;
             soundContentRevision++;
             ampSavedBytes = target.ToArray(); ampSavedSlot = slot; ampSavedIdentity = session.IdentityHex;

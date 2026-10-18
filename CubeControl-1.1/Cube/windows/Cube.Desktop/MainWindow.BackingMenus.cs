@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -64,7 +64,7 @@ public partial class MainWindow
     private void BackingMixerFaderReset(object sender, MouseButtonEventArgs e)
     {
         if (e.ClickCount != 2 || sender is not Controls.BackingFader fader) return;
-        fader.SetCurrentValue(System.Windows.Controls.Primitives.RangeBase.ValueProperty, fader.Tag as string == "guitar" ? 0d : 30d);
+        fader.SetCurrentValue(System.Windows.Controls.Primitives.RangeBase.ValueProperty, (fader.Tag as string) switch { "guitar" => 0d, "click" => 100d, _ => 30d });
         e.Handled = true;
     }
     private bool backingDialogOpen;

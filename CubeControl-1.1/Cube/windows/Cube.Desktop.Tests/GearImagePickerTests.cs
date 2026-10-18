@@ -95,7 +95,7 @@ internal static class GearImagePickerTests
             var computer = Find<Wpf.Ui.Controls.Button>(picker).First(b => b.Content as string == "Escolher do computador");
             Check(computer.IsVisible && computer.TranslatePoint(new Point(), picker).Y + computer.ActualHeight <= picker.ActualHeight, "PC action remains inside the picker after scrolling");
             Check(Find<ListBoxItem>(list).Count() < list.Items.Count, "Thumbnails use virtualized rows");
-            string reports = "C:/CubeControl-Build/reports/gear-image-picker"; Directory.CreateDirectory(reports);
+            string reports = TestPaths.Report("C:/CubeControl-Build/reports/gear-image-picker"); Directory.CreateDirectory(reports);
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap)); using (var output = File.Create(Path.Combine(reports, "picker.png"))) png.Save(output);
             Find<Wpf.Ui.Controls.Button>(picker).First(b => b.Content as string == "Cancelar").RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
