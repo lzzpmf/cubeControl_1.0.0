@@ -1,6 +1,14 @@
 using System.IO;
+#if WINUI
+using Microsoft.UI.Xaml.Media;
+#else
 using System.Windows.Media;
+#endif
+#if WINUI
+using Microsoft.UI.Xaml.Media.Imaging;
+#else
 using System.Windows.Media.Imaging;
+#endif
 using Cube.Protocol;
 
 namespace Cube.Desktop.ViewModels;
@@ -69,9 +77,13 @@ public sealed class GearItem(string id, int value, string name, string category,
         if (path == null || !File.Exists(path)) return null;
         try
         {
+#if WINUI
+            return new BitmapImage(new Uri(path)) { DecodePixelWidth = 1200 };
+#else
             using var stream = File.OpenRead(path);
             var bitmap = new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad;
             bitmap.DecodePixelWidth = 1200; bitmap.StreamSource = stream; bitmap.EndInit(); bitmap.Freeze(); return bitmap;
+#endif
         }
         catch (Exception ex) when (ex is IOException or NotSupportedException or ArgumentException or FormatException) { return null; }
     }

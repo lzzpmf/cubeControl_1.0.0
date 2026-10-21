@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI>
+    <DefineConstants>$(DefineConstants);WINUI</DefineConstants>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>CubeControl.WinUI</AssemblyName>
+    <Version>1.1.0</Version>
+    <Product>CubeControl WinUI</Product>
+    <ApplicationIcon>../Cube.Desktop/Assets/Images/Icons/desktopIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+    <Compile Include="../Cube.Desktop/Appearance/ControlFinishCatalog.cs" Link="Shared/ControlFinishCatalog.cs" />
+    <Compile Include="../Cube.Desktop/ViewModels/*.cs" Link="Shared/ViewModels/%(Filename)%(Extension)" />
+    <Compile Include="../Cube.Desktop/Services/*.cs" Link="Shared/Services/%(Filename)%(Extension)" />
+    <Compile Include="../Cube.Desktop/AssetPaths.cs;../Cube.Desktop/FirmwareUpdater.cs;../Cube.Desktop/Appearance/AppDataPaths.cs;../Cube.Desktop/Localization/LanguageService.cs" Link="Shared/%(Filename)%(Extension)" />
+    <PackageReference Include="NAudio.Core" Version="3.1.0" />
+    <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.5.1" />
+    <ProjectReference Include="../Cube.Usb/Cube.Usb.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../Cube.Desktop/Assets/FactoryAmps.bin" LogicalName="Cube.FactoryAmps" />
+    <None Include="$(ArtifactsPath)/native/CubeBackingDsp.dll" Link="CubeBackingDsp.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('$(ArtifactsPath)/native/CubeBackingDsp.dll')" />
+    <None Include="../Cube.Desktop/Assets/Firmwares/**/*;../Cube.Desktop/Assets/RawWaves/**/*;../Cube.Desktop/Assets/ImpulseResponses/**/*;../Cube.Desktop/Assets/IrPacks.v1.json;../Cube.Desktop/Assets/Documents/**/*;../Cube.Desktop/Assets/Images/Equipment/**/*;../Cube.Desktop/Assets/Images/Controls/**/*;../Cube.Desktop/Assets/Images/Icons/desktopIcon.ico" Link="Assets/$([System.IO.Path]::GetRelativePath('$(MSBuildProjectDirectory)/../Cube.Desktop/Assets', '%(FullPath)'))" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../Cube.Desktop/Localization/*.json" Link="Localization/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../docs/manual/**/*" Link="Assets/Documents/manual/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../docs/usuario/**/*" Link="Assets/Documents/guias/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="$(ArtifactsPath)/youtube-tools/**/*" Link="Tools/YouTube/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="BuildBackingDsp" BeforeTargets="PrepareForBuild" Condition="'$(DesignTimeBuild)' != 'true' and '$(SkipBackingNativeBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)/../Cube.Desktop/Native/Build.ps1&quot; -OutputDirectory &quot;$(ArtifactsPath)/native&quot;" />
+    <ItemGroup><None Remove="$(ArtifactsPath)/native/CubeBackingDsp.dll" /><None Include="$(ArtifactsPath)/native/CubeBackingDsp.dll" Link="CubeBackingDsp.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" /></ItemGroup>
+  </Target>
+  <!-- Unpackaged publication must carry the app's compiled XAML and resource index. -->
+  <Target Name="PublishWinUIResources" AfterTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <_WinUIResources Include="$(TargetDir)**/*.xbf;$(TargetDir)$(AssemblyName).pri" />
+      <ResolvedFileToPublish Remove="@(_WinUIResources)" />
+      <ResolvedFileToPublish Include="@(_WinUIResources)">
+        <RelativePath>%(_WinUIResources.RecursiveDir)%(_WinUIResources.Filename)%(_WinUIResources.Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>

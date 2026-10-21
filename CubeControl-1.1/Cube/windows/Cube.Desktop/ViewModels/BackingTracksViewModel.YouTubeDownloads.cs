@@ -2,7 +2,11 @@ using System.IO;
 using System.Text.Json;
 using System.Windows.Input;
 using Cube.Desktop.Localization;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using Microsoft.Win32;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 

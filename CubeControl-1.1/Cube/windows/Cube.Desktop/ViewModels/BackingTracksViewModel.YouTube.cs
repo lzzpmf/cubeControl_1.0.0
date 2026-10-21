@@ -3,7 +3,11 @@ using System.IO;
 using System.Windows.Input;
 using Cube.Desktop.Services;
 using Cube.Desktop.Localization;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using Microsoft.Win32;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 

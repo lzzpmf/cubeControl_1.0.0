@@ -1,6 +1,10 @@
 using System.IO;
 using Cube.Protocol;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using Microsoft.Win32;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 
@@ -49,6 +53,7 @@ public sealed partial class EditorViewModel
             AmpPreviewMessage = "Seu timbre está no computador. Conecte o pedal para ouvir.";
         }
         Notify(nameof(CanRestoreAmp)); Notify(nameof(CanSaveAmp));
+        Notify(nameof(CanAdjustAmp)); Notify(nameof(CanEditAmpLocally));
     }
     private void AmpPresentationChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {

@@ -1,7 +1,11 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows.Input;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Threading;
+#endif
 using Cube.Desktop.Services;
 using Cube.Protocol;
 using NAudio.CoreAudioApi;

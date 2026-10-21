@@ -1,5 +1,9 @@
 using System.Windows.Input;
+#if WINUI
+using Microsoft.UI.Xaml.Media;
+#else
 using System.Windows.Media;
+#endif
 using Cube.Protocol;
 
 namespace Cube.Desktop.ViewModels;

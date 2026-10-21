@@ -1,11 +1,19 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.ComponentModel;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Threading;
+#endif
 using System.Windows.Input;
 using Cube.Desktop.Localization;
 using Cube.Desktop.Services;
+#if WINUI
+
+#else
 using Microsoft.Win32;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 
@@ -271,6 +279,19 @@ public sealed partial class BackingTracksViewModel
     {
         Duration = SessionStems?.SelectMany(s => s.Clips).Select(c => Math.Max(0, c.End)).DefaultIfEmpty(0).Max() ?? 0;
     }
+    private readonly HashSet<BackingTrack> observedSectionTracks = [];
+    private void ObserveSessionSections()
+    {
+        foreach (var track in observedSectionTracks.Where(track => !Tracks.Contains(track)).ToArray())
+        {
+            track.Sections.CollectionChanged -= SessionSectionsChanged;
+            observedSectionTracks.Remove(track);
+        }
+        foreach (var track in Tracks)
+            if (observedSectionTracks.Add(track)) track.Sections.CollectionChanged += SessionSectionsChanged;
+    }
+    private void SessionSectionsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e) => PersistSession();
+
     private void PersistSession()
     {
         if (!playlistLoaded || disposed || editingGesture) return;

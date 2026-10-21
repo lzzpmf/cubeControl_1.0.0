@@ -1,8 +1,19 @@
+#if WINUI
+using ICollectionView = Cube.WinUI.Platform.ListCollectionView;
+#endif
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Data;
+#endif
 using System.Windows.Input;
+#if WINUI
+
+#else
 using System.Windows.Threading;
+#endif
 using Cube.Desktop.Services;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
@@ -37,9 +48,14 @@ public sealed partial class BackingTracksViewModel
     public string[] Keys { get; } = ["Não definido", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "A#m", "Bm"];
     public string[] PresetOptions { get; } = ["Sem vínculo", "Preset A", "Preset B", "Preset C"];
     public string Search { get => search; set { if (Set(ref search, value)) { FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); } } }
+    public string Tuning
+    {
+        get => SelectedTrack?.Tuning ?? "";
+        set { if (CanEditSession && SelectedTrack is { } track) { UpdateTrackMetadata(track, track.Bpm, track.OriginalKey, value, track.Preset); Notify(); } }
+    }
     public double Bpm { get => SelectedTrack?.Bpm ?? 0; set { if (!CanEditSession || SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.ManualBpm = true; SelectedTrack.Bpm = Math.Clamp(value, 20, 300); Notify(); Notify(nameof(CurrentBpm)); Notify(nameof(TransportBpm)); Notify(nameof(BpmBadge)); UpdateMetronome(); PersistSession(); } }
     public string CurrentBpm => $"{Bpm * Speed / 100:0.#} BPM atual · {SessionMeter}";
-    public string OriginalKey { get => SelectedTrack?.OriginalKey ?? Keys[0]; set { if (SelectedTrack == null || !Keys.Contains(value)) return; SelectedTrack.ManualKey = true; SelectedTrack.OriginalKey = value; Notify(); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); } }
+    public string OriginalKey { get => SelectedTrack?.OriginalKey ?? Keys[0]; set { if (SelectedTrack == null || !Keys.Contains(value)) return; SelectedTrack.ManualKey = true; SelectedTrack.OriginalKey = value; Notify(); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); PersistSession(); } }
     public string BpmBadge => SelectedTrack?.MusicPending == true && Bpm <= 0 ? "Analisando…" : Bpm > 0 ? $"BPM: {(SelectedTrack?.ManualBpm == true ? "" : "≈")}{Bpm * Speed / 100:0.#}" : "BPM não identificado";
     public string KeyBadge => OriginalKey == Keys[0] ? "Tom não identificado" : $"Tom: {(SelectedTrack?.ManualKey == true ? "" : "≈")}{OriginalKey}" + (Pitch != 0 ? $" → {CurrentKey}" : "");
     public string PresetBadge => LinkedPreset == 0 ? "Preset: —" : $"Preset: {(char)('A' + LinkedPreset - 1)}";
@@ -56,7 +72,7 @@ public sealed partial class BackingTracksViewModel
         return note < 0 ? "Não definido" : notes[((note + semitones) % 12 + 12) % 12] + (minor ? "m" : "");
     }
     public string PresetHint => LinkedPreset == 0 ? "Sem preset associado" : $"Preset {(char)('A' + LinkedPreset - 1)} · selecione no footswitch";
-    public int LinkedPreset { get => SelectedTrack?.Preset ?? 0; set { if (SelectedTrack == null) return; SelectedTrack.Preset = Math.Clamp(value, 0, 3); Notify(); Notify(nameof(PresetHint)); Notify(nameof(PresetBadge)); } }
+    public int LinkedPreset { get => SelectedTrack?.Preset ?? 0; set { if (SelectedTrack == null) return; SelectedTrack.Preset = Math.Clamp(value, 0, 3); Notify(); Notify(nameof(PresetHint)); Notify(nameof(PresetBadge)); PersistSession(); } }
     public double Zoom { get => zoom; set { if (!double.IsFinite(value)) return; if (Set(ref zoom, Math.Clamp(value, 1, 16))) { Notify(nameof(ViewportDuration)); ViewportStart = viewportStart; } } }
     public double ViewportDuration => Duration / Zoom;
     public double ViewportStart { get => viewportStart; set { if (double.IsFinite(value)) Set(ref viewportStart, Math.Clamp(value, 0, Math.Max(0, Duration - ViewportDuration))); } }
@@ -135,6 +151,7 @@ public sealed partial class BackingTracksViewModel
     }
     private void RefreshPractice()
     {
+        Notify(nameof(Tuning));
         RefreshMetronome(); UpdateMetronome(false);
         Zoom = 1; ViewportStart = 0; SelectedSection = null;
         foreach (var name in new[] { nameof(BpmBadge), nameof(KeyBadge), nameof(PresetBadge), nameof(Bpm), nameof(CurrentBpm), nameof(OriginalKey), nameof(CurrentKey), nameof(LinkedPreset), nameof(PresetHint), nameof(Sections), nameof(SelectedSection) }) Notify(name);

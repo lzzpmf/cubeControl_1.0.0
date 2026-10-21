@@ -3,9 +3,11 @@ using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+#if !WINUI
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
+#endif
 
 namespace Cube.Desktop.Localization;
 
@@ -32,6 +34,12 @@ public sealed class LanguageService : INotifyPropertyChanged
 
     public LanguageService(string? catalogDirectory = null, string? settingsPath = null)
     {
+#if WINUI
+        var arguments = Environment.GetCommandLineArgs();
+        int dataIndex = Array.IndexOf(arguments, "--data-directory");
+        if (settingsPath == null && dataIndex >= 0 && dataIndex + 1 < arguments.Length)
+            settingsPath = Path.Combine(Path.GetFullPath(arguments[dataIndex + 1]), "language-v1.json");
+#endif
         preferencePath = settingsPath ?? Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl", "language-v1.json");
         packs["pt-BR"] = new() { Code = "pt-BR", Name = "Português (Brasil)" };
         string directory = catalogDirectory ?? Path.Combine(AppContext.BaseDirectory, "Localization");
@@ -87,6 +95,7 @@ public sealed class LanguageService : INotifyPropertyChanged
     public static string T(string text) => Instance.Translate(text);
 }
 
+#if !WINUI
 public sealed class TranslateConverter : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
@@ -108,3 +117,5 @@ public sealed class TranslateExtension : MarkupExtension
         return binding.ProvideValue(serviceProvider);
     }
 }
+
+#endif

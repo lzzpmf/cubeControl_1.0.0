@@ -1,6 +1,14 @@
 using System.IO;
+#if WINUI
+using Microsoft.UI.Xaml.Media;
+#else
 using System.Windows.Media;
+#endif
+#if WINUI
+using Microsoft.UI.Xaml.Media.Imaging;
+#else
 using System.Windows.Media.Imaging;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 
@@ -24,6 +32,9 @@ public sealed class EquipmentImageEntry(string path, string category) : Observab
         await decoders.WaitAsync();
         try
         {
+#if WINUI
+            thumbnail = File.Exists(path) ? new BitmapImage(new Uri(path)) { DecodePixelWidth = 300 } : null;
+#else
             thumbnail = await Task.Run(() =>
             {
                 try
@@ -35,6 +46,7 @@ public sealed class EquipmentImageEntry(string path, string category) : Observab
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException or FormatException) { return null; }
             });
+#endif
             Notify(nameof(Thumbnail));
         }
         finally { decoders.Release(); }

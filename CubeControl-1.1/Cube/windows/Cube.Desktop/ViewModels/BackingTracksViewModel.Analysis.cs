@@ -83,5 +83,6 @@ public sealed partial class BackingTracksViewModel
         if (!target.ManualKey) target.OriginalKey = result.Key;
         target.TempoConfidence = result.TempoConfidence; target.KeyConfidence = result.KeyConfidence;
         target.RefreshMusic(); if (target == SelectedTrack) RefreshPractice();
+        PersistSession();
     }
 }

@@ -1,4 +1,8 @@
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Threading;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 

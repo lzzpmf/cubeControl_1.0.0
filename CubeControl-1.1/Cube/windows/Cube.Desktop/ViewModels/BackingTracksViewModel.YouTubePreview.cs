@@ -1,3 +1,8 @@
+#if WINUI
+using DispatcherPriority = Cube.WinUI.Platform.DispatcherPriority;
+#else
+using DispatcherPriority = System.Windows.Threading.DispatcherPriority;
+#endif
 using Cube.Desktop.Services;
 
 namespace Cube.Desktop.ViewModels;
@@ -94,7 +99,7 @@ public sealed partial class BackingTracksViewModel
                         if (SelectedTrack != null) SelectedTrack.State = "Pausada";
                         positionTimer.Stop();
                     }
-                }, System.Windows.Threading.DispatcherPriority.Normal, token).Task.Unwrap(),
+                }, DispatcherPriority.Normal, token).Task.Unwrap(),
                 () => Dispatch(() =>
                 {
                     if (youtubePreview == request && !request.IsCancellationRequested)

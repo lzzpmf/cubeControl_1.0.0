@@ -1,12 +1,31 @@
+#if WINUI
+using WindowsUI = Microsoft.UI.Xaml;
+#else
+using WindowsUI = System.Windows;
+#endif
+#if WINUI
+using ControlAppearance = Cube.WinUI.Platform.ControlAppearance;
+#else
+using ControlAppearance = Wpf.Ui.Controls.ControlAppearance;
+#endif
 using Cube.Desktop.Localization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
+#if WINUI
+using Microsoft.UI.Xaml;
+using Application = Cube.WinUI.Platform.UiApplication;
+#else
 using System.Windows;
+#endif
 using System.Windows.Input;
 using Cube.Protocol;
 using Cube.Usb;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using Microsoft.Win32;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 
@@ -294,7 +313,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
             ? previousEdits == null ? "Conexão USB confirmada. Presets e IRs carregados."
                 : "Pedal reconectado e pronto para editar. O estado atual foi lido do pedal."
             : "Conexão USB confirmada. Encerre a prévia interrompida para restaurar o IR anterior.",
-            Wpf.Ui.Controls.ControlAppearance.Success);
+            ControlAppearance.Success);
     }
 
     private async Task LoadBank()
@@ -448,7 +467,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         {
             session.Dispose(); session = null; Connection.Identity = "Conexão perdida";
             Connection.Input = null; Connection.Output = null;
-            NotifyUser("Pedal desconectado", "A comunicação com o pedal foi perdida. Verifique o cabo USB e a alimentação. Sua edição local foi preservada.", Wpf.Ui.Controls.ControlAppearance.Danger);
+            NotifyUser("Pedal desconectado", "A comunicação com o pedal foi perdida. Verifique o cabo USB e a alimentação. Sua edição local foi preservada.", ControlAppearance.Danger);
         }
         else if (!automaticConnectionAttempt) NotifyFailure(Status);
         Refresh();
@@ -461,7 +480,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         await RestorePreviewAsync(); queue?.Stop(); session?.Dispose(); session = null;
         inventory.Clear(); RebuildCabinets();
         Connection.Identity = "Desconectado"; Status = "Desconectado. Sua edição local continua disponível para exportação."; Refresh();
-        NotifyUser("Pedal desconectado", Status, Wpf.Ui.Controls.ControlAppearance.Danger);
+        NotifyUser("Pedal desconectado", Status, ControlAppearance.Danger);
     }
 
     private async Task SaveAsync()
@@ -502,7 +521,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         await SetBankLive(imported);
         bankOperationGroup = new object(); RecordBankOperation("Banco importado e aplicado na RAM.");
         Status = "Banco importado e aplicado. Use Gravar A/B/C para salvar no aparelho.";
-        NotifyUser("Gravação pendente", Status, Wpf.Ui.Controls.ControlAppearance.Caution);
+        NotifyUser("Gravação pendente", Status, ControlAppearance.Caution);
     }
     private async Task SetBankLive(byte[] target)
     {
@@ -739,8 +758,8 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         int[]? selection;
         if (restoration)
         {
-            var panel = new System.Windows.Controls.StackPanel();
-            var boxes = Enumerable.Range(0, 8).Select(i => new System.Windows.Controls.CheckBox {
+            var panel = new WindowsUI.Controls.StackPanel();
+            var boxes = Enumerable.Range(0, 8).Select(i => new WindowsUI.Controls.CheckBox {
                 Content = $"Slot {i + 1} · {LanguageService.T(pack.SlotName(i))}", IsChecked = different[i], IsEnabled = different[i], Margin = new Thickness(0,4,0,4) }).ToArray();
             foreach (var box in boxes) panel.Children.Add(box);
             var dialog = new Controls.PackDialog("Restaurar IRs originais", panel) { IsPrimaryEnabled = boxes.Any(b => b.IsChecked == true) };
@@ -801,13 +820,17 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     public Func<string, Task<bool>> ConfirmPackApply { get; set; } = async message =>
     {
         var dialog = new Controls.PackDialog(LanguageService.T("Aplicar"),
-            new System.Windows.Controls.TextBlock { Text = LanguageService.T(message), TextWrapping = TextWrapping.Wrap }, primary: "OK", close: "Sair");
+            new WindowsUI.Controls.TextBlock { Text = LanguageService.T(message), TextWrapping = TextWrapping.Wrap }, primary: "OK", close: "Sair");
         return await dialog.ShowAsync() == Controls.PackDialogChoice.Primary;
     };
     public Func<string, Task<bool>> Ask { get; set; } = async message =>
     {
+#if WINUI
+        return await Cube.WinUI.Platform.Dialogs.Confirm(message);
+#else
         var dialog = new Wpf.Ui.Controls.MessageBox { PrimaryButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Checkmark24), CloseButtonIcon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24), Title = "CubeControl", Content = LanguageService.T(message), PrimaryButtonText = LanguageService.T("Confirmar"), CloseButtonText = LanguageService.T("Cancelar"), Owner = Application.Current.MainWindow };
         return await dialog.ShowDialogAsync() == Wpf.Ui.Controls.MessageBoxResult.Primary;
+#endif
     };
     public async Task Flush() { if (queue != null) await queue.Flush(); }
     public bool HasAdvancedPreview(int stage) => stage switch

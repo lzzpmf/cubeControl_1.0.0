@@ -1,5 +1,14 @@
+#if WINUI
+using ControlAppearance = Cube.WinUI.Platform.ControlAppearance;
+#else
+using ControlAppearance = Wpf.Ui.Controls.ControlAppearance;
+#endif
 using Cube.Protocol;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Threading;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 
@@ -36,7 +45,7 @@ public sealed partial class EditorViewModel
                 lastFootswitchState = null;
                 if (state == null)
                     NotifyUser("Footswitches", "A troca automática de presets não está disponível neste firmware.",
-                        Wpf.Ui.Controls.ControlAppearance.Caution);
+                        ControlAppearance.Caution);
             }
             // Only a physical state transition changes the editor. Manual navigation stays usable.
             if (state != lastFootswitchState && state?.PresetIndex is int slot)

@@ -4,6 +4,12 @@ using NAudio.Wave.SampleProviders;
 
 namespace Cube.Desktop.Services;
 
+internal sealed class BackingExportSourceException(string path, Exception inner)
+    : IOException("Export source is unavailable: " + path, inner)
+{
+    public string SourcePath { get; } = path;
+}
+
 public sealed record BackingStemSource(Guid Id, string Path, double Offset = 0, double RecordedSpeed = 1,
     double RecordedPitch = 0, bool Muted = false, bool Solo = false, double Volume = 1, double Pan = 0, bool LegacyMono = true,
     Guid TrackId = default, double SourceStart = 0, double ClipLength = double.PositiveInfinity,
@@ -48,7 +54,11 @@ internal sealed class BackingSessionAudio : ISampleProvider, IDisposable
             var inputs = sources.ToArray(); anySolo = inputs.Any(s => s.Solo);
             foreach (var source in inputs)
             {
-                if (!File.Exists(source.Path)) continue;
+                if (!File.Exists(source.Path))
+                {
+                    if (offline) throw new BackingExportSourceException(source.Path, new FileNotFoundException(null, source.Path));
+                    continue;
+                }
                 if (!double.IsFinite(source.Offset) || !double.IsFinite(source.RecordedSpeed) || source.RecordedSpeed is < .49 or > 1.53
                     || !double.IsFinite(source.RecordedPitch) || Math.Abs(source.RecordedPitch) > 6)
                     throw new InvalidDataException("Invalid stem timing.");
@@ -58,7 +68,8 @@ internal sealed class BackingSessionAudio : ISampleProvider, IDisposable
                 meters.TryAdd(Track(source), new());
             }
             Duration = voices.Select(v => v.Source.Offset + v.Length).DefaultIfEmpty(0).Max();
-            this.end = double.IsFinite(end) ? Math.Min(end, Duration) : Duration;
+            // Offline export preserves the selected interval, including intentional silence.
+            this.end = double.IsFinite(end) ? offline ? end : Math.Min(end, Duration) : Duration;
             Begin(start);
         }
         catch { Dispose(); throw; }
@@ -152,11 +163,29 @@ internal sealed class BackingSessionAudio : ISampleProvider, IDisposable
     public static Task Export(BackingStemSource[] sources, string destination, double start, double end,
         double speed, double pitch, double volume, CancellationToken cancellation) => Task.Run(() =>
     {
-        if (!sources.Any(s => File.Exists(s.Path))) throw new FileNotFoundException("No session audio is available for export.");
+        cancellation.ThrowIfCancellationRequested();
+        if (!double.IsFinite(start) || !double.IsFinite(end) || start < 0 || end <= start
+            || !double.IsFinite(speed) || speed <= 0 || !double.IsFinite(pitch) || !double.IsFinite(volume))
+            throw new ArgumentException("Invalid export range or parameters.");
+        if (sources.Any(s => string.Equals(System.IO.Path.GetFullPath(s.Path), System.IO.Path.GetFullPath(destination), StringComparison.OrdinalIgnoreCase)))
+            throw new IOException("Export cannot overwrite source audio.");
+        bool anySolo = sources.Any(s => s.Solo);
+        var required = sources.Where(s => s.ClipLength > 0 && s.Offset < end && s.Offset + s.ClipLength > start
+            && !s.Muted && (!anySolo || s.Solo) && s.Volume > 0).ToArray();
+        if (sources.Length == 0) throw new InvalidDataException("No session audio is available for export.");
+        // Validate every contributing clip/layer before creating the temporary output.
+        // Do not use File.Exists alone: access and sharing failures must also block export.
+        foreach (string path in required.Select(s => s.Path).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            cancellation.ThrowIfCancellationRequested();
+            try { using var file = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            { throw new BackingExportSourceException(path, ex); }
+        }
         string temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
-            using (var session = new BackingSessionAudio(sources, start, end, speed, pitch, offline: true))
+            using (var session = new BackingSessionAudio(required, start, end, speed, pitch, offline: true))
             using (var writer = new WaveFileWriter(temporary, new WaveFormat(48000, 16, 2)))
             {
                 var samples = new float[4096]; var pcm = new byte[samples.Length * 2];

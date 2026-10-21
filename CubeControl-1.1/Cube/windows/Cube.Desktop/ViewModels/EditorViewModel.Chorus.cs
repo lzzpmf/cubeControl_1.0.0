@@ -1,7 +1,11 @@
 using System.IO;
 using System.Text.Json;
 using Cube.Protocol;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using Microsoft.Win32;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 

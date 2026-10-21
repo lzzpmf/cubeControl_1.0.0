@@ -1,3 +1,8 @@
+#if WINUI
+using SharedImageSource = Microsoft.UI.Xaml.Media.ImageSource;
+#else
+using SharedImageSource = System.Windows.Media.ImageSource;
+#endif
 ﻿using Cube.Desktop.Localization;
 using System.IO;
 using System.Windows.Input;
@@ -363,7 +368,7 @@ public sealed partial class EditorViewModel
         }
     }
 
-    public static System.Windows.Media.ImageSource ValidateGearImage(string path)
+    public static SharedImageSource ValidateGearImage(string path)
     {
         if (Path.GetExtension(path).ToLowerInvariant() is not (".png" or ".jpg" or ".jpeg"))
             throw new FormatException("Imagem inválida. Use PNG ou JPEG.");

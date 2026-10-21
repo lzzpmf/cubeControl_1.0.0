@@ -1,6 +1,15 @@
+#if WINUI
+using WindowsUI = Microsoft.UI.Xaml;
+#else
+using WindowsUI = System.Windows;
+#endif
 using System.IO;
 using System.Windows.Input;
+#if WINUI
+using Microsoft.UI.Xaml.Media;
+#else
 using System.Windows.Media;
+#endif
 using Cube.Protocol;
 
 namespace Cube.Desktop.ViewModels;
@@ -156,16 +165,23 @@ public sealed class IrPackEditorViewModel : Observable
             if (details == null || string.IsNullOrWhiteSpace(details.Value.Name)) return false;
             Name = details.Value.Name; Description = details.Value.Description; return true;
         }
-        var title = new System.Windows.Controls.TextBox { Text = Name, MinWidth = 0, MaxLength = 120 };
-        var notes = new System.Windows.Controls.TextBox { Text = Description, AcceptsReturn = true, TextWrapping = System.Windows.TextWrapping.Wrap, MinHeight = 64, MaxLength = 4000 };
-        System.Windows.Automation.AutomationProperties.SetName(title, Localization.LanguageService.T("Nome do pack"));
-        System.Windows.Automation.AutomationProperties.SetName(notes, Localization.LanguageService.T("Descrição do pack"));
-        var panel = new System.Windows.Controls.StackPanel();
-        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = Localization.LanguageService.T("Nome do pack") }); panel.Children.Add(title);
-        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = Localization.LanguageService.T("Descrição do pack"), Margin = new System.Windows.Thickness(0,12,0,8) }); panel.Children.Add(notes);
+        var title = new WindowsUI.Controls.TextBox { Text = Name, MinWidth = 0, MaxLength = 120 };
+        var notes = new WindowsUI.Controls.TextBox { Text = Description, AcceptsReturn = true, TextWrapping = WindowsUI.TextWrapping.Wrap, MinHeight = 64, MaxLength = 4000 };
+        WindowsUI.Automation.AutomationProperties.SetName(title, Localization.LanguageService.T("Nome do pack"));
+        WindowsUI.Automation.AutomationProperties.SetName(notes, Localization.LanguageService.T("Descrição do pack"));
+        var panel = new WindowsUI.Controls.StackPanel();
+        panel.Children.Add(new WindowsUI.Controls.TextBlock { Text = Localization.LanguageService.T("Nome do pack") }); panel.Children.Add(title);
+        panel.Children.Add(new WindowsUI.Controls.TextBlock { Text = Localization.LanguageService.T("Descrição do pack"), Margin = new WindowsUI.Thickness(0,12,0,8) }); panel.Children.Add(notes);
         var dialog = new Controls.PackDialog("Detalhes do pack", panel, always ? "Salvar" : "Continuar") { IsPrimaryEnabled = !string.IsNullOrWhiteSpace(Name) };
         title.TextChanged += (_, _) => dialog.IsPrimaryEnabled = !string.IsNullOrWhiteSpace(title.Text);
-        title.Loaded += (_, _) => title.Focus();
+        title.Loaded += (_, _) =>
+        {
+#if WINUI
+            title.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+#else
+            title.Focus();
+#endif
+        };
         if (await dialog.ShowAsync() != Controls.PackDialogChoice.Primary) return false;
         Name = title.Text; Description = notes.Text; return true;
     }

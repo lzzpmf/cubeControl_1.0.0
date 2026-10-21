@@ -1,10 +1,26 @@
+#if WINUI
+using ICollectionView = Cube.WinUI.Platform.ListCollectionView;
+#endif
 using Cube.Protocol;
+#if WINUI
+using Microsoft.UI.Xaml;
+using Application = Cube.WinUI.Platform.UiApplication;
+#else
 using System.Windows;
+#endif
+#if WINUI
+using Microsoft.UI.Xaml.Controls;
+#else
 using System.Windows.Controls;
+#endif
 using Cube.Desktop.Localization;
 using System.IO;
 using System.Text.Json;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Data;
+#endif
 using System.ComponentModel;
 using System.Windows.Input;
 
@@ -69,7 +85,7 @@ public sealed partial class EditorViewModel
     public IrPack? SelectedIrPack
     {
         get => selectedIrPack;
-        set { if (Set(ref selectedIrPack, value)) { Notify(nameof(SelectedPackSummary)); System.Windows.Input.CommandManager.InvalidateRequerySuggested(); } }
+        set { if (Set(ref selectedIrPack, value)) { Notify(nameof(SelectedPackSummary)); CommandManager.InvalidateRequerySuggested(); } }
     }
 
     public Func<bool[], Task<int[]?>>? ChoosePackIrSlots { get; set; }
@@ -80,6 +96,9 @@ public sealed partial class EditorViewModel
     private async Task<bool> ShowPackReview(IrPackReviewViewModel review)
     {
         if (ReviewPack != null) return await ReviewPack(review);
+#if WINUI
+        return await Cube.WinUI.Platform.Dialogs.ReviewPack(review);
+#else
         var dialog = new Controls.PackDialog(LanguageService.T("Revisar e aplicar") + " · " + review.Definition.Name,
             new Controls.IrPackReview { DataContext = review }, width: 1200) { IsPrimaryEnabled = review.CanContinue };
         void StateChanged(object? sender, PropertyChangedEventArgs e) { if (e.PropertyName == nameof(review.CanContinue)) dialog.IsPrimaryEnabled = review.CanContinue; }
@@ -87,6 +106,7 @@ public sealed partial class EditorViewModel
         SetAwaitingPackReview(true);
         try { return await dialog.ShowAsync() == Controls.PackDialogChoice.Primary; }
         finally { review.PropertyChanged -= StateChanged; SetAwaitingPackReview(false); }
+#endif
     }
     private async Task RestoreOriginalIrsAsync()
     {

@@ -1,7 +1,11 @@
 using System.IO;
 using System.Text.Json;
 using System.Windows.Input;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Threading;
+#endif
 using Cube.Desktop.Services;
 
 namespace Cube.Desktop.ViewModels;
@@ -180,7 +184,9 @@ public sealed partial class BackingTracksViewModel
 
     private sealed record SavedStem(Guid Id, string Source, double Offset, double RecordedSpeed, double RecordedPitch,
         bool Muted, bool Solo, double Volume, string State, string Name = "", string Color = "#6495ED", double Pan = 0, bool LegacyMono = true, int InputChannel = 0, int InputChannels = 1, BackingTake[]? Takes = null, Guid? ActiveTake = null, BackingClip[]? Clips = null);
-    private sealed record SavedSession(Guid Id, string Source, SavedStem[] Stems, double Speed = 100, double Pitch = 0, string? InputId = null, double MasterGain = 1, double AccompanimentGain = .3, string Meter = "4/4", double Bpm = 0, double FirstBeat = 0, bool ManualBpm = false);
+    private sealed record SavedSession(Guid Id, string Source, SavedStem[] Stems, double Speed = 100, double Pitch = 0, string? InputId = null, double MasterGain = 1, double AccompanimentGain = .3, string Meter = "4/4", double Bpm = 0, double FirstBeat = 0, bool ManualBpm = false,
+        string? OriginalKey = null, bool ManualKey = false, string Tuning = "", int Preset = 0,
+        BackingSection[]? Sections = null, double? Start = null, double? End = null);
     private sealed record RecordingPlaylist(int Version, string[]? Paths = null, SavedSession[]? Sessions = null, double LatencyMs = 0, double MasterVolume = 1, string? InputId = null);
     private void LoadRecordingPlaylist()
     {
@@ -190,7 +196,7 @@ public sealed partial class BackingTracksViewModel
         {
             if (!File.Exists(playlistPath)) return;
             var saved = JsonSerializer.Deserialize<RecordingPlaylist>(File.ReadAllText(playlistPath));
-            if (saved == null || saved.Version is not (1 or 2 or 3 or 4)) throw new InvalidDataException("Unsupported playlist format.");
+            if (saved == null || saved.Version is not (1 or 2 or 3 or 4 or 5)) throw new InvalidDataException("Unsupported playlist format.");
             var sessions = saved.Version == 1
                 ? (saved.Paths ?? throw new InvalidDataException("Missing playlist paths.")).Select(path => new SavedSession(Guid.NewGuid(), path,
                     [new(Guid.NewGuid(), path, 0, 1, 0, false, false, 100, "Pronta")])).ToArray()
@@ -204,6 +210,22 @@ public sealed partial class BackingTracksViewModel
                 track.Meter = MetronomeMeters.Contains(item.Meter) ? item.Meter : "4/4";
                 if (item.Bpm > 0) { track.Bpm = item.Bpm; track.ManualBpm = item.ManualBpm; }
                 if (double.IsFinite(item.FirstBeat)) metronomeOffsets[item.Source] = item.FirstBeat;
+                if (item.Start is double a && (!double.IsFinite(a) || a < 0)
+                    || item.End is double b && (!double.IsFinite(b) || b < 0)
+                    || item.Start is double rangeStart && item.End is double rangeEnd && rangeEnd - rangeStart < .1 - 1e-9)
+                    throw new InvalidDataException("Invalid session range.");
+                track.OriginalKey = item.OriginalKey != null && Keys.Contains(item.OriginalKey) ? item.OriginalKey : Keys[0];
+                track.ManualKey = item.ManualKey;
+                track.Tuning = item.Tuning ?? "";
+                track.Preset = Math.Clamp(item.Preset, 0, 3);
+                track.Start = item.Start; track.End = item.End;
+                foreach (var section in (item.Sections ?? []).OrderBy(section => section?.Position))
+                {
+                    if (section == null || !double.IsFinite(section.Position) || section.Position < 0
+                        || string.IsNullOrWhiteSpace(section.Name) || section.Name.Length > 40)
+                        throw new InvalidDataException("Invalid session section.");
+                    track.Sections.Add(section);
+                }
                 track.Stems.Clear();
                 foreach (var entry in item.Stems)
                 {
@@ -224,7 +246,7 @@ public sealed partial class BackingTracksViewModel
                         stem.ActiveTake = stem.Takes.FirstOrDefault(t => t.Id == entry.ActiveTake);
                     }
                     stem.EnsureTake();
-                    if (saved.Version == 4)
+                    if (saved.Version >= 4)
                     {
                         if (entry.Clips == null) throw new InvalidDataException("Missing clips.");
                         foreach (var clip in entry.Clips) { clip.Validate(); stem.Clips.Add(clip); }
@@ -237,7 +259,7 @@ public sealed partial class BackingTracksViewModel
                 if (track.Stems.SelectMany(s => s.Clips).Select(c => c.Id).Distinct().Count() != track.Stems.Sum(s => s.Clips.Count)) throw new InvalidDataException("Duplicate session clip identifiers.");
                 loaded.Add(track);
             }
-            if (saved.Version < 4 && !File.Exists(playlistPath + $".v{saved.Version}.bak")) File.Copy(playlistPath, playlistPath + $".v{saved.Version}.bak", overwrite: false);
+            if (saved.Version < 5 && !File.Exists(playlistPath + $".v{saved.Version}.bak")) File.Copy(playlistPath, playlistPath + $".v{saved.Version}.bak", overwrite: false);
             masterVolume = double.IsFinite(saved.MasterVolume) ? Math.Clamp(saved.MasterVolume, 0, BackingMixMath.MaximumGain) : 1;
             Start(engine.SetMasterVolume(masterVolume)); Notify(nameof(MasterDb));
             savedInputId = saved.InputId;
@@ -255,8 +277,9 @@ public sealed partial class BackingTracksViewModel
         var sessions = Tracks.Select(track => new SavedSession(track.SessionId, track.Source,
             track.Stems
             .Where(s => !s.IsProvisional).Select(s => new SavedStem(s.Id, s.Source, s.Offset, s.RecordedSpeed, s.RecordedPitch,
-                s.IsMuted, s.IsSolo, s.Volume, s.State, s.Name, s.Color, s.Pan, s.LegacyMono, s.InputChannel, s.InputChannels, s.SnapshotTakes(), s.ActiveTake?.Id, s.Clips.ToArray())).ToArray(), track.Speed, track.Pitch, track.CaptureEndpoint, track.MasterGain, track.AccompanimentGain, track.Meter, track.Bpm, metronomeOffsets.GetValueOrDefault(track.Source), track.ManualBpm)).ToArray();
-        File.WriteAllText(temporary, JsonSerializer.Serialize(new RecordingPlaylist(4, Sessions: sessions, LatencyMs: LatencyCompensationMs, MasterVolume: masterVolume, InputId: SelectedInput?.Id ?? savedInputId)));
+                s.IsMuted, s.IsSolo, s.Volume, s.State, s.Name, s.Color, s.Pan, s.LegacyMono, s.InputChannel, s.InputChannels, s.SnapshotTakes(), s.ActiveTake?.Id, s.Clips.ToArray())).ToArray(), track.Speed, track.Pitch, track.CaptureEndpoint, track.MasterGain, track.AccompanimentGain, track.Meter, track.Bpm, metronomeOffsets.GetValueOrDefault(track.Source), track.ManualBpm,
+                track.OriginalKey, track.ManualKey, track.Tuning, track.Preset, track.Sections.ToArray(), track.Start, track.End)).ToArray();
+        File.WriteAllText(temporary, JsonSerializer.Serialize(new RecordingPlaylist(5, Sessions: sessions, LatencyMs: LatencyCompensationMs, MasterVolume: masterVolume, InputId: SelectedInput?.Id ?? savedInputId)));
         File.Move(temporary, playlistPath, overwrite: true);
     }
     private void DisposeRecording()

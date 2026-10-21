@@ -1,3 +1,18 @@
+#if WINUI
+using SharedImageSource = Microsoft.UI.Xaml.Media.ImageSource;
+#else
+using SharedImageSource = System.Windows.Media.ImageSource;
+#endif
+#if WINUI
+using InfoBarSeverity = Cube.WinUI.Platform.InfoBarSeverity;
+#else
+using InfoBarSeverity = Wpf.Ui.Controls.InfoBarSeverity;
+#endif
+#if WINUI
+using ControlAppearance = Cube.WinUI.Platform.ControlAppearance;
+#else
+using ControlAppearance = Wpf.Ui.Controls.ControlAppearance;
+#endif
 namespace Cube.Desktop.ViewModels;
 
 public sealed partial class EditorViewModel
@@ -70,7 +85,7 @@ public sealed partial class EditorViewModel
     public string ConnectActionLabel => LoadingDevice ? "Carregando dispositivo" : "Conectar e carregar";
     public string HeaderConnectionStatus => LoadingDevice || SearchingPorts ? BusyDetail : blocked ? "Conexão requer atenção" : ConnectionSummary;
     public string BankSaveStatus => Dirty ? "Alterações não gravadas" : "Banco A/B/C sem alterações pendentes";
-    public Wpf.Ui.Controls.ControlAppearance SaveAppearance => Wpf.Ui.Controls.ControlAppearance.Primary;
+    public ControlAppearance SaveAppearance => ControlAppearance.Primary;
     private string busyDetail = "Aguarde a conclusão da operação.";
     private int inventoryReadCount;
     private bool readingInventory;
@@ -86,16 +101,19 @@ public sealed partial class EditorViewModel
     public string ErrorMessage { get => errorMessage; private set { if (Set(ref errorMessage, value)) Notify(nameof(HasError)); } }
     public bool HasError => ErrorMessage.Length != 0;
     public event Action<UserNotification>? NotificationRequested;
-    private void Completed(string message) => NotifyUser("Concluído", message, Wpf.Ui.Controls.ControlAppearance.Success);
-    private void NotifyUser(string title, string message, Wpf.Ui.Controls.ControlAppearance appearance) =>
+    private void Completed(string message) => NotifyUser("Concluído", message, ControlAppearance.Success);
+    private void NotifyUser(string title, string message, ControlAppearance appearance) =>
         NotificationRequested?.Invoke(new(title, message, appearance));
-    private void NotifyFailure(string message) => NotifyUser("Não foi possível concluir", message, Wpf.Ui.Controls.ControlAppearance.Danger);
+    private void NotifyFailure(string message) => NotifyUser("Não foi possível concluir", message, ControlAppearance.Danger);
 
     public string ConnectionSummary => Connected ? "Conectado por USB" : "Sem conexão USB";
-    public System.Windows.Media.ImageSource? ConnectedDeviceImage { get; } = ReadConnectedDeviceImage();
-    private static System.Windows.Media.ImageSource? ReadConnectedDeviceImage()
+    public SharedImageSource? ConnectedDeviceImage { get; } = ReadConnectedDeviceImage();
+    private static SharedImageSource? ReadConnectedDeviceImage()
     {
         var source = GearItem.ReadImage(AssetPaths.Device("SINCO-CubeBaby.png"));
+#if WINUI
+        return source;
+#else
         if (source is not System.Windows.Media.Imaging.BitmapSource bitmap) return source;
         var pixels = new System.Windows.Media.Imaging.FormatConvertedBitmap(bitmap, System.Windows.Media.PixelFormats.Bgra32, null, 0);
         int width = pixels.PixelWidth, height = pixels.PixelHeight;
@@ -115,6 +133,7 @@ public sealed partial class EditorViewModel
         var cropped = new System.Windows.Media.Imaging.CroppedBitmap(bitmap, new System.Windows.Int32Rect(left, top, right - left + 1, bottom - top + 1));
         cropped.Freeze();
         return cropped;
+#endif
     }
 
     public string EditAvailability => ShowBusyPanel ? "Operação em andamento. Aguarde para editar."
@@ -128,8 +147,8 @@ public sealed partial class EditorViewModel
     public bool ShowEndAmpPreviewNotice => CanRestoreAmp;
     public string EndIrPreviewLabel => AmpPreviewActive ? "Encerrar prévia IR" : "Encerrar prévia";
     public string EndAmpPreviewLabel => Ir.PreviewActive ? "Encerrar prévia AMP" : "Encerrar prévia";
-    public Wpf.Ui.Controls.InfoBarSeverity EditNoticeSeverity => !Busy && (blocked || ShowEndPreviewNotice || ShowEndAmpPreviewNotice)
-        ? Wpf.Ui.Controls.InfoBarSeverity.Warning : Wpf.Ui.Controls.InfoBarSeverity.Informational;
+    public InfoBarSeverity EditNoticeSeverity => !Busy && (blocked || ShowEndPreviewNotice || ShowEndAmpPreviewNotice)
+        ? InfoBarSeverity.Warning : InfoBarSeverity.Informational;
     public string IrAvailability => Busy ? "Operação em andamento. Aguarde a conclusão."
         : blocked ? "Operação indisponível. Releia os presets ou reconecte."
         : !Connected ? "Conecte o aparelho para ouvir ou gravar o IR."

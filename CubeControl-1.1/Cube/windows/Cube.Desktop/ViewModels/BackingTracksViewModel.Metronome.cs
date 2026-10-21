@@ -2,7 +2,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Input;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Threading;
+#endif
 using Cube.Desktop.Localization;
 using Cube.Desktop.Services;
 using NAudio.CoreAudioApi;

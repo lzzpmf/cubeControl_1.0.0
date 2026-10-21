@@ -1,17 +1,34 @@
+#if WINUI
+using InfoBarSeverity = Cube.WinUI.Platform.InfoBarSeverity;
+#else
+using InfoBarSeverity = Wpf.Ui.Controls.InfoBarSeverity;
+#endif
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
+#if WINUI
+using Cube.WinUI.Platform;
+#else
 using System.Windows.Threading;
+#endif
 using Cube.Desktop.Localization;
 using Cube.Desktop.Services;
+#if WINUI
+
+#else
 using Microsoft.Win32;
+#endif
 using NAudio.CoreAudioApi;
 using Windows.Devices.Enumeration;
 using Windows.Media.Devices;
+#if WINUI
+using SymbolRegular = Cube.WinUI.Platform.SymbolRegular;
+#else
 using SymbolRegular = Wpf.Ui.Controls.SymbolRegular;
+#endif
 
 namespace Cube.Desktop.ViewModels;
 
@@ -124,7 +141,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     public bool CanLoop => CanEditSession && HasRange && Duration >= .1;
     public bool IsExporting { get => exporting; private set => Set(ref exporting, value); }
     public bool HasError { get => hasError; private set { Set(ref hasError, value); Notify(nameof(ShowMiniPlayer)); Notify(nameof(StatusSeverity)); } }
-    public Wpf.Ui.Controls.InfoBarSeverity StatusSeverity => HasError ? Wpf.Ui.Controls.InfoBarSeverity.Error : Wpf.Ui.Controls.InfoBarSeverity.Informational;
+    public InfoBarSeverity StatusSeverity => HasError ? InfoBarSeverity.Error : InfoBarSeverity.Informational;
     public bool HasModifiedSpeed => Speed != 100;
     public bool HasModifiedPitch => Pitch != 0;
     public bool HasStatus => Status.Length > 0;
@@ -176,7 +193,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         positionTimer.Tick += (_, _) => UpdatePosition();
         parameterTimer.Tick += (_, _) => { parameterTimer.Stop(); if (!parameterGesture) Start(ApplyParameters()); };
         LanguageService.Instance.PropertyChanged += MusicLanguageChanged;
-        engine.Changed += EngineChanged; Tracks.CollectionChanged += (_, _) => { Notify(nameof(HasTracks)); ScheduleMusic(); };
+        engine.Changed += EngineChanged; Tracks.CollectionChanged += (_, _) => { ObserveSessionSections(); Notify(nameof(HasTracks)); ScheduleMusic(); };
 
     }
     public BackingTrack? SelectedTrack
@@ -251,7 +268,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
     private void RangeChanged(bool persist = true)
     {
         foreach (string name in new[] { nameof(RangeStart), nameof(RangeEnd), nameof(RangeLabel), nameof(HasRange), nameof(CanLoop), nameof(IsLooping), nameof(ExportLabel) }) Notify(name);
-        if (persist) { Changed(); Start(ApplyParameters()); } CommandManager.InvalidateRequerySuggested();
+        if (persist) { Changed(); PersistSession(); Start(ApplyParameters()); } CommandManager.InvalidateRequerySuggested();
     }
     public double Position
     {
@@ -405,7 +422,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         if (Tracks.Any(t => t != track && string.Equals(t.Source, dialog.FileName, StringComparison.OrdinalIgnoreCase))) { Status = "Este arquivo já está na playlist."; return; }
         int index = Tracks.IndexOf(track); if (index < 0 || !CanEditSession) return;
         bool current = SelectedTrack == track;
-        var replacement = new BackingTrack(Path.GetFullPath(dialog.FileName)) { SessionId = track.SessionId, Speed = track.Speed, Pitch = track.Pitch, Start = track.Start, End = track.End, Bpm = track.Bpm, OriginalKey = track.OriginalKey, Tuning = track.Tuning, Preset = track.Preset };
+        var replacement = new BackingTrack(Path.GetFullPath(dialog.FileName)) { SessionId = track.SessionId, Speed = track.Speed, Pitch = track.Pitch, ManualKey = track.ManualKey, ManualBpm = track.ManualBpm, Start = track.Start, End = track.End, Bpm = track.Bpm, OriginalKey = track.OriginalKey, Tuning = track.Tuning, Preset = track.Preset };
         replacement.Stems.Clear();
         foreach (var stem in track.Stems)
         {
@@ -425,7 +442,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         track.Bpm = bpm > 0 ? Math.Clamp(bpm, 20, 300) : track.Bpm; track.OriginalKey = key; track.Tuning = tuning.Trim(); track.Preset = Math.Clamp(preset, 0, 3);
         if (track == SelectedTrack)
             foreach (string name in new[] { nameof(Bpm), nameof(CurrentBpm), nameof(BpmBadge), nameof(OriginalKey), nameof(CurrentKey), nameof(KeyBadge), nameof(LinkedPreset), nameof(PresetBadge), nameof(PresetHint) }) Notify(name);
-        FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); Changed();
+        FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); Changed(); PersistSession();
     }
     internal void AddSectionAt(BackingTrack track, double time, string name)
     {
@@ -489,6 +506,11 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
             if (!disposed) Status = "WAV exportado. O áudio original foi preservado.";
         }
         catch (OperationCanceledException) { if (!disposed) Status = "Exportação cancelada."; }
+        catch (BackingExportSourceException ex)
+        {
+            if (!disposed) Error(LanguageService.T("Exportação interrompida. Arquivo de áudio ausente ou inacessível: ")
+                + ex.SourcePath + "\n" + LanguageService.T("Localize o arquivo ou restaure o acesso e tente novamente. O destino foi preservado."), ex);
+        }
         catch (Exception ex) { if (!disposed) Error("Não foi possível exportar. Verifique o destino e tente novamente.", ex); }
         finally { exportCancellation = null; IsExporting = false; CommandManager.InvalidateRequerySuggested(); }
     }
@@ -503,6 +525,8 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         SaveStudio();
         localPreviewGeneration++; localPreviewEngine?.Dispose();
         DisposeRecording();
+        foreach (var track in observedSectionTracks) track.Sections.CollectionChanged -= SessionSectionsChanged;
+        observedSectionTracks.Clear();
         SaveMetronome(); metronomeTimer.Stop(); StopIndependentMetronome();
         StopYouTubePreview(); StopMonitor(); meterTimer.Stop(); disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); parameterTimer.Stop();
         LanguageService.Instance.PropertyChanged -= MusicLanguageChanged;
