@@ -1,7 +1,7 @@
 {
   "version": "1.1.0",
   "inputs": {
-    "scripts/Build-Manual.mjs": "e3084973952d220cfc1e4463ba9bfab51c1f1ec46906ddc784629fb0866d97d1",
+    "scripts/Build-Manual.mjs": "3655b56405a16d53373155f5334e96f21ea5f43209fedf27142c40819bd77af9",
     "CubeControl-1.1/Cube/docs/usuario/catalogo.v1.json": "433092334fdc29a4750233dd6765fb42eeaba6afa298456a30ba3ac61baa96f7",
     "CubeControl-1.1/Cube/docs/usuario/pt-BR/primeiros-passos.md": "e716c3a6c06ac3d06a2901d9db50ebf2e9ce3119e9557852635b81b297609f3d",
     "CubeControl-1.1/Cube/docs/usuario/en-US/primeiros-passos.md": "9c16cc5bd4917f617fa1fc54dac207036c303b178a6b8f28383c7515ee127d28",
