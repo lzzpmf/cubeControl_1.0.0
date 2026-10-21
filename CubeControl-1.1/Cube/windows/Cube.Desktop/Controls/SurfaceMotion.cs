@@ -29,6 +29,10 @@ public static class SurfaceMotion
     public static object GetSecondaryKey(DependencyObject target) => target.GetValue(SecondaryKeyProperty);
     private static readonly DependencyProperty StateProperty = DependencyProperty.RegisterAttached(
         "State", typeof(State), typeof(SurfaceMotion));
+    public static readonly DependencyProperty HorizontalProperty = DependencyProperty.RegisterAttached("Horizontal", typeof(bool), typeof(SurfaceMotion), new PropertyMetadata(false));
+    public static void SetHorizontal(DependencyObject target, bool value) => target.SetValue(HorizontalProperty, value);
+    public static bool GetHorizontal(DependencyObject target) => (bool)target.GetValue(HorizontalProperty);
+    public static void Replay(FrameworkElement element) { if (element.GetValue(StateProperty) is State state) state.Play(); }
     public static bool Allowed => SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast && (RenderCapability.Tier >> 16) > 0;
 
     private static void Configure(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -78,7 +82,7 @@ public static class SurfaceMotion
             // Preserve the surface opacity and let WPF schedule up to 240 fps.
             var fade = new DoubleAnimation(0, element.Opacity, TimeSpan.FromMilliseconds(167))
             { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-            Timeline.SetDesiredFrameRate(fade, 240);
+
             element.BeginAnimation(UIElement.OpacityProperty, fade);
             if (GetOffset(element) is double offset && offset != 0)
             {
@@ -90,8 +94,8 @@ public static class SurfaceMotion
                 element.SetCurrentValue(UIElement.RenderTransformProperty, group);
                 var slide = new DoubleAnimation(offset, 0, TimeSpan.FromMilliseconds(167))
                 { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
-                Timeline.SetDesiredFrameRate(slide, 240);
-                translation.BeginAnimation(TranslateTransform.YProperty, slide);
+
+                translation.BeginAnimation(GetHorizontal(element) ? TranslateTransform.XProperty : TranslateTransform.YProperty, slide);
             }
             cleanup.Start();
         }
@@ -102,6 +106,7 @@ public static class SurfaceMotion
             if (translation != null)
             {
                 translation.BeginAnimation(TranslateTransform.YProperty, null);
+                translation.BeginAnimation(TranslateTransform.XProperty, null);
                 element.SetCurrentValue(UIElement.RenderTransformProperty, originalTransform);
                 translation = null;
             }

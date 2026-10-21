@@ -7,7 +7,7 @@
         <ui:AutoSuggestBox x:Name="IrLibrarySearch" Style="{StaticResource CubeSearchAutoSuggestBoxStyle}" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{loc:Translate Text='Buscar marca, gabinete ou captação'}" ToolTip="{loc:Translate Text='Buscar marca, gabinete ou captação'}" Margin="0,0,0,8" AutomationProperties.Name="{loc:Translate Text='Buscar marca, gabinete ou captação'}">
          <ui:AutoSuggestBox.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSearch24}" FontSize="{DynamicResource CubeIconSizeAction}" Width="20" Height="20" VerticalAlignment="Center"/></ui:AutoSuggestBox.Icon>
         </ui:AutoSuggestBox>
-        <TreeView x:Name="IrLibraryTree" ItemsSource="{Binding Roots}" MinHeight="320" MaxHeight="420" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="False" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Biblioteca'}">
+        <TreeView x:Name="IrLibraryTree" ItemsSource="{Binding Roots}" MinHeight="320" MaxHeight="420" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{loc:Translate Text='Biblioteca'}">
          <TreeView.Resources>
           <Style TargetType="TreeViewItem" BasedOn="{StaticResource DefaultTreeViewItemStyle}">
            <Setter Property="Template" Value="{StaticResource IrLibraryItemTemplate}"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>

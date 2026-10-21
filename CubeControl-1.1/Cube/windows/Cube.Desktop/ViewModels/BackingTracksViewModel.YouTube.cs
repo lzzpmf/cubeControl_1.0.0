@@ -14,6 +14,18 @@ public sealed partial class BackingTracksViewModel
     private string youtubeStatus = "", youtubeDownloadStatus = "";
     private bool youtubeSearching, youtubeDownloading;
     private double youtubePercent;
+    private bool previewOnHover;
+    public bool PreviewOnHover
+    {
+        get => previewOnHover;
+        set
+        {
+            if (!Set(ref previewOnHover, value)) return;
+            if (!value) StopYouTubePreview();
+            try { SaveYouTubeDownloadSettings(YouTubeDownloadFolder); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { Log(ex); }
+        }
+    }
     public ObservableCollection<YouTubeResult> YouTubeResults { get; } = [];
     public ObservableCollection<YouTubeResult> PresentedYouTubeResults { get; } = [];
     private YouTubeResult? pinnedDownload;

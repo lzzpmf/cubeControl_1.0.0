@@ -1,3 +1,6 @@
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Globalization;
 using System.ComponentModel;
 using System.Windows;
@@ -33,14 +36,18 @@ public sealed class BackingClipLane : FrameworkElement
         lane.InvalidateVisual();
     }
     private void Update(object? sender, PropertyChangedEventArgs e)
-    { if (e.PropertyName is "ClipRevision" or "Position" or "ViewportStart" or "ViewportDuration" or "TrackHeight" or "IsRecording") InvalidateVisual(); }
+    {
+        if (e.PropertyName is "ClipRevision" or "Position" or "ViewportStart" or "ViewportDuration" or "TrackHeight" or "IsRecording") InvalidateVisual();
+        if (e.PropertyName == "ClipRevision" && UIElementAutomationPeer.FromElement(this) is LanePeer peer)
+            peer.RefreshClips();
+    }
     public BackingClipLane()
     {
         Focusable = true; ClipToBounds = true; AllowDrop = true;
         System.Windows.Automation.AutomationProperties.SetName(this, LanguageService.T("Editor de clipes"));
         ToolTip = LanguageService.T("Arraste o corpo para mover e as bordas para aparar. Alt ignora o snap.");
     }
-    protected override System.Windows.Automation.Peers.AutomationPeer OnCreateAutomationPeer() => new System.Windows.Automation.Peers.FrameworkElementAutomationPeer(this);
+    protected override AutomationPeer OnCreateAutomationPeer() => new LanePeer(this);
     private Brush Brush(string key) => TryFindResource(key) as Brush ?? Brushes.Gray;
     private double X(double time) => 12 + (time - (Model?.ViewportStart ?? 0)) / Math.Max(.001, Model?.StudioViewportDuration ?? 1) * Math.Max(1, ActualWidth - 24);
     private double Time(double x) => (Model?.ViewportStart ?? 0) + (x - 12) / Math.Max(1, ActualWidth - 24) * Math.Max(.001, Model?.StudioViewportDuration ?? 1);
@@ -71,7 +78,7 @@ public sealed class BackingClipLane : FrameworkElement
         {
             var empty = new Rect(12, 10, Math.Max(0, ActualWidth - 24), Math.Max(0, ActualHeight - 20));
             dc.DrawRoundedRectangle(null, new Pen(Brush("CubeBorder"), 1) { DashStyle = DashStyles.Dash }, empty, 3, 3);
-            var hint = new FormattedText(LanguageService.T("Arraste áudio aqui"), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), 12, Brush("Muted"), VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            var hint = new FormattedText(LanguageService.T("Arraste áudio aqui"), CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), TryFindResource("CubeFontSizeCaption") is double size ? size : 12, Brush("Muted"), VisualTreeHelper.GetDpi(this).PixelsPerDip);
             dc.DrawText(hint, new Point(Math.Max(12, (ActualWidth - hint.Width) / 2), Math.Max(10, (ActualHeight - hint.Height) / 2)));
         }
         double height = ActualHeight / Math.Max(1, rows.Count);
@@ -86,7 +93,7 @@ public sealed class BackingClipLane : FrameworkElement
             dc.DrawRoundedRectangle(Brush("CubeInset"), null, bounds, 4, 4);
             dc.DrawRoundedRectangle(tint, new Pen(Brush(selected ? "CubeAccent" : "CubeBorder"), selected ? 2 : 1), bounds, 4, 4);
             dc.PushClip(new RectangleGeometry(bounds));
-            var text = new FormattedText(clip.Name, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI"), 12, Brush("CubeText"), VisualTreeHelper.GetDpi(this).PixelsPerDip) { MaxTextWidth = Math.Max(1, Math.Min(ActualWidth, bounds.Width) - 16), MaxTextHeight = 20, Trimming = TextTrimming.CharacterEllipsis };
+            var text = new FormattedText(clip.Name, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), TryFindResource("CubeFontSizeCaption") is double size ? size : 12, Brush("CubeText"), VisualTreeHelper.GetDpi(this).PixelsPerDip) { MaxTextWidth = Math.Max(1, Math.Min(ActualWidth, bounds.Width) - 16), MaxTextHeight = 20, Trimming = TextTrimming.CharacterEllipsis };
             dc.DrawText(text, new Point(left + 8, bounds.Top + 2));
             double center = bounds.Top + 22 + Math.Max(0, bounds.Height - 24) / 2, amplitude = Math.Max(0, bounds.Height - 26) / 2;
             var pen = new Pen(trackBrush, 1);
@@ -210,6 +217,14 @@ public sealed class BackingClipLane : FrameworkElement
     protected override void OnKeyDown(KeyEventArgs e)
     {
         if (e.Key == Key.Escape && dragClip != null) { dragClip = null; DragFeedback.Clear(); ReleaseMouseCapture(); Model?.CancelClipGesture(); e.Handled = true; return; }
+        if (Model?.CanEditSession == true && e.Key is Key.Left or Key.Right
+            && Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) && Model.SelectedClips.Count > 0)
+        {
+            double step = Keyboard.Modifiers.HasFlag(ModifierKeys.Shift) ? .1 : .01;
+            Model.BeginClipGesture();
+            Model.MoveClips(e.Key == Key.Left ? -step : step);
+            Model.EndClipGesture(); e.Handled = true; return;
+        }
         if (Model != null && Stem != null && e.Key is Key.Left or Key.Right && Stem.Clips.Count > 0)
         {
             var clips = Stem.Clips.OrderBy(c => c.Position).ToArray(); int index = Array.FindIndex(clips, c => Model.SelectedClips.Contains(c.Id));
@@ -220,4 +235,75 @@ public sealed class BackingClipLane : FrameworkElement
         if (e.Key == Key.Apps || e.Key == Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift) { ShowMenu(); e.Handled = true; }
         base.OnKeyDown(e);
     }
+    private sealed class LanePeer(BackingClipLane lane) : FrameworkElementAutomationPeer(lane), ISelectionProvider
+    {
+        private readonly Dictionary<Guid, ClipPeer> children = [];
+        protected override string GetClassNameCore() => nameof(BackingClipLane);
+        protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.List;
+        public override object? GetPattern(PatternInterface pattern) => pattern == PatternInterface.Selection ? this : base.GetPattern(pattern);
+        internal void RefreshClips()
+        {
+            foreach (var id in children.Keys.Where(id => lane.Stem?.Clips.All(c => c.Id != id) != false).ToArray()) children.Remove(id);
+            ResetChildrenCache();
+            RaiseAutomationEvent(AutomationEvents.SelectionPatternOnInvalidated);
+        }
+        protected override List<AutomationPeer> GetChildrenCore() => (lane.Stem?.Clips ?? []).OrderBy(c => c.Position)
+            .Select(c => (AutomationPeer)(children.TryGetValue(c.Id, out var peer) ? peer : children[c.Id] = new ClipPeer(lane, this, c.Id))).ToList();
+        internal IRawElementProviderSimple Provider => ProviderFromPeer(this);
+        internal IRawElementProviderSimple ClipProvider(AutomationPeer peer) => ProviderFromPeer(peer);
+        public bool CanSelectMultiple => true;
+        public bool IsSelectionRequired => false;
+        public IRawElementProviderSimple[] GetSelection() => GetChildrenCore().OfType<ClipPeer>().Where(c => c.IsSelected).Select(ClipProvider).ToArray();
+    }
+    private sealed class ClipPeer(BackingClipLane lane, LanePeer parent, Guid id) : AutomationPeer, ISelectionItemProvider, IInvokeProvider
+    {
+        private BackingClip? Clip => lane.Stem?.Clips.FirstOrDefault(c => c.Id == id);
+        protected override string GetNameCore() => Clip?.Name ?? "";
+        protected override string GetAutomationIdCore() => id.ToString();
+        protected override string GetClassNameCore() => nameof(BackingClip);
+        protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.ListItem;
+        protected override string GetHelpTextCore() => Clip is { } clip
+            ? $"{LanguageService.T("Posição")}: {clip.Position:0.###} s; {LanguageService.T("Duração")}: {clip.Duration:0.###} s" : "";
+        protected override Rect GetBoundingRectangleCore()
+        {
+            var bounds = lane.areas.FirstOrDefault(a => a.Clip.Id == id).Bounds;
+            if (bounds.IsEmpty || bounds.Width == 0 || !lane.IsVisible || PresentationSource.FromVisual(lane) == null) return Rect.Empty;
+            bounds.Intersect(new Rect(lane.RenderSize));
+            return bounds.IsEmpty ? Rect.Empty : new Rect(lane.PointToScreen(bounds.TopLeft), lane.PointToScreen(bounds.BottomRight));
+        }
+        protected override Point GetClickablePointCore() { var r = GetBoundingRectangleCore(); return r.IsEmpty ? new(double.NaN, double.NaN) : new(r.X + r.Width / 2, r.Y + r.Height / 2); }
+        protected override List<AutomationPeer>? GetChildrenCore() => null;
+        protected override string GetAccessKeyCore() => "";
+        protected override string GetAcceleratorKeyCore() => "";
+        protected override string GetItemStatusCore() => "";
+        protected override string GetItemTypeCore() => "";
+        protected override AutomationPeer? GetLabeledByCore() => null;
+        protected override AutomationOrientation GetOrientationCore() => AutomationOrientation.Horizontal;
+        protected override bool HasKeyboardFocusCore() => lane.IsKeyboardFocused && IsSelected;
+        protected override bool IsKeyboardFocusableCore() => true;
+        protected override bool IsEnabledCore() => lane.IsEnabled && Clip != null;
+        protected override bool IsOffscreenCore() => GetBoundingRectangleCore().IsEmpty;
+        protected override bool IsPasswordCore() => false;
+        protected override bool IsRequiredForFormCore() => false;
+        protected override bool IsContentElementCore() => true;
+        protected override bool IsControlElementCore() => true;
+        protected override void SetFocusCore() => Select();
+        public override object? GetPattern(PatternInterface pattern) => pattern is PatternInterface.SelectionItem or PatternInterface.Invoke ? this : null;
+        public bool IsSelected => lane.Model?.SelectedClips.Contains(id) == true;
+        public IRawElementProviderSimple SelectionContainer => parent.Provider;
+        public void Select() => ChangeSelection(false, false);
+        public void AddToSelection() { if (!IsSelected) ChangeSelection(true, false); }
+        public void RemoveFromSelection() { if (IsSelected) ChangeSelection(true, true); }
+        private void ChangeSelection(bool additive, bool removing)
+        {
+            if (!lane.IsEnabled) throw new ElementNotEnabledException();
+            if (Clip is not { } clip || lane.Model == null || lane.Stem == null) return;
+            lane.Model.SelectClip(lane.Stem, clip, additive);
+            lane.Focus();
+            RaiseAutomationEvent(removing ? AutomationEvents.SelectionItemPatternOnElementRemovedFromSelection
+                : additive ? AutomationEvents.SelectionItemPatternOnElementAddedToSelection : AutomationEvents.SelectionItemPatternOnElementSelected);
+        }
+        public void Invoke() { Select(); lane.ShowMenu(); }
+    }
+
 }

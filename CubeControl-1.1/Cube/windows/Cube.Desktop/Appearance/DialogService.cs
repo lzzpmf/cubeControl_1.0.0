@@ -5,11 +5,21 @@ namespace Cube.Desktop.Appearance;
 
 internal sealed class DialogService(ContentDialogHost host)
 {
-    public Task<ContentDialogResult> ShowAsync(string title, object content, string closeButtonText = "Fechar")
-        => new ContentDialog(host)
+    public async Task<ContentDialogResult> ShowAsync(string title, object content, string closeButtonText = "Fechar")
+    {
+        var previousFocus = System.Windows.Input.Keyboard.FocusedElement;
+        try
         {
-            Title = title,
-            Content = content,
-            CloseButtonText = closeButtonText
-        }.ShowLocalizedAsync();
+            return await new ContentDialog(host)
+            {
+                Title = title,
+                Content = content,
+                CloseButtonText = closeButtonText
+            }.ShowLocalizedAsync();
+        }
+        finally
+        {
+            if (previousFocus is System.Windows.UIElement { IsVisible: true, IsEnabled: true } element) element.Focus();
+        }
+    }
 }

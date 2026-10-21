@@ -49,7 +49,7 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
     private void CardSizeChanged(object sender, SizeChangedEventArgs e)
     {
         bool compact = e.NewSize.Width < 480;
-        ResultTitle.TextWrapping = compact ? TextWrapping.Wrap : TextWrapping.NoWrap;
+        ResultTitle.TextWrapping = TextWrapping.Wrap;
         Grid.SetRow(PreviewDetails, compact ? 1 : 0);
         Grid.SetColumn(PreviewDetails, compact ? 1 : 2);
         Grid.SetColumnSpan(PreviewDetails, compact ? 2 : 1);
@@ -82,7 +82,7 @@ public partial class YouTubeResultCard : UserControl, INotifyPropertyChanged
     private void CardVisibilityChanged(object sender, DependencyPropertyChangedEventArgs e) { if (!IsVisible) Stop(); }
     private void Stop() { if (Video is { } video) Model?.StopYouTubePreview(video.Id); }
     private async void CardMouseEnter(object sender, MouseEventArgs e)
-    { if (e.StylusDevice == null && Window.GetWindow(this)?.IsActive == true && Video is { } video && Model != null) await Model.PreviewYouTube(video); }
+    { if (Model?.PreviewOnHover == true && e.StylusDevice == null && Window.GetWindow(this)?.IsActive == true && Video is { } video && Model != null) await Model.PreviewYouTube(video); }
     private void CardMouseLeave(object sender, MouseEventArgs e) => Stop();
     private async void PreviewClick(object sender, RoutedEventArgs e)
     {

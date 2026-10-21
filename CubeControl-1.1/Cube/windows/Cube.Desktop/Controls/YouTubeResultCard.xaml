@@ -20,15 +20,15 @@
     <ui:SymbolIcon Symbol="{Binding PreviewIcon,ElementName=Root}" FontSize="{DynamicResource CubeIconSizeAction}"/>
    </ui:Button>
    <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
-    <TextBlock x:Name="ResultTitle" Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" MaxHeight="40" TextTrimming="CharacterEllipsis" ToolTip="{Binding Title}"/>
+    <TextBlock x:Name="ResultTitle" Text="{Binding Title}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" LineStackingStrategy="BlockLineHeight" TextTrimming="None" ToolTip="{Binding Title}"/>
     <Grid Margin="0,4,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-     <TextBlock Text="{Binding Channel}" Style="{StaticResource HelpText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Channel}" Margin="0,0,8,0"/>
+     <TextBlock Text="{Binding Channel}" Style="{StaticResource HelpText}" TextWrapping="Wrap" TextTrimming="None" ToolTip="{Binding Channel}" Margin="0,0,8,0"/>
      <TextBlock Grid.Column="1" Text="{Binding DurationLabel}" Style="{StaticResource CaptionText}" Foreground="{DynamicResource Muted}"/>
     </Grid>
    </StackPanel>
-    <Grid x:Name="PreviewDetails" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Height="28" Margin="12,4,12,0" Visibility="{Binding DetailVisibility,ElementName=Root}">
+    <Grid x:Name="PreviewDetails" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" MinHeight="28" Margin="12,4,12,0" Visibility="{Binding DetailVisibility,ElementName=Root}">
      <local:BackingWaveform Visibility="{Binding WaveVisibility,ElementName=Root}" Peaks="{Binding PreviewPeaks,ElementName=Root}" Duration="{Binding PreviewDuration,ElementName=Root}" Position="{Binding PreviewPosition,ElementName=Root,Mode=OneWay}" IsOverview="True" IsHitTestVisible="False" Focusable="False" Cursor="Arrow" Height="28" AutomationProperties.Name="{loc:Translate Text='Forma de onda da prévia de até 30 s'}"/>
-     <TextBlock Text="{loc:Translate Value={Binding StatusText,ElementName=Root}}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Top" Margin="0,2,0,0"
+     <TextBlock Text="{loc:Translate Value={Binding StatusText,ElementName=Root}}" TextWrapping="Wrap" TextTrimming="None" VerticalAlignment="Top" Margin="0,2,0,0"
       ToolTip="{loc:Translate Value={Binding StatusText,ElementName=Root}}" AutomationProperties.LiveSetting="Polite">
       <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource HelpText}"><Setter Property="Background" Value="{DynamicResource CubeInset}"/><Style.Triggers><DataTrigger Binding="{Binding StatusText,ElementName=Root}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsPreviewActive,ElementName=Root}" Value="True"><Setter Property="Opacity" Value="0.85"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
      </TextBlock>

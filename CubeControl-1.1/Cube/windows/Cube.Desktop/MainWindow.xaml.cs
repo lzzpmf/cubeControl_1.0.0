@@ -84,6 +84,14 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         PreviewKeyUp += SuppressStandaloneAltUp;
         Deactivated += (_, _) => standaloneAltPressed = false;
         PreviewKeyDown += BackingKeyDown;
+        PreviewKeyDown += (_, e) =>
+        {
+            if (e.Key != Key.F6) return;
+            if (Navigation.IsKeyboardFocusWithin && Tabs.SelectedContent is UIElement page)
+                page.MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
+            else if (Navigation.SelectedItem is ListBoxItem item) item.Focus();
+            e.Handled = true;
+        };
         Deactivated += (_, _) => { BackingTracks.StopYouTubePreview(); _ = BackingTracks.StopLocalPreview(); };
         Appearance.UiDensity.Initialize();
         InitializeComponent();
@@ -263,31 +271,18 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         standaloneAltPressed = false;
     }
 
-    private int navigationWheelDelta;
-    private bool navigatingByWheel;
-    private void NavigationLeave(object sender, MouseEventArgs e) => navigationWheelDelta = 0;
-    private void NavigationWheel(object sender, MouseWheelEventArgs e)
-    {
-        e.Handled = true;
-        if (!Navigation.IsEnabled || Navigation.SelectedIndex < 0 || Navigation.Items.Count == 0)
-        { navigationWheelDelta = 0; return; }
-        navigationWheelDelta += e.Delta;
-        int steps = navigationWheelDelta / 120;
-        navigationWheelDelta %= 120;
-        if (steps == 0) return;
-        int next = Math.Clamp(Navigation.SelectedIndex - steps, 0, Navigation.Items.Count - 1);
-        if (Navigation.Items[next] is ListBoxItem item && (!item.IsEnabled || item.Visibility != Visibility.Visible))
-        { navigationWheelDelta = 0; return; }
-        navigatingByWheel = true;
-        try { Navigation.SelectedIndex = next; }
-        finally { navigatingByWheel = false; }
-    }
+    private void NavigationWheel(object sender, MouseWheelEventArgs e) => e.Handled = true;
     private void NavigationChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (e.Source == Navigation && !navigatingByWheel) navigationWheelDelta = 0;
-        if (Tabs != null && e.Source == Navigation && Navigation.SelectedIndex >= 0)
+        if (Tabs == null || e.Source != Navigation || Navigation.SelectedIndex < 0) return;
+        int previous = Tabs.SelectedIndex;
+        if (previous == Navigation.SelectedIndex) return;
+        Tabs.SelectedIndex = Navigation.SelectedIndex;
+        if (Tabs.SelectedContent is FrameworkElement page)
         {
-            Tabs.SelectedIndex = Navigation.SelectedIndex;
+            Controls.SurfaceMotion.SetHorizontal(page, true);
+            Controls.SurfaceMotion.SetOffset(page, Navigation.SelectedIndex >= previous ? 12 : -12);
+            Controls.SurfaceMotion.Replay(page);
         }
     }
     internal Action<Appearance.ControlFinish> SelectControlFinish { get; set; } = Appearance.ThemeService.Instance.SelectFinish;
@@ -632,7 +627,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     internal void ShowNotification(UserNotification notification)
     {
         if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(() => ShowNotification(notification)); return; }
-        if (closing) return;
+        if (closing || notification.Appearance == Wpf.Ui.Controls.ControlAppearance.Danger && Model.HasError) return;
         var symbol = notification.Appearance switch
         {
             Wpf.Ui.Controls.ControlAppearance.Danger => Wpf.Ui.Controls.SymbolRegular.ErrorCircle24,
@@ -914,9 +909,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         bool wide = BackingPage.ActualWidth >= 1200;
         BackingSideColumn.Width = new GridLength(visible && wide ? 310 : 0);
         Grid.SetColumn(BackingLibraryLayout, wide ? 1 : 0);
-        Grid.SetRow(BackingLibraryLayout, wide ? 1 : 0);
-        Grid.SetRowSpan(BackingLibraryLayout, wide ? 1 : 2);
-        BackingLibraryLayout.Width = wide ? double.NaN : Math.Min(310, Math.Max(180, BackingPage.ActualWidth));
+        Grid.SetRow(BackingLibraryLayout, 1);
+        Grid.SetRowSpan(BackingLibraryLayout, 1);
+        BackingLibraryLayout.Width = wide ? double.NaN : Math.Min(310, Math.Max(0, BackingPage.ActualWidth));
         BackingLibraryLayout.HorizontalAlignment = wide ? HorizontalAlignment.Stretch : HorizontalAlignment.Right;
     }
     private void BackingSectionClick(object sender, RoutedEventArgs e)

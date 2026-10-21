@@ -21,3 +21,9 @@ The lower mixer shows actual channels and a fixed Master at the right. Gain is i
 Under Local files, Add folder indexes MP3/WAV files. Search combines with All, Loops, One Shots and Vocals. Assign categories in the file context menu; names do not determine categories. Preview pauses the session only when ready and leaves it paused afterward. Click again or choose Stop preview to stop. The insertion button adds audio at the selected track/cursor; dragging chooses the destination and time.
 
 The YouTube tab retains search, preview and download. Use your own or authorized content. Only these features need internet. Local folders and categories are remembered without copying audio into the library. Unavailable files cannot be inserted or previewed.
+
+## Keyboard and compact windows
+
+F6 switches between navigation and content. Use Tab to reach the controls and arrow keys to select timeline clips. Alt+Left/Right moves selected clips by 0.01 seconds; Alt+Shift+Left/Right moves them by 0.1 seconds. Shift+F10 opens clip actions. Screen readers can inspect each clip and its timing separately. Changes participate in undo/redo.
+
+The session toolbar keeps recording, playback and stop visible and places other commands in its overflow menu when space is limited. YouTube playback starts from the preview button by default. Enable Preview on hover to start playback when pointing at a result; the preference is remembered.

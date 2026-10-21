@@ -15,7 +15,13 @@ public partial class MainWindow
     private void BackingGoToStart(object sender, RoutedEventArgs e) => BackingTracks.Position = 0;
     private void BackingUndo(object sender, RoutedEventArgs e) => BackingTracks.UndoEdit();
     private void BackingRedo(object sender, RoutedEventArgs e) => BackingTracks.UndoEdit(true);
-    private void ConfigureBackingTransport(double width, double height) => BackingWorkspace.Height = Math.Max(360, height - 68);
+    private void BackingTransportSizeChanged(object sender, SizeChangedEventArgs e) =>
+        ConfigureBackingTransport(BackingPage.ActualWidth, BackingPage.ActualHeight);
+    private void ConfigureBackingTransport(double width, double height)
+    {
+        if (BackingWorkspace == null || BackingTransportHost == null) return;
+        BackingWorkspace.Height = Math.Max(360, height - BackingTransportHost.ActualHeight);
+    }
     private void SessionTrackWidthChanged(object sender, SizeChangedEventArgs e) => BackingTracks.TrackHeaderWidth = 335;
     private void SessionTrackLayoutUpdated(object? sender, EventArgs e)
     {

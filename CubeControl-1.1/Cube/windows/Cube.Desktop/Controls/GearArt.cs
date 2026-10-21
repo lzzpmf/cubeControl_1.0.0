@@ -40,7 +40,7 @@ public sealed class GearArt : FrameworkElement
         int revision = scrollRevision;
         var animation = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(167))
         { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop };
-        Timeline.SetDesiredFrameRate(animation, 240);
+
         animation.Completed += (_, _) => { if (revision == scrollRevision) StopScroll(); };
         BeginAnimation(ScrollProgressProperty, animation, HandoffBehavior.SnapshotAndReplace);
     }

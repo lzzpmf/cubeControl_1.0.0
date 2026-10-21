@@ -3,6 +3,9 @@
   "Code": "pt-BR",
   "Name": "Português (Brasil)",
   "Strings": {
+    "Controles da sessão": "Controles da sessão",
+    "Duração": "Duração",
+    "Prévia ao passar o mouse": "Prévia ao passar o mouse",
     "Não foi possível localizar áudio do clipe.": "Não foi possível localizar áudio do clipe.",
     "BPM da sessão": "BPM da sessão",
     "Fechar biblioteca": "Fechar biblioteca",

@@ -56,8 +56,7 @@ internal static class PopupMotion
         internal DialogState(ContentDialog dialog) => this.dialog = dialog;
         internal void Open()
         {
-            dialog.ApplyTemplate();
-            if (dialog.Template.FindName("DialogRootGrid", dialog) is FrameworkElement surface)
+            if (dialog.Content is FrameworkElement surface)
                 SurfaceMotion.SetEnabled(surface, true);
         }
     }

@@ -3,6 +3,9 @@
   "Code": "en-US",
   "Name": "English",
   "Strings": {
+    "Controles da sessão": "Session controls",
+    "Duração": "Duration",
+    "Prévia ao passar o mouse": "Preview on hover",
     "Não foi possível localizar áudio do clipe.": "Could not relink the clip audio.",
     "BPM da sessão": "Session BPM",
     "Fechar biblioteca": "Close library",

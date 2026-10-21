@@ -21,3 +21,9 @@ O mixer inferior tem apenas canais reais e Master fixo à direita. Ganho é most
 Em Arquivos locais, Adicionar pasta indexa MP3/WAV. A busca combina com Todos, Loops, One Shots e Vocais. Atribua categorias pelo menu de contexto do arquivo; nomes não definem categorias automaticamente. O botão de prévia reproduz o arquivo; clicar novamente ou usar Parar pré-escuta encerra. A sessão é pausada quando a prévia está pronta e permanece pausada. A seta insere no cursor da pista selecionada; arrastar escolhe pista e tempo.
 
 A aba YouTube mantém busca, pré-escuta e download. Use conteúdo próprio ou autorizado. Internet é necessária apenas para esses recursos. Pastas e categorias locais são lembradas; os áudios não são copiados para a biblioteca. Arquivos indisponíveis não podem ser inseridos ou pré-ouvidos.
+
+## Teclado e janelas compactas
+
+F6 alterna entre navegação e conteúdo. Use Tab para acessar os controles e as setas para selecionar clipes na timeline. Alt+Esquerda/Direita move os clipes selecionados em 0,01 segundo; Alt+Shift+Esquerda/Direita move em 0,1 segundo. Shift+F10 abre as ações do clipe. Leitores de tela podem consultar cada clipe, sua posição e duração separadamente. As alterações participam de desfazer/refazer.
+
+A barra da sessão mantém gravação, reprodução e parada visíveis e leva os demais comandos para seu menu de excedentes quando falta espaço. No YouTube, a reprodução começa pelo botão de prévia por padrão. Ative Prévia ao passar o mouse para iniciar ao apontar para um resultado; essa preferência é lembrada.

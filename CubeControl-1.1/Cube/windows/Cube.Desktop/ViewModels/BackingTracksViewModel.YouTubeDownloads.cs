@@ -8,7 +8,7 @@ namespace Cube.Desktop.ViewModels;
 
 public sealed partial class BackingTracksViewModel
 {
-    private sealed record DownloadSettings(int Version, string Folder, Dictionary<string, string>? Completed = null);
+    private sealed record DownloadSettings(int Version, string Folder, Dictionary<string, string>? Completed = null, bool PreviewOnHover = false);
     private readonly Dictionary<string, string> completedYouTubeDownloads = new(StringComparer.Ordinal);
     public bool IsYouTubeDownloaded(string id) => completedYouTubeDownloads.TryGetValue(id, out string? path) && File.Exists(path);
     private void RememberYouTubeDownload(string id, string path)
@@ -24,7 +24,7 @@ public sealed partial class BackingTracksViewModel
         string temporary = downloadSettingsPath + ".tmp";
         try
         {
-            File.WriteAllText(temporary, JsonSerializer.Serialize(new DownloadSettings(1, folder, completedYouTubeDownloads)));
+            File.WriteAllText(temporary, JsonSerializer.Serialize(new DownloadSettings(1, folder, completedYouTubeDownloads, PreviewOnHover)));
             File.Move(temporary, downloadSettingsPath, overwrite: true);
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
@@ -47,6 +47,7 @@ public sealed partial class BackingTracksViewModel
         try
         {
             var settings = JsonSerializer.Deserialize<DownloadSettings>(File.ReadAllText(downloadSettingsPath));
+            if (settings?.Version == 1) previewOnHover = settings.PreviewOnHover;
             if (settings?.Version == 1 && settings.Completed != null)
                 foreach (var entry in settings.Completed) completedYouTubeDownloads[entry.Key] = entry.Value;
             if (settings?.Version == 1 && !string.IsNullOrWhiteSpace(settings.Folder) && Path.IsPathFullyQualified(settings.Folder))
