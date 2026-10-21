@@ -43,46 +43,19 @@ public sealed partial class EditorViewModel
         return Task.CompletedTask;
     }
 
-    public async Task ReadPhaserAsync()
+    public Task ReadPhaserAsync() => ReadAdvancedPreviewAsync(2, () => phaserStopped, () => CanStartPhaser, async () =>
     {
-        await advancedLifecycle.WaitAsync();
-        try
-        {
-            await WaitForAdvancedEffectOperationAsync();
-            if (HasAdvancedPreview(2) && phaserStopped)
-                await ExecuteAdvancedEffect(2, () => ReconcileAdvancedRecoveryAsync(2));
-            while (Busy) await WaitForAdvancedEffectOperationAsync();
-            if (!CanStartPhaser) { EnsureAdvancedMonitor(2); return; }
-            await ExecuteAdvancedEffect(2, async () =>
-            {
-                await PrepareAdvancedEffectAsync(2);
-                await session!.BeginPhaserPreview(SelectedIndex, KeepPhaserRecovery);
-                Phaser.Load(session.IdentityHex, phaserRecovery!.Target);
-                phaserStopped = false;
-                RecordOperation("Prévia de phaser iniciada na RAM.");
-                Phaser.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
-            });
-            EnsureAdvancedMonitor(2);
-        }
-        finally { advancedLifecycle.Release(); }
-    }
+        await session!.BeginPhaserPreview(SelectedIndex, KeepPhaserRecovery);
+        Phaser.Load(session.IdentityHex, phaserRecovery!.Target);
+        phaserStopped = false;
+        RecordOperation("Prévia de phaser iniciada na RAM.");
+        Phaser.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
+    });
 
-    private async Task MonitorPhaser(CancellationToken stop)
-    {
-        try
-        {
-            while (!stop.IsCancellationRequested && PhaserPreviewActive && !phaserStopped)
-            {
-                await Task.Delay(2000, stop);
-                if (Busy || phaserSendTask != null || session == null || phaserRecovery == null || !IsModulationPreviewAudible(2)) continue;
-                phaserMonitoring = true;
-                try { await CheckPreviewInBackground(2, () => session.CheckPhaserPreview(phaserRecovery)); }
-                finally { phaserMonitoring = false; RefreshPresentation(); }
-            }
-        }
-        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
-        catch (Exception ex) { FaultAdvancedPreview(ex, 2); }
-    }
+    private Task MonitorPhaser(CancellationToken stop) => MonitorAdvancedPreviewAsync(2, stop,
+        () => PhaserPreviewActive && !phaserStopped,
+        () => phaserSendTask == null && phaserRecovery != null && IsModulationPreviewAudible(2),
+        value => phaserMonitoring = value, () => session!.CheckPhaserPreview(phaserRecovery!));
 
     private void PhaserEdited()
     {
@@ -163,16 +136,17 @@ public sealed partial class EditorViewModel
                 return;
             }
             phaserStopped = true;
-            try
-            {
-                await session.RestorePhaserPreview(phaserRecovery);
-                Phaser.Load(phaserRecovery.Identity, PhaserParameters.Read(phaserRecovery.OriginalDsp));
-                phaserRecovery = null; phaserStopped = false;
-                Phaser.Message = "Phaser original restaurado e conferido. Edição local disponível.";
-                RecordOperation("Prévia de phaser encerrada; parâmetros anteriores restaurados.");
-            }
-            catch { Phaser.Message = "Restauração não confirmada. O snapshot do phaser continua em memória nesta sessão."; throw; }
-            finally { Refresh(); }
+            await RestoreAdvancedSnapshotAsync(
+                () => session.RestorePhaserPreview(phaserRecovery),
+                () =>
+                {
+                    Phaser.Load(phaserRecovery.Identity, PhaserParameters.Read(phaserRecovery.OriginalDsp));
+                    phaserRecovery = null; phaserStopped = false;
+                },
+                value => Phaser.Message = value,
+                "Phaser original restaurado e conferido. Edição local disponível.",
+                "Prévia de phaser encerrada; parâmetros anteriores restaurados.",
+                "Restauração não confirmada. O snapshot do phaser continua em memória nesta sessão.");
         }
         finally { retiringAdvanced[2] = false; }
     }

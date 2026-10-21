@@ -80,11 +80,11 @@ public sealed class YouTubeAudioService(string? toolsDirectory = null) : IYouTub
     }
     private static async Task<string> Run(string executable, IEnumerable<string> arguments, CancellationToken cancellation, Action<string>? output = null)
     {
-        var info = new ProcessStartInfo(executable) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true, StandardOutputEncoding = System.Text.Encoding.UTF8, StandardErrorEncoding = System.Text.Encoding.UTF8 };
-        foreach (string argument in arguments) info.ArgumentList.Add(argument);
+        var info = MediaProcess.CreateStartInfo(executable, arguments);
+        info.StandardOutputEncoding = info.StandardErrorEncoding = System.Text.Encoding.UTF8;
         using var process = new Process { StartInfo = info };
         cancellation.ThrowIfCancellationRequested(); process.Start();
-        using var registration = cancellation.Register(() => { try { if (!process.HasExited) process.Kill(true); } catch (InvalidOperationException) { } catch (System.ComponentModel.Win32Exception) { } });
+        using var registration = cancellation.Register(() => MediaProcess.Kill(process));
         var stdout = new System.Text.StringBuilder();
         async Task Read(StreamReader reader, bool collect)
         {
@@ -95,7 +95,11 @@ public sealed class YouTubeAudioService(string? toolsDirectory = null) : IYouTub
             }
         }
         try { await Task.WhenAll(Read(process.StandardOutput, true), Read(process.StandardError, false), process.WaitForExitAsync(cancellation)); }
-        finally { if (!process.HasExited) { process.Kill(true); await process.WaitForExitAsync(CancellationToken.None); } }
+        finally
+        {
+            MediaProcess.Kill(process);
+            await process.WaitForExitAsync(CancellationToken.None);
+        }
         cancellation.ThrowIfCancellationRequested();
         if (process.ExitCode != 0) throw new IOException("YouTube indisponível ou vídeo restrito. Verifique a internet e tente novamente.");
         return stdout.ToString();

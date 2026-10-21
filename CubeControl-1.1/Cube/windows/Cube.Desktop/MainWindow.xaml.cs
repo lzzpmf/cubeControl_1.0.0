@@ -654,6 +654,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
     private void RefreshThemeColors() => Model.RefreshThemeColors();
+    private Appearance.DialogService Dialogs => new(DialogHost);
     private async void ConnectionClick(object sender, RoutedEventArgs e)
     {
         if (sender is MenuItem)
@@ -661,18 +662,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             MoreOptionsButton.ContextMenu.IsOpen = false;
             MoreOptionsButton.Focus();
         }
-        var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = "Conexão USB", Content = new Views.ConnectionDetails { DataContext = Model }, CloseButtonText = "Fechar" };
-        await dialog.ShowLocalizedAsync();
+        await Dialogs.ShowAsync("Conexão USB", new Views.ConnectionDetails { DataContext = Model });
     }
     private async void UserManualClick(object sender, RoutedEventArgs e)
     {
         if (Documentation.ManualLauncher.TryOpen(AssetPaths.Documents, LanguageService.Instance.Language,
             Appearance.ThemeService.Instance.IsLight, out string error)) return;
-        var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost)
-        {
-            Title = "Manual do cubeControl", Content = error, CloseButtonText = "Fechar"
-        };
-        await dialog.ShowLocalizedAsync();
+        await Dialogs.ShowAsync("Manual do cubeControl", error);
     }
     private Views.DocumentationWindow? documentationWindow;
     private void DocumentationClick(object sender, RoutedEventArgs e)

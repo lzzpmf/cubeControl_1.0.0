@@ -7,16 +7,16 @@
   <Grid Margin="0" MaxWidth="900" HorizontalAlignment="Stretch">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Ler efeito atual'}" ToolTip="{loc:Translate Text='Lê os parâmetros do efeito no pedal para iniciar a edição em RAM.'}" Click="ReadClick" IsEnabled="{Binding CanOperate}" Margin="0,0,8,8"/>
-    <ui:Button Content="{loc:Translate Text='Ouvir phaser'}" Click="ListenClick" IsEnabled="{Binding CanListenPhaser}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconPlay24}"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Restaurar phaser'}" Click="RestoreClick" IsEnabled="{Binding CanRestorePhaser}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconArrowUndo24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Ler efeito atual'}" ToolTip="{loc:Translate Text='Lê os parâmetros do efeito no pedal para iniciar a edição em RAM.'}" Command="{Binding PhaserCommands.Read}" IsEnabled="{Binding CanOperate}" Margin="0,0,8,8"/>
+    <ui:Button Content="{loc:Translate Text='Ouvir phaser'}" Command="{Binding PhaserCommands.Listen}" IsEnabled="{Binding CanListenPhaser}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconPlay24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Restaurar phaser'}" Command="{Binding PhaserCommands.Restore}" IsEnabled="{Binding CanRestorePhaser}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconArrowUndo24}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Grid.Row="2" Text="{loc:Translate Value={Binding PhaserGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
    <graph:EffectGraphEditor Grid.Row="3" EffectKind="Phaser" Accent="{Binding DataContext.Stages[2].Color,RelativeSource={RelativeSource AncestorType=UserControl}}" DataContext="{Binding Phaser}" IsEnabled="{Binding DataContext.CanEditPhaser,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
    <WrapPanel Grid.Row="4" Margin="0,8,0,0" IsEnabled="{Binding CanUsePhaserFiles}">
-    <ui:Button Content="{loc:Translate Text='Importar phaser'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconFolderOpen24}"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Exportar phaser'}" Click="ExportClick" IsEnabled="{Binding Phaser.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconSave24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Importar phaser'}" Command="{Binding PhaserCommands.Import}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconFolderOpen24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Exportar phaser'}" Command="{Binding PhaserCommands.Export}" IsEnabled="{Binding Phaser.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconSave24}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Grid.Row="5" Text="{loc:Translate Value={Binding Phaser.Message}}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </Grid>

@@ -44,46 +44,19 @@ public sealed partial class EditorViewModel
         return Task.CompletedTask;
     }
 
-    public async Task ReadReverbAsync()
+    public Task ReadReverbAsync() => ReadAdvancedPreviewAsync(4, () => reverbStopped, () => CanStartReverb, async () =>
     {
-        await advancedLifecycle.WaitAsync();
-        try
-        {
-            await WaitForAdvancedEffectOperationAsync();
-            if (HasAdvancedPreview(4) && reverbStopped)
-                await ExecuteAdvancedEffect(4, () => ReconcileAdvancedRecoveryAsync(4));
-            while (Busy) await WaitForAdvancedEffectOperationAsync();
-            if (!CanStartReverb) { EnsureAdvancedMonitor(4); return; }
-            await ExecuteAdvancedEffect(4, async () =>
-            {
-                await PrepareAdvancedEffectAsync(4);
-                await session!.BeginReverbPreview(SelectedIndex, KeepReverbRecovery);
-                Reverb.Load(session.IdentityHex, reverbRecovery!.Target);
-                reverbStopped = false;
-                RecordOperation("Prévia de reverb iniciada na RAM.");
-                Reverb.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
-            });
-            EnsureAdvancedMonitor(4);
-        }
-        finally { advancedLifecycle.Release(); }
-    }
+        await session!.BeginReverbPreview(SelectedIndex, KeepReverbRecovery);
+        Reverb.Load(session.IdentityHex, reverbRecovery!.Target);
+        reverbStopped = false;
+        RecordOperation("Prévia de reverb iniciada na RAM.");
+        Reverb.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
+    });
 
-    private async Task MonitorReverb(CancellationToken stop)
-    {
-        try
-        {
-            while (!stop.IsCancellationRequested && ReverbPreviewActive && !reverbStopped)
-            {
-                await Task.Delay(2000, stop);
-                if (Busy || reverbSendTask != null || session == null || reverbRecovery == null || !IsAdvancedEffectAudible(4)) continue;
-                reverbMonitoring = true;
-                try { await CheckPreviewInBackground(4, () => session.CheckReverbPreview(reverbRecovery)); }
-                finally { reverbMonitoring = false; RefreshPresentation(); }
-            }
-        }
-        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
-        catch (Exception ex) { FaultAdvancedPreview(ex, 4); }
-    }
+    private Task MonitorReverb(CancellationToken stop) => MonitorAdvancedPreviewAsync(4, stop,
+        () => ReverbPreviewActive && !reverbStopped,
+        () => reverbSendTask == null && reverbRecovery != null && IsAdvancedEffectAudible(4),
+        value => reverbMonitoring = value, () => session!.CheckReverbPreview(reverbRecovery!));
 
     private void ReverbEdited()
     {
@@ -164,16 +137,17 @@ public sealed partial class EditorViewModel
                 return;
             }
             reverbStopped = true;
-            try
-            {
-                await session.RestoreReverbPreview(reverbRecovery);
-                Reverb.Load(reverbRecovery.Identity, ReverbParameters.Read(reverbRecovery.OriginalDsp));
-                reverbRecovery = null; reverbStopped = false;
-                Reverb.Message = "Reverb original restaurado e conferido. Edição local disponível.";
-                RecordOperation("Prévia de reverb encerrada; parâmetros anteriores restaurados.");
-            }
-            catch { Reverb.Message = "Restauração não confirmada. O snapshot do reverb continua em memória nesta sessão."; throw; }
-            finally { Refresh(); }
+            await RestoreAdvancedSnapshotAsync(
+                () => session.RestoreReverbPreview(reverbRecovery),
+                () =>
+                {
+                    Reverb.Load(reverbRecovery.Identity, ReverbParameters.Read(reverbRecovery.OriginalDsp));
+                    reverbRecovery = null; reverbStopped = false;
+                },
+                value => Reverb.Message = value,
+                "Reverb original restaurado e conferido. Edição local disponível.",
+                "Prévia de reverb encerrada; parâmetros anteriores restaurados.",
+                "Restauração não confirmada. O snapshot do reverb continua em memória nesta sessão.");
         }
         finally { retiringAdvanced[4] = false; }
     }

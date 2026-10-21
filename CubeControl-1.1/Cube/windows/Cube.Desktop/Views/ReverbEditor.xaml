@@ -7,15 +7,15 @@
   <Grid Margin="0" MaxWidth="900" HorizontalAlignment="Stretch">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Ler efeito atual'}" ToolTip="{loc:Translate Text='Lê os parâmetros do efeito no pedal para iniciar a edição em RAM.'}" Click="ReadClick" IsEnabled="{Binding CanOperate}" Margin="0,0,8,8"/>
-    <ui:Button Content="{loc:Translate Text='Restaurar reverb'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreReverb}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconArrowUndo24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Ler efeito atual'}" ToolTip="{loc:Translate Text='Lê os parâmetros do efeito no pedal para iniciar a edição em RAM.'}" Command="{Binding ReverbCommands.Read}" IsEnabled="{Binding CanOperate}" Margin="0,0,8,8"/>
+    <ui:Button Content="{loc:Translate Text='Restaurar reverb'}" Command="{Binding ReverbCommands.Restore}" IsEnabled="{Binding CanRestoreReverb}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconArrowUndo24}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Grid.Row="2" Text="{loc:Translate Value={Binding ReverbGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
    <graph:EffectGraphEditor Grid.Row="3" EffectKind="Reverb" Accent="{Binding DataContext.Stages[4].Color,RelativeSource={RelativeSource AncestorType=UserControl}}" DataContext="{Binding Reverb}" IsEnabled="{Binding DataContext.CanEditReverb,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
    <WrapPanel Grid.Row="4" Margin="0,8,0,0" IsEnabled="{Binding CanUseReverbFiles}">
-    <ui:Button Content="{loc:Translate Text='Importar reverb'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconFolderOpen24}"/></ui:Button.Icon></ui:Button>
-    <ui:Button Content="{loc:Translate Text='Exportar reverb'}" Click="ExportClick" IsEnabled="{Binding Reverb.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconSave24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Importar reverb'}" Command="{Binding ReverbCommands.Import}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconFolderOpen24}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Exportar reverb'}" Command="{Binding ReverbCommands.Export}" IsEnabled="{Binding Reverb.Loaded}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconSave24}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Grid.Row="5" Text="{loc:Translate Value={Binding Reverb.Message}}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>
   </Grid>

@@ -44,46 +44,19 @@ public sealed partial class EditorViewModel
         return Task.CompletedTask;
     }
 
-    public async Task ReadDelayAsync()
+    public Task ReadDelayAsync() => ReadAdvancedPreviewAsync(3, () => delayStopped, () => CanStartDelay, async () =>
     {
-        await advancedLifecycle.WaitAsync();
-        try
-        {
-            await WaitForAdvancedEffectOperationAsync();
-            if (HasAdvancedPreview(3) && delayStopped)
-                await ExecuteAdvancedEffect(3, () => ReconcileAdvancedRecoveryAsync(3));
-            while (Busy) await WaitForAdvancedEffectOperationAsync();
-            if (!CanStartDelay) { EnsureAdvancedMonitor(3); return; }
-            await ExecuteAdvancedEffect(3, async () =>
-            {
-                await PrepareAdvancedEffectAsync(3);
-                await session!.BeginDelayPreview(SelectedIndex, KeepDelayRecovery);
-                Delay.Load(session.IdentityHex, delayRecovery!.Target);
-                delayStopped = false;
-                RecordOperation("Prévia de delay iniciada na RAM.");
-                Delay.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
-            });
-            EnsureAdvancedMonitor(3);
-        }
-        finally { advancedLifecycle.Release(); }
-    }
+        await session!.BeginDelayPreview(SelectedIndex, KeepDelayRecovery);
+        Delay.Load(session.IdentityHex, delayRecovery!.Target);
+        delayStopped = false;
+        RecordOperation("Prévia de delay iniciada na RAM.");
+        Delay.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
+    });
 
-    private async Task MonitorDelay(CancellationToken stop)
-    {
-        try
-        {
-            while (!stop.IsCancellationRequested && DelayPreviewActive && !delayStopped)
-            {
-                await Task.Delay(2000, stop);
-                if (Busy || delaySendTask != null || session == null || delayRecovery == null || !IsAdvancedEffectAudible(3)) continue;
-                delayMonitoring = true;
-                try { await CheckPreviewInBackground(3, () => session.CheckDelayPreview(delayRecovery)); }
-                finally { delayMonitoring = false; RefreshPresentation(); }
-            }
-        }
-        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
-        catch (Exception ex) { FaultAdvancedPreview(ex, 3); }
-    }
+    private Task MonitorDelay(CancellationToken stop) => MonitorAdvancedPreviewAsync(3, stop,
+        () => DelayPreviewActive && !delayStopped,
+        () => delaySendTask == null && delayRecovery != null && IsAdvancedEffectAudible(3),
+        value => delayMonitoring = value, () => session!.CheckDelayPreview(delayRecovery!));
 
     private void DelayEdited()
     {
@@ -164,16 +137,17 @@ public sealed partial class EditorViewModel
                 return;
             }
             delayStopped = true;
-            try
-            {
-                await session.RestoreDelayPreview(delayRecovery);
-                Delay.Load(delayRecovery.Identity, DelayParameters.Read(delayRecovery.OriginalDsp));
-                delayRecovery = null; delayStopped = false;
-                Delay.Message = "Delay original restaurado e conferido. Edição local disponível.";
-                RecordOperation("Prévia de delay encerrada; parâmetros anteriores restaurados.");
-            }
-            catch { Delay.Message = "Restauração não confirmada. O snapshot do delay continua em memória nesta sessão."; throw; }
-            finally { Refresh(); }
+            await RestoreAdvancedSnapshotAsync(
+                () => session.RestoreDelayPreview(delayRecovery),
+                () =>
+                {
+                    Delay.Load(delayRecovery.Identity, DelayParameters.Read(delayRecovery.OriginalDsp));
+                    delayRecovery = null; delayStopped = false;
+                },
+                value => Delay.Message = value,
+                "Delay original restaurado e conferido. Edição local disponível.",
+                "Prévia de delay encerrada; parâmetros anteriores restaurados.",
+                "Restauração não confirmada. O snapshot do delay continua em memória nesta sessão.");
         }
         finally { retiringAdvanced[3] = false; }
     }

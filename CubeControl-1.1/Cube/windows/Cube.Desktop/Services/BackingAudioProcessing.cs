@@ -1,55 +1,7 @@
 using System.IO;
-using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
 using NAudio.Wave;
 
 namespace Cube.Desktop.Services;
-
-internal sealed class BackingDspHandle : SafeHandleZeroOrMinusOneIsInvalid
-{
-    private BackingDspHandle() : base(true) { }
-    protected override bool ReleaseHandle() { Native.Destroy(handle); return true; }
-    internal static class Native
-    {
-        private const string Library = "CubeBackingDsp";
-        [DllImport(Library, EntryPoint = "backing_create", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern BackingDspHandle Create(int channels, int sampleRate);
-        [DllImport(Library, EntryPoint = "backing_create_offline", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern BackingDspHandle CreateOffline(int channels, int sampleRate);
-        [DllImport(Library, EntryPoint = "backing_destroy", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void Destroy(IntPtr handle);
-        [DllImport(Library, EntryPoint = "backing_prepare", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Prepare(BackingDspHandle handle, double speed, double semitones);
-        [DllImport(Library, EntryPoint = "backing_seek", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Seek(BackingDspHandle handle, float[] input, int frames);
-        [DllImport(Library, EntryPoint = "backing_process", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int Process(BackingDspHandle handle, float[] input, int inputFrames, [Out] float[] output, int outputFrames);
-    }
-}
-
-internal sealed class BackingDecoder : IDisposable
-{
-    private readonly WaveStream reader;
-    private readonly ISampleProvider samples;
-    public WaveFormat Format => samples.WaveFormat;
-    public double Duration => reader.TotalTime.TotalSeconds;
-    public BackingDecoder(string path)
-    {
-        if (Path.GetExtension(path).Equals(".wav", StringComparison.OrdinalIgnoreCase))
-        {
-            var wav = new WaveFileReader(path);
-            if (wav.WaveFormat.Encoding is WaveFormatEncoding.Pcm or WaveFormatEncoding.IeeeFloat or WaveFormatEncoding.Extensible) reader = wav;
-            else { wav.Dispose(); reader = new MediaFoundationReader(path, new() { RequestFloatOutput = true }); }
-        }
-        else reader = new MediaFoundationReader(path, new() { RequestFloatOutput = true });
-        try { samples = reader.ToSampleProvider(); }
-        catch { reader.Dispose(); throw; }
-    }
-    public void Seek(long frame) => reader.Position = Math.Clamp(frame * reader.WaveFormat.BlockAlign, 0, reader.Length);
-    public int Read(float[] buffer, int offset, int count) => samples.Read(buffer.AsSpan(offset, count));
-    public int Read(float[] buffer) => samples.Read(buffer);
-    public void Dispose() => reader.Dispose();
-}
 
 internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
 {
@@ -167,117 +119,9 @@ internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
     }
     public void Dispose() { dsp?.Dispose(); decoder.Dispose(); }
 
-    public static Task<(double Duration, float[] Peaks)> Analyze(string path, CancellationToken cancellation, int maximumBins = 8 * 1024 * 1024) => Task.Run(() =>
-    {
-        using var source = new BackingDecoder(path);
-        int channels = source.Format.Channels, rate = source.Format.SampleRate;
-        // A single envelope is capped as well as the aggregate cache.
-        double duration = source.Duration;
-        double totalFrames = Math.Max(1, duration * rate);
-        int bins = (int)Math.Clamp(Math.Ceiling(duration * 100), 1, maximumBins);
-        var peaks = new float[bins]; var block = new float[4096 * channels];
-        long frame = 0;
-        int read;
-        while ((read = source.Read(block)) > 0)
-        {
-            cancellation.ThrowIfCancellationRequested();
-            for (int i = 0; i < read; i += channels, frame++)
-            {
-                float peak = 0;
-                for (int c = 0; c < channels; c++) peak = Math.Max(peak, Math.Abs(block[i + c]));
-                int bin = (int)Math.Min(bins - 1, frame * bins / totalFrames);
-                peaks[bin] = Math.Max(peaks[bin], float.IsFinite(peak) ? peak : 0);
-            }
-        }
-        return (frame / (double)rate, peaks);
-    }, cancellation);
+    public static Task<(double Duration, float[] Peaks)> Analyze(string path, CancellationToken cancellation, int maximumBins = 8 * 1024 * 1024)
+        => BackingAudioAnalysis.Analyze(path, cancellation, maximumBins);
 
-    public static Task Export(string source, string destination, double start, double end, double speed, double pitch, bool processed, CancellationToken cancellation) => Task.Run(() =>
-    {
-        string temporary = Path.Combine(Path.GetDirectoryName(destination)!, "." + Path.GetFileName(destination) + "." + Guid.NewGuid().ToString("N") + ".tmp");
-        try
-        {
-            using (var audio = new BackingAudioProcessing(source, start, end, processed ? speed : 1, processed ? pitch : 0, offline: true))
-            {
-                ISampleProvider provider = processed ? new BackingPeakGuard(audio) : audio;
-                using var writer = new WaveFileWriter(temporary, new WaveFormat(audio.WaveFormat.SampleRate, 16, audio.WaveFormat.Channels));
-                var samples = new float[4096 * audio.WaveFormat.Channels]; var pcm = new byte[samples.Length * 2];
-                var random = new Random(0x43554245);
-                int read;
-                while ((read = provider.Read(samples)) > 0)
-                {
-                    cancellation.ThrowIfCancellationRequested();
-                    for (int i = 0; i < read; i++)
-                    {
-                        double dither = random.NextDouble() - random.NextDouble();
-                        short value = (short)Math.Clamp(Math.Round(samples[i] * 32768 + dither), short.MinValue, short.MaxValue);
-                        pcm[2 * i] = (byte)value; pcm[2 * i + 1] = (byte)(value >> 8);
-                    }
-                    writer.Write(pcm, 0, read * 2);
-                }
-            }
-            cancellation.ThrowIfCancellationRequested();
-            File.Move(temporary, destination, true);
-        }
-        finally { if (File.Exists(temporary)) File.Delete(temporary); }
-    }, cancellation);
-}
-
-internal sealed class BackingPeakGuard : ISampleProvider
-{
-    private readonly ISampleProvider source;
-    private readonly float[] ring, block;
-    private readonly int channels, window;
-    private readonly long[] peakFrames;
-    private readonly float[] peakValues;
-    private int peakHead, peakCount;
-    private long inserted, removed;
-    private int blockCount, blockOffset;
-    private float gain = 1;
-    private readonly float recovery;
-    private bool ended;
-    public WaveFormat WaveFormat => source.WaveFormat;
-    public BackingPeakGuard(ISampleProvider source)
-    {
-        this.source = source; channels = WaveFormat.Channels;
-        window = Math.Max(1, (int)Math.Ceiling(WaveFormat.SampleRate * .005));
-        ring = new float[(window + 1) * channels]; block = new float[1024 * channels];
-        peakFrames = new long[window + 2]; peakValues = new float[window + 2];
-        recovery = (float)(1 - Math.Exp(-1 / (.05 * WaveFormat.SampleRate)));
-    }
-    private bool Push()
-    {
-        if (ended) return false;
-        if (blockOffset == blockCount) { blockCount = source.Read(block); blockOffset = 0; }
-        if (blockCount == 0) { ended = true; return false; }
-        int index = (int)(inserted % (window + 1)) * channels; float peak = 0;
-        for (int c = 0; c < channels; c++)
-        {
-            float value = block[blockOffset++];
-            if (!float.IsFinite(value)) throw new InvalidDataException("Non-finite DSP sample.");
-            ring[index + c] = value; peak = Math.Max(peak, Math.Abs(value));
-        }
-        while (peakCount > 0 && peakFrames[peakHead] < removed) { peakHead = (peakHead + 1) % peakFrames.Length; peakCount--; }
-        while (peakCount > 0 && peakValues[(peakHead + peakCount - 1) % peakFrames.Length] <= peak) peakCount--;
-        int tail = (peakHead + peakCount++) % peakFrames.Length;
-        peakFrames[tail] = inserted++; peakValues[tail] = peak; return true;
-    }
-    public int Read(float[] buffer, int offset, int count)
-        => Read(buffer.AsSpan(offset, count));
-    public int Read(Span<float> buffer)
-    {
-        int done = 0, count = buffer.Length - buffer.Length % channels;
-        while (done < count)
-        {
-            while (inserted - removed <= window && Push()) { }
-            if (inserted == removed) break;
-            while (peakCount > 0 && peakFrames[peakHead] < removed) { peakHead = (peakHead + 1) % peakFrames.Length; peakCount--; }
-            float peak = peakCount > 0 ? peakValues[peakHead] : 0;
-            float target = peak > 1 ? 1 / peak : 1;
-            gain = Math.Min(target, gain + (1 - gain) * recovery);
-            int index = (int)(removed++ % (window + 1)) * channels;
-            for (int c = 0; c < channels; c++) buffer[done++] = ring[index + c] * gain;
-        }
-        return done;
-    }
+    public static Task Export(string source, string destination, double start, double end, double speed, double pitch, bool processed, CancellationToken cancellation)
+        => BackingAudioExporter.Export(source, destination, start, end, speed, pitch, processed, cancellation);
 }

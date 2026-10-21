@@ -80,13 +80,11 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                 args.AddRange(["-headers", value]);
             }
             args.AddRange(["-i", url, "-t", "30", "-vn", "-ac", "2", "-ar", "44100", "-f", "s16le", "pipe:1"]);
-            var info = new ProcessStartInfo(Path.Combine(tools, "ffmpeg.exe"))
-            { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-            foreach (string arg in args) info.ArgumentList.Add(arg);
+            var info = MediaProcess.CreateStartInfo(Path.Combine(tools, "ffmpeg.exe"), args);
             using var process = new Process { StartInfo = info };
             token.ThrowIfCancellationRequested();
             process.Start();
-            using var registration = token.Register(() => Kill(process));
+            using var registration = token.Register(() => MediaProcess.Kill(process));
             var errors = process.StandardError.ReadToEndAsync();
             try
             {
@@ -100,6 +98,17 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                 output.PlaybackStopped += (_, e) => stopped.TrySetResult(e.Exception);
                 byte[] block = new byte[8192];
                 bool playing = false;
+                async Task StartPlayback()
+                {
+                    token.ThrowIfCancellationRequested();
+                    await beforeStart(token).WaitAsync(token);
+                    token.ThrowIfCancellationRequested();
+                    output.Play();
+                    playing = true;
+                    preparation.CancelAfter(TimeSpan.FromSeconds(35));
+                    Timing?.Invoke("output-start", decodeTime.Elapsed.TotalMilliseconds);
+                    started();
+                }
                 long total = 0;
                 var peaks = new YouTubePreviewPeaks();
                 double duration = video.Duration > 0 ? Math.Min(30, video.Duration) : 30;
@@ -131,15 +140,7 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                         if (total == 0) Timing?.Invoke("first-pcm", decodeTime.Elapsed.TotalMilliseconds);
                         buffer.AddSamples(block.AsSpan(0, count)); Interlocked.Add(ref total, count);
                         if (!playing && buffer.BufferedDuration.TotalMilliseconds >= 200)
-                        {
-                            token.ThrowIfCancellationRequested();
-                            await beforeStart(token).WaitAsync(token);
-                            token.ThrowIfCancellationRequested();
-                            output.Play(); playing = true;
-                            preparation.CancelAfter(TimeSpan.FromSeconds(35));
-                            Timing?.Invoke("output-start", decodeTime.Elapsed.TotalMilliseconds);
-                            started();
-                        }
+                            await StartPlayback();
                         peaks.Append(block.AsSpan(0, count));
                     }
                     await process.WaitForExitAsync(token);
@@ -152,12 +153,7 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
                         throw new IOException("Preview decoding failed");
                     }
                     if (!playing)
-                    {
-                        await beforeStart(token).WaitAsync(token);
-                        token.ThrowIfCancellationRequested(); output.Play();
-                        Timing?.Invoke("output-start", decodeTime.Elapsed.TotalMilliseconds); started();
-                        preparation.CancelAfter(TimeSpan.FromSeconds(35));
-                    }
+                        await StartPlayback();
                     while (buffer.BufferedBytes > 0)
                     {
                         if (stopped.Task.IsCompleted) throw await stopped.Task ?? new IOException("Preview output stopped");
@@ -174,20 +170,13 @@ internal sealed class YouTubePreviewService(string? toolsDirectory = null) : IYo
             }
             finally
             {
-                Kill(process);
+                MediaProcess.Kill(process);
                 await process.WaitForExitAsync(CancellationToken.None);
                 await errors;
             }
         }
         catch (OperationCanceledException) when (!cancellation.IsCancellationRequested)
         { throw new TimeoutException("Preview preparation or playback timed out"); }
-    }
-
-    private static void Kill(Process process)
-    {
-        try { if (!process.HasExited) process.Kill(true); }
-        catch (InvalidOperationException) { }
-        catch (System.ComponentModel.Win32Exception) { }
     }
 
     // Read volume on the audio callback, even while the network decoder is stalled.

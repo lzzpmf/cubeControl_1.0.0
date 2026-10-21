@@ -44,46 +44,19 @@ public sealed partial class EditorViewModel
         return Task.CompletedTask;
     }
 
-    public async Task ReadChorusAsync()
+    public Task ReadChorusAsync() => ReadAdvancedPreviewAsync(1, () => chorusStopped, () => CanStartChorus, async () =>
     {
-        await advancedLifecycle.WaitAsync();
-        try
-        {
-            await WaitForAdvancedEffectOperationAsync();
-            if (HasAdvancedPreview(1) && chorusStopped)
-                await ExecuteAdvancedEffect(1, () => ReconcileAdvancedRecoveryAsync(1));
-            while (Busy) await WaitForAdvancedEffectOperationAsync();
-            if (!CanStartChorus) { EnsureAdvancedMonitor(1); return; }
-            await ExecuteAdvancedEffect(1, async () =>
-            {
-                await PrepareAdvancedEffectAsync(1);
-                await session!.BeginChorusPreview(SelectedIndex, KeepChorusRecovery);
-                Chorus.Load(session.IdentityHex, chorusRecovery!.Target);
-                chorusStopped = false;
-                RecordOperation("Prévia de chorus iniciada na RAM.");
-                Chorus.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
-            });
-            EnsureAdvancedMonitor(1);
-        }
-        finally { advancedLifecycle.Release(); }
-    }
+        await session!.BeginChorusPreview(SelectedIndex, KeepChorusRecovery);
+        Chorus.Load(session.IdentityHex, chorusRecovery!.Target);
+        chorusStopped = false;
+        RecordOperation("Prévia de chorus iniciada na RAM.");
+        Chorus.Message = "Edição em RAM iniciada · ajustes não salvos no pedal.";
+    });
 
-    private async Task MonitorChorus(CancellationToken stop)
-    {
-        try
-        {
-            while (!stop.IsCancellationRequested && ChorusPreviewActive && !chorusStopped)
-            {
-                await Task.Delay(2000, stop);
-                if (Busy || chorusSendTask != null || session == null || chorusRecovery == null || !IsModulationPreviewAudible(1)) continue;
-                chorusMonitoring = true;
-                try { await CheckPreviewInBackground(1, () => session.CheckChorusPreview(chorusRecovery)); }
-                finally { chorusMonitoring = false; RefreshPresentation(); }
-            }
-        }
-        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
-        catch (Exception ex) { FaultAdvancedPreview(ex, 1); }
-    }
+    private Task MonitorChorus(CancellationToken stop) => MonitorAdvancedPreviewAsync(1, stop,
+        () => ChorusPreviewActive && !chorusStopped,
+        () => chorusSendTask == null && chorusRecovery != null && IsModulationPreviewAudible(1),
+        value => chorusMonitoring = value, () => session!.CheckChorusPreview(chorusRecovery!));
 
     private void ChorusEdited()
     {
@@ -164,16 +137,17 @@ public sealed partial class EditorViewModel
                 return;
             }
             chorusStopped = true;
-            try
-            {
-                await session.RestoreChorusPreview(chorusRecovery);
-                Chorus.Load(chorusRecovery.Identity, ChorusParameters.Read(chorusRecovery.OriginalDsp));
-                chorusRecovery = null; chorusStopped = false;
-                Chorus.Message = "Chorus original restaurado e conferido. Edição local disponível.";
-                RecordOperation("Prévia de chorus encerrada; parâmetros anteriores restaurados.");
-            }
-            catch { Chorus.Message = "Restauração não confirmada. O snapshot do chorus continua em memória nesta sessão."; throw; }
-            finally { Refresh(); }
+            await RestoreAdvancedSnapshotAsync(
+                () => session.RestoreChorusPreview(chorusRecovery),
+                () =>
+                {
+                    Chorus.Load(chorusRecovery.Identity, ChorusParameters.Read(chorusRecovery.OriginalDsp));
+                    chorusRecovery = null; chorusStopped = false;
+                },
+                value => Chorus.Message = value,
+                "Chorus original restaurado e conferido. Edição local disponível.",
+                "Prévia de chorus encerrada; parâmetros anteriores restaurados.",
+                "Restauração não confirmada. O snapshot do chorus continua em memória nesta sessão.");
         }
         finally { retiringAdvanced[1] = false; }
     }
