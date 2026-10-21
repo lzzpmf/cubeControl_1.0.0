@@ -43,10 +43,15 @@ internal static class GearImagePickerTests
             var collection = EquipmentImageEntry.Discover(equipmentRoot, alternativesRoot);
             Check(collection.Count(i => i.Id.StartsWith("Catalog/Cabeçotes/", StringComparison.Ordinal)) == 64, "All 64 archived heads are packaged and discoverable");
             Check(collection.Count(i => i.Id.StartsWith("Catalog/Racks/", StringComparison.Ordinal)) == 32, "All 32 archived racks are packaged and discoverable");
-            Check(collection.Count(i => i.Id.StartsWith("Equipment/Cabinets/", StringComparison.Ordinal)) == 35, "All 35 cabinet images including subfolders are discoverable");
+            string sourceAssets = Path.GetFullPath("CubeControl-1.1/Cube/windows/Cube.Desktop/Assets");
+            string sourceEquipment = Path.Combine(sourceAssets, "Images", "Equipment");
+            var expectedCabinets = Directory.EnumerateFiles(Path.Combine(sourceEquipment, "Cabinets"), "*", SearchOption.AllDirectories)
+                .Where(EquipmentImageEntry.IsEquipmentImage)
+                .Select(file => "Equipment/" + Path.GetRelativePath(sourceEquipment, file).Replace('\\', '/')).ToHashSet(StringComparer.Ordinal);
+            Check(expectedCabinets.Count > 0 && expectedCabinets.SetEquals(collection.Where(i => i.Id.StartsWith("Equipment/Cabinets/", StringComparison.Ordinal)).Select(i => i.Id)),
+                "Every current source cabinet image, including subfolders, is packaged and discoverable");
             Check(collection.Select(i => i.Id).Distinct().Count() == collection.Length, "Relative identities are unique across sources");
             Check(collection.Any(i => i.Name == "CubeBaby" && i.Category == "Dispositivos") && !collection.Any(i => i.Name.StartsWith("footswitch", StringComparison.OrdinalIgnoreCase)), "CubeBaby is a device and footswitch is excluded");
-            string sourceAssets = Path.GetFullPath("CubeControl-1.1/Cube/windows/Cube.Desktop/Assets");
             foreach (string source in new[] { Path.Combine(sourceAssets, "Images", "Equipment") }.Concat(new[] { "Cabeçotes", "Caixas", "Pedais", "Guitarras", "Dispositivos", "Equipment", "Racks" }.Select(c => Path.Combine(sourceAssets, "Archive", "Images", c))))
                 foreach (string file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories).Where(EquipmentImageEntry.IsEquipmentImage))
                 {
@@ -172,7 +177,7 @@ internal static class GearImagePickerTests
             }
             finally { zoom.Preview(originalZoom); theme.Preview(originalTheme); language.Preview(originalLanguage); }
             Check(fake.Writes == writes, "Image selection and persistence never send MIDI commands");
-            Console.WriteLine("PASS image picker: complete source/hash coverage, 64 heads, 32 racks, 35 cabinets, adaptive grid, arrows, filter/resize preservation, recycled thumbnails, fixed PC action, confirmation, cancellation, persistence, validation, themes/zoom and no MIDI writes.");
+            Console.WriteLine("PASS image picker: complete source/hash coverage, 64 heads, 32 racks, current cabinet inventory, adaptive grid, arrows, filter/resize preservation, recycled thumbnails, fixed PC action, confirmation, cancellation, persistence, validation, themes/zoom and no MIDI writes.");
         }
         finally { model.Ask = _ => Task.FromResult(true); window.Close(); }
     }

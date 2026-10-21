@@ -14,15 +14,15 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:motion="clr-namespace:Cube.Desktop.Controls"
     xmlns:controls="clr-namespace:Wpf.Ui.Controls;assembly=Wpf.Ui"
     xmlns:system="clr-namespace:System;assembly=System.Runtime">
 
+    <motion:ComboBoxHoverBrushConverter x:Key="CubeComboHoverBrushConverter"/>
     <Thickness x:Key="CubeComboBoxPadding">10,8,10,8</Thickness>
     <Thickness x:Key="CubeComboBoxBorderThemeThickness">1,1,1,1</Thickness>
     <Thickness x:Key="CubeComboBoxAccentBorderThemeThickness">0,0,0,2</Thickness>
     <Thickness x:Key="CubeComboBoxChevronMargin">8,0,10,0</Thickness>
-    <Thickness x:Key="CubeComboBoxItemMargin">6,4,6,0</Thickness>
-    <Thickness x:Key="CubeComboBoxItemContentMargin">10,8,8,8</Thickness>
     <system:Double x:Key="CubeComboBoxChevronSize">11.0</system:Double>
     <system:Double x:Key="CubeComboBoxPopupMinHeight">32.0</system:Double>
 
@@ -89,13 +89,25 @@
         </Setter>
     </Style>
 
+    <Style x:Key="CubeComboSelectionMarker" TargetType="Border">
+        <Setter Property="Width" Value="3"/><Setter Property="Height" Value="20"/>
+        <Setter Property="CornerRadius" Value="2"/><Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="VerticalAlignment" Value="Center"/><Setter Property="IsHitTestVisible" Value="False"/>
+        <Setter Property="Background" Value="{DynamicResource CubeSelectionIndicator}"/>
+        <Setter Property="Visibility" Value="Collapsed"/>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+            <DataTrigger Binding="{Binding IsEnabled, RelativeSource={RelativeSource TemplatedParent}}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="CubeDefaultComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
-        <!--  Universal WPF UI focus  -->
+        <Setter Property="FontFamily" Value="{DynamicResource CubeUiFont}"/><Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/><Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <!--  Universal WPF UI focus  -->
-        <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
+        <Setter Property="Foreground" Value="{DynamicResource CubeText}" />
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Padding" Value="{StaticResource CubeComboBoxItemContentMargin}" />
+        <Setter Property="Padding" Value="{DynamicResource CubePopupItemPadding}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -105,8 +117,8 @@
                 <ControlTemplate TargetType="{x:Type ComboBoxItem}">
                     <Grid Background="Transparent">
                         <Border
-                            Name="ContentBorder"
-                            Margin="{DynamicResource CubeComboBoxItemMargin}"
+                            Name="ContentBorder" Background="Transparent" MinHeight="{DynamicResource CubePopupItemMinHeight}"
+                            Margin="{DynamicResource CubePopupItemMargin}"
                             Padding="0"
                             VerticalAlignment="Stretch"
                             CornerRadius="{TemplateBinding Border.CornerRadius}"
@@ -116,21 +128,21 @@
                                     x:Name="PART_ContentPresenter"
                                     Margin="{TemplateBinding Padding}"
                                     VerticalAlignment="Center" />
-                                <Border x:Name="ActiveRectangle" Style="{DynamicResource CubeSelectionMarker}"/>
+                                <Border x:Name="ActiveRectangle" Style="{DynamicResource CubeComboSelectionMarker}"/>
                             </Grid>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource CubeSelected}" />
+                            <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource CubePopupHover}" /><Setter TargetName="PART_ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource CubePopupHoverText}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
- <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource CubeSelected}"/>
+ <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource CubePopupSelected}"/>
 
                             <Setter TargetName="PART_ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource CubeSelectedText}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter Property="Foreground" Value="{DynamicResource ComboBoxForegroundDisabled}" />
+                            <Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}" /><Setter TargetName="ContentBorder" Property="Background" Value="Transparent"/><Setter TargetName="PART_ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource CubeDisabledText}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -147,25 +159,26 @@
         <Setter Property="ContextMenu" Value="{DynamicResource DefaultControlContextMenu}" />
         <!--  Universal WPF UI ContextMenu  -->
         <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
-        <Setter Property="Background" Value="{DynamicResource ComboBoxBackground}" />
+        <Setter Property="Background" Value="{DynamicResource CubeComboField}" />
+        <Setter Property="motion:ComboBoxPopupPlacement.Enabled" Value="True"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="FontSize" Value="{DynamicResource ControlContentThemeFontSize}" />
         <Setter Property="ScrollViewer.CanContentScroll" Value="False" />
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Hidden" />
-        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Hidden" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
         <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-        <Setter Property="VerticalContentAlignment" Value="Top" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="MinHeight" Value="{DynamicResource TextControlThemeMinHeight}" />
         <Setter Property="MinWidth" Value="{DynamicResource TextControlThemeMinWidth}" />
         <Setter Property="Padding" Value="{DynamicResource CubeComboBoxPadding}" />
         <Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}" />
         <Setter Property="Popup.PopupAnimation" Value="None" />
-        <!--  WPF doesn't like centering, the animation is ugly and the mouse button sometimes clicks right away.  -->
-        <Setter Property="Popup.Placement" Value="Bottom" />
+        <!-- The popup behavior aligns the selected row with the closed field. -->
+        <Setter Property="Popup.Placement" Value="Custom" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="ItemsPanel">
             <Setter.Value>
@@ -256,6 +269,7 @@
                                 </Grid>
                                 <Popup
                                     x:Name="Popup"
+                                    motion:ComboBoxPopupPlacement.Enabled="{Binding Path=(motion:ComboBoxPopupPlacement.Enabled), RelativeSource={RelativeSource TemplatedParent}}"
                                     VerticalAlignment="Center"
                                     AllowsTransparency="True"
                                     Focusable="False"
@@ -269,14 +283,14 @@
                                         AnimationElement="{Binding ElementName=DropDownBorder}"
                                         Thickness="30,0,30,30">
                                         <Border
-                                            x:Name="DropDownBorder"
+                                            x:Name="DropDownBorder" motion:SurfaceMotion.Enabled="True" motion:SurfaceMotion.Offset="0"
                                             MinWidth="{TemplateBinding ActualWidth}"
                                             Margin="0"
                                             Padding="0,4,0,6"
-                                            Background="{DynamicResource ComboBoxDropDownBackground}"
-                                            BorderBrush="{DynamicResource ComboBoxDropDownBorderBrush}"
-                                            BorderThickness="0"
-                                            CornerRadius="{DynamicResource CubeCardCornerRadius}"
+                                            Background="{DynamicResource CubePopupSurface}"
+                                            BorderBrush="{DynamicResource CubePopupBorder}"
+                                            BorderThickness="{DynamicResource CubePopupBorderThickness}"
+                                            CornerRadius="{DynamicResource CubePopupCornerRadius}"
                                             SnapsToDevicePixels="True">
                                             <Border.RenderTransform>
                                                 <TranslateTransform />
@@ -285,7 +299,7 @@
                                                 <DropShadowEffect
                                                     BlurRadius="20"
                                                     Direction="270"
-                                                    Opacity="0.135"
+                                                    Opacity="{DynamicResource CubePopupShadowOpacity}"
                                                     ShadowDepth="10"
                                                     Color="#202020" />
                                             </Border.Effect>
@@ -296,11 +310,11 @@
                                                     Margin="0"
                                                     HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
                                                     SnapsToDevicePixels="True"
-                                                    TextElement.FontSize="{TemplateBinding FontSize}"
-                                                    TextElement.FontWeight="{TemplateBinding FontWeight}"
-                                                    TextElement.Foreground="{TemplateBinding Foreground}"
+                                                    TextElement.FontSize="{DynamicResource CubeFontSizeBody}"
+                                                    TextElement.FontWeight="Normal"
+                                                    TextElement.Foreground="{DynamicResource CubeText}"
                                                     VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
-                                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" TextElement.FontSize="{TemplateBinding FontSize}" />
+                                                    <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" TextElement.FontSize="{DynamicResource CubeFontSizeBody}" />
                                                 </controls:DynamicScrollViewer>
                                             </Grid>
                                         </Border>
@@ -322,16 +336,7 @@
                                             From="0"
                                             To="180"
                                             Duration="00:00:00.167" />
-                                        <DoubleAnimation
-                                            Storyboard.TargetName="DropDownBorder"
-                                            Storyboard.TargetProperty="(Border.RenderTransform).(TranslateTransform.Y)"
-                                            From="-90"
-                                            To="0"
-                                            Duration="00:00:00.167">
-                                            <DoubleAnimation.EasingFunction>
-                                                <CircleEase EasingMode="EaseOut" />
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
+
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -373,9 +378,14 @@
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsEnabled" Value="True" />
                                 <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsKeyboardFocusWithin" Value="False" />
+
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource ComboBoxBackgroundPointerOver}" />
+                            <Setter TargetName="ContentBorder" Property="Background"><Setter.Value>
+                                <MultiBinding Converter="{StaticResource CubeComboHoverBrushConverter}">
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}"/>
+                                    <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Background"/>
+                                </MultiBinding>
+                            </Setter.Value></Setter>
                         </MultiTrigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="ContentBorder" Property="Background" Value="{DynamicResource ComboBoxBackgroundDisabled}" />

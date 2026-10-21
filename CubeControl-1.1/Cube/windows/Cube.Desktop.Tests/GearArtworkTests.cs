@@ -40,7 +40,27 @@ internal static class GearArtworkTests
         Check(CabinetArtwork.ForIr(@"FENDER\IRs WAV\1x12\Deluxe Reverb Oxford\Big.wav", null) == "fender-deluxe-oxford-1x12.png", "Artwork matching tolerates path separators and casing");
         var inferred = library.Where(e => CabinetArtwork.ForIr(e.RelativePath, e.Name) != null).GroupBy(e => CabinetArtwork.ForIr(e.RelativePath, e.Name)).Select(g =>
             new GearItem("illustration-" + g.Key, 0, IrViewModel.DisplayName(g.First().FullPath, g.First().Collection), "", "cab", "#C5B77F")).ToArray();
-        Check(inferred.Length == 10, "Ten named cabinet families share art across microphone variants");
+        Check(inferred.Length > 0, "Current library provides cabinet families for the render matrix");
+        foreach (var (name, asset) in new[]
+        {
+            ("Fender Deluxe Reverb Oxford 1x12", "fender-deluxe-oxford-1x12.png"),
+            ("Fender Twin Reverb 2x12", "fender-twin-reverb-2x12.png"),
+            ("Marshall 1960TV Greenback 4x12", "marshall-1960tv-greenback-4x12.png"),
+            ("Vox AC30 Blue 2x12", "vox-ac30-blue-2x12.png"),
+            ("M212 2x12", "m212-vintage-2x12.png"),
+            ("DE112 1x12", "de112-ported-1x12.png"),
+            ("Mesa Rectifier 1x12", "mesa-rectifier-1x12.png"),
+            ("Mesa Rectifier 4x12", "mesa-rectifier-v30.png"),
+            ("Zilla Fatboy 2x12", "zilla-fatboy-2x12.png")
+        })
+        {
+            Check(CabinetArtwork.ForIr(null, name + " SM57") == asset && CabinetArtwork.ForIr(null, name + " R121") == asset,
+                "Microphone variants share the cabinet illustration: " + name);
+            Check(File.Exists(AssetPaths.Image(asset)), "Mapped cabinet illustration is packaged: " + asset);
+        }
+        Check(CabinetArtwork.ForIr(null, "Mesa Rectifier") == null, "Ambiguous cabinet name does not invent a speaker configuration");
+        Check(CabinetArtwork.ForIr(null, "Fender Deluxe Reverb Oxford 4x12") != "fender-deluxe-oxford-1x12.png",
+            "Conflicting speaker count cannot select the named 1x12 illustration");
         var vertical = new[] {
             new GearItem("vertical-neutral", 0, "Gabinete 2×12 Vertical", "", "cab", "#C5B77F"),
             new GearItem("vertical-orange", 0, "Orange 2x12 Vertical Vintage 30", "", "cab", "#C5B77F") };

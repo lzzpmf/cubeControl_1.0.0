@@ -17,8 +17,7 @@ public sealed record BackingSection(double Position, string Name)
 
 public sealed partial class BackingTracksViewModel
 {
-    private readonly DispatcherTimer meterTimer = new() { Interval = TimeSpan.FromMilliseconds(33) };
-    private BackingLevelMeter? inputMeter, monitorMeter;
+    private readonly DispatcherTimer meterTimer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private int trackLevel, inputLevel;
     public int TrackLevel { get => trackLevel; private set => Set(ref trackLevel, value); }
     public int InputLevel { get => inputLevel; private set => Set(ref inputLevel, value); }
@@ -33,17 +32,13 @@ public sealed partial class BackingTracksViewModel
     private string search = "", sectionName = "Intro";
     private double zoom = 1, viewportStart, monitorVolume = 0;
     private BackingOutput? selectedInput;
-    private WasapiRecorder? monitorCapture;
-    private WasapiPlayer? monitorOutput;
-    private MMDevice? monitorInputDevice, monitorOutputDevice;
-    private VolumeSampleProvider? monitorGain;
     public ICollectionView FilteredTracks { get; private set; } = null!;
     public ObservableCollection<BackingOutput> Inputs { get; } = [];
     public string[] Keys { get; } = ["Não definido", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "A#m", "Bm"];
     public string[] PresetOptions { get; } = ["Sem vínculo", "Preset A", "Preset B", "Preset C"];
     public string Search { get => search; set { if (Set(ref search, value)) { FilteredTracks.Refresh(); Notify(nameof(SelectedTrack)); } } }
-    public double Bpm { get => SelectedTrack?.Bpm ?? 0; set { if (SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.ManualBpm = true; SelectedTrack.Bpm = Math.Clamp(value, 20, 300); Notify(); Notify(nameof(CurrentBpm)); Notify(nameof(BpmBadge)); UpdateMetronome(); } }
-    public string CurrentBpm => $"{Bpm * Speed / 100:0.#} BPM atual · grade 4/4";
+    public double Bpm { get => SelectedTrack?.Bpm ?? 0; set { if (!CanEditSession || SelectedTrack == null || !double.IsFinite(value)) return; SelectedTrack.ManualBpm = true; SelectedTrack.Bpm = Math.Clamp(value, 20, 300); Notify(); Notify(nameof(CurrentBpm)); Notify(nameof(TransportBpm)); Notify(nameof(BpmBadge)); UpdateMetronome(); PersistSession(); } }
+    public string CurrentBpm => $"{Bpm * Speed / 100:0.#} BPM atual · {SessionMeter}";
     public string OriginalKey { get => SelectedTrack?.OriginalKey ?? Keys[0]; set { if (SelectedTrack == null || !Keys.Contains(value)) return; SelectedTrack.ManualKey = true; SelectedTrack.OriginalKey = value; Notify(); Notify(nameof(CurrentKey)); Notify(nameof(KeyBadge)); } }
     public string BpmBadge => SelectedTrack?.MusicPending == true && Bpm <= 0 ? "Analisando…" : Bpm > 0 ? $"BPM: {(SelectedTrack?.ManualBpm == true ? "" : "≈")}{Bpm * Speed / 100:0.#}" : "BPM não identificado";
     public string KeyBadge => OriginalKey == Keys[0] ? "Tom não identificado" : $"Tom: {(SelectedTrack?.ManualKey == true ? "" : "≈")}{OriginalKey}" + (Pitch != 0 ? $" → {CurrentKey}" : "");
@@ -83,9 +78,26 @@ public sealed partial class BackingTracksViewModel
     public ICommand GoToSection { get; private set; } = null!;
     public ICommand ToggleMonitor { get; private set; } = null!;
     public ICommand RefreshInputs { get; private set; } = null!;
-    public BackingOutput? SelectedInput { get => selectedInput; set { if (CanChangeRecordingInput && Set(ref selectedInput, value)) RestartMonitorForDeviceChange(); } }
-    public bool IsMonitoring => monitorCapture != null;
-    public double MonitorVolume { get => monitorVolume; set { if (!double.IsFinite(value)) return; Set(ref monitorVolume, Math.Clamp(value, 0, 100)); if (monitorGain != null) monitorGain.Volume = MonitorMuted ? 0 : (float)(monitorVolume / 100); } }
+    private string? savedInputId;
+    public ObservableCollection<BackingInputChoice> InputChoices { get; } = [];
+    private void RefreshInputChoices()
+    {
+        InputChoices.Clear();
+        if (SelectedInput == null) return;
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator(); using var device = enumerator.GetDevice(SelectedInput.Id);
+            using var client = device.CreateAudioClient();
+            int channels = client.MixFormat.Channels;
+            for (int i = 0; i < channels; i++) { InputChoices.Add(new(i, 1)); if (i + 1 < channels) InputChoices.Add(new(i, 2)); }
+        }
+        catch (Exception ex) { Log(ex); }
+    }
+    public BackingOutput? SelectedInput { get => selectedInput; set { if (CanChangeRecordingInput && Set(ref selectedInput, value)) { savedInputId = value?.Id; if (SelectedTrack != null) SelectedTrack.CaptureEndpoint = savedInputId; RefreshInputChoices(); RestartMonitorForDeviceChange(); } } }
+    private BackingMultitrackCapture? liveCapture;
+    private bool suppressMonitorChanges;
+    public bool IsMonitoring => liveCapture != null || recording != null;
+    public double MonitorVolume { get => monitorVolume; set { if (!double.IsFinite(value)) return; Set(ref monitorVolume, Math.Clamp(value, 0, 100));  } }
     public void SelectRange(double start, double end)
     {
         if (!CanEditSession || SelectedTrack == null || !double.IsFinite(start) || !double.IsFinite(end) || start < 0 || end > Duration || end - start < .1 - 1e-9) return;
@@ -113,7 +125,7 @@ public sealed partial class BackingTracksViewModel
         AddSection = new UiCommand(() => { var marker = new BackingSection(Position, SectionName.Trim()); int index = 0; while (index < Sections!.Count && Sections[index].Position <= Position) index++; Sections.Insert(index, marker); }, () => CanSeek && !string.IsNullOrWhiteSpace(SectionName) && SectionName.Length <= 40);
         RemoveSection = new UiCommand(() => { if (SelectedSection is { } section) Sections?.Remove(section); SelectedSection = null; }, () => SelectedSection != null);
         GoToSection = new UiCommand(() => { if (SelectedSection != null) Position = SelectedSection.Position; }, () => SelectedSection != null);
-        ToggleMonitor = new UiCommand(() => { if (IsMonitoring) StopMonitor(); else StartMonitor(); }, () => !recordingFinalizing && (IsMonitoring || SelectedInput != null && SelectedOutput != null));
+        ToggleMonitor = new UiCommand(() => { if (IsMonitoring) StopMonitor(true); else StartMonitor(); }, () => CanEditSession && (IsMonitoring || SelectedInput != null && SelectedOutput != null));
         RefreshInputs = new UiCommand(LoadInputs, () => CanChangeRecordingInput);
         PropertyChanged += (_, e) =>
         {
@@ -132,57 +144,59 @@ public sealed partial class BackingTracksViewModel
         if (!CanChangeRecordingInput) return;
         try
         {
-            string? id = SelectedInput?.Id;
+            string? id = SelectedInput?.Id ?? savedInputId;
             Inputs.Clear();
             using var enumerator = new MMDeviceEnumerator();
             foreach (var device in enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
                 using (device) Inputs.Add(new(device.ID, device.FriendlyName));
+            if (id != null && !Inputs.Any(x => x.Id == id)) Inputs.Add(new(id, Cube.Desktop.Localization.LanguageService.T("Dispositivo indisponível"), false));
             SelectedInput = Inputs.FirstOrDefault(x => x.Id == id);
         }
         catch (Exception ex) { Error("Não foi possível listar as entradas de áudio.", ex); }
     }
     private void RestartMonitorForDeviceChange()
     {
-        bool resume = IsMonitoring;
+        if (IsRecording) return;
         StopMonitor();
-        if (resume && SelectedInput != null && SelectedOutput != null) StartMonitor();
+        if (SessionStems?.Any(s => s.IsMonitoring) != true) return;
+        if (SelectedInput?.Available == true && SelectedOutput != null) StartMonitor();
+        else
+        {
+            StopMonitor(clearRoutes: true);
+            Status = "Escolha uma entrada e saída disponíveis para monitorar.";
+            HasError = true;
+        }
     }
     private void StartMonitor()
     {
-        if (SelectedInput == null || SelectedOutput == null) return;
+        if (SelectedInput == null || SelectedOutput == null || IsRecording) return;
         try
         {
-            using var enumerator = new MMDeviceEnumerator();
-            monitorInputDevice = enumerator.GetDevice(SelectedInput.Id);
-            monitorOutputDevice = enumerator.GetDevice(SelectedOutput.Id);
-            monitorCapture = new WasapiRecorderBuilder().WithDevice(monitorInputDevice).Build();
-            var capture = monitorCapture;
-            var buffer = new BufferedWaveProvider(capture.WaveFormat, TimeSpan.FromMilliseconds(200)) { DiscardOnBufferOverflow = true };
-            inputMeter = new BackingLevelMeter(buffer.ToSampleProvider());
-            monitorGain = new VolumeSampleProvider(inputMeter) { Volume = MonitorMuted ? 0 : (float)(MonitorVolume / 100) };
-            monitorOutput = new WasapiPlayerBuilder().WithDevice(monitorOutputDevice).WithSharedMode().WithLatency(40).Build();
-            monitorMeter = new BackingLevelMeter(monitorGain);
-            monitorOutput.Init(new SampleToWaveProvider(monitorMeter));
-            byte[] silence = [];
-            capture.DataAvailable += (data, flags, devicePosition, qpcPosition) =>
+            if (SessionStems?.Any(s => s.IsMonitoring) != true && SelectedStem != null) SelectedStem.IsMonitoring = true;
+            if (liveCapture != null) return;
+            liveCapture = new(SelectedInput.Id, CaptureRoutes(false));
+            liveCapture.Start(); Start(engine.SetMonitor(SelectedOutput.Id, liveCapture.MonitorProvider));
+            var current = liveCapture;
+            _ = current.Completion.ContinueWith(task => Dispatch(() =>
             {
-                if ((flags & AudioClientBufferFlags.Silent) != 0)
-                { if (silence.Length < data.Length) silence = new byte[data.Length]; buffer.AddSamples(silence.AsSpan(0, data.Length)); }
-                else buffer.AddSamples(data);
-            };
-            capture.RecordingStopped += (_, e) => Dispatch(() => { if (monitorCapture != capture) return; StopMonitor(); if (e.Exception != null) Error("Entrada de áudio desconectada.", e.Exception); });
-            monitorOutput.PlaybackStopped += (_, e) => Dispatch(() => { if (monitorCapture != capture) return; StopMonitor(); if (e.Exception != null) Error("Monitor de entrada interrompido.", e.Exception); });
-            capture.StartRecording(); monitorOutput.Play(); Notify(nameof(IsMonitoring));
+                if (liveCapture != current) return; StopMonitor(clearRoutes: true);
+                if (task.Result != null) Error("Entrada de áudio desconectada.", task.Result);
+            }));
+            Notify(nameof(IsMonitoring));
         }
-        catch (Exception ex) { StopMonitor(); Error("Não foi possível iniciar o monitor de entrada.", ex); }
+        catch (Exception ex) { StopMonitor(clearRoutes: true); Error("Não foi possível iniciar o monitor de entrada.", ex); }
     }
-    private void StopMonitor()
+    private void StopMonitor(bool clearRoutes = false)
     {
-        var capture = monitorCapture; monitorCapture = null;
-        // Release every endpoint even when a disconnected device throws during teardown.
-        foreach (IDisposable? resource in new IDisposable?[] { capture, monitorOutput, monitorInputDevice, monitorOutputDevice })
-            try { resource?.Dispose(); } catch (Exception ex) { Log(ex); }
-        monitorOutput = null; monitorGain = null; inputMeter = null; monitorMeter = null; monitorInputDevice = monitorOutputDevice = null;
+        if (clearRoutes)
+        {
+            suppressMonitorChanges = true;
+            try { foreach (var stem in SessionStems ?? []) stem.IsMonitoring = false; }
+            finally { suppressMonitorChanges = false; Notify(nameof(MonitoredInputs)); }
+        }
+        var previous = liveCapture; liveCapture = null;
+        Start(engine.SetMonitor(SelectedOutput?.Id ?? "", null));
+        try { previous?.Dispose(); } catch (Exception ex) { Log(ex); }
         Notify(nameof(IsMonitoring));
     }
 }

@@ -72,7 +72,7 @@ internal sealed class BackingAudioProcessing : ISampleProvider, IDisposable
         try
         {
             channels = WaveFormat.Channels; rate = WaveFormat.SampleRate;
-            this.speed = Math.Clamp(speed, relativeParameters ? 1d / 3 : .5, relativeParameters ? 3 : 1.5); this.pitch = Math.Clamp(pitch, relativeParameters ? -12 : -6, relativeParameters ? 12 : 6);
+            this.speed = Math.Clamp(speed, relativeParameters ? .32 : .5, relativeParameters ? 3.07 : 1.5); this.pitch = Math.Clamp(pitch, relativeParameters ? -12 : -6, relativeParameters ? 12 : 6);
             this.looping = looping;
             this.end = (long)Math.Round(Math.Min(end, Duration) * rate);
             this.loopStart = (long)Math.Round(Math.Max(0, loopStart) * rate);

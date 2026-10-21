@@ -134,10 +134,12 @@ internal static class IrLibraryUiTests
             foreach (var size in new[] { (640, 480), (1280, 720), (1400, 940) })
             {
                 window.Width = size.Item1; window.Height = size.Item2; await Settle();
-                var owner = workspace.VerticalScrollBarVisibility == ScrollBarVisibility.Auto ? workspace : page;
+                // The shared page scrollbar hides the owner's native scrollbar.
+                // Hidden still scrolls; Disabled delegates scrolling to the other viewer.
+                var owner = workspace.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled ? workspace : page;
                 owner.ScrollToTop(); await Settle();
                 await Wheel(import, -120);
-                if (owner.VerticalOffset <= 0) throw new Exception("Wheel down must scroll IR page at " + size);
+                if (owner.VerticalOffset <= 0) throw new Exception($"Wheel down must scroll IR page at {size}; owner={owner.Name}, page={page.VerticalOffset}/{page.ScrollableHeight}, workspace={workspace.VerticalOffset}/{workspace.ScrollableHeight}, sourceVisible={import.IsVisible}");
                 double down = owner.VerticalOffset;
                 await Wheel(import, 120);
                 if (owner.VerticalOffset >= down) throw new Exception("Wheel up must scroll IR page at " + size);

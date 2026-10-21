@@ -195,3 +195,6 @@ Essas alterações de cobertura foram revisadas estaticamente, sem execução ne
 O modo `--backing-session-only` prepara cobertura para mistura sincronizada, offsets, mute/solo, velocidade/tom relativos, exportação, envelope limitado, migração da playlist e cálculo de inserção com filtros. `--backing-recording-only` mantém a cobertura do escritor WAV; gravação sincronizada exige entrada e saída. Os cenários de packs agora verificam feedback em adorner independente da borda.
 
 Esses testes foram preparados, mas não executados nesta alteração, assim como nenhum build. Quando houver autorização, compilar pelo fluxo documentado e executar os modos pertinentes. A DLL nativa precisa ser reconstruída: os limites internos relativos passaram a 1/3–3× e ±12 semitons, enquanto os controles da sessão permanecem em 50–150% e ±6 semitons. Captura longa, latência, desconexão, renderização, alto contraste e interação por teclado exigem verificação posterior.
+
+
+O modo `--backing-clips` verifica edição não destrutiva, fades/crossfade por amostra, sobregravação composta, undo/redo, snap e persistência v4. `--backing-daw` também produz capturas da Biblioteca lateral e do transporte compacto. Ambos usam fixtures locais; não comprovam áudio físico.

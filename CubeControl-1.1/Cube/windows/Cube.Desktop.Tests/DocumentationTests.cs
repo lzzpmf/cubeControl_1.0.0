@@ -63,6 +63,17 @@ internal static class DocumentationTests
         Check(!DocumentLauncher.TryOpen(pdf, out var error, _ => throw new Win32Exception()) && error.Length > 0, "missing PDF association gives an actionable failure");
         Check(!DocumentLauncher.TryOpen(Path.Combine(documentRoot, "missing.pdf"), out _, _ => throw new Exception("should not launch")), "missing PDF is not launched");
         Check(!DocumentLauncher.TryOpen("javascript:alert(1)", out _, _ => throw new Exception("should not launch")), "unsupported URI scheme is not launched");
+        Check(ManualLauncher.TryOpen(documentRoot, "en-US", false, out _, value => target = value), "packaged English HTML manual opens");
+        var manualUri = new Uri(target!);
+        Check(manualUri.IsFile && manualUri.LocalPath.EndsWith(Path.Combine("manual", "en-US", "index.html"))
+            && manualUri.Query == "?theme=dark", "manual launch passes locale and current dark theme as file URI");
+        Check(ManualLauncher.TryOpen(documentRoot, "unknown", true, out _, value => target = value)
+            && new Uri(target!).LocalPath.EndsWith(Path.Combine("manual", "pt-BR", "index.html"))
+            && new Uri(target!).Query == "?theme=light", "manual uses Portuguese fallback and light theme");
+        Check(!ManualLauncher.TryOpen(Path.Combine(documentRoot, "missing"), "pt-BR", true, out _,
+            _ => throw new Exception("should not launch")), "missing HTML manual is not launched");
+        Check(!ManualLauncher.TryOpen(documentRoot, "en-US", true, out var manualError,
+            _ => throw new Win32Exception()) && manualError.Contains("navegador"), "browser association failure explains recovery");
         var originalLanguage = LanguageService.Instance.Language;
         var originalZoom = ZoomService.Instance.Percent;
         var originalTheme = ThemeService.Instance.Mode;

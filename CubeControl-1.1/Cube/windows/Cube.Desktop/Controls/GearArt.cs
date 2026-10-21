@@ -38,8 +38,9 @@ public sealed class GearArt : FrameworkElement
         outgoing.Freeze();
         scrollDirection = Math.Sign(direction);
         int revision = scrollRevision;
-        var animation = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200))
+        var animation = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(167))
         { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }, FillBehavior = FillBehavior.Stop };
+        Timeline.SetDesiredFrameRate(animation, 240);
         animation.Completed += (_, _) => { if (revision == scrollRevision) StopScroll(); };
         BeginAnimation(ScrollProgressProperty, animation, HandoffBehavior.SnapshotAndReplace);
     }
@@ -56,12 +57,8 @@ public sealed class GearArt : FrameworkElement
         if (outgoing == null || !SurfaceMotion.Allowed || Appearance.ThemeService.Instance.IsHighContrast)
         { DrawArtwork(dc); return; }
         double progress = (double)GetValue(ScrollProgressProperty);
-        double distance = Math.Min(60, ActualHeight * .35) * scrollDirection;
+        double distance = 8;
         dc.PushClip(new RectangleGeometry(new Rect(RenderSize)));
-        dc.PushOpacity(1 - progress);
-        dc.PushTransform(new TranslateTransform(0, -distance * progress));
-        dc.DrawDrawing(outgoing);
-        dc.Pop(); dc.Pop();
         dc.PushOpacity(progress);
         dc.PushTransform(new TranslateTransform(0, distance * (1 - progress)));
         DrawArtwork(dc);

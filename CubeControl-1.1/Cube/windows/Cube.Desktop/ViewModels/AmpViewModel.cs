@@ -138,7 +138,8 @@ public sealed partial class AmpViewModel : Observable
                 break;
             }
         }
-        Load(bytes, title);
+        var variation = AmpEqPresets.All.FirstOrDefault(p => bytes.AsSpan().SequenceEqual(p.Build()));
+        Load(bytes, variation?.Name ?? title);
     }
     public void Load(byte[] bytes, string title)
     {

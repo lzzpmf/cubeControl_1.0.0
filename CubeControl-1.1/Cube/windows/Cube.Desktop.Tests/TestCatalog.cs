@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -8,6 +8,8 @@ internal static class TestCatalog
     internal static string[] Arguments { get; private set; } = Environment.GetCommandLineArgs();
     internal static readonly TestSuite[] Suites =
     [
+        new("drag-drop", "--drag-drop-only", "Shared drag adapters, motion and cancellation", "local", true, DragDropTests.Run),
+        new("wide-layout", "--wide-layout-only", "Five sections at wide work areas and simulated DPI", "local", true, ResponsiveTests.Run),
         new("player-layout", "--player-layout-only", "PlayerLayout", "local", true, () => PlayerLayoutTests.Run()),
         new("overdriven", "--overdriven-only", "OverdrivenLibrary", "local", true, () => OverdrivenLibraryTests.Run()),
         new("documentation", "--documentation-only", "Documentation", "local", true, () => DocumentationTests.Run()),
@@ -23,9 +25,9 @@ internal static class TestCatalog
         new("curated-packs", "--curated-packs-only", "CuratedPack", "local", true, () => CuratedPackTests.Run()),
         new("live-session", "--live-session-only", "LiveSession", "local", true, () => LiveSessionTests.Run()),
         new("factory-irs", "--factory-irs-only", "FactoryIrSelection", "local", true, () => FactoryIrSelectionTests.Run()),
+        new("amp-eq-presets", "--amp-eq-presets-only", "Amp EQ variants", "local", true, AmpEqPresetTests.Run),
         new("amp-capacitors", "--amp-capacitors-only", "AmpCapacitor", "local", true, () => AmpCapacitorTests.Run()),
         new("hardware-effect-cards", "--hardware-effect-cards", "AdvancedHardware", "hardware", true, () => AdvancedHardwareTests.Run(cardFlow: true)),
-        new("hardware-advanced-recovery", "--hardware-advanced-recovery", "AdvancedHardware", "hardware", true, () => AdvancedHardwareTests.Run(recoveryOnly: true)),
         new("hardware-advanced-lifecycle", "--hardware-advanced-lifecycle", "AdvancedHardware", "hardware", true, () => AdvancedHardwareTests.Run()),
         new("advanced-lifecycle", "--advanced-lifecycle-only", "AdvancedLifecycle", "local", true, () => AdvancedLifecycleTests.Run()),
         new("advanced-interaction", "--advanced-interaction-only", "AdvancedInteraction", "local", true, () => AdvancedInteractionTests.Run()),
@@ -68,6 +70,10 @@ internal static class TestCatalog
         new("theme", "--theme-only", "Theme", "local", true, () => ThemeTests.Run()),
         new("localization", "--localization-only", "Localization", "local", true, () => LocalizationTests.Run()),
         new("midi-ports", "--midi-ports-only", "MIDI port matching with synthetic port lists", "local", false, () => Task.Run(MidiPortSelectionTests.Run)),
+        new("multitrack-capture", "--multitrack-capture", "Offline PCM conversion, capture routing and stop lifecycle", "local", false, MultitrackCaptureTests.Run),
+        new("backing-audio-boundaries", "--backing-audio-boundaries", "Offline gain, pan, monitor overflow/underrun and meter boundaries", "local", false, BackingAudioBoundaryTests.Run),
+        new("backing-clips", "--backing-clips", "Clip editing, fades, overdub, undo and v4 persistence", "local", true, BackingClipTests.Run),
+        new("backing-daw", "--backing-daw", "Multitrack gain, takes and mixer rendering", "local", true, BackingDawTests.Run),
         new("backing-session", "--backing-session-only", "Offline multitrack mix, persistence and export recovery", "local", false, () => Task.Run(BackingSessionTests.Run)),
         new("backing-recording", "--backing-recording-only", "BackingRecording", "local", false, () => BackingRecordingTests.Run()),
         new("firmware-worker", "--firmware-worker-only", "FirmwareWorker", "elevation", false, () => FirmwareWorkerTests.Run()),
@@ -84,6 +90,21 @@ internal static class TestCatalog
         new("qa-usability", "--usability-all", "All local usability QA batteries", "local", false, QaUsability.RunAll),
         new("catalog-contract", "--catalog-contract", "CLI discovery and invalid argument handling", "local", false, CatalogTests.Run),
     ];
+    internal static TestSuite? Resolve(string[] args, out string[] normalized)
+    {
+        normalized = [];
+        const string rootPrefix = "--documentation-root=";
+        string[] options = args.Where(a => a.StartsWith(rootPrefix, StringComparison.Ordinal)).ToArray();
+        if (options.Length > 1 || options.Any(a => string.IsNullOrWhiteSpace(a[rootPrefix.Length..]))) return null;
+        string[] selectors = args.Where(a => !a.StartsWith(rootPrefix, StringComparison.Ordinal)).ToArray();
+        TestSuite? suite = selectors.Length == 0 ? Suites.Single(s => s.Id == "default")
+            : selectors.Length == 2 && selectors[0] == "--suite" ? Suites.SingleOrDefault(s => s.Id == selectors[1])
+            : selectors.Length == 1 ? Suites.SingleOrDefault(s => s.Alias == selectors[0]) : null;
+        if (suite == null || (options.Length > 0 && suite.Id != "documentation")) return null;
+        normalized = [Environment.GetCommandLineArgs()[0], suite.Alias, .. options];
+        return suite;
+    }
+
     internal static int Execute(string[] args)
     {
         if (args.SequenceEqual(new[] { "--list" }))
@@ -91,11 +112,9 @@ internal static class TestCatalog
             Console.WriteLine(JsonSerializer.Serialize(Suites.Select(s => new { s.Id, s.Alias, s.Description, s.Requirement, s.Wpf }), new JsonSerializerOptions { WriteIndented = true }));
             return 0;
         }
-        TestSuite? suite = args.Length == 0 ? Suites.Single(s => s.Id == "default")
-            : args.Length == 2 && args[0] == "--suite" ? Suites.SingleOrDefault(s => s.Id == args[1])
-            : args.Length == 1 ? Suites.SingleOrDefault(s => s.Alias == args[0]) : null;
+        TestSuite? suite = Resolve(args, out var normalized);
         if (suite == null) { Console.Error.WriteLine("Unknown or incompatible arguments. Use --list or --suite <id>."); return 2; }
-        Arguments = [Environment.GetCommandLineArgs()[0], suite.Alias];
+        Arguments = normalized;
         try
         {
             if (!suite.Wpf) { suite.Run().GetAwaiter().GetResult(); return 0; }

@@ -2,9 +2,6 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using Cube.Desktop.Controls;
 using Wpf.Ui.Controls;
 
@@ -17,15 +14,14 @@ internal static class PopupMotion
 
     internal static void Initialize()
     {
-        // Let WPF animate detached menus, tooltips and dropdowns using system preferences.
+        // Popup surfaces animate through SurfaceMotion, without a second native fade.
         EventManager.RegisterClassHandler(typeof(Popup), FrameworkElement.LoadedEvent,
             new RoutedEventHandler((sender, args) =>
             {
                 if (!ReferenceEquals(sender, args.OriginalSource)) return;
                 var popup = (Popup)sender;
                 popup.SetCurrentValue(Popup.PopupAnimationProperty,
-                    SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast
-                        ? PopupAnimation.Fade : PopupAnimation.None);
+                    PopupAnimation.None);
             }));
         EventManager.RegisterClassHandler(typeof(ContentDialog), FrameworkElement.LoadedEvent,
             new RoutedEventHandler((sender, args) =>
@@ -57,76 +53,12 @@ internal static class PopupMotion
     private sealed class DialogState
     {
         private readonly ContentDialog dialog;
-        private FrameworkElement? surface;
-        private readonly ScaleTransform scale = new(1, 1);
-        private bool closing, completing;
-        private int generation;
-
-        internal DialogState(ContentDialog dialog)
-        {
-            this.dialog = dialog;
-            dialog.Closing += Closing;
-            dialog.Unloaded += (_, _) => { generation++; Reset(); };
-        }
-
+        internal DialogState(ContentDialog dialog) => this.dialog = dialog;
         internal void Open()
         {
-            generation++;
-            Reset();
             dialog.ApplyTemplate();
-            surface = dialog.Template.FindName("DialogRootGrid", dialog) as FrameworkElement;
-            if (surface == null || !SurfaceMotion.Allowed) return;
-            surface.RenderTransformOrigin = new Point(.5, .5);
-            surface.RenderTransform = scale;
-            Animate(true);
-        }
-
-        private void Animate(bool opening)
-        {
-            if (surface == null) return;
-            var duration = TimeSpan.FromMilliseconds(opening ? 200 : 120);
-            var ease = new CubicEase { EasingMode = opening ? EasingMode.EaseOut : EasingMode.EaseIn };
-            surface.BeginAnimation(UIElement.OpacityProperty,
-                new DoubleAnimation(opening ? 0 : surface.Opacity, opening ? 1 : 0, duration) { EasingFunction = ease });
-            foreach (var property in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
-                scale.BeginAnimation(property,
-                    new DoubleAnimation(opening ? .96 : (double)scale.GetValue(property), opening ? 1 : .96, duration)
-                    { EasingFunction = ease });
-        }
-
-        private void Closing(ContentDialog sender, ContentDialogClosingEventArgs args)
-        {
-            if (completing || args.Cancel || surface == null || !SurfaceMotion.Allowed) return;
-            args.Cancel = true;
-            if (closing) return;
-            closing = true;
-            int current = generation;
-            var result = args.Result;
-            Animate(false);
-            var timer = new DispatcherTimer(DispatcherPriority.Render, dialog.Dispatcher)
-            { Interval = TimeSpan.FromMilliseconds(120) };
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-                if (current != generation || !dialog.IsLoaded) return;
-                completing = true;
-                try { dialog.Hide(result); }
-                finally
-                {
-                    completing = false;
-                    // A different Closing handler may veto dismissal.
-                    Reset();
-                }
-            };
-            timer.Start();
-        }
-
-        private void Reset()
-        {
-            closing = false;
-            surface?.BeginAnimation(UIElement.OpacityProperty, null);
-            scale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
-            scale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+            if (dialog.Template.FindName("DialogRootGrid", dialog) is FrameworkElement surface)
+                SurfaceMotion.SetEnabled(surface, true);
         }
     }
 }

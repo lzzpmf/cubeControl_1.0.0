@@ -36,7 +36,16 @@ public sealed class BackingWaveform : FrameworkElement
     public bool IsLooping { get => (bool)GetValue(IsLoopingProperty); set => SetValue(IsLoopingProperty, value); }
     public static readonly DependencyProperty ViewportStartProperty = DependencyProperty.Register(nameof(ViewportStart), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, GeometryChanged));
     public static readonly DependencyProperty ViewportDurationProperty = DependencyProperty.Register(nameof(ViewportDuration), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
+    public static readonly DependencyProperty ShowRulerProperty = DependencyProperty.Register(nameof(ShowRuler), typeof(bool), typeof(BackingWaveform), new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly DependencyProperty MusicalRulerProperty = DependencyProperty.Register(nameof(MusicalRuler), typeof(bool), typeof(BackingWaveform), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, MusicalGridChanged));
+    public bool MusicalRuler { get => (bool)GetValue(MusicalRulerProperty); set => SetValue(MusicalRulerProperty, value); }
+    public bool ShowRuler { get => (bool)GetValue(ShowRulerProperty); set => SetValue(ShowRulerProperty, value); }
     public static readonly DependencyProperty IsOverviewProperty = DependencyProperty.Register(nameof(IsOverview), typeof(bool), typeof(BackingWaveform), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, GeometryChanged));
+    public static readonly DependencyProperty MeterProperty = DependencyProperty.Register(nameof(Meter), typeof(string), typeof(BackingWaveform), new FrameworkPropertyMetadata("4/4", FrameworkPropertyMetadataOptions.AffectsRender, MusicalGridChanged));
+    public static readonly DependencyProperty FirstBeatProperty = DependencyProperty.Register(nameof(FirstBeat), typeof(double), typeof(BackingWaveform), new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender, MusicalGridChanged));
+    public string Meter { get => (string)GetValue(MeterProperty); set => SetValue(MeterProperty, value); }
+    public double FirstBeat { get => (double)GetValue(FirstBeatProperty); set => SetValue(FirstBeatProperty, value); }
+    private static void MusicalGridChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) { ((BackingWaveform)d).guides = null; }
     public static readonly DependencyProperty BpmProperty = Register(nameof(Bpm), 120);
     public static readonly DependencyProperty SectionsProperty = DependencyProperty.Register(nameof(Sections), typeof(System.Collections.ObjectModel.ObservableCollection<BackingSection>), typeof(BackingWaveform), new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, SectionsChanged));
     public double ViewportStart { get => (double)GetValue(ViewportStartProperty); set => SetCurrentValue(ViewportStartProperty, value); }
@@ -89,12 +98,14 @@ public sealed class BackingWaveform : FrameworkElement
     {
         RenderCount++;
         base.OnRender(dc);
-        if (ActualWidth < 26 || ActualHeight < (IsOverview ? 20 : 80)) return;
+        if (MusicalRuler) { RenderMusicalRuler(dc); return; }
+        if (ActualWidth < 26 || ActualHeight < (MusicalRuler ? 32 : IsOverview ? 20 : 80)) return;
         var foreground = ResourceBrush("CubeText", Brushes.White);
         var accent = ResourceBrush("BackingPlayed", Brushes.MediumAquamarine);
         var neutral = ResourceBrush("BackingFuture", Brushes.SteelBlue);
         var border = ResourceBrush("CubeBorder", Brushes.Gray);
-        dc.DrawRoundedRectangle(ResourceBrush("CubeInset", Brushes.Black), null, new Rect(RenderSize), 8, 8);
+        double surfaceRadius = ((CornerRadius)FindResource("CubeControlCornerRadius")).TopLeft;
+        dc.DrawRoundedRectangle(ResourceBrush("CubeInset", Brushes.Black), null, new Rect(RenderSize), surfaceRadius, surfaceRadius);
         void Text(string text, double x, double y, Brush? brush = null)
         {
             var formatted = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, WaveTypeface, text is "A" or "B" ? 16 : 12, brush ?? foreground, VisualTreeHelper.GetDpi(this).PixelsPerDip);
@@ -121,24 +132,27 @@ public sealed class BackingWaveform : FrameworkElement
                 double desired = VisibleDuration / Math.Max(1, (ActualWidth - 24) / 80);
                 double magnitude = Math.Pow(10, Math.Floor(Math.Log10(Math.Max(.1, desired))));
                 double tick = new[] { 1d, 2, 5, 10 }.First(v => v * magnitude >= desired) * magnitude;
-                for (double t = Math.Ceiling(VisibleStart / tick) * tick; !IsOverview && t < VisibleStart + VisibleDuration; t += tick)
+                for (double t = Math.Ceiling(VisibleStart / tick) * tick; !IsOverview && ShowRuler && !MusicalRuler && t < VisibleStart + VisibleDuration; t += tick)
                 {
                     double x = X(t);
                     if (t > 0 && X(Duration) - x < 80) break;
                     grid.DrawLine(new Pen(border, 1), new(x, 24), new(x, ActualHeight - 8)); GuideText(BackingTracksViewModel.FormatTime(t, tick < 1), x, 4);
                 }
-                if (!IsOverview) GuideText(BackingTracksViewModel.FormatTime(VisibleStart + VisibleDuration, tick < 1), ActualWidth - 52, 4);
-                if (!IsOverview && Bpm >= 20 && Bpm <= 300)
+                if (!IsOverview && ShowRuler && !MusicalRuler) GuideText(BackingTracksViewModel.FormatTime(VisibleStart + VisibleDuration, tick < 1), ActualWidth - 52, 4);
+                if (!IsOverview && ShowRuler && Bpm >= 20 && Bpm <= 300)
                 {
-                    double bar = 240 / Bpm;
+                    var meter = Meter.Split('/');
+                    double bar = 60 / Bpm * (int.TryParse(meter[0], out int numerator) ? numerator : 4) * 4 / (meter.Length > 1 && int.TryParse(meter[1], out int denominator) ? denominator : 4);
                     int stride = Math.Max(1, (int)Math.Ceiling(VisibleDuration / bar / Math.Max(1, ActualWidth / 70)));
-                    for (double t = Math.Ceiling(VisibleStart / (bar * stride)) * bar * stride; t < VisibleStart + VisibleDuration; t += bar * stride)
+                    for (double t = FirstBeat + Math.Ceiling((VisibleStart - FirstBeat) / (bar * stride)) * bar * stride; t < VisibleStart + VisibleDuration; t += bar * stride)
                     {
                         double x = X(t); grid.PushOpacity(.4); grid.DrawLine(new Pen(border, 1), new(x, 48), new(x, ActualHeight - 28)); grid.Pop();
-                        GuideText($"{(int)Math.Round(t / bar) + 1}", x + 3, ActualHeight - 18, neutral);
+                        // The 104-DIP session ruler reserves separate bands for
+                        // time (4), A/B (30), sections (55) and bar numbers (80).
+                        GuideText($"{(int)Math.Round((t - FirstBeat) / bar) + 1}", x + 3, MusicalRuler ? 2 : Math.Min(80, ActualHeight - 16), neutral);
                     }
                 }
-                if (!IsOverview && Sections != null)
+                if (!IsOverview && ShowRuler && Sections != null)
                 {
                     var markers = Sections.Where(m => m.Position >= VisibleStart && m.Position <= VisibleStart + VisibleDuration).OrderBy(m => m.Position).ToArray();
                     for (int i = 0; i < markers.Length; i++)
@@ -280,7 +294,52 @@ public sealed class BackingWaveform : FrameworkElement
         if (drag == 0) drag = 3;
         Focus(); CaptureMouse(); Preview(at.X); e.Handled = true;
     }
-    private Rect MarkerBounds(double time) => new(Math.Clamp(X(time) - 18, 0, Math.Max(0, ActualWidth - 36)), 24, 36, 30);
+    private void RenderMusicalRuler(DrawingContext dc)
+    {
+        if (ActualWidth < 26 || ActualHeight < 24 || VisibleDuration <= 0) return;
+        var foreground = ResourceBrush("CubeText", Brushes.White);
+        var border = ResourceBrush("CubeBorder", Brushes.Gray);
+        var accent = ResourceBrush("BackingPlayed", Brushes.MediumAquamarine);
+        dc.DrawRectangle(ResourceBrush("CubeWell", Brushes.Black), null, new Rect(RenderSize));
+        void Label(string text, double x, double y, Brush brush)
+        {
+            var label = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, WaveTypeface, 12, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+            dc.DrawText(label, new Point(Math.Clamp(x, 0, Math.Max(0, ActualWidth - label.Width)), y));
+        }
+        string[] meter = Meter.Split('/');
+        int numerator = int.TryParse(meter[0], out int n) ? n : 4;
+        int denominator = meter.Length > 1 && int.TryParse(meter[1], out int d) ? d : 4;
+        double beat = 60 / Math.Max(20, Bpm) * 4 / denominator;
+        double bar = beat * numerator;
+        int stride = Math.Max(1, (int)Math.Ceiling(VisibleDuration / bar / Math.Max(1, ActualWidth / 50)));
+        for (double t = FirstBeat + Math.Ceiling((VisibleStart - FirstBeat) / beat) * beat; t <= VisibleStart + VisibleDuration; t += beat)
+        {
+            bool major = Math.Abs((t - FirstBeat) / bar - Math.Round((t - FirstBeat) / bar)) < .0001;
+            dc.DrawLine(new Pen(border, 1), new Point(X(t), major ? 20 : 25), new Point(X(t), 30));
+            int index = (int)Math.Round((t - FirstBeat) / bar);
+            if (major && index % stride == 0) Label((index + 1).ToString(CultureInfo.CurrentCulture), X(t) + 2, 0, foreground);
+        }
+        dc.DrawLine(new Pen(border, 1), new Point(0, 30), new Point(ActualWidth, 30));
+        double a = drag == 1 ? preview : RangeStart, b = drag == 2 ? preview : RangeEnd;
+        if (double.IsFinite(a) && double.IsFinite(b) && b > a)
+        {
+            double left = X(a), right = X(b);
+            var fill = accent.Clone(); fill.Opacity = SystemParameters.HighContrast ? 1 : .2;
+            dc.DrawRectangle(fill, new Pen(accent, 1), new Rect(left, 31, Math.Max(0, right - left), 19));
+            int first = (int)Math.Floor((a - FirstBeat) / bar) + 1, last = (int)Math.Ceiling((b - FirstBeat) / bar);
+            Label($"Loop ({first} – {last})", left + Math.Max(0, (right - left) / 2 - 35), 32, foreground);
+            foreach (var (x, direction) in new[] { (left, 1), (right, -1) })
+            {
+                var triangle = new StreamGeometry(); using (var g = triangle.Open()) { g.BeginFigure(new Point(x,31),true,true); g.LineTo(new Point(x+direction*10,40),true,false); g.LineTo(new Point(x,50),true,false); }
+                dc.DrawGeometry(accent,null,triangle);
+            }
+        }
+        double cursor = X(drag == 3 ? preview : Position);
+        dc.DrawLine(new Pen(ResourceBrush("BackingPlayhead", Brushes.Gold), 1), new Point(cursor,30), new Point(cursor,ActualHeight));
+    }
+    private Rect MarkerBounds(double time) => MusicalRuler
+        ? new Rect(X(time) - 10, 28, 20, 24)
+        : new Rect(Math.Clamp(X(time) - 18, 0, Math.Max(0, ActualWidth - 36)), 24, 36, 30);
     private int HitMarker(Point point)
     {
         if (IsOverview) return 0;

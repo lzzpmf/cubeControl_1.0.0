@@ -8,6 +8,7 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:motion="clr-namespace:Cube.Desktop.Controls"
     xmlns:controls="clr-namespace:Wpf.Ui.Controls;assembly=Wpf.Ui">
 
     <Style x:Key="CubeDefaultToolTipStyle" TargetType="{x:Type ToolTip}">
@@ -28,7 +29,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
                     <controls:EffectThicknessDecorator Thickness="15">
-                        <Border
+                        <Border motion:SurfaceMotion.Enabled="True"
                             Name="Border"
                             Width="{TemplateBinding Width}"
                             Height="{TemplateBinding Height}"

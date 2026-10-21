@@ -4,6 +4,7 @@ Editor Windows para o **Cube Baby de guitarra**, com comunicação USB-MIDI. Per
 
 ## Comece aqui
 
+- [Manual HTML offline](CubeControl-1.1/Cube/docs/manual/index.html): capítulos em português e inglês, busca integral, temas e impressão. No aplicativo: **Dispositivo e ajuda → Manual do cubeControl**.
 - [Guia de uso](CubeControl-1.1/Cube/docs/usuario/pt-BR/primeiros-passos.md): conexão, edição, gravação e recuperação.
 - [Documentação completa](CubeControl-1.1/Cube/docs/README.md): índice por assunto, incluindo pesquisa e referências.
 - [Desenvolvimento e build](CubeControl-1.1/Cube/windows/README.md): requisitos, fluxo único, opções e destinos externos.

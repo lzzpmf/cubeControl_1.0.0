@@ -9,13 +9,14 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:motion="clr-namespace:Cube.Desktop.Controls"
     xmlns:controls="clr-namespace:Wpf.Ui.Controls;assembly=Wpf.Ui">
 
     <Style x:Key="CubeUiContextMenu" TargetType="{x:Type ContextMenu}">
-        <Setter Property="TextElement.Foreground" Value="{DynamicResource ContextMenuForeground}" />
-        <Setter Property="Foreground" Value="{DynamicResource ContextMenuForeground}" />
-        <Setter Property="Background" Value="{DynamicResource ContextMenuBackground}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource ContextMenuBorderBrush}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource CubeText}" />
+        <Setter Property="Foreground" Value="{DynamicResource CubeText}" />
+        <Setter Property="Background" Value="{DynamicResource CubePopupSurface}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CubePopupBorder}" />
         <Setter Property="MinWidth" Value="140" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="0" />
@@ -29,49 +30,33 @@
                 <ControlTemplate TargetType="{x:Type ContextMenu}">
                     <controls:EffectThicknessDecorator Thickness="30">
                         <Border
-                            x:Name="Border"
+                            x:Name="Border" motion:SurfaceMotion.Enabled="True"
                             Padding="0,3,0,3"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="0"
-                            CornerRadius="{DynamicResource CubeCardCornerRadius}">
+                            BorderThickness="{DynamicResource CubePopupBorderThickness}"
+                            CornerRadius="{DynamicResource CubePopupCornerRadius}">
                             <Border.Effect>
                                 <DropShadowEffect
                                     BlurRadius="20"
                                     Direction="270"
-                                    Opacity="0.135"
+                                    Opacity="{DynamicResource CubePopupShadowOpacity}"
                                     ShadowDepth="10"
                                     Color="#202020" />
                             </Border.Effect>
                             <Border.RenderTransform>
                                 <TranslateTransform />
                             </Border.RenderTransform>
+                            <controls:DynamicScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="True" MaxHeight="{Binding Source={x:Static SystemParameters.WorkArea}, Path=Height}">
                             <StackPanel
                                 ClipToBounds="True"
                                 IsItemsHost="True"
                                 KeyboardNavigation.DirectionalNavigation="Cycle"
                                 Orientation="Vertical" />
+                            </controls:DynamicScrollViewer>
                         </Border>
                     </controls:EffectThicknessDecorator>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsOpen" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation
-                                            Storyboard.TargetName="Border"
-                                            Storyboard.TargetProperty="(Border.RenderTransform).(TranslateTransform.Y)"
-                                            From="-90"
-                                            To="0"
-                                            Duration="00:00:00.167">
-                                            <DoubleAnimation.EasingFunction>
-                                                <CircleEase EasingMode="EaseOut" />
-                                            </DoubleAnimation.EasingFunction>
-                                        </DoubleAnimation>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

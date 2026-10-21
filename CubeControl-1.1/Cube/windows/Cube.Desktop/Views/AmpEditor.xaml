@@ -16,7 +16,7 @@
    <Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/>
    <Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="VerticalAlignment" Value="Center"/>
    <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
-   <Setter Property="Background" Value="{DynamicResource ButtonBackground}"/>
+   <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
    <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
    <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
    <Setter Property="BorderThickness" Value="0"/>
@@ -28,14 +28,14 @@
      </Border>
     </Grid>
     <Border Style="{StaticResource CubeSelectionMarker}"/></Grid><ControlTemplate.Triggers>
-     <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}"/></Trigger>
+     <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
      <Trigger Property="IsSelected" Value="True">
       <Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource CubeAccent}"/>
      </Trigger>
      <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource CubeFocus}"/></Trigger>
      <Trigger Property="IsEnabled" Value="False">
-      <Setter Property="Background" Value="{DynamicResource ButtonBackgroundDisabled}"/><Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
+      <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/><Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}"/>
      </Trigger>
     </ControlTemplate.Triggers>
@@ -143,7 +143,7 @@
       <ui:Button Content="{loc:Translate Text='Exportar preset'}" Click="ExportClick" IsEnabled="{Binding Amp.Loaded}" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Salva os ajustes atuais em um preset no computador.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowUpload24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
      </WrapPanel>
     </StackPanel>
-    <StackPanel x:Name="GlobalControls" Grid.Column="1" IsEnabled="{Binding CanAdjustAmp}" VerticalAlignment="Bottom" Margin="0,48,0,0">
+    <StackPanel x:Name="GlobalControls" Grid.Column="1" IsEnabled="{Binding CanAdjustAmp}" VerticalAlignment="Top" Margin="0,12,0,0">
      <ItemsControl ItemsSource="{Binding Amp.MainControls}" Foreground="{DynamicResource AmpAccent}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/>
     </StackPanel>
    </Grid>

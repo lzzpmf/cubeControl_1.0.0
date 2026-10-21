@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 
 namespace Cube.Desktop;
 
@@ -32,6 +32,15 @@ internal static class AssetPaths
         ["Two-Rock Coral.png"] = "Images/Equipment/Amps/Two-Rock Coral.png",
         ["VHT Deliverance.png"] = "Images/Equipment/Cabinets/VHT Deliverance.png",
         ["VHT Pittbull.png"] = "Images/Equipment/Amps/VHT Pittbull.png",
+        ["Blackface Clean.png"] = "Images/Equipment/Amps/Blackface Clean.png",
+        ["Hiwatt Glass.png"] = "Images/Equipment/Amps/Hiwatt Glass.png",
+        ["Dumble Bloom.png"] = "Images/Equipment/Amps/Dumble Bloom.png",
+        ["Tweed Deluxe.png"] = "Images/Equipment/Amps/Tweed Deluxe.png",
+        ["Recto Modern.png"] = "Images/Equipment/Amps/Recto Modern.png",
+        ["Matchless Chime.png"] = "Images/Equipment/Amps/Matchless Chime.png",
+        ["Brit 800 Bite.png"] = "Images/Equipment/Amps/Brit 800 Bite.png",
+        ["Orange Growl.png"] = "Images/Equipment/Amps/Orange Growl.png",
+        ["5150 Focus.png"] = "Images/Equipment/Amps/5150 Focus.png",
         ["Vox AC30.png"] = "Images/Equipment/Amps/Vox AC30.png",
         ["cabinet-generic-front.png"] = "Images/Equipment/Cabinets/cabinet-generic-front.png",
         ["cabinet-unknown.png"] = "Images/Equipment/Cabinets/cabinet-unknown.png",
@@ -49,6 +58,8 @@ internal static class AssetPaths
         ["marshall-1960tv-greenback-4x12.png"] = "Images/Equipment/Cabinets/marshall-1960tv-greenback-4x12.png",
         ["mesa-4fb-v30-4x12.png"] = "Images/Equipment/Cabinets/mesa-4fb-v30-4x12.png",
         ["mesa-rectifier-v30.png"] = "Images/Equipment/Cabinets/mesa-rectifier-v30.png",
+        ["cabinet-distance-side.png"] = "Images/Equipment/Cabinets/cabinet-distance-side.png",
+        ["microphone-distance-side.png"] = "Images/Equipment/Microphones/microphone-distance-side.png",
         ["micGenerico.png"] = "Images/Equipment/Microphones/micGenerico.png",
         ["orange-v30-2x12.png"] = "Images/Equipment/Cabinets/orange-v30-2x12.png",
         ["orange-v30-vertical-2x12.png"] = "Images/Equipment/Cabinets/orange-v30-vertical-2x12.png",

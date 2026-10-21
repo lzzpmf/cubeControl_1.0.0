@@ -231,6 +231,8 @@ internal static class QaProtocol
             Check(inventory.Resolve(hash)?.Slot == 7, "Match did not follow content"); return Task.CompletedTask;
         }),
         Test("effects-chorus", "Existing protocol chorus fixtures", "QA-DSP-001,QA-DSP-002", _ => ChorusTests.Run(Check)),
+        Test("effects-chorus-preview", "Chorus preview validation, readback and recovery", "QA-DSP-001,QA-DSP-002", _ => ChorusPreviewTests.Run(Check)),
+        Test("ir-pack-resources", "IR pack identities and missing/corrupt resources", "QA-REG-001", _ => { IrPackTests.Run(Check); return Task.CompletedTask; }),
         Test("effects-phaser", "Existing protocol phaser fixtures", "QA-DSP-001,QA-DSP-002", _ => PhaserTests.Run(Check)),
         Test("effects-delay", "Existing protocol delay fixtures", "QA-DSP-001,QA-DSP-002", _ => DelayTests.Run(Check)),
         Test("effects-reverb", "Existing protocol reverb fixtures", "QA-DSP-001,QA-DSP-002", _ => ReverbTests.Run(Check)),

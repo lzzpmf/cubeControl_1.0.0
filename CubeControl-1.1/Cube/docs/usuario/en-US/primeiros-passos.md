@@ -22,6 +22,8 @@ Zoom ranges from 50% to 200% in 10% steps. Use Ctrl +, Ctrl − and Ctrl 0 to in
 For connection issues, see [Troubleshooting](problemas.md).
 
 ## Find help
+In **Device and help**, **cubeControl manual** opens the HTML manual in your default browser using the app's current language and theme. It includes full-text search, a chapter index, printing and switching between Portuguese and English. You can also open `Assets/Documents/manual/index.html` directly, without internet. The browser's theme selection does not change the app's appearance.
+
 Documentation Center search matches catalog titles, summaries and keywords, not the full guide text. Every space-separated term must match; case and accents are ignored. If the selected language is unavailable, the app uses Brazilian Portuguese or, failing that, the first available version. Preserved manuals describe their source versions; use the Center’s guides for current app workflows.
 
 ## Navigation and help

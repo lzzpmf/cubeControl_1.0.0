@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -12,7 +12,6 @@ internal static class DragFeedback
 {
     private static FeedbackAdorner? current;
     private static AdornerLayer? layer;
-    private static long lastScroll;
     private static ScrollViewer? scrolling;
     private static double scrollStep;
     private static readonly System.Windows.Threading.DispatcherTimer scrollTimer = CreateScrollTimer();
@@ -29,7 +28,8 @@ internal static class DragFeedback
     }
     public static void Show(UIElement target, string text, Point pointer, bool valid, bool? insertAfter = null)
     {
-        Clear(); layer = AdornerLayer.GetAdornerLayer(target);
+        if (current != null) layer?.Remove(current);
+        current = null; layer = AdornerLayer.GetAdornerLayer(target);
         if (layer == null) return;
         current = new(target, text, pointer, valid, insertAfter) { IsHitTestVisible = false }; layer.Add(current);
     }
@@ -39,20 +39,20 @@ internal static class DragFeedback
         current = null; layer = null;
         scrollTimer.Stop(); scrolling = null;
     }
-    public static void AutoScroll(DependencyObject source, DragEventArgs e)
+    public static void AutoScroll(DependencyObject source, CubeDropContext e)
     {
-        long now = Environment.TickCount64;
-        if (now - lastScroll < 50) return;
         for (DependencyObject? node = source; node != null; node = node is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
         {
             if (node is not ScrollViewer viewer || viewer.ScrollableHeight <= 0) continue;
-            double y = e.GetPosition(viewer).Y;
+            var point = e.GetPosition(viewer);
+            if (point.X < 0 || point.X > viewer.ActualWidth || point.Y < 0 || point.Y > viewer.ActualHeight) continue;
+            double y = point.Y;
             if (y < 28) scrollStep = -16;
             else if (y > viewer.ActualHeight - 28) scrollStep = 16;
             else continue;
-            scrolling = viewer; scrollTimer.Start(); viewer.ScrollToVerticalOffset(viewer.VerticalOffset + scrollStep);
-            lastScroll = now; break;
+            scrolling = viewer; scrollTimer.Start(); return;
         }
+        scrollTimer.Stop(); scrolling = null;
     }
     private sealed class FeedbackAdorner(UIElement target, string text, Point pointer, bool valid, bool? after) : Adorner(target)
     {
@@ -61,6 +61,7 @@ internal static class DragFeedback
             IsHitTestVisible = false;
             var accent = ThemeService.Brush(valid ? "CubeAccent" : "CubeDisabledText");
             var bounds = new Rect(AdornedElement.RenderSize);
+            double radius = ((CornerRadius)FindResource("CubeCardCornerRadius")).TopLeft;
             if (bounds.Width < 4 || bounds.Height < 4) return;
             if (after.HasValue)
             {
@@ -70,15 +71,16 @@ internal static class DragFeedback
             }
             else
             {
-                dc.PushOpacity(.12); dc.DrawRoundedRectangle(accent, null, bounds, 8, 8); dc.Pop();
+                if (SystemParameters.HighContrast) dc.DrawRoundedRectangle(null, new Pen(accent, 2), bounds, radius, radius);
+                else { dc.PushOpacity(.12); dc.DrawRoundedRectangle(accent, null, bounds, radius, radius); dc.Pop(); }
 
             }
             var label = new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-                new Typeface("Segoe UI"), 12, ThemeService.Brush("CubeText"), VisualTreeHelper.GetDpi(this).PixelsPerDip)
+                new Typeface((FontFamily)FindResource("CubeUiFont"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), (double)FindResource("CubeFontSizeCaption"), ThemeService.Brush("CubeText"), VisualTreeHelper.GetDpi(this).PixelsPerDip)
                 { MaxTextWidth = Math.Max(20, Math.Min(360, bounds.Width - 20)), Trimming = TextTrimming.CharacterEllipsis };
             double x = Math.Clamp(pointer.X + 12, 0, Math.Max(0, bounds.Width - label.Width - 16));
             double top = Math.Clamp(pointer.Y + 16, 0, Math.Max(0, bounds.Height - label.Height - 12));
-            dc.DrawRoundedRectangle(ThemeService.Brush("CubeFloatingSurface"), null, new Rect(x, top, label.Width + 16, label.Height + 12), 6, 6);
+            dc.DrawRoundedRectangle(ThemeService.Brush("CubeFloatingSurface"), null, new Rect(x, top, label.Width + 16, label.Height + 12), radius, radius);
             dc.DrawText(label, new(x + 8, top + 6));
         }
     }

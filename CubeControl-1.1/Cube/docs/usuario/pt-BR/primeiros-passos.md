@@ -22,6 +22,8 @@ O zoom vai de 50% a 200%, em passos de 10%. Use Ctrl +, Ctrl − e Ctrl 0 para a
 Se a conexão falhar, consulte [Problemas comuns](problemas.md).
 
 ## Encontrar ajuda
+Em **Dispositivo e ajuda**, **Manual do cubeControl** abre o manual HTML no navegador padrão, no idioma e tema atuais do aplicativo. Ele inclui busca no texto completo, índice por capítulo, impressão e troca entre português e inglês. Também é possível abrir `Assets/Documents/manual/index.html` diretamente, sem internet. A seleção de tema do navegador não altera a aparência do aplicativo.
+
 A busca da Central de Documentação procura no título, resumo e palavras-chave do catálogo, não no texto integral dos guias. Todos os termos separados por espaço precisam corresponder; maiúsculas e acentos são ignorados. Se não houver versão no idioma selecionado, o app usa português brasileiro ou, na ausência dele, a primeira versão disponível. Os manuais preservados descrevem suas versões de origem; para os fluxos atuais do aplicativo, use os guias da Central.
 
 ## Navegar e consultar ajuda

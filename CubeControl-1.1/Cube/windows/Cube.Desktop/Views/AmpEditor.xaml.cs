@@ -27,7 +27,8 @@ public partial class AmpEditor : UserControl
             try { e.Handled = EqGraph.AdjustQ(e.GetPosition(EqGraph), e.Delta); }
             finally { model.EndGesture(this); }
         };
-        BaseSelector.ItemsSource = EquipmentCatalog.Amps.Select(a => a.Name).ToArray();
+        BaseSelector.ItemsSource = EquipmentCatalog.Amps.Select(a => a.Name)
+            .Concat(AmpEqPresets.All.Select(a => a.Description)).ToArray();
         foreach (string key in new[] { "AmpAccent", "AmpBandA", "AmpBandB", "CapacitorAmber", "CapacitorDisplay" }) ampBrushes[key] = Resources[key];
         Loaded += (_, _) => { ThemeService.Instance.Changed += UpdateColors; UpdateColors(); UpdateLayoutMode(); };
         Unloaded += (_, _) => ThemeService.Instance.Changed -= UpdateColors;
@@ -49,7 +50,7 @@ public partial class AmpEditor : UserControl
         bool headerWide = ActualWidth >= 800, eqWide = ActualWidth >= 960;
         AmpHeader.ColumnDefinitions[1].Width = headerWide ? GridLength.Auto : new GridLength(0);
         Grid.SetColumn(GlobalControls, headerWide ? 1 : 0); Grid.SetRow(GlobalControls, headerWide ? 0 : 1);
-        GlobalControls.Margin = new Thickness(0, headerWide ? 48 : 16, 0, 0);
+        GlobalControls.Margin = new Thickness(0, headerWide ? 12 : 16, 0, 0);
         ModernEq.ColumnDefinitions[1].Width = new GridLength(eqWide ? 240 : 0);
         Grid.SetColumn(EqControlsPanel, eqWide ? 1 : 0); Grid.SetRow(EqControlsPanel, eqWide ? 0 : 1);
         EqControlsPanel.Margin = eqWide ? new Thickness(12, 0, 0, 0) : new Thickness(0, 8, 0, 0);
@@ -112,9 +113,18 @@ public partial class AmpEditor : UserControl
             {
                 BaseSelector.SelectedIndex = selectedBase; return;
             }
-            if (await model.ReadAmpAsync(next))
+            bool loaded;
+            if (next >= EquipmentCatalog.Amps.Count)
             {
-                selectedBase = next; model.Amp.Slot = next;
+                var preset = AmpEqPresets.All[next - EquipmentCatalog.Amps.Count];
+                model.Amp.Load(preset.Build(), preset.Name);
+                loaded = true;
+            }
+            else loaded = await model.ReadAmpAsync(next);
+            if (loaded)
+            {
+                selectedBase = next;
+                if (next < EquipmentCatalog.Amps.Count) model.Amp.Slot = next;
                 await ApplyControls();
             }
             else

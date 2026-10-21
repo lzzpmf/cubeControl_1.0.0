@@ -13,6 +13,8 @@ public sealed class BackingFaderMeter : FrameworkElement
         nameof(Reading), typeof(BackingMeterReading), typeof(BackingFaderMeter),
         new FrameworkPropertyMetadata(BackingMeterReading.Silent, FrameworkPropertyMetadataOptions.AffectsRender));
     public BackingMeterReading Reading { get => (BackingMeterReading)GetValue(ReadingProperty); set => SetValue(ReadingProperty, value); }
+    public static readonly DependencyProperty VerticalProperty = DependencyProperty.Register(nameof(Vertical), typeof(bool), typeof(BackingFaderMeter), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+    public bool Vertical { get => (bool)GetValue(VerticalProperty); set => SetValue(VerticalProperty, value); }
     public BackingFaderMeter()
     {
         IsHitTestVisible = false; Focusable = false;
@@ -22,6 +24,28 @@ public sealed class BackingFaderMeter : FrameworkElement
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
+        if (Vertical)
+        {
+            double height = Math.Max(1, ActualHeight - 16);
+            Brush verticalText = SystemParameters.HighContrast ? SystemColors.WindowTextBrush : (Brush)FindResource("CubeText");
+            for (int i = 0; i < 30; i++)
+            {
+                double db = -60 + (i + 1) * 2;
+                Brush brush = (Brush)FindResource(db <= Reading.LevelDb ? db >= -6 ? "CubeWarning" : "CubeAccent" : "CubeWell");
+                if (SystemParameters.HighContrast) brush = db <= Reading.LevelDb ? SystemColors.HighlightBrush : SystemColors.WindowBrush;
+                dc.DrawRectangle(brush, new Pen((Brush)FindResource("CubeBorder"), .5), new Rect(2, 8 + height - (i + 1) * height / 30, 12, Math.Max(1, height / 30 - 2)));
+            }
+            double peakY = 8 + height * (1 - Math.Clamp((Reading.PeakDb + 60) / 60, 0, 1));
+            dc.DrawLine(new Pen(verticalText, 2), new Point(1, peakY), new Point(15, peakY));
+            foreach (int db in new[] { 0, -18, -60 })
+            {
+                var label = new FormattedText(db.ToString(CultureInfo.InvariantCulture), CultureInfo.CurrentUICulture,
+                    FlowDirection.LeftToRight, new Typeface((FontFamily)FindResource("CubeUiFont"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal),
+                    9, verticalText, VisualTreeHelper.GetDpi(this).PixelsPerDip);
+                dc.DrawText(label, new Point(18, Math.Clamp(8 + height * -db / 60 - label.Height / 2, 0, ActualHeight - label.Height)));
+            }
+            return;
+        }
         double width = Math.Max(0, ActualWidth - 20);
         if (width < 1) return;
         bool contrast = ThemeService.Instance.IsHighContrast || SystemParameters.HighContrast;

@@ -225,8 +225,9 @@ internal static class MetronomeTests
                 var panel = (FrameworkElement)window.FindName("BackingTransportRack");
                 var metronomePanel = (FrameworkElement)window.FindName("BackingMetronomePanel");
                 Check(Descendants(panel).Contains(metronomePanel), "metronome belongs to player");
-                var faders = Descendants(panel).OfType<Cube.Desktop.Controls.BackingFader>().ToArray();
-                Check(faders.Length == 3 && faders.All(f => f.Orientation == Orientation.Horizontal), "player mixer contains three horizontal faders");
+                ((FrameworkElement)window.FindName("BackingVolumesPanel")).Visibility = Visibility.Visible; window.UpdateLayout();
+                var faders = Descendants((FrameworkElement)window.FindName("BackingVolumesPanel")).OfType<Cube.Desktop.Controls.BackingFader>().ToArray();
+                Check(faders.Length >= 3 && faders.All(f => f.Orientation == Orientation.Vertical), "player mixer contains vertical bus faders");
                 Check(panel.ActualWidth > 0 && panel.ActualHeight > 0, $"panel without track {theme}/{language}/{width}/{scale}");
                 var bpmButton = (FrameworkElement)window.FindName("BackingBpmButton");
                 var bpmPosition = bpmButton.TranslatePoint(new Point(), panel);

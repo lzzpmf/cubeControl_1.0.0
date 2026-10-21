@@ -121,6 +121,7 @@ public sealed partial class EditorViewModel
         {
             var bytes = await session!.ReadAmpSlot(slot);
             Amp.LoadSlot(bytes, slot);
+            IdentifyAmpArtwork(slot, bytes);
             AmpSource = "Modelo carregado do pedal";
             loaded = true;
             Status = "Amp carregado para edição local.";
@@ -233,6 +234,7 @@ public sealed partial class EditorViewModel
             }, new TransferProgressThrottle(p => Status = $"{p.Stage}: {p.Done}/{p.Total}"));
             completed = true;
             soundContentRevision++;
+            IdentifyAmpArtwork(slot, target);
             ampSavedBytes = target.ToArray(); ampSavedSlot = slot; ampSavedIdentity = session.IdentityHex;
             Notify(nameof(AmpSavedMessage));
             AmpOperation = AmpOperationState.Saved;

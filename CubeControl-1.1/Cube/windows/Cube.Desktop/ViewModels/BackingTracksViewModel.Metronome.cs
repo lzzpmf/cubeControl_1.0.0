@@ -50,11 +50,7 @@ public sealed partial class BackingTracksViewModel
     private readonly Dictionary<string, double> metronomeTrackBpms = new(StringComparer.OrdinalIgnoreCase);
     private readonly MetronomeTapTempo tapTempo = new();
     private readonly DispatcherTimer metronomeTimer = new() { Interval = TimeSpan.FromMilliseconds(40) };
-    private MMDeviceEnumerator? metronomeEnumerator;
-    private MMDevice? metronomeDevice;
-    private WasapiPlayer? metronomeOutput;
     private MetronomeSampleProvider? metronomeProvider;
-    private BackingLevelMeter? metronomeLevelMeter;
     private bool followTrack, metronomeEnabled, metronomeAccent = true;
     private double metronomeBpm = 120, metronomeVolume = 100;
     private string metronomeMeter = "4/4";
@@ -66,10 +62,11 @@ public sealed partial class BackingTracksViewModel
     public ICommand MarkFirstBeat { get; private set; } = null!;
     public string[] MetronomeMeters { get; } = ["2/4", "3/4", "4/4", "6/8"];
     public int[] MetronomeCountIns { get; } = [0, 1, 2];
+    public string MetronomeModeLabel => LanguageService.T(FollowTrack ? "Metrônomo da sessão" : "Metrônomo independente");
     public bool FollowTrack
     {
         get => followTrack;
-        set { if (!Set(ref followTrack, value)) return; metronomeGeneration++; StopIndependentMetronome(); metronomeEnabled = false; RefreshMetronome(); UpdateMetronome(); }
+        set { if (!Set(ref followTrack, value)) return; metronomeGeneration++; StopIndependentMetronome(); metronomeEnabled = false; RefreshMetronome(); Notify(nameof(MetronomeModeLabel)); UpdateMetronome(); }
     }
     public bool MetronomeEnabled => metronomeEnabled;
     public string MetronomeToggleLabel => LanguageService.T(metronomeEnabled ? "Desligar metrônomo" : "Ligar metrônomo");
@@ -87,14 +84,14 @@ public sealed partial class BackingTracksViewModel
             UpdateMetronome();
         }
     }
-    public double MetronomeVolume { get => metronomeVolume; set { if (double.IsFinite(value) && Set(ref metronomeVolume, Math.Clamp(value, 0, 100))) UpdateMetronome(); } }
-    public string MetronomeMeter { get => metronomeMeter; set { if (MetronomeMeters.Contains(value) && Set(ref metronomeMeter, value)) UpdateMetronome(); } }
+    public double MetronomeVolume { get => metronomeVolume; set { if (double.IsFinite(value) && Set(ref metronomeVolume, Math.Clamp(value, 0, BackingMixMath.MaximumGain * 100))) { Notify(nameof(ClickDb)); UpdateMetronome(); } } }
+    public string MetronomeMeter { get => FollowTrack && SelectedTrack != null ? SessionMeter : metronomeMeter; set { if (FollowTrack && SelectedTrack != null) { SessionMeter = value; Notify(); } else if (MetronomeMeters.Contains(value) && Set(ref metronomeMeter, value)) UpdateMetronome(); } }
     public bool MetronomeAccent { get => metronomeAccent; set { if (Set(ref metronomeAccent, value)) UpdateMetronome(); } }
     public int CountInBars { get => countInBars; set { if (value is >= 0 and <= 2 && Set(ref countInBars, value)) UpdateMetronome(); } }
     public double FirstBeatOffset
     {
         get => SelectedTrack != null && metronomeOffsets.TryGetValue(SelectedTrack.Source, out double value) ? value : 0;
-        set { if (SelectedTrack == null || !double.IsFinite(value)) return; metronomeOffsets[SelectedTrack.Source] = Math.Clamp(value, 0, Math.Max(0, Duration)); Notify(); UpdateMetronome(); }
+        set { if (!CanEditSession || SelectedTrack == null || !double.IsFinite(value)) return; metronomeOffsets[SelectedTrack.Source] = Math.Clamp(value, 0, Math.Max(0, Duration)); Notify(); UpdateMetronome(); PersistSession(); }
     }
     private bool[] metronomeBeatMarkers = new bool[4];
     public bool[] MetronomeBeatMarkers => metronomeBeatMarkers;
@@ -109,7 +106,7 @@ public sealed partial class BackingTracksViewModel
         Notify(nameof(MetronomeBeatMarkers));
     }
     public int MetronomeBeat { get => metronomeBeat; private set { if (Set(ref metronomeBeat, value)) RefreshMetronomeBeatMarkers(); } }
-    public string MetronomeStatus => LanguageService.T(engine.IsCountingIn && FollowTrack ? "Contagem inicial" : metronomeEnabled && (FollowTrack ? IsPlaying : metronomeOutput != null) ? "Tocando" : metronomeEnabled ? "Pronto" : "Desligado");
+    public string MetronomeStatus => LanguageService.T(engine.IsCountingIn && FollowTrack ? "Contagem inicial" : metronomeEnabled && (FollowTrack ? IsPlaying : metronomeProvider != null) ? "Tocando" : metronomeEnabled ? "Pronto" : "Desligado");
     public string MetronomeTempoLabel => $"{(FollowTrack ? MetronomeBpm * Speed / 100 : MetronomeBpm):0.#} BPM";
     private MetronomeSettings MetronomeConfiguration(bool independent = false) => new(
         metronomeEnabled, MetronomeBpm > 0 ? MetronomeBpm : 120,
@@ -133,7 +130,7 @@ public sealed partial class BackingTracksViewModel
                 followTrack = saved.Follow;
                 metronomeBpm = double.IsFinite(saved.Bpm) ? Math.Clamp(saved.Bpm, 20, 300) : 120;
                 metronomeMeter = MetronomeMeters.Contains(saved.Meter) ? saved.Meter : "4/4";
-                metronomeAccent = saved.Accent; metronomeVolume = double.IsFinite(saved.Volume) ? Math.Clamp(saved.Volume, 0, 100) : 100;
+                metronomeAccent = saved.Accent; metronomeVolume = double.IsFinite(saved.Volume) ? Math.Clamp(saved.Volume, 0, BackingMixMath.MaximumGain * 100) : 100;
                 countInBars = Math.Clamp(saved.CountIn, 0, 2);
                 foreach (var entry in saved.Offsets ?? []) if (double.IsFinite(entry.Value) && entry.Value >= 0) metronomeOffsets[entry.Key] = entry.Value;
                 foreach (var entry in saved.TrackBpms ?? []) if (double.IsFinite(entry.Value) && entry.Value is >= 20 and <= 300) metronomeTrackBpms[entry.Key] = entry.Value;
@@ -146,7 +143,7 @@ public sealed partial class BackingTracksViewModel
         metronomeTimer.Tick += (_, _) =>
         {
             try { MetronomeBeat = !metronomeEnabled ? 0 : FollowTrack ? (IsPlaying ? engine.MetronomeBeat : 0)
-                : metronomeOutput == null ? 0 : MetronomeConfiguration(true).BeatAt(metronomeOutput.GetPosition() / (double)metronomeOutput.OutputWaveFormat.AverageBytesPerSecond);
+                : metronomeProvider == null ? 0 : MetronomeConfiguration(true).BeatAt(metronomeProvider.Seconds);
             }
             catch (Exception ex) { MetronomeOutputChanged(); Error("Metrônomo interrompido. Verifique a saída de áudio.", ex); }
             Notify(nameof(MetronomeStatus));
@@ -160,7 +157,7 @@ public sealed partial class BackingTracksViewModel
             Directory.CreateDirectory(Path.GetDirectoryName(metronomePath)!);
             string temporary = metronomePath + ".tmp";
             File.WriteAllText(temporary, JsonSerializer.Serialize(new MetronomePreferences(1, FollowTrack, metronomeBpm,
-                MetronomeMeter, MetronomeAccent, MetronomeVolume, CountInBars, metronomeOffsets, metronomeTrackBpms, MetronomeSound, CustomMetronomeFiles.ToArray())));
+                metronomeMeter, MetronomeAccent, MetronomeVolume, CountInBars, metronomeOffsets, metronomeTrackBpms, MetronomeSound, CustomMetronomeFiles.ToArray())));
             File.Move(temporary, metronomePath, true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Error("Não foi possível salvar o metrônomo.", ex); }
@@ -170,7 +167,7 @@ public sealed partial class BackingTracksViewModel
         RefreshMeters();
         if (metronomeEnabled) metronomeTimer.Start(); else { metronomeTimer.Stop(); MetronomeBeat = 0; }
         RefreshMetronomeBeatMarkers();
-        foreach (string name in new[] { nameof(MetronomeEnabled), nameof(MetronomeToggleLabel), nameof(MetronomeBpm), nameof(MetronomeTempoLabel), nameof(FirstBeatOffset), nameof(MetronomeStatus) }) Notify(name);
+        foreach (string name in new[] { nameof(TransportBpm), nameof(MetronomeMeter), nameof(MetronomeModeLabel), nameof(MetronomeEnabled), nameof(MetronomeToggleLabel), nameof(MetronomeBpm), nameof(MetronomeTempoLabel), nameof(FirstBeatOffset), nameof(MetronomeStatus) }) Notify(name);
         CommandManager.InvalidateRequerySuggested();
     }
     private void RestoreTrackMetronome()
@@ -213,28 +210,15 @@ public sealed partial class BackingTracksViewModel
     }
     private void StartIndependentMetronome()
     {
-        if (SelectedOutput != null)
-        {
-            try
-            {
-                metronomeEnumerator = new MMDeviceEnumerator(); metronomeDevice = metronomeEnumerator.GetDevice(SelectedOutput.Id);
-                metronomeProvider = new(MetronomeConfiguration(true)); metronomeProvider.Configure(MetronomeConfiguration(true), MetronomeMuted);
-                metronomeOutput = new WasapiPlayerBuilder().WithDevice(metronomeDevice).WithSharedMode().WithEventSync().WithLatency(100).Build();
-                var current = metronomeOutput;
-                current.PlaybackStopped += (_, args) => Dispatch(() => { if (metronomeOutput != current) return; StopIndependentMetronome(); metronomeEnabled = false; RefreshMetronome(); if (args.Exception != null) Error("Metrônomo interrompido. Verifique a saída de áudio.", args.Exception); });
-                metronomeLevelMeter = new BackingLevelMeter(metronomeProvider);
-                metronomeOutput.Init(new SampleToWaveProvider(metronomeLevelMeter)); metronomeOutput.Play();
-            }
-            catch { metronomeEnabled = false; StopIndependentMetronome(); RefreshMetronome(); throw; }
-        }
+        if (SelectedOutput == null) return;
+        metronomeProvider = new(MetronomeConfiguration(true));
+        metronomeProvider.Configure(MetronomeConfiguration(true), MetronomeMuted);
+        Start(engine.SetIndependentClick(SelectedOutput.Id, metronomeProvider));
     }
     private void StopIndependentMetronome()
     {
-        var previous = metronomeOutput; metronomeOutput = null;
-        try { previous?.Stop(); } catch (Exception ex) { Log(ex); }
-        foreach (IDisposable? resource in new IDisposable?[] { previous, metronomeDevice, metronomeEnumerator })
-            try { resource?.Dispose(); } catch (Exception ex) { Log(ex); }
-        metronomeProvider = null; metronomeLevelMeter = null; metronomeDevice = null; metronomeEnumerator = null; MetronomeBeat = 0;
+        Start(engine.SetIndependentClick(SelectedOutput?.Id ?? "", null));
+        metronomeProvider = null; MetronomeBeat = 0;
     }
     private void MetronomeOutputChanged()
     {

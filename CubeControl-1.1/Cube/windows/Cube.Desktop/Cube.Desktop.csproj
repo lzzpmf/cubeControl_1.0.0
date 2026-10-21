@@ -16,6 +16,7 @@
   </ItemGroup>
   <ItemGroup><ProjectReference Include="../Cube.Usb/Cube.Usb.csproj" /><PackageReference Include="WPF-UI" Version="4.3.0" /></ItemGroup>
   <ItemGroup>
+    <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
     <PackageReference Include="NAudio.Core" Version="3.1.0" />
     <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
     <None Include="$(ArtifactsPath)/native/CubeBackingDsp.dll" Link="CubeBackingDsp.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Condition="Exists('$(ArtifactsPath)/native/CubeBackingDsp.dll')" />
@@ -54,6 +55,7 @@
     <Resource Include="Assets/Images/Controls/Switches/chave_seletora_oficial_01_on.png;Assets/Images/Controls/Switches/chave_seletora_oficial_01_off.png" />
     <EmbeddedResource Include="Assets/FactoryAmps.bin" LogicalName="Cube.FactoryAmps" />
     <None Update="Assets/Documents/manuais/**/*.pdf" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../docs/manual/**/*" Link="Assets/Documents/manual/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../../docs/usuario/catalogo.v1.json" Link="Assets/Documents/catalogo.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../../docs/usuario/pt-BR/**/*" Link="Assets/Documents/guias/pt-BR/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../../docs/usuario/en-US/**/*" Link="Assets/Documents/guias/en-US/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

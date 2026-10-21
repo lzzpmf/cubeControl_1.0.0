@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
@@ -117,7 +117,15 @@ internal static class PackCompactUiTests
                 var args = (DragEventArgs)constructor.Invoke(constructor.GetParameters().Select(p => p.ParameterType == typeof(IDataObject) ? (object)data : p.ParameterType == typeof(int) ? 0 : p.ParameterType == typeof(DragDropKeyStates) ? DragDropKeyStates.LeftMouseButton : p.ParameterType == typeof(Point) ? new Point() : p.ParameterType == typeof(DragDropEffects) ? DragDropEffects.Copy | DragDropEffects.Move : (object)destination).ToArray());
                 args.RoutedEvent = DragDrop.DropEvent; return args;
             }
-            void Drag(string handler, DragEventArgs args) => typeof(IrPackEditor).GetMethod(handler, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(view, new object[] { destination, args });
+            void Drag(string handler, DragEventArgs args)
+            {
+                var adapter = GongSolutions.Wpf.DragDrop.DragDrop.GetDropHandler(destination);
+                var info = new GongSolutions.Wpf.DragDrop.DropInfo(destination, args, null, GongSolutions.Wpf.DragDrop.EventType.Bubbled);
+                if (handler == "SlotDragOver") adapter.DragOver(info);
+                else if (handler == "SlotDragLeave") adapter.DragLeave(info);
+                else adapter.Drop(info);
+                args.Effects = info.Effects;
+            }
             editor.Slots[0].DistanceValue = 17; editor.Slots[2].DistanceValue = 81;
             var slotData = new DataObject(sourceType, Activator.CreateInstance(sourceType, editor, 0)!);
             var over = Args(slotData); Drag("SlotDragOver", over);

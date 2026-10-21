@@ -11,6 +11,7 @@ using Cube.Desktop.Controls;
 using Cube.Desktop.Localization;
 using Cube.Desktop.ViewModels;
 using Cube.Protocol;
+using ThemeMode = Cube.Desktop.Appearance.ThemeMode;
 
 internal static class ResponsiveTests
 {
@@ -52,20 +53,30 @@ internal static class ResponsiveTests
         var outer = (ScrollViewer)window.FindName("WorkspaceScroll");
         var tabs = (TabControl)window.FindName("Tabs");
         var chain = (ListBox)window.FindName("EffectChain");
-        async Task Settle()
+        async Task Settle(bool checkCommandStyle = true)
         {
             window.UpdateLayout(); await Dispatcher.Yield(DispatcherPriority.ApplicationIdle); window.UpdateLayout();
-            foreach (var button in Find<Wpf.Ui.Controls.Button>(window).Where(b => b.IsVisible && b.Content is string { Length: > 0 }))
+            foreach (var button in Find<Wpf.Ui.Controls.Button>(window).Where(b => checkCommandStyle && b.IsVisible && b.Content is string { Length: > 0 }))
             {
                 Check(button.ActualHeight >= 39.5, $"Command button is vertically compressed: {button.Content}, height {button.ActualHeight}");
                 Check(button.Padding.Top >= 8 && button.Padding.Bottom >= 8, $"Command text needs vertical breathing room: {button.Content}");
                 Check(button.VerticalContentAlignment == VerticalAlignment.Center, $"Command text must be centered: {button.Content}");
             }
         }
-        void Capture(string name)
+        void Capture(string name, FrameworkElement? surface = null)
         {
-            var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
-            bitmap.Render(window);
+            surface ??= window;
+            // Remove the native monitor's smaller arrange slot from offscreen captures.
+            if (!ReferenceEquals(surface, window)) surface.Arrange(new Rect(surface.RenderSize));
+            var bitmap = new RenderTargetBitmap((int)surface.ActualWidth, (int)surface.ActualHeight, 96, 96, PixelFormats.Pbgra32);
+            if (!ReferenceEquals(surface, window))
+            {
+                var background = new DrawingVisual();
+                using (var drawing = background.RenderOpen())
+                    drawing.DrawRectangle(ThemeService.Brush("CubeCanvas"), null, new Rect(surface.RenderSize));
+                bitmap.Render(background);
+            }
+            bitmap.Render(surface);
             var png = new PngBitmapEncoder(); png.Frames.Add(BitmapFrame.Create(bitmap));
             using var file = File.Create(Path.Combine(folder, name + ".png")); png.Save(file);
         }
@@ -108,7 +119,10 @@ internal static class ResponsiveTests
                     }
                     Check(knob.Value == 1 && fake.Bank[5] == 1, "Volume binding must preserve the real 0-127 range and preset offset");
                     // Drive the same coordinate-based adjustment used by mouse drag,
-                    // without moving the user's system pointer.
+                    // without moving the user's system pointer. WPF can synthesize
+                    // mouse moves during layout; those must not overwrite our supplied coordinates.
+                    MouseEventHandler ignoreSystemMove = (_, e) => e.Handled = true;
+                    knob.PreviewMouseMove += ignoreSystemMove;
                     knob.RaiseEvent(new MouseButtonEventArgs(Mouse.PrimaryDevice, 0, MouseButton.Left) { RoutedEvent = Mouse.MouseDownEvent });
                     try
                     {
@@ -125,16 +139,80 @@ internal static class ResponsiveTests
                         adjust.Invoke(knob, new object[] { target });
                         Check(knob.Value == dragged && dragged > 1, "Unchanged drag coordinates must preserve volume after text changes");
                     }
-                    finally { knob.ReleaseMouseCapture(); }
+                    finally { knob.ReleaseMouseCapture(); knob.PreviewMouseMove -= ignoreSystemMove; }
                     model.Current.State = "Aplicado ao aparelho · não gravado";
                     await Settle(); Capture($"{language}-{width}");
                     Console.WriteLine($"PASS stable volume {language}/{width}: wheel, keyboard, simulated drag, pending/confirmed and status text");
                 }
                 return;
             }
+            if (!zoomOnly)
+            {
+                var testSurface = (FrameworkElement)window.Content;
+                var originalTheme = ThemeService.Instance.Mode;
+                var ampHost = (ContentControl)window.FindName("AmpEditorHost");
+                using (var factory = typeof(AmpViewModel).Assembly.GetManifestResourceStream("Cube.FactoryAmps")!)
+                {
+                    var image = new byte[AmpImage.Size]; factory.ReadExactly(image);
+                    model.Amp.Load(image, "Factory amp");
+                }
+                ampHost.Content = new Cube.Desktop.Views.AmpEditor(model);
+                foreach (var (wideWidth, wideHeight) in new[] { (1366, 768), (1920, 1080), (2560, 1440) })
+                foreach (double dpiScale in new[] { 1d, 1.25, 1.5 })
+                {
+                    ZoomService.Instance.Preview(100);
+                    // Emulate the logical work area at each DPI without changing the monitor.
+                    window.Width = wideWidth / dpiScale; window.Height = (wideHeight - 48) / dpiScale;
+                    // Explicit surface dimensions also cover viewports larger than the QA monitor.
+                    testSurface.Width = wideWidth / dpiScale; testSurface.Height = (wideHeight - 48) / dpiScale;
+                    ThemeService.Instance.Preview(dpiScale == 1.25 ? ThemeMode.Light : ThemeMode.Dark);
+                    LanguageService.Instance.Preview(dpiScale == 1.25 ? "en-US" : "pt-BR");
+                    for (int section = 0; section < 5; section++)
+                    {
+                        tabs.SelectedIndex = section; outer.ScrollToTop(); await Settle(false);
+                        Check(Math.Abs(testSurface.ActualWidth - wideWidth / dpiScale) < 1, "Requested wide viewport must be exercised even beyond the QA monitor");
+                        Check(outer.ExtentWidth <= outer.ViewportWidth + 1, "Wide section horizontal overflow");
+                        if (section == 0)
+                        {
+                            var detail = (Border)window.FindName("EffectDetailSurface");
+                            var panel = (AdaptivePanel)detail.Child;
+                            if (panel.ActualWidth >= panel.Breakpoint)
+                                Check(((FrameworkElement)panel.Children[0]).ActualWidth <= 480.5, "Equipment must leave wide space for parameters");
+                        }
+                        if (section == 1)
+                        {
+                            var libraryPanel = (AdaptivePanel)window.FindName("IrSectionPanel");
+                            var analysis = (FrameworkElement)window.FindName("IrAnalysisPanel");
+                            var preparation = (FrameworkElement)window.FindName("IrPreparationPanel");
+                            var layout = (Grid)window.FindName("IrIndividualLayout");
+                            bool wideIr = libraryPanel.ActualWidth >= 1768;
+                            Check(Grid.GetColumn(preparation) == (wideIr ? 1 : 0), "IR preparation must follow available width");
+                            if (wideIr)
+                            {
+                                var a = analysis.TransformToAncestor(layout).TransformBounds(new Rect(analysis.RenderSize));
+                                var b = preparation.TransformToAncestor(layout).TransformBounds(new Rect(preparation.RenderSize));
+                                Check(a.Right <= b.Left + 1, "Wide IR analysis and preparation overlap");
+                            }
+                            if (libraryPanel.ActualWidth >= libraryPanel.Breakpoint)
+                                Check(((FrameworkElement)libraryPanel.Children[0]).ActualWidth is >= 339.5 and <= 400.5, "IR library readable width");
+                        }
+                        if (section == 4)
+                        {
+                            var help = (ScrollViewer)window.FindName("HelpScroll");
+                            Check(((FrameworkElement)help.Content).ActualWidth <= 1440.5, "Help reading width");
+                        }
+                        await Task.Delay(250); await Settle(false);
+                        Capture($"wide-{wideWidth}x{wideHeight}-dpi{dpiScale}-tab{section}", testSurface);
+                    }
+                }
+                testSurface.ClearValue(FrameworkElement.WidthProperty); testSurface.ClearValue(FrameworkElement.HeightProperty);
+                ThemeService.Instance.Preview(originalTheme);
+                Console.WriteLine("PASS five sections at exact 16:9 work areas and simulated DPI 100/125/150, light/dark and pt-BR/en-US");
+                if (TestCatalog.Arguments.Contains("--wide-layout-only")) return;
+            }
             foreach (int zoom in dialogsOnly ? Array.Empty<int>() : compactOnly ? new[] { 200 } : zoomOnly ? new[] { 50, 100, 150, 200 } : new[] { 100 })
             foreach (string language in new[] { "pt-BR", "en-US" })
-            foreach (var (width, height) in new[] { (1400, 940), (640, 480), (920, 740), (1024, 768), (1100, 850), (1920, 1080), (640, 940), (1400, 940) })
+            foreach (var (width, height) in new[] { (1400, 940), (640, 480), (920, 740), (1024, 768), (1100, 850), (1366, 768), (1920, 1080), (2560, 1440), (640, 940), (1400, 940) })
             {
                 ZoomService.Instance.Preview(zoom);
                 LanguageService.Instance.Preview(language);
@@ -145,7 +223,7 @@ internal static class ResponsiveTests
                     tabs.SelectedIndex = new[] { 0, 1, 4 }[tab]; outer.ScrollToTop(); await Settle();
                     var page = (ScrollViewer)window.FindName(new[] { "EditorScroll", "IrScroll", "HelpScroll" }[tab]);
                     page.ScrollToTop(); await Settle();
-                    bool compact = outer.VerticalScrollBarVisibility == ScrollBarVisibility.Auto;
+                    bool compact = outer.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled;
                     var footer = (FrameworkElement)window.FindName("FooterActions");
                     var pageContent = (StackPanel)page.Content;
                     Check(footer.Parent == pageContent && pageContent.Children[^1] == footer, "Footer follows active page content");
@@ -153,7 +231,8 @@ internal static class ResponsiveTests
                     double gap = footer.TranslatePoint(new Point(), pageContent).Y - preceding.TranslatePoint(new Point(0, preceding.ActualHeight), pageContent).Y;
                     Check(gap <= 32, "Footer must not drift away from content in tall windows");
                     Check(double.IsNaN(workspace.Height), "Workspace must size to content, never a fixed height");
-                    Check(workspace.ActualWidth <= 1440.5, "Wide content must remain bounded");
+                    var client = (FrameworkElement)window.FindName("ClientArea");
+                    Check(Math.Abs(workspace.ActualWidth + workspace.Margin.Left + workspace.Margin.Right - client.ActualWidth) <= 2, "Workspace must use the available client width");
                     Check(outer.ExtentWidth <= outer.ViewportWidth + 1, "Workspace horizontal overflow");
                     Check(page.ExtentWidth <= page.ViewportWidth + 1, "Page horizontal overflow");
                     Check(!compact || page.ScrollableHeight < 1, "Compact layout has competing vertical scroll owners");
@@ -279,7 +358,7 @@ internal static class ResponsiveTests
                 await Settle();
                 var save = (UIElement)window.FindName("SavePresetsButton");
                 save.Focus(); outer.ScrollToTop(); ((ScrollViewer)window.FindName("EditorScroll")).ScrollToTop(); await Settle();
-                var owner = outer.VerticalScrollBarVisibility == ScrollBarVisibility.Auto ? outer : (ScrollViewer)window.FindName("EditorScroll");
+                var owner = outer.VerticalScrollBarVisibility != ScrollBarVisibility.Disabled ? outer : (ScrollViewer)window.FindName("EditorScroll");
                 double offset = owner.VerticalOffset;
                 model.Save.Execute(null);
                 while (model.Busy) { await Task.Delay(20); await Settle(); Check(Math.Abs(owner.VerticalOffset - offset) < 1, "Saving must not scroll the page while busy"); }

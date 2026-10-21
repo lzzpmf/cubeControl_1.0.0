@@ -40,6 +40,7 @@ internal static class MicrophoneTests
             throw new Exception("Focused microphone must retain a transparent background.");
         var folder = Path.GetFullPath(TestPaths.Report("C:/CubeControl-Build/reports/microphone-check"));
         Directory.CreateDirectory(folder);
+        var positions = new Dictionary<(int Width, int Distance), Point>();
         foreach (var width in new[] { 1280, 680 })
         foreach (var distance in new[] { 0, 50, 99 })
         {
@@ -48,15 +49,25 @@ internal static class MicrophoneTests
             window.UpdateLayout(); await Task.Delay(80);
             ((ScrollViewer)window.FindName("IrScroll")).ScrollToVerticalOffset(230);
             scene.BringIntoView(); window.UpdateLayout();
-            if (scene.Distance != distance || Math.Abs(Canvas.GetLeft(thumb) - (210 + 160d * distance / 99)) > .01)
-                throw new Exception("Distance binding or microphone placement failed.");
-            if (Math.Abs(Canvas.GetTop(thumb) - 92) > .01 || Canvas.GetTop(thumb) + thumb.Height > canvas.Height || Canvas.GetLeft(thumb) < 0 || Canvas.GetLeft(thumb) + thumb.Width > canvas.Width)
+            if (scene.Distance != distance) throw new Exception("Distance binding failed.");
+            positions[(width, distance)] = new Point(Canvas.GetLeft(thumb), Canvas.GetTop(thumb));
+            if (Canvas.GetTop(thumb) < 0 || Canvas.GetTop(thumb) + thumb.Height > canvas.Height || Canvas.GetLeft(thumb) < 0 || Canvas.GetLeft(thumb) + thumb.Width > canvas.Width)
                 throw new Exception("Microphone clipped at distance endpoint.");
             var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32);
             bitmap.Render(window);
             var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
             using var output = File.Create(Path.Combine(folder, $"ir-{width}-{distance}.png")); encoder.Save(output);
         }
+        foreach (int width in new[] { 1280, 680 })
+        {
+            var near = positions[(width, 0)]; var middle = positions[(width, 50)]; var far = positions[(width, 99)];
+            if (!(near.X < middle.X && middle.X < far.X) || near.Y != middle.Y || near.Y != far.Y ||
+                Math.Abs((middle.X - near.X) / (far.X - near.X) - 50d / 99) > .0001)
+                throw new Exception("Microphone distance must move proportionally away from the cabinet on a horizontal path.");
+        }
+        foreach (int distance in new[] { 0, 50, 99 })
+            if (positions[(1280, distance)] != positions[(680, distance)])
+                throw new Exception("Resizing must scale the scene without changing microphone distance coordinates.");
         scene.Distance = 27;
         if (model.Ir.Distance != 27) throw new Exception("Microphone change does not reach IR preparation.");
         scene.Distance = 150;

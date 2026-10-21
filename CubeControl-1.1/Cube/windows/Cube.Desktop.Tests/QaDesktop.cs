@@ -192,7 +192,7 @@ internal static class QaDesktop
                 player.AddPaths([a, a, b]); await WaitUntil(() => player.Duration > 0);
                 Check(player.Tracks.Count == 2, "Duplicate paths added");
                 player.MoveTrack(player.Tracks[0], 1); player.SelectedTrack = player.Tracks[0];
-                await WaitUntil(() => player.Duration > 0); player.Volume = 43; player.IsMuted = true;
+                await WaitUntil(() => player.Duration > 0); player.Volume = 43; player.MasterDb = 3; player.IsMuted = true;
                 Check(!player.PlayPause.CanExecute(null), "No endpoint but Play enabled");
                 await Task.Delay(30);
             }
@@ -201,7 +201,12 @@ internal static class QaDesktop
                 typeof(BackingTracksViewModel).GetMethod("LoadRecordingPlaylist", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(reopened, null);
                 await WaitUntil(() => reopened.Duration > 0);
                 Check(reopened.Tracks[0].Source == b && reopened.Tracks[1].Source == a, "Playlist order lost");
-                Check(reopened.Volume == 30 && !reopened.IsMuted, "Playback mixer must start at its session defaults");
+                Check(Math.Abs(reopened.Volume - 43) < .0001 && Math.Abs(reopened.MasterDb - 3) < .0001 && !reopened.IsMuted,
+                    "Session mixer gains persist while transient playback mute resets");
+                reopened.SelectedTrack = reopened.Tracks[1];
+                Check(reopened.Volume == 30 && reopened.MasterDb == 0, "Untouched session retains its independent default gains");
+                reopened.SelectedTrack = reopened.Tracks[0];
+                Check(Math.Abs(reopened.Volume - 43) < .0001 && Math.Abs(reopened.MasterDb - 3) < .0001, "Switching back restores the selected session gains");
                 reopened.RemoveTrack.Execute(null); await Task.Delay(50);
                 Check(File.Exists(b) && reopened.Tracks.Count == 1, "Remove deleted source or wrong reference");
             }

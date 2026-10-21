@@ -30,13 +30,13 @@
                     <Condition Property="IsEnabled" Value="True" />
                     <Condition Property="IsMouseOver" Value="True" />
                 </MultiTrigger.Conditions>
-                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ListViewItemBackgroundPointerOver}" />
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeItemHover}" />
             </MultiTrigger>
             <Trigger Property="IsSelected" Value="True">
  <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
  <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeSelected}" />
             </Trigger>
-        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="Border" Property="Background" Value="Transparent"/></Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeItemRest}"/></Trigger>
 </ControlTemplate.Triggers>
     </ControlTemplate>
 
@@ -64,19 +64,19 @@
                     <Condition Property="IsEnabled" Value="True" />
                     <Condition Property="IsMouseOver" Value="True" />
                 </MultiTrigger.Conditions>
-                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ListViewItemBackgroundPointerOver}" />
+                <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeItemHover}" />
             </MultiTrigger>
             <Trigger Property="IsSelected" Value="True">
  <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
  <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeSelected}" />
             </Trigger>
-        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="Border" Property="Background" Value="Transparent"/></Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeItemRest}"/></Trigger>
 </ControlTemplate.Triggers>
     </ControlTemplate>
 
     <Style x:Key="CubeListViewItemStyle" TargetType="{x:Type controls:ListViewItem}">
         <Setter Property="Foreground" Value="{DynamicResource ListViewItemForeground}" />
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{DynamicResource CubeItemRest}" />
         <Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}" />
         <Setter Property="Margin" Value="0,0,0,2" />
         <Setter Property="Padding" Value="12,4"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>

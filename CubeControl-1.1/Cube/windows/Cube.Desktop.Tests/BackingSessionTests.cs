@@ -97,6 +97,7 @@ internal static class BackingSessionTests
             Check(stem.State == "Arquivo ausente", "missing source remains repairable");
             stem.IsSolo = true; stem.IsMuted = true; stem.Volume = 42; stem.Offset = .125;
             stem.RecordedSpeed = .75; stem.RecordedPitch = -2;
+            stem.Name = "Lead"; stem.Pan = .4; stem.Color = "#40BFA0"; stem.IsArmed = true; stem.InputChannel = 2; stem.InputChannels = 2;
             Invoke(model, "SaveRecordingPlaylist");
         }
         Check(File.Exists(path + ".v1.bak"), "migration preserves the original playlist");
@@ -104,11 +105,31 @@ internal static class BackingSessionTests
         {
             Invoke(model, "LoadRecordingPlaylist"); var stem = model.SessionStems![0];
             Check(stem.Id == id && stem.IsSolo && stem.IsMuted && stem.Volume == 42, "track identity and mix survive reload");
+            Check(stem.Name == "Lead" && stem.Pan == .4 && stem.InputChannel == 2 && stem.InputChannels == 2 && !stem.IsArmed && !stem.IsMonitoring, "v3 restores routing and identity without arming or monitoring");
             Check(stem.Offset == .125 && stem.RecordedSpeed == .75 && stem.RecordedPitch == -2, "take timing survives reload");
         }
         File.WriteAllText(path, "unreadable playlist");
         using (var model = new BackingTracksViewModel(data)) Invoke(model, "LoadRecordingPlaylist");
         Check(File.ReadAllText(path) == "unreadable playlist", "unreadable playlist is not overwritten on disposal");
+        string v2Folder = Path.Combine(folder, "version2"); Directory.CreateDirectory(v2Folder);
+        string v2Path = Path.Combine(v2Folder, "backing-playlist-v1.json");
+        var sessionId = Guid.NewGuid(); var stemId = Guid.NewGuid();
+        File.WriteAllText(v2Path, JsonSerializer.Serialize(new
+        {
+            Version = 2,
+            Sessions = new[] { new { Id = sessionId, Source = missing, Speed = 80, Pitch = -1,
+                Stems = new[] { new { Id = stemId, Source = missing, Offset = .3, RecordedSpeed = .8, RecordedPitch = -1, Muted = true, Solo = false, Volume = 0, State = "Arquivo ausente" } } } }
+        }));
+        using (var model = new BackingTracksViewModel(v2Folder))
+        {
+            Invoke(model, "LoadRecordingPlaylist"); var stem = model.SessionStems![0];
+            Check(model.SelectedTrack!.SessionId == sessionId && stem.Id == stemId && stem.Volume == 0 && stem.GainDb == -61 && stem.LegacyMono && stem.Pan == 0,
+                "v2 migration preserves silence, identity and legacy center amplitude");
+            Check(stem.Takes.Count == 1 && stem.ActiveTake!.Offset == .3 && model.MasterDb == 0, "v2 source becomes one aligned take with unity Master");
+            Invoke(model, "SaveRecordingPlaylist");
+        }
+        Check(File.Exists(v2Path + ".v2.bak") && JsonDocument.Parse(File.ReadAllText(v2Path)).RootElement.GetProperty("Version").GetInt32() == 4,
+            "v2 backup precedes version 4 persistence");
     }
     private static void Invoke(object instance, string method) => instance.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(instance, null);
     private static void WriteConstant(string path, float sample)

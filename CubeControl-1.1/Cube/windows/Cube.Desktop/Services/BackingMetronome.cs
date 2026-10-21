@@ -7,7 +7,7 @@ public sealed record MetronomeSettings(bool Enabled = false, double Bpm = 120, i
 {
     public double Interval => 60 / Bpm / (EighthNotes ? 2 : 1);
     public bool Valid => double.IsFinite(Bpm) && Bpm >= 20 && Bpm <= 300 && Beats is 2 or 3 or 4 or 6
-        && double.IsFinite(Offset) && double.IsFinite(Volume) && Volume >= 0 && Volume <= 1 && CountInBars is >= 0 and <= 2;
+        && double.IsFinite(Offset) && double.IsFinite(Volume) && Volume >= 0 && Volume <= BackingMixMath.MaximumGain && CountInBars is >= 0 and <= 2;
     public int BeatAt(double position)
     {
         if (!Valid) return 0;
@@ -85,6 +85,7 @@ public sealed class MetronomeSampleProvider : ISampleProvider
 {
     private MetronomeSettings settings;
     private long frames;
+    public double Seconds => Interlocked.Read(ref frames) / 48000d;
     private int muted;
     public WaveFormat WaveFormat { get; } = WaveFormat.CreateIeeeFloatWaveFormat(48000, 2);
     public MetronomeSampleProvider(MetronomeSettings settings) { MetronomeClick.Prepare(); this.settings = settings; }

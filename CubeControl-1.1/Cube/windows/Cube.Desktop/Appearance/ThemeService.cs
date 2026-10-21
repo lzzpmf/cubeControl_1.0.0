@@ -203,6 +203,17 @@ public sealed class ThemeService
         Set("CubeKnobTop", SystemColors.WindowBrush);
         Set("CubeKnobBottom", SystemColors.WindowBrush);
         Set("CubeKnobTrack", SystemColors.WindowTextBrush);
+        Set("CubeComboField", SystemColors.WindowBrush);
+        Set("CubeComboFieldHover", SystemColors.WindowBrush);
+        Set("CubePopupSurface", SystemColors.WindowBrush);
+        Set("CubePopupHover", SystemColors.HighlightBrush);
+        Set("CubePopupSelected", SystemColors.HighlightBrush);
+        Set("CubePopupBorder", SystemColors.WindowTextBrush);
+        resources["CubePopupHoverText"] = IsHighContrast ? SystemColors.HighlightTextBrush : Brush("TextFillColorPrimaryBrush");
+        resources["CubePopupShadowOpacity"] = IsHighContrast ? 0d : .135d;
+        Set("CubeItemRest", SystemColors.WindowBrush);
+        Set("CubeItemHover", SystemColors.WindowBrush);
+        Set("CubeSelectedBrush", SystemColors.HighlightBrush);
         // Keep the library palette intact; only adapt the app's own semantic keys.
         foreach (var alias in new[] { "CubeCanvas", "CubeText", "CubeCard", "CubeFloatingSurface", "CubeInset", "CubeWell", "CubeBorder", "CubeSelected", "CubeSelectedText", "CubeFocus", "CubeAccent", "Muted", "CubeDisabledText", "CubeWarning" })
         {
@@ -217,6 +228,8 @@ public sealed class ThemeService
             resources["CubeSelectedText"] = SystemColors.HighlightTextBrush;
             resources["CubeDisabledText"] = SystemColors.GrayTextBrush;
         }
+        resources["BackingMuteActive"] = IsHighContrast ? SystemColors.WindowTextBrush : new SolidColorBrush(IsLight ? Color.FromRgb(164, 76, 12) : Color.FromRgb(255, 169, 82));
+        resources["BackingSoloActive"] = IsHighContrast ? SystemColors.WindowTextBrush : new SolidColorBrush(IsLight ? Color.FromRgb(128, 98, 0) : Color.FromRgb(255, 219, 77));
         resources["CubeSelectionIndicator"] = IsHighContrast ? SystemColors.HighlightTextBrush : resources["CubeAccent"];
         ControlArtwork.Apply(resources, Finish, IsLight, IsHighContrast);
         RefreshBackdrop();

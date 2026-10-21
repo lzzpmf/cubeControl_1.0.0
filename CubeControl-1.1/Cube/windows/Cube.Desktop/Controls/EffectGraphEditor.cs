@@ -326,7 +326,7 @@ public sealed class EffectGraphEditor : Grid
                 choiceContent.Children.Add(choiceLabel); choiceContent.Children.Add(choiceMarker);
                 option.Content = choiceContent;
                 option.FontWeight = active ? FontWeights.Bold : FontWeights.Normal;
-                option.Background = active ? Brush("CubeSelected") : Brushes.Transparent;
+                option.Background = active ? Brush("CubeSelected") : Brush("CubeItemRest");
                 option.BorderThickness = new Thickness(0);
                 AutomationProperties.SetName(option, $"{T(selected.Name)}: {T(label)}");
                 AutomationProperties.SetItemStatus(option, active ? T("Selecionado") : "");
@@ -456,7 +456,7 @@ public sealed class EffectGraphEditor : Grid
     private Pen Pen(string key = "", bool faint = false)
     {
         bool direct = key is "Original" or "Dry";
-        return new Pen(faint ? Brush("CubeBorder") : direct || key.Length == 0 ? Brush("Muted") : Signal,
+        return new Pen(faint ? Brush("CubeBorder") : key.Length == 0 ? Brush("Muted") : Signal,
             selected?.Key == key ? 2.5 : faint ? 1 : 1.5) { DashStyle = direct ? DashStyles.Dash : DashStyles.Solid };
     }
     private void Line(DrawingContext dc, double x1, double y1, double x2, double y2, string key = "", bool faint = false)

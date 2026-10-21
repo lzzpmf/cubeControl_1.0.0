@@ -36,7 +36,7 @@ Reutilizar as chaves existentes, sem copiar valores para estilos locais. Recurso
 | `CubeInset` | `LayerFillColorDefaultBrush` | área de equipamento e hover dos tiles |
 | `CubeWell` | `ControlFillColorInputActiveBrush` | áreas rebaixadas |
 | `CubeFloatingSurface` | `SolidBackgroundFillColorSecondaryBrush` | Superfícies flutuantes |
-| `CubeSelected` | `SubtleFillColorSecondaryBrush` | Seleção |
+| `CubeSelected` | `CubeSelectedBrush` (paleta por tema) | Seleção e expansão |
 | `CubeSelectedText` | `TextFillColorPrimaryBrush` | Conteúdo selecionado |
 | `CubeBorder` | `ControlStrokeColorDefaultBrush` | Contornos previstos pelo componente |
 | `CubeAccent` / `CubeFocus` | `AccentFillColorDefaultBrush` | Destaque e foco do sistema |
@@ -51,9 +51,71 @@ Reutilizar as chaves existentes, sem copiar valores para estilos locais. Recurso
 
 As paletas funcionais `Backing*`, dos gráficos e dos knobs permanecem em `Colors.xaml`; `ControlArtwork` pode aplicar cores e artes específicas do acabamento escolhido. Brushes de superfície do WPF UI podem ser translúcidos: avaliar contraste sobre o fundo efetivamente composto, não somente pelos canais RGB isolados.
 
+### Contraste de seleção e repouso
+
+A referência aprovada em 19/10/2026 é o contraste entre o cabeçalho destacado de **Atalhos no pedal** e os cabeçalhos em repouso na imagem de Dispositivo e ajuda. Os valores escuros abaixo são a aproximação normativa dessa referência. Aplicar somente aos estados e interações que já existem: esta regra não torna cards, botões de ação ou outros elementos selecionáveis.
+
+| Estado / recurso | Escuro | Claro |
+| --- | --- | --- |
+| Repouso — `CubeItemRest` | `#292929` | `#FAFAFA` |
+| Hover — `CubeItemHover` | `#3A3A3A` | `#E8E8E8` |
+| Seleção — `CubeSelected` | `#555555` | `#D0D0D0` |
+
+Usar fundos opacos, independentes da superfície hospedeira, em navegação, presets, cadeia, listas, árvores, abas e filtros. Listas suspensas e menus seguem a especialização abaixo. Seleção prevalece sobre hover e permanece após retirar o mouse ou perder o foco. Nos expansores existentes, o estado expandido usa o preenchimento selecionado somente no cabeçalho; o conteúdo conserva sua superfície estrutural. Hover responde apenas ao cabeçalho.
+
+Foco sozinho não representa seleção nem colore todo um painel quando um campo interno recebe foco. Preservar seus indicadores próprios, os marcadores de seleção e as cores funcionais dos controles musicais, efeitos, mute/solo e medidores. Itens desabilitados usam o fundo de repouso e texto desabilitado, sem destaque de hover/seleção. Alto contraste usa as cores do sistema, incluindo `HighlightTextBrush` no cabeçalho expandido.
+
+Consumidores usam `DynamicResource` em XAML ou referências de recursos em C#, sem paletas locais concorrentes. Esta alteração foi limitada a aparência e documentação, sem testes, compilação ou homologação visual; a comparação renderizada permanece pendente.
+
+### Listas suspensas e menus
+
+A referência aprovada é a imagem da lista de fusos horários enviada em 19/10/2026: painel contínuo, itens integrados ao fundo, destaque discreto e marcador lateral na opção escolhida. Aplicar aos ComboBox, menus de ações, menus de contexto, preferências e submenus, sem tornar ações comuns selecionáveis. As cores são aproximações normativas da imagem, sem textura ou transparência obrigatória.
+
+| Recurso | Escuro | Claro |
+| --- | --- | --- |
+| `CubePopupSurface` | `#292929` | `#FAFAFA` |
+| `CubePopupHover` | `#3A3A3A` | `#E8E8E8` |
+| `CubePopupSelected` | `#383838` | `#E4E4E4` |
+| `CubePopupBorder` | `#404040` | `#D6D6D6` |
+
+O painel usa `CubePopupCornerRadius` de 8 DIPs e `CubePopupBorderThickness` de 1 DIP, exceções explícitas ao raio geral de 4 DIPs e às superfícies sem contorno. A sombra suave usa `CubePopupShadowOpacity`. Itens usam fundo transparente em repouso, raio de 4 DIPs, `CubePopupItemMinHeight` de 40 DIPs, margem `CubePopupItemMargin` de 6,2,6,2 (4 DIPs entre itens) e padding `CubePopupItemPadding` de 10,8,10,8. Texto usa a família do app e tamanho de corpo.
+
+Seleção prevalece sobre hover; desabilitação prevalece sobre ambos, com fundo transparente e `CubeDisabledText`. O marcador de seleção acompanha o destaque do sistema. Foco, hover e seleção continuam estados distintos. Preservar indicadores de opções marcadas, ícones, atalhos, grupos, amostras de cor e campos incorporados aos menus. Manter rolagem vertical, visibilidade da opção escolhida ao abrir, teclado, Escape e interação dos submenus.
+
+A aparência do popup é independente do campo fechado: seletores compactos e mostradores musicais conservam suas dimensões, cores e interação. Estilos locais de itens devem herdar os estilos compartilhados. A paleta geral de seleção permanece válida fora desses popups.
+
+`ThemeService` atualiza os recursos dinamicamente. Em alto contraste, painel usa `WindowBrush`, contorno usa `WindowTextBrush`, hover/seleção usam `HighlightBrush` e seus textos usam `HighlightTextBrush`; a sombra tem opacidade zero. Não substituir recursos globais da biblioteca.
+
+Esta implementação recebeu somente revisão estática, sem testes ou compilação. Permanecem pendentes de conferência visual: lista longa, seleção com hover em outra opção, item desabilitado, submenu, agrupamentos, temas claro/escuro/alto contraste e janela compacta.
+
+### Estados e abertura dos ComboBox
+
+As imagens de seleção de calendários adicionais aprovadas em 19/10/2026 complementam a referência de listas suspensas especificamente para ComboBox. Menus conservam o padrão anterior.
+
+| Estado | Aparência |
+| --- | --- |
+| Campo fechado | Texto e chevron centralizados verticalmente, raio de 4 DIPs, sem marcador lateral |
+| Campo em hover | Clareamento discreto, mantendo o foco acessível independente |
+| Opção em repouso | Fundo transparente, integrado ao painel |
+| Opção em hover ou navegação por teclado | `CubePopupHover`, sem criar seleção |
+| Opção selecionada, com ou sem hover | `CubePopupSelected` e marcador lateral de 3 × 20 DIPs |
+| Opção desabilitada | Fundo transparente, `CubeDisabledText`, sem marcador |
+
+O campo usa `CubeComboField` (`#333333` escuro / `#FAFAFA` claro) e `CubeComboFieldHover` (`#3A3A3A` / `#E8E8E8`). Alturas compactas e fundos musicais explícitos permanecem autoritativos, inclusive no hover. Os recursos acompanham o tema; em alto contraste, o campo usa `WindowBrush`. O popup mantém os recursos `CubePopup*`, independentemente do acabamento do campo.
+
+`CubeComboSelectionMarker` depende somente de seleção e habilitação: foco não o mostra nem altera sua altura. A seleção permanece visível quando outro item recebe hover. Desabilitação prevalece sobre seleção e hover; as cores do sistema e o foco acessível permanecem ativos.
+
+`ComboBoxPopupPlacement.Enabled`, aplicado pelo estilo compartilhado e encaminhado ao popup, ativa a abertura sobreposta. Na abertura, trazer a opção escolhida à área visível e alinhar o centro da linha ao centro do campo, alinhando o texto horizontalmente quando houver espaço. Sem seleção, alinhar a primeira linha sem selecioná-la; lista vazia mantém a altura mínima. Considerar margens, sombra, padding, zoom, DPI e área útil do monitor. Nas bordas, a visibilidade prevalece sobre o alinhamento exato; listas longas permitem rolagem vertical.
+
+O posicionamento estabiliza na abertura: rolagem e navegação posteriores não fazem o popup acompanhar cada linha. A transição do painel mantém opacidade, sem deslocamento vertical que desalinhe a opção. Preservar confirmação, cancelamento, Escape, clique externo, edição, agrupamentos, conteúdos personalizados e bindings. Descarregar ou substituir o template cancela trabalho pendente e libera os eventos do popup.
+
+Verificação desta alteração limitada à revisão estática e ao diff, sem testes nem compilação. Validação visual pendente: campo fechado em repouso/hover/foco, seleção com hover próprio ou em outra opção, teclado, lista longa/agrupada, ausência de seleção, lista vazia, reabertura, bordas da tela, zoom, DPI e temas claro/escuro/alto contraste.
+
 ### Arredondamento de superf?cies e controles
 
-Usar `CubeCardCornerRadius` (14 DIPs) para cards, pain?is de agrupamento, expansores e superf?cies externas de di?logos, menus, tooltips e popups. Usar `CubeControlCornerRadius` (4 DIPs) para bot?es comuns, campos, buscas, filtros, abas, seletores, itens de menu e tiles, incluindo presets. As buscas seguem o mesmo raio dos campos, sem formato de c?psula. Cards de slots de packs usam 14; linhas compactas de m?sicas e resultados usam 4 por serem itens internos.
+Exceção: os painéis de listas suspensas, menus e submenus usam o raio de 8 DIPs definido acima; seus itens continuam com 4 DIPs.
+
+Usar `CubeCardCornerRadius` (4 DIPs) para cards, pain?is de agrupamento, expansores e superf?cies externas de di?logos, menus, tooltips e popups. Usar `CubeControlCornerRadius` (4 DIPs) para bot?es comuns, campos, buscas, filtros, abas, seletores, itens de menu e tiles, incluindo presets. As buscas seguem o mesmo raio dos campos, sem formato de c?psula. Cards de slots de packs usam 4; linhas compactas de m?sicas e resultados usam 4 por serem itens internos.
 
 Os recursos ficam em `Appearance/Resources/Colors.xaml`, carregado antes dos estilos. Reutilizar `DynamicResource` em XAML e `SetResourceReference` em C#. As variantes `CubeCardLeftCornerRadius`, `CubeCardTopCornerRadius` e `CubeCardBottomCornerRadius` preservam as jun??es retas entre partes de uma superf?cie; expansores dividem o raio compartilhado entre cabe?alho e conte?do. Camadas de foco, hover e sombra acompanham a geometria da superf?cie correspondente.
 
@@ -70,7 +132,7 @@ Esta padroniza??o altera somente o arredondamento: n?o remove contornos nem modi
 | `SectionTitle` | 20, SemiBold, entrelinha 28 | Título de seção quando necessário |
 | `BodyText` / `BodyStrongText` | 14, entrelinha 20; Normal / SemiBold | Corpo, nomes e títulos compactos |
 | `CaptionText` / `HelpText` | 12, entrelinha 16; ajuda em `Muted`, com quebra | Estado e orientação secundária |
-| `Card` | Raio 14, padding 24 | Superfície principal; faixa de presets usa padding 24,16 |
+| `Card` | Raio 4, padding 24 | Superfície principal; faixa de presets usa padding 24,16 |
 | `SelectionTile` | Raio 4, padding interno 12, margem 0,0,8,8 | Seletores da cadeia e equivalentes |
 | `PresetTile` | Raio 4, altura 116, margem horizontal 18 | Especialização do seletor A/B/C |
 | `CubeButtonStyle` | Altura mínima 40, padding 16,8, texto 14 | Comandos; preservar templates e estados WPF UI |
@@ -169,6 +231,8 @@ Detalhes de zoom, rolagem e duração das animações: [Interação no Windows](
 
 ### Transições de entrada das seções
 
+O padr?o de transi??o de conte?do do aplicativo ? opacidade de zero ao valor original com deslocamento vertical de 8 a 0 DIPs, em 167 ms, com `CubicEase/EaseOut`. Aplicar tamb?m a cards da cadeia, troca de presets, menus, listas suspensas, tooltips, expansores e di?logos. Usar uma ?nica superf?cie por troca, evitando anima??es sobrepostas entre pais e filhos. Feedbacks funcionais de hover, arraste e rolagem n?o s?o transi??es de conte?do.
+
 Usar o comportamento compartilhado [SurfaceMotion](../windows/Cube.Desktop/Controls/SurfaceMotion.cs) no contêiner principal de cada seção: `EditorScroll` (Pedaleira), `IrScroll` (IRs), `BackingPage` (Backing Tracks), `AmpEditorHost` (Criador de amps) e `HelpScroll` (Dispositivo e ajuda). Habilitar `SurfaceMotion.Enabled` e definir `SurfaceMotion.Offset="8"`: a entrada combina opacidade de zero até o valor original e deslocamento vertical de 8 até 0 DIPs, em 167 ms, com `CubicEase/EaseOut`. Não duplicar storyboards por página nem animar cada controle individualmente para produzir essa entrada.
 
 A transição ocorre no carregamento e quando a seção volta a ficar visível. Em `AmpEditorHost`, vincular `SurfaceMotion.Key` ao próprio `Content` para reproduzir a entrada quando o convite inicial é substituído pelo editor. Atualizações de valores e de áudio não devem disparar novamente a entrada da seção.
@@ -199,17 +263,15 @@ O criador possui limites específicos em cinco grupos de coeficientes; o limite 
 
 ## Player, mixer e busca de backing tracks
 
-O transporte conserva suas artes próprias, sem legendas permanentes nos saltos de cinco segundos; tooltips e nomes acessíveis descrevem as ações. O ícone vetorial `CubeMetronomeIcon` compartilha a grade de 24 unidades, tamanho de navegação e cor herdada dos controles vizinhos.
+A seção segue a composição Mini DAW aprovada: barra contínua superior de 68 DIPs; arranjo e mixer em proporção 59/41; biblioteca lateral de 310 DIPs, sobreposta abaixo de 1200 DIPs de largura disponível. A navegação principal permanece. Não usar cartões, badges ou expansores para fragmentar o arranjo. Janelas menores usam rolagem horizontal na barra e nos canais; o mixer permanece visível, sem redução de controles por escala.
 
-No mixer, usar um único layout com faders horizontais e um único mute por canal junto ao percentual. O botão comunica o estado e oferece a ação inversa no tooltip/nome acessível. O painel limita a largura a 620 DIPs e usa 8 DIPs entre grupos; monitoração e metrônomo ficam sempre disponíveis. Os medidores de pico digital ficam atrás dos faders, sem interceptar interação, com escala de −60 a 0 dBFS e retenção de pico por um segundo. Medir cada canal após volume e mute e manter o aviso de saturação da entrada separado. Preservar as artes dos faders, recursos semânticos e alternativa de alto contraste.
+A barra apresenta dispositivo WASAPI, REC, Play/Pause, Stop, Loop, metrônomo, BPM, velocidade, tom, Cortar, Importar e Exportar. Reutilizar superfícies, tipografia, ícones e controles musicais compartilhados. Os cabeçalhos têm 335 DIPs; as pistas, 96 DIPs. Régua em compassos, clipes, loop e cursor compartilham o eixo temporal.
 
-O toggle de busca por backing track usa fundo `CubeAccent`, texto sobre destaque e check quando ligado, e aparência neutra sem check quando desligado. Preservar foco, comportamento de ToggleButton e estado localizado para automação. Detalhes de interação e verificação ficam em [Interação no Windows](desenvolvimento/windows-interaction.md#player-e-mixer-de-backing-tracks).
+Cabeçalhos e mixer apresentam S/M/R/I, entrada, ganho e pan sincronizados. I monitora a entrada independentemente de R, sem iniciar transporte ou gravação. O estado efetivo é desligado em falha de dispositivo e ao restaurar sessões. Bloqueios de captura e roteamento continuam válidos. Não criar canais auxiliares de monitoração, Bus ou metrônomo. Master fica fixo à direita do mixer, sem monitoração; os canais reais rolam horizontalmente e usam ganho em dB e medidores compartilhados `BackingGainControl` e `BackingFaderMeter`.
 
-### Pistas e gravação em tempo real
+A biblioteca contém Arquivos locais e YouTube. Arquivos locais têm busca, categorias manuais Todos/Loops/One Shots/Vocais, prévia e inserção na pista/cursor; não mostrar conteúdo fictício. A prévia pausa a sessão quando pronta e não a retoma automaticamente. Pastas e categorias são persistidas separadamente dos arquivos de áudio.
 
-A playlist reúne músicas; cada música abre uma sessão com backing track e gravações alinhadas no mesmo eixo temporal. Cada pista apresenta nome, waveform e controles individuais de mute, solo e volume. Seleção identifica a pista editada, sem silenciar as demais. Vários solos podem estar ligados; mute tem prioridade. O mixer geral permanece separado da monitoração e do metrônomo.
-
-REC cria uma pista visível imediatamente. A waveform reutiliza `BackingWaveform`, seus recursos de tema, cursor e escala; seus picos representam as amostras capturadas, inclusive silêncio. Estados gravando, finalizando, salva e interrompida usam texto localizado. A atualização visual nominal de 50 ms não é garantia de latência física ou FPS. Acompanhamento automático pode ser desligado e retomado. Não desenhar um progresso fictício nem mostrar uma gravação interrompida como concluída.
+Novas sessões têm uma pista vazia; a última sessão disponível é restaurada sem tocar, armar ou monitorar. Sessões legadas mantêm seus dados e processamento, incluindo tomadas e fades, embora ferramentas avançadas não façam parte da interface. Cortar divide no cursor, e operações essenciais oferecem desfazer/refazer. A gravação continua preservando áudio anterior e arquivos recuperáveis. A atualização visual nominal de 50 ms não comprova latência física. Persistência de sessões permanece na versão 4.
 
 ### Feedback de arrastar e soltar
 
@@ -274,6 +336,12 @@ Registre novas decisões neste guia e mantenha histórico separado. Não altere 
 
 ## Criadores gráficos de efeitos
 
+As linhas representativas dos parâmetros de Chorus, Phaser, Delay e Reverb usam a cor do respectivo efeito na Pedaleira, nunca a cor de destaque do tema. Os quatro editores vinculam `EffectGraphEditor.Accent` a `DataContext.Stages[1..4].Color` do `UserControl` pai, mantendo uma única fonte de cor e as notificações de troca de tema. As cores-base existentes são Chorus `#80B8A8`, Phaser `#D9A071`, Delay `#82ACD2` e Reverb `#B49ACF`; `ThemeService.ModuleColor` fornece as variantes claras e de alto contraste. Não duplicar esses valores nos XAML dos editores.
+
+Aplicar a cor do efeito também aos pontos de manipulação e às linhas Original/Dry, preservando o tracejado do sinal direto. Eixos, grades e linhas auxiliares sem parâmetro permanecem neutros. Preservar espessuras de seleção, estados de interação e foco acessível; botões, campos e indicadores de foco continuam usando os recursos da interface. Em alto contraste, o gráfico mantém a substituição por `CubeText`, resolvido para a cor de texto do sistema. Essa padronização não altera parâmetros, escalas, áudio, prévia ou comunicação com o pedal.
+
+A correção de cores recebeu revisão estática dos bindings, do desenho compartilhado e das notificações de tema, sem testes ou compilação. Permanece pendente a conferência visual dos quatro efeitos em claro, escuro e alto contraste, incluindo seleção e mudança da cor de destaque do sistema.
+
 Chorus, Phaser, Delay e Reverb usam manipulação direta de contornos, sem sliders, faders ou knobs internos. Os comandos usam botões e ícones WPF UI; os detalhes numéricos aparecem junto ao elemento selecionado. Alvos de 36 DIPs, foco visível e UI Automation compartilham as propriedades do modelo. Desenhos são ilustrativos e não animados; não representam medições. Os controles normais dos pedais permanecem separados. Consulte [mapeamentos e limitações](referencias/editores-graficos-de-efeitos.md).
 
 ### Padrão compartilhado de VU
@@ -285,3 +353,14 @@ Nos cards de packs de IR, usar o `Knob` compartilhado de 94 × 94 DIPs com rótu
 ## Regressão automatizada da aparência
 
 A suíte `borderless` carrega e aplica os templates em WPF e exercita seleção, foco, desabilitação, temas e componentes flutuantes. Complementa as suítes de tema, responsividade e usabilidade; não substitui inspeção visual. Execução e limites estáo na [matriz de cobertura](desenvolvimento/test-coverage.md).
+
+
+## Arraste compartilhado
+
+Os arrastes existentes do editor de IR, playlist e stems usam GongSolutions.WPF.DragDrop 4.0.0 com adaptadores internos. Iniciar somente ap?s o limiar do sistema, sem capturar gestos de bot?es, knobs, faders, campos e waveform. A pr?via tem opacidade de 75%, escala de 1,03 e sombra discreta; a origem de movimenta??es mant?m seu espa?o com opacidade reduzida. C?pias preservam a origem.
+
+A indica??o de destino distingue inser??o nas listas, troca entre slots, adi??o, substitui??o e destino inv?lido. O feedback permanece separado da sele??o e do foco. A rolagem autom?tica atua nas bordas dos visores; destinos internos de stems consomem o drop para n?o importar novamente na playlist.
+
+Confirmar os dados somente no drop. Listas preservam o c?lculo por identidade na cole??o original, mesmo com filtros. Slots mant?m n?meros e comandos fixos: somente os conte?dos trocam de posi??o. A acomoda??o usa 200 ms com desacelera??o c?bica e capturas visuais dos elementos vis?veis; n?o modifica transforms nem bindings de layout. Importa??es mant?m suas valida??es e recebem encaixe visual ap?s inclus?o.
+
+Respeitar `SurfaceMotion.Allowed`, anima??es do sistema e alto contraste. Em alto contraste, dispensar sombra, transpar?ncia e movimento; manter indica??o por contorno e texto com cores sem?nticas. Cancelamento, drop externo, falha e descarregamento limpam o feedback e restauram a origem. As alternativas por teclado e as regras de persist?ncia permanecem existentes. Novas ?reas de arraste devem reutilizar essa infraestrutura, sem habilita??o global indiscriminada.

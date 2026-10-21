@@ -35,21 +35,19 @@ public sealed class MicrophoneDistance : Viewbox
     private readonly Canvas scene = new() { Width = 480, Height = 250, Background = Brushes.Transparent };
     private readonly Thumb microphone;
     private double grabOffset;
-    private const double Near = 210, Travel = 160;
+    private const double Near = 220, Travel = 150;
 
     public MicrophoneDistance()
     {
         Stretch = Stretch.Uniform;
         StretchDirection = StretchDirection.DownOnly;
         HorizontalAlignment = HorizontalAlignment.Stretch;
-        var cabinet = new Image { Source = Load(ViewModels.CabinetArtwork.Generic), Width = 250, Height = 215, Stretch = Stretch.Uniform, IsHitTestVisible = false, RenderTransformOrigin = new Point(.5, .5), RenderTransform = new ScaleTransform(-1, 1) };
+        var cabinet = new Image { Source = Load("cabinet-distance-side.png"), Width = 220, Height = 220, Stretch = Stretch.Uniform, IsHitTestVisible = false };
         Canvas.SetLeft(cabinet, 40); Canvas.SetTop(cabinet, 2); scene.Children.Add(cabinet);
 
         var picture = new FrameworkElementFactory(typeof(Image));
-        picture.SetValue(Image.SourceProperty, Load("micGenerico.png"));
+        picture.SetValue(Image.SourceProperty, Load("microphone-distance-side.png"));
         picture.SetValue(Image.StretchProperty, Stretch.Uniform);
-        picture.SetValue(RenderTransformOriginProperty, new Point(.5, .5));
-        picture.SetValue(RenderTransformProperty, new ScaleTransform(-1, 1));
         var frame = new FrameworkElementFactory(typeof(Border));
         frame.SetValue(Border.BorderThicknessProperty, new Thickness(0));
         frame.SetResourceReference(Border.CornerRadiusProperty, "CubeControlCornerRadius");
@@ -64,7 +62,7 @@ public sealed class MicrophoneDistance : Viewbox
         var template = new ControlTemplate(typeof(Thumb)) { VisualTree = content };
         microphone = new MicrophoneThumb(this)
         {
-            Width = 100, Height = 91, Cursor = GrabCursors.OpenHand, Focusable = true,
+            Width = 100, Height = 50, Cursor = GrabCursors.OpenHand, Focusable = true,
             FocusVisualStyle = null, Template = template
         };
         microphone.SetResourceReference(FrameworkElement.FocusVisualStyleProperty, "DefaultControlFocusVisualStyle");
@@ -125,7 +123,7 @@ public sealed class MicrophoneDistance : Viewbox
     private void PositionMicrophone()
     {
         if (microphone == null) return;
-        // Keep a horizontal capsule path; the full range needs a longer, less sensitive drag.
+        // Side-view artwork keeps the capsule aligned with the grille along a horizontal path.
         Canvas.SetLeft(microphone, Near + Travel * Distance / 99);
         Canvas.SetTop(microphone, 92);
     }

@@ -5,7 +5,7 @@ using Cube.Protocol;
 
 namespace Cube.Desktop.ViewModels;
 
-public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? cabinetId = null) : Observable
+public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? cabinetId = null, string? ampImage = null) : Observable
 {
     public string Id => id;
     public int Value => value;
@@ -32,7 +32,7 @@ public sealed class GearItem(string id, int value, string name, string category,
     public void RefreshColor() => Notify(nameof(Color));
     public string Description => description;
     public string Alias => alias;
-    public ImageSource? DefaultImage => ReadImage(AssetPaths.Image((cabinetId ?? id) switch
+    public ImageSource? DefaultImage => ReadImage(AssetPaths.Image(ampImage ?? ((cabinetId ?? id) switch
     {
         "amp-0" => "Koch Powertone.png",
         "amp-1" => "Friedman BE-100.png",
@@ -51,7 +51,7 @@ public sealed class GearItem(string id, int value, string name, string category,
         _ when kind == "cab" => CabinetArtwork.ForIdentity(cabinetId ?? id)
             ?? CabinetArtwork.ForIr(null, name) ?? CabinetArtwork.Generic,
         _ => "not-provided.png"
-    }));
+    })));
     // Brief effect explanations; sources in docs/referencias/effect-descriptions.md.
     public string Subtitle => kind switch
     {

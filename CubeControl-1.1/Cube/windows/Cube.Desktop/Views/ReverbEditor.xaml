@@ -11,7 +11,7 @@
     <ui:Button Content="{loc:Translate Text='Restaurar reverb'}" Click="RestoreClick" IsEnabled="{Binding CanRestoreReverb}" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconArrowUndo24}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
    <TextBlock Grid.Row="2" Text="{loc:Translate Value={Binding ReverbGraphState}}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
-   <graph:EffectGraphEditor Grid.Row="3" EffectKind="Reverb" Accent="{DynamicResource AccentTextFillColorPrimaryBrush}" DataContext="{Binding Reverb}" IsEnabled="{Binding DataContext.CanEditReverb,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+   <graph:EffectGraphEditor Grid.Row="3" EffectKind="Reverb" Accent="{Binding DataContext.Stages[4].Color,RelativeSource={RelativeSource AncestorType=UserControl}}" DataContext="{Binding Reverb}" IsEnabled="{Binding DataContext.CanEditReverb,RelativeSource={RelativeSource AncestorType=UserControl}}"/>
 
    <WrapPanel Grid.Row="4" Margin="0,8,0,0" IsEnabled="{Binding CanUseReverbFiles}">
     <ui:Button Content="{loc:Translate Text='Importar reverb'}" Click="ImportClick" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}" Symbol="{StaticResource CubeIconFolderOpen24}"/></ui:Button.Icon></ui:Button>

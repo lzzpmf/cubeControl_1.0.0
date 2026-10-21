@@ -17,11 +17,11 @@
      <StackPanel>
       <CheckBox Content="{Binding Title}" IsChecked="{Binding Selected}" IsEnabled="{Binding Available}" AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Name}"/>
       <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" Height="40" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" Margin="0,4,0,0"/>
-      <Grid Margin="0,4,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <local:GearArt Kind="cab" Image="{Binding Image}" Accent="{DynamicResource CubeAccent}" Height="88" Margin="0,0,8,0" VerticalAlignment="Center"/>
-       <StackPanel Grid.Column="1">
+      <Grid Margin="0,4,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <local:GearArt Kind="cab" Image="{Binding Image}" Accent="{DynamicResource CubeAccent}" Height="112" Margin="0,0,0,8" VerticalAlignment="Center"/>
+       <StackPanel Grid.Row="1">
         <TextBlock Text="{loc:Translate Text='Distância (%)'}" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Margin="0,0,0,4"/>
-        <local:Knob Value="{Binding Distance,Mode=TwoWay}" Minimum="0" Maximum="99" StepSize="1" Width="94" Height="94" Accent="{DynamicResource CubeAccent}" IsEnabled="{Binding Available}" ToolTip="{Binding Distance}" AutomationProperties.Name="{loc:Translate Text='Distância no pedal (%)'}" AutomationProperties.HelpText="{Binding Title}"/>
+        <Slider Value="{Binding Distance,Mode=TwoWay}" Minimum="0" Maximum="99" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" Orientation="Horizontal" Height="32" MaxWidth="160" HorizontalAlignment="Stretch" IsEnabled="{Binding Available}" ToolTip="{Binding Distance}" AutomationProperties.Name="{loc:Translate Text='Distância no pedal (%)'}" AutomationProperties.HelpText="{Binding Title}"/>
        </StackPanel>
       </Grid>
       <TextBlock Text="{loc:Translate Value={Binding Comparison}}" Style="{StaticResource HelpText}" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>

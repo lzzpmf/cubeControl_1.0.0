@@ -45,6 +45,16 @@
   <DataTrigger Binding="{Binding IsEnabled,RelativeSource={RelativeSource TemplatedParent}}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
  </Style.Triggers>
 </Style>
+<!-- Menu focus moves between a header and its popup children during hover.
+     Keep the header marker stable for the entire time its submenu is open. -->
+<Style x:Key="CubeMenuMarker" TargetType="Border" BasedOn="{StaticResource CubeToggleMarker}">
+ <Style.Triggers>
+  <DataTrigger Binding="{Binding IsSubmenuOpen,RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+   <Setter Property="Visibility" Value="Visible"/><Setter Property="Height" Value="24"/>
+  </DataTrigger>
+  <DataTrigger Binding="{Binding IsEnabled,RelativeSource={RelativeSource TemplatedParent}}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+ </Style.Triggers>
+</Style>
 <Style x:Key="CubePreferenceMarker" TargetType="Border">
  <Setter Property="Width" Value="3"/><Setter Property="Height" Value="16"/>
  <Setter Property="CornerRadius" Value="2"/><Setter Property="HorizontalAlignment" Value="Left"/>
@@ -263,7 +273,7 @@
   </Style>
 <ControlTemplate x:Key="DownUpExpanderHeader" TargetType="ToggleButton">
    <Grid Background="Transparent">
-   <Border x:Name="HeaderHover" Background="{DynamicResource ControlFillColorSecondaryBrush}" CornerRadius="{DynamicResource CubeCardCornerRadius}" Opacity="0"/>
+   <!-- Header surface states are supplied by the CardExpander template. -->
    <Border Padding="{TemplateBinding Padding}" Background="Transparent">
     <Grid>
      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -273,8 +283,8 @@
    </Border>
    </Grid>
    <ControlTemplate.Triggers>
-    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="HeaderHover" Property="Opacity" Value="1"/></Trigger>
-    <Trigger Property="IsEnabled" Value="False"><Setter TargetName="HeaderHover" Property="Opacity" Value="0"/></Trigger>
+
+
     <Trigger Property="IsChecked" Value="True"><Setter TargetName="ControlChevronIcon" Property="Symbol" Value="ChevronUp24"/></Trigger>
    </ControlTemplate.Triggers>
   </ControlTemplate>
@@ -319,7 +329,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Border x:Name="Border" Background="Transparent" Grid.Row="0" CornerRadius="{TemplateBinding Border.CornerRadius}">
+                        <Border x:Name="Border" Background="{DynamicResource CubeItemRest}" Grid.Row="0" CornerRadius="{TemplateBinding Border.CornerRadius}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" MinWidth="19"/>
@@ -346,7 +356,7 @@
                             <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible"/>
                         </Trigger>
                         <Trigger SourceName="Border" Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeInset}"/>
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeItemHover}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource CubeSelected}"/>
@@ -376,14 +386,14 @@
    <Setter Property="Padding" Value="16,12"/><Setter Property="MinHeight" Value="64"/>
    <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Margin" Value="0,0,0,8"/>
   <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
-   <Style.Triggers><Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></Trigger></Style.Triggers>
+
   </Style>
 <Style x:Key="SettingsExpander" TargetType="ui:CardExpander" BasedOn="{StaticResource CubeDefaultUiCardExpanderStyle}">
    <Setter Property="local:ExpanderChevron.Enabled" Value="True"/>
    <Setter Property="Padding" Value="16,12"/><Setter Property="ContentPadding" Value="16"/>
    <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Margin" Value="0,0,0,8"/>
   <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
-   <Style.Triggers><Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></Trigger></Style.Triggers>
+
   </Style>
 <Style x:Key="QuickAction" TargetType="ui:CardAction" BasedOn="{StaticResource SettingsAction}">
    <Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="MaxWidth" Value="440"/>
@@ -415,12 +425,12 @@
    <Setter Property="Foreground" Value="{DynamicResource CubeText}"/>
    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
-    <Grid><Border x:Name="Surface" Background="{DynamicResource CubeCard}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+    <Grid><Border x:Name="Surface" Background="{DynamicResource CubeItemRest}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
     <Border Style="{StaticResource CubeSelectionMarker}"/></Grid>
     <ControlTemplate.Triggers>
-     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeInset}"/></Trigger>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
      <Trigger Property="IsSelected" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></Trigger>
-     <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeCard}"/><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeItemRest}"/><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/></Trigger>
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
   </Style>
@@ -446,7 +456,7 @@
  <Setter Property="Margin" Value="0,0,8,8"/>
  <Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/>
  <Setter Property="Foreground" Value="{DynamicResource CubeText}"/>
- <Setter Property="Background" Value="{DynamicResource CubeCard}"/>
+ <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
 
  <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
  <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -463,7 +473,7 @@
                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
   </Border><Border Style="{StaticResource CubeSelectionMarker}" Margin="4,0,0,0"/></Grid>
   <ControlTemplate.Triggers>
-   <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeInset}"/></Trigger>
+   <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
    <Trigger Property="IsSelected" Value="True">
     <Setter Property="Background" Value="{DynamicResource CubeSelected}"/>
     <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
@@ -473,7 +483,7 @@
 
    <Trigger Property="IsEnabled" Value="False">
     <Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/>
-    <Setter Property="Background" Value="{DynamicResource CubeCard}"/>
+    <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
 
    </Trigger>
   </ControlTemplate.Triggers>
@@ -683,8 +693,8 @@
             Focusable="False"
             IsOpen="{TemplateBinding IsSuggestionListOpen}"
             Placement="Bottom"
-            PopupAnimation="Slide">
-            <Border
+            PopupAnimation="None">
+            <Border local:SurfaceMotion.Enabled="True"
                 Margin="0"
                 Padding="0,6,0,6"
                 HorizontalAlignment="Stretch"
@@ -736,7 +746,7 @@
  <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="VerticalContentAlignment" Value="Center"/>
  <Setter Property="Padding" Value="{StaticResource CompactMusicCardPadding}"/><Setter Property="Margin" Value="0,0,0,4"/>
  <Setter Property="MinHeight" Value="64"/><Setter Property="Foreground" Value="{DynamicResource CubeText}"/>
- <Setter Property="Background" Value="{DynamicResource CubeInset}"/>
+ <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
  <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
   <Grid>
@@ -745,10 +755,10 @@
    </Border>
   <Border Style="{StaticResource CubeSelectionMarker}"/></Grid>
   <ControlTemplate.Triggers>
-   <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></Trigger>
+   <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
    <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/></Trigger>
 
-   <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter Property="Background" Value="{DynamicResource CubeInset}"/></Trigger>
+   <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter Property="Background" Value="{DynamicResource CubeItemRest}"/></Trigger>
   </ControlTemplate.Triggers>
  </ControlTemplate></Setter.Value></Setter>
 </Style>

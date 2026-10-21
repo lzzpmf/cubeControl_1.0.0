@@ -308,6 +308,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         history.Clear(); pendingMatches.Clear(); revisions.Clear(); gesture = null;
         blocked = false; ErrorMessage = ""; SetupQueue();
         foreach (var preset in Presets) { preset.Load(bank); preset.State = "Lido do aparelho"; }
+        await RefreshKnownAmpArtworkAsync();
         Status = "Pronto. Ajustes são enviados durante o gesto; Salvar grava o banco A/B/C."; Refresh();
     }
     private void SetupQueue()

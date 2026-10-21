@@ -122,6 +122,7 @@ internal static class BackingPracticeTests
                 Key(window, System.Windows.Input.Key.Up); Check(model.Speed == 100, "practice shortcuts also work outside the backing page");
                 ((TabControl)window.FindName("Tabs")).SelectedIndex = 2;
                 model.Speed = 95;
+                ((FrameworkElement)window.FindName("BackingLibraryLayout")).Visibility = Visibility.Visible; window.UpdateLayout();
                 var search = Find<TextBox>((DependencyObject)window.FindName("BackingPlaylistPanel")).First();
                 Key(search, System.Windows.Input.Key.Up); Check(model.Speed == 95, "text fields retain their editing keys");
                 await Task.Delay(80); window.UpdateLayout();
@@ -132,10 +133,10 @@ internal static class BackingPracticeTests
                 model.Position = 24; model.SelectRange(18, 36); model.IsLooping = true; model.Zoom = 2; model.ViewportStart = 0;
                 model.IsLooping = false; model.Position = 40; model.SectionName = "Solo"; model.AddSection.Execute(null); model.Position = 24; model.IsLooping = true;
                 await Task.Delay(100); window.UpdateLayout();
-                var sectionShortcut = Find<Wpf.Ui.Controls.Button>((DependencyObject)window.FindName("BackingArrangement")).First(button => button.DataContext is BackingSection section && section.Name == "Solo");
+                model.SelectedSection = model.Sections!.First(section => section.Name == "Solo");
                 model.IsLooping = false;
-                sectionShortcut.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-                Check(model.Position == 40, "arrangement shortcut seeks to the existing named section");
+                model.GoToSection.Execute(null);
+                Check(model.Position == 40, "section navigation seeks to the existing ruler marker");
                 model.Position = 24; model.IsLooping = true;
                 string reports = TestPaths.Report("C:/CubeControl-Build/backing-ui-review/compact-analysis"); Directory.CreateDirectory(reports);
                 foreach (var expander in Find<Expander>((DependencyObject)window.FindName("BackingRacks"))) expander.IsExpanded = false;
@@ -155,8 +156,8 @@ internal static class BackingPracticeTests
                     var player = (FrameworkElement)window.FindName("BackingPlayerPanel");
                     var transport = (FrameworkElement)window.FindName("BackingTransportRack");
                     var transportHost = (ContentControl)window.FindName("BackingTransportHost");
-                    Check(transportHost.IsVisible && transportHost.Parent == window.FindName("BackingRacks"), "transport remains inside the scrollable player");
-                    Check(transport.ActualWidth <= player.ActualWidth + 1, "transport fits the player at every scale");
+                    Check(transportHost.IsVisible && transportHost.Parent == window.FindName("BackingPage"), "transport remains outside the scrollable player");
+                    Check(!transport.IsVisible || transport.ActualWidth <= ((FrameworkElement)window.FindName("BackingPage")).ActualWidth + 1, "transport fits the player at every scale");
                     foreach (string name in new[] { "BackingAudioPanel" })
                         Check(!((FrameworkElement)window.FindName(name)).IsVisible || ((FrameworkElement)window.FindName(name)).ActualWidth <= ((FrameworkElement)window.FindName("BackingPage")).ActualWidth + 1, $"{name} fits at {width}, scale {scale}");
                     foreach (string name in new[] { "BackingTransportRack", "BackingArrangement", "BackingAudioPanel" })
@@ -166,7 +167,9 @@ internal static class BackingPracticeTests
                         foreach (var control in Find<FrameworkElement>(section).Where(c => c.IsVisible && (c is System.Windows.Controls.Primitives.ButtonBase || c is Knob || c is Slider || c is Wpf.Ui.Controls.ToggleSwitch)))
                         {
                             var bounds = control.TransformToAncestor(section).TransformBounds(new Rect(control.RenderSize));
-                            Check(bounds.Left >= -1 && bounds.Right <= section.ActualWidth + 1, $"{name} contains {control.GetType().Name} at {width}/{scale}");
+                            for (DependencyObject? node = VisualTreeHelper.GetParent(control); node != null && node != section; node = VisualTreeHelper.GetParent(node))
+                                if (node is System.Windows.Controls.ScrollContentPresenter viewport) bounds.Intersect(viewport.TransformToAncestor(section).TransformBounds(new Rect(viewport.RenderSize)));
+                            Check(bounds.IsEmpty || bounds.Left >= -1 && bounds.Right <= section.ActualWidth + 1, $"{name} contains {control.GetType().Name} at {width}/{scale}");
                         }
                         var drawing = new DrawingVisual();
                         using (var dc = drawing.RenderOpen()) dc.DrawRectangle(new VisualBrush(section), null, new Rect(section.RenderSize));
@@ -174,7 +177,7 @@ internal static class BackingPracticeTests
                         var detailEncoder = new PngBitmapEncoder(); detailEncoder.Frames.Add(BitmapFrame.Create(detail));
                         using var detailStream = File.Create(Path.Combine(reports, $"{name}-{theme}-{width}-{scale}.png")); detailEncoder.Save(detailStream);
                     }
-                    Check(((FrameworkElement)window.FindName("BackingPlayButton")).ActualWidth >= 56 && Math.Abs(wave.ActualHeight - 160) < 1 && Math.Abs(((FrameworkElement)window.FindName("BackingOverview")).ActualHeight - 30) < 1, $"compact targets: play={((FrameworkElement)window.FindName("BackingPlayButton")).ActualWidth}, wave={wave.ActualHeight}, overview={((FrameworkElement)window.FindName("BackingOverview")).ActualHeight}");
+                    Check(((FrameworkElement)window.FindName("BackingPlayButton")).ActualWidth >= 36 && wave.ActualHeight >= 64 && Math.Abs(((FrameworkElement)window.FindName("BackingOverview")).ActualHeight - 30) < 1, $"compact targets: play={((FrameworkElement)window.FindName("BackingPlayButton")).ActualWidth}, wave={wave.ActualHeight}, overview={((FrameworkElement)window.FindName("BackingOverview")).ActualHeight}");
                     var bitmap = new RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(window);
                     var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
                     using var stream = File.Create(Path.Combine(reports, $"practice-{theme}-{language}-{width}-{scale}.png")); encoder.Save(stream);

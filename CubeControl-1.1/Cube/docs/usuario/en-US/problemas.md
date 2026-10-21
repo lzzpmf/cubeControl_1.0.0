@@ -13,10 +13,10 @@ Live adjustments are not persistent writes. Save the bank for A/B/C. Chorus/phas
 Check that its MP3/WAV still exists at the original path and that the audio output is available. Check volume and mute. YouTube search requires a network; local playback does not.
 
 ## REC unavailable or recording has no audio
-Select a valid input above the player and check that it receives a signal in Windows. REC captures only that input; mixer volume, mute and monitoring do not determine the captured audio. Backing track and metronome are not automatically included. Press REC again to save a new track; Stop also stops playback. If the input disconnects or capture fails, preserve the recoverable WAV shown in the message. Files without samples do not create tracks; if the WAV was saved but playlist registration failed, the message shows the preserved path. See [Record](backing-tracks.md#record).
+Select a valid input above the player and check that it receives a signal in Windows. REC captures only that input; mixer volume, mute and monitoring do not determine the captured audio. Backing track and metronome are not automatically included. Press REC again to save a new track; Stop also stops playback. If the input disconnects or capture fails, preserve the recoverable WAV shown in the message. Files without samples do not create tracks; if the WAV was saved but playlist registration failed, the message shows the preserved path. See [Record](backing-tracks.md#tracks-and-mixer).
 
 ## The exported WAV sounds different from the player
-Export ignores volume and mute. Speed and pitch adjustments are included only when the corresponding dialog option is checked. A/B selection defines the exported section even with looping off. See [Export](backing-tracks.md#export).
+Export ignores volume and mute. Speed and pitch adjustments are included only when the corresponding dialog option is checked. A/B selection defines the exported section even with looping off. See [Export](backing-tracks.md#session-and-transport).
 
 ## A document will not open
 Guides are included in the package. If files are missing, extract the complete package again. PDFs require an associated Windows reader. Web links require a browser and connection.

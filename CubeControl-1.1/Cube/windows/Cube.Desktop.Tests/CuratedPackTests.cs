@@ -83,6 +83,9 @@ internal static class CuratedPackTests
             var nextRow = System.Windows.Controls.Primitives.LayoutInformation.GetLayoutSlot((FrameworkElement)grid.Children[columns]);
             Check(nextRow.Left == 0 && nextRow.Top == 112, "grid wraps in reading order at " + width);
         }
+        // The standalone host must select the same workspace as MainWindow's pack tab.
+        // Otherwise shared library selection starts an audition and locks draft editing.
+        model.IrWorkspaceTab = 1;
         var control = new IrPackEditor { DataContext = editor };
         Window Host(IrPackEditor content, double width = 1100) {
             var host = new Window { Width = width, Height = 800, Content = new ScrollViewer { Content = content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled } };
@@ -109,7 +112,8 @@ internal static class CuratedPackTests
         Check(editor.LibraryEmpty && !editor.Library.Any(), "empty library search is explicit");
         editor.Search = "";
         editor.PackLibrary.Selected = editor.PackLibrary.Entries[0];
-        Check(model.Ir.File == previewFile, "pack selection leaves the preview IR unchanged");
+        await model.PendingLibraryLoad;
+        Check(model.Ir.File == previewFile && !model.Busy && fake.Writes == writes, "pack selection leaves the preview IR unchanged without starting audition writes");
         SlotMenu(2, "Usar neste slot"); SlotMenu(5, "Usar neste slot");
         await System.Windows.Threading.Dispatcher.Yield();
         Check(editor.Slots.Count(s => s.Entry != null) == 2, "keyboard context actions assign the selected library IR");
@@ -123,7 +127,7 @@ internal static class CuratedPackTests
             item.Command.Execute(null); menu.IsOpen = false;
         }
         editor.Slots[2].DistanceValue = 23;
-        Check(editor.Slots[2].Distance == "23" && editor.Dirty, "distance edits only the local slot draft");
+        Check(editor.Slots[2].Distance == "23" && editor.Dirty, $"distance edits only the local slot draft (distance={editor.Slots[2].Distance}, dirty={editor.Dirty}, editable={editor.CanEdit}, busy={model.Busy})");
         SlotMenu(2, "Mover para o slot anterior"); SlotMenu(5, "Remover IR"); Click("Salvar pack");
         Check(model.IrPacks.Single(p => p.Name == "UI personal").Definition!.Entries.Single().Slot == 1, "editor assigns, moves, removes and saves a partial pack");
         Check(model.SelectedIrPack?.Name == "UI personal" && !editor.Dirty, "saving synchronizes the pack used for application");

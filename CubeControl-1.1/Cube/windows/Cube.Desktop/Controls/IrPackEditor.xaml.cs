@@ -1,4 +1,4 @@
-using Cube.Desktop.Localization;
+﻿using Cube.Desktop.Localization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,50 +25,18 @@ public partial class IrPackEditor : UserControl
     }
     private sealed record LibraryDrag(IrPackEditorViewModel Editor, IrLibraryEntry Entry);
     private sealed record SlotDrag(IrPackEditorViewModel Editor, int Index);
-    private Point dragStart;
-    private object? dragCandidate;
-    private static T? Ancestor<T>(DependencyObject? node) where T : DependencyObject
+    internal void ConfigureLibraryDrag(TreeView tree, Func<bool> enabled)
     {
-        while (node != null)
-        {
-            if (node is T found) return found;
-            node = node is Visual or System.Windows.Media.Media3D.Visual3D ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
-        }
-        return null;
+        CubeDragDrop.Attach(tree, info => enabled() && DataContext is IrPackEditorViewModel { CanEdit: true } model &&
+            info.SourceItem is IrLibraryNode { Entry: { } entry }
+                ? (new LibraryDrag(model, entry), DragDropEffects.Copy) : (null, DragDropEffects.None));
     }
-    internal void LibraryMouseDown(object sender, MouseButtonEventArgs e)
+    private void SlotLoaded(object sender, RoutedEventArgs e)
     {
-        dragCandidate = null;
-        if (DataContext is IrPackEditorViewModel { CanEdit: true } model &&
-            Ancestor<TreeViewItem>(e.OriginalSource as DependencyObject)?.DataContext is IrLibraryNode { Entry: { } entry })
-        { dragStart = e.GetPosition(this); dragCandidate = new LibraryDrag(model, entry); }
-    }
-    internal void LibraryMouseMove(object sender, MouseEventArgs e) => StartDrag(sender, e);
-    private void SlotMouseDown(object sender, MouseButtonEventArgs e)
-    {
-        dragCandidate = null;
-        if (Ancestor<System.Windows.Controls.Primitives.ButtonBase>(e.OriginalSource as DependencyObject) != null ||
-            Ancestor<Knob>(e.OriginalSource as DependencyObject) != null) return;
-        if (sender is Border { DataContext: IrPackSlotViewModel slot } card)
-        {
-            card.Focus();
-            if (DataContext is IrPackEditorViewModel { CanEdit: true } model && slot.HasEntry)
-            { dragStart = e.GetPosition(this); dragCandidate = new SlotDrag(model, slot.Index); }
-        }
-    }
-    private void SlotMouseMove(object sender, MouseEventArgs e) => StartDrag(sender, e);
-    private void StartDrag(object sender, MouseEventArgs e)
-    {
-        if (e.LeftButton != MouseButtonState.Pressed) { dragCandidate = null; return; }
-        if (DataContext is not IrPackEditorViewModel { CanEdit: true } || dragCandidate == null) return;
-        var position = e.GetPosition(this);
-        if (Math.Abs(position.X - dragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
-            Math.Abs(position.Y - dragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
-        var candidate = dragCandidate; dragCandidate = null;
-        var data = new DataObject(candidate.GetType(), candidate);
-        try { DragDrop.DoDragDrop((DependencyObject)sender, data, candidate is LibraryDrag ? DragDropEffects.Copy : DragDropEffects.Move); }
-        finally { DragFeedback.Clear(); foreach (var card in Cards(this)) card.Tag = null; }
-        e.Handled = true;
+        if (sender is not Border card || GongSolutions.Wpf.DragDrop.DragDrop.GetDragHandler(card) is CubeDragDrop) return;
+        CubeDragDrop.Attach(card, _ => DataContext is IrPackEditorViewModel { CanEdit: true } model &&
+            card.DataContext is IrPackSlotViewModel { HasEntry: true } slot
+                ? (new SlotDrag(model, slot.Index), DragDropEffects.Move) : (null, DragDropEffects.None), SlotDragOver, SlotDrop);
     }
     private static IEnumerable<Border> Cards(DependencyObject root)
     {
@@ -79,14 +47,15 @@ public partial class IrPackEditor : UserControl
             foreach (var nested in Cards(child)) yield return nested;
         }
     }
-    private DragDropEffects DropEffect(DragEventArgs e, IrPackSlotViewModel slot)
+    private static FrameworkElement SlotContent(Border card) => (FrameworkElement)((StackPanel)((Grid)card.Child).Children[0]).Children[1];
+    private DragDropEffects DropEffect(CubeDropContext e, IrPackSlotViewModel slot)
     {
         if (DataContext is not IrPackEditorViewModel { CanEdit: true } model) return DragDropEffects.None;
         if (e.Data.GetData(typeof(LibraryDrag)) is LibraryDrag library && ReferenceEquals(library.Editor, model) && model.PackLibrary.Entries.Contains(library.Entry)) return DragDropEffects.Copy;
         if (e.Data.GetData(typeof(SlotDrag)) is SlotDrag source && ReferenceEquals(source.Editor, model) && source.Index != slot.Index && model.Slots[source.Index].HasEntry) return DragDropEffects.Move;
         return DragDropEffects.None;
     }
-    private void SlotDragOver(object sender, DragEventArgs e)
+    private void SlotDragOver(object sender, CubeDropContext e)
     {
         if (sender is Border { DataContext: IrPackSlotViewModel slot } card)
         {
@@ -101,8 +70,8 @@ public partial class IrPackEditor : UserControl
         }
         e.Handled = true;
     }
-    private void SlotDragLeave(object sender, DragEventArgs e) { DragFeedback.Clear(); if (sender is Border card) card.Tag = null; e.Handled = true; }
-    private void SlotDrop(object sender, DragEventArgs e)
+
+    private void SlotDrop(object sender, CubeDropContext e)
     {
         DragFeedback.Clear();
         if (sender is Border { DataContext: IrPackSlotViewModel slot } card && DataContext is IrPackEditorViewModel model)
@@ -110,8 +79,11 @@ public partial class IrPackEditor : UserControl
             card.Tag = null; e.Effects = DropEffect(e, slot);
             try
             {
-                if (e.Effects == DragDropEffects.Copy && e.Data.GetData(typeof(LibraryDrag)) is LibraryDrag library) model.AssignIr(slot.Index, library.Entry);
-                else if (e.Effects == DragDropEffects.Move && e.Data.GetData(typeof(SlotDrag)) is SlotDrag source) model.SwapSlots(source.Index, slot.Index);
+                if (e.Effects == DragDropEffects.Copy && e.Data.GetData(typeof(LibraryDrag)) is LibraryDrag library) { if (model.AssignIr(slot.Index, library.Entry)) DragMotion.Settle(card); }
+                else if (e.Effects == DragDropEffects.Move && e.Data.GetData(typeof(SlotDrag)) is SlotDrag source) {
+                    var origin = Cards(this).FirstOrDefault(x => x.DataContext is IrPackSlotViewModel item && item.Index == source.Index);
+                    if (origin != null) DragMotion.Swap(this, SlotContent(origin), SlotContent(card), () => model.SwapSlots(source.Index, slot.Index));
+                }
                 if (e.Effects != DragDropEffects.None) card.Focus();
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or InvalidOperationException) { model.ReportError(ex.Message); }

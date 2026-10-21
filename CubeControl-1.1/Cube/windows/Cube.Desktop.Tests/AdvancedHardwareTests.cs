@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Text.Json;
 using Cube.Desktop.ViewModels;
 using Cube.Protocol;
@@ -8,7 +7,7 @@ using Cube.Usb;
 
 internal static class AdvancedHardwareTests
 {
-    public static async Task Run(bool recoveryOnly = false, bool cardFlow = false)
+    public static async Task Run(bool cardFlow = false)
     {
         if (Process.GetProcessesByName("CubeControl").Length != 0 || Process.GetProcessesByName("CubeSuite").Length != 0)
             throw new InvalidOperationException("Close other pedal editors before this explicit hardware test.");
@@ -24,12 +23,6 @@ internal static class AdvancedHardwareTests
         await File.WriteAllTextAsync(Path.Combine(folder, "initial.json"), JsonSerializer.Serialize(initial));
         using var model = new EditorViewModel(folder); model.Ask = _ => Task.FromResult(true);
         await model.AttachSession(session);
-        if (recoveryOnly)
-        {
-            string pending = Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl", "pending-chorus-preview.json");
-            File.Copy(pending, Path.Combine(folder, "pending-chorus-preview.json"));
-            await (Task)typeof(EditorViewModel).GetMethod("LoadPendingChorus", BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(model, null)!;
-        }
         async Task Settle()
         {
             await Task.Delay(150);
@@ -74,12 +67,6 @@ internal static class AdvancedHardwareTests
         {
             await model.ReadChorusAsync();
             if (!model.CanEditChorus) throw new Exception("Hardware chorus is not editable: " + model.ErrorMessage);
-            if (recoveryOnly)
-            {
-                if (!Directory.Exists(Path.Combine(folder, "ArchivedEffectRecovery"))) throw new Exception("Obsolete pending recovery was not archived");
-                Console.WriteLine("PASS HARDWARE exact persisted chorus recovery: archived, fresh preview editable, original user backup untouched");
-                return;
-            }
             model.Chorus.Depth = 50; model.Chorus.Speed = 1.2; model.Chorus.Mix = 60;
             model.Chorus.Feedback = 1; model.Chorus.Waveform = 1; model.Chorus.WetGain = 80; model.Chorus.CombinedGain = 80;
             await Settle();

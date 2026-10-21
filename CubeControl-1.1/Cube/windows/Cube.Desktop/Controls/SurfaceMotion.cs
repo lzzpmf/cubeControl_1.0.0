@@ -14,7 +14,7 @@ public static class SurfaceMotion
     public static void SetEnabled(DependencyObject target, bool value) => target.SetValue(EnabledProperty, value);
     public static bool GetEnabled(DependencyObject target) => (bool)target.GetValue(EnabledProperty);
     public static readonly DependencyProperty OffsetProperty = DependencyProperty.RegisterAttached(
-        "Offset", typeof(double), typeof(SurfaceMotion), new PropertyMetadata(0d));
+        "Offset", typeof(double), typeof(SurfaceMotion), new PropertyMetadata(8d));
     public static void SetOffset(DependencyObject target, double value) => target.SetValue(OffsetProperty, value);
     public static double GetOffset(DependencyObject target) => (double)target.GetValue(OffsetProperty);
     public static readonly DependencyProperty KeyProperty = DependencyProperty.RegisterAttached(
@@ -22,6 +22,11 @@ public static class SurfaceMotion
         { if (d is FrameworkElement element && element.GetValue(StateProperty) is State state) state.Play(); }));
     public static void SetKey(DependencyObject target, object value) => target.SetValue(KeyProperty, value);
     public static object GetKey(DependencyObject target) => target.GetValue(KeyProperty);
+    public static readonly DependencyProperty SecondaryKeyProperty = DependencyProperty.RegisterAttached(
+        "SecondaryKey", typeof(object), typeof(SurfaceMotion), new PropertyMetadata(null, (d, _) =>
+        { if (d is FrameworkElement element && element.GetValue(StateProperty) is State state) state.Play(); }));
+    public static void SetSecondaryKey(DependencyObject target, object value) => target.SetValue(SecondaryKeyProperty, value);
+    public static object GetSecondaryKey(DependencyObject target) => target.GetValue(SecondaryKeyProperty);
     private static readonly DependencyProperty StateProperty = DependencyProperty.RegisterAttached(
         "State", typeof(State), typeof(SurfaceMotion));
     public static bool Allowed => SystemParameters.ClientAreaAnimation && !SystemParameters.HighContrast && (RenderCapability.Tier >> 16) > 0;
@@ -67,6 +72,9 @@ public static class SurfaceMotion
         {
             Stop();
             if (!element.IsLoaded || !element.IsVisible || !Allowed) return;
+            // A parent entry already carries its children; do not double the motion.
+            for (var parent = VisualTreeHelper.GetParent(element); parent != null; parent = VisualTreeHelper.GetParent(parent))
+                if (parent.GetValue(StateProperty) is State ancestor && ancestor.cleanup.IsEnabled) return;
             // Preserve the surface opacity and let WPF schedule up to 240 fps.
             var fade = new DoubleAnimation(0, element.Opacity, TimeSpan.FromMilliseconds(167))
             { EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };

@@ -1,10 +1,12 @@
 # Privacy
 
-Updated: October 12, 2026. Scope: cubeControl 1.1.0 for Windows, including amp creator and Backing Tracks.
+Updated: October 19, 2026. Scope: cubeControl 1.1.0 for Windows, including amp creator and Backing Tracks.
 
 Application controller: Luiz Paulo Martins Ferreira. Privacy contact: [lzpmartins@gmail.com](mailto:lzpmartins@gmail.com).
 
 ## Local operation
+The HTML manual works offline and searches its content inside the browser without sending queries. When supported, it saves only the theme preference in the `cube-manual-theme` local-storage key. Clearing browser data removes this preference. External and email links open only when selected by the user.
+
 Pedal editing uses USB-MIDI. No account, registration, advertising, developer analytics or automatic upload to developer servers is required. Included IRs and local audio playback work offline. Windows audio output may use Bluetooth; the Bluetooth button opens Windows settings.
 
 ## Information and purposes

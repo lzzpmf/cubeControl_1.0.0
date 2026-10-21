@@ -64,6 +64,11 @@ function Get-SourceHashes {
     foreach ($file in Get-ChildItem -LiteralPath $guidesRoot -File -Recurse) {
         $hashes['docs\usuario\' + $file.FullName.Substring($guidesRoot.Length + 1)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
     }
+    $manualRoot = Join-Path (Split-Path -Parent $workspace) 'docs\manual'
+    foreach ($file in Get-ChildItem -LiteralPath $manualRoot -File -Recurse) {
+        $hashes['docs\manual\' + $file.FullName.Substring($manualRoot.Length + 1)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+    }
+    $hashes['Build-Manual.mjs'] = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'Build-Manual.mjs') -Algorithm SHA256).Hash
     $hashes['Validate-Documentation.ps1'] = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot 'Validate-Documentation.ps1') -Algorithm SHA256).Hash
     foreach ($helper in 'Prepare-YouTubeTools.ps1', 'youtube-tools.json') { $hashes[$helper] = (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot $helper) -Algorithm SHA256).Hash }
     $hashes['build-script'] = (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash

@@ -16,7 +16,7 @@ public partial class MainWindow
         if (e.Key == Key.Enter && sender is TextBox field)
         { field.GetBindingExpression(TextBox.TextProperty)?.UpdateSource(); e.Handled = true; }
     }
-    private void BackingBpmClick(object sender, RoutedEventArgs e) => EditMetronomeNumber(false);
+    private void BackingBpmClick(object sender, RoutedEventArgs e) => EditMetronomeNumber(false, true);
     private int backingBpmWheelDelta;
     private int backingSpeedWheelDelta;
     private int backingPitchWheelDelta;
@@ -45,7 +45,7 @@ public partial class MainWindow
         backingBpmWheelDelta += e.Delta;
         int steps = backingBpmWheelDelta / 120;
         backingBpmWheelDelta %= 120;
-        if (steps != 0) BackingTracks.MetronomeBpm += steps;
+        if (steps != 0) BackingTracks.TransportBpm += steps;
     }
     private void BackingMixerClick(object sender, RoutedEventArgs e)
     {
@@ -83,7 +83,7 @@ public partial class MainWindow
         e.Handled = true;
     }
     // Handle the press before ListBoxItem sees it: opening options must not select/play another track.
-    private void BackingTrackMenuPress(object sender, MouseButtonEventArgs e) { BackingMenuClick(sender, e); backingDragTrack = null; }
+    private void BackingTrackMenuPress(object sender, MouseButtonEventArgs e) { BackingMenuClick(sender, e); }
     private void BackingTrackContext(object sender, MouseButtonEventArgs e)
     {
         if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem { DataContext: BackingTrack track } item)
@@ -317,14 +317,14 @@ public partial class MainWindow
         if (e.Key != Key.Enter) return;
         e.Handled = true; EditMetronomeNumber(false);
     }
-    private async void EditMetronomeNumber(bool offset)
+    private async void EditMetronomeNumber(bool offset, bool session = false)
     {
         if (backingDialogOpen) return;
         backingDialogOpen = true;
         try
         {
-            string title = offset ? "Primeiro tempo (s)" : "BPM do metrônomo";
-            var input = new TextBox { Text = (offset ? BackingTracks.FirstBeatOffset : BackingTracks.MetronomeBpm).ToString("0.###", CultureInfo.CurrentCulture), MinWidth = 240 };
+            string title = offset ? "Primeiro tempo (s)" : session ? "BPM da sessão" : "BPM do metrônomo";
+            var input = new TextBox { Text = (offset ? BackingTracks.FirstBeatOffset : session ? BackingTracks.TransportBpm : BackingTracks.MetronomeBpm).ToString("0.###", CultureInfo.CurrentCulture), MinWidth = 240 };
             System.Windows.Automation.AutomationProperties.SetName(input, LanguageService.T(title));
             var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T(title), Content = input, PrimaryButtonText = LanguageService.T("Salvar"), CloseButtonText = LanguageService.T("Cancelar") };
             bool Valid() => double.TryParse(input.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double value) && double.IsFinite(value) && value >= (offset ? 0 : 20) && value <= (offset ? BackingTracks.Duration : 300);
@@ -333,7 +333,7 @@ public partial class MainWindow
             if (await dialog.ShowLocalizedAsync() == Wpf.Ui.Controls.ContentDialogResult.Primary && Valid())
             {
                 double value = double.Parse(input.Text, CultureInfo.CurrentCulture);
-                if (offset) BackingTracks.FirstBeatOffset = value; else BackingTracks.MetronomeBpm = value;
+                if (offset) BackingTracks.FirstBeatOffset = value; else if (session) BackingTracks.TransportBpm = value; else BackingTracks.MetronomeBpm = value;
             }
         }
         finally { backingDialogOpen = false; }

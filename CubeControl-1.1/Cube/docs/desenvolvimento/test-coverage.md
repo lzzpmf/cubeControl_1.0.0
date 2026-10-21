@@ -18,7 +18,7 @@ O executor compila os dois projetos de testes em Release, executa cada suíte lo
 
 Requisitos: Windows com sessão gráfica disponível, .NET 10 SDK, ferramentas C++ usadas pelo build nativo, PowerShell e Python 3. A suíte `factory-irs` também usa os arquivos locais originais `BFI.bin` e `BFIN.bin` em `%USERPROFILE%\Downloads\CubeSuite\bin`, conferidos por hash pelo catálogo; sua ausência causa falha explícita, sem download automático. Durante as suítes WPF, evitar interação com outras janelas para não disputar o foco.
 
-`--list` no executável Desktop produz o catálogo JSON. `--suite <id>` escolhe uma suíte; os argumentos legados continuam aceitos. Argumentos desconhecidos ou múltiplos seletores são rejeitados. Os executores especializados `--qa` e `--usability` mantêm seus filtros de baterias e relatórios; `qa-desktop` e `qa-usability` executam todas as baterias locais correspondentes. O executor também inclui o protocolo básico, `qa-protocol`, `doc-links` (Python 3) e `doc-catalog` (PowerShell).
+`--list` no executável Desktop produz o catálogo JSON. `--suite <id>` escolhe uma suíte; os argumentos legados continuam aceitos. Argumentos desconhecidos ou múltiplos seletores são rejeitados. A suíte `documentation` aceita uma opção `--documentation-root=<pasta>` com ambos os seletores; a opção é rejeitada quando vazia, repetida ou associada a outra suíte. Os executores especializados `--qa` e `--usability` mantêm seus filtros de baterias e relatórios; `qa-desktop` e `qa-usability` executam todas as baterias locais correspondentes. O executor também inclui o protocolo básico, `qa-protocol` (incluindo prévia de chorus e recursos dos packs de IR), `doc-links` (Python 3) e `doc-catalog` (PowerShell).
 
 Relatórios ficam em `C:\CubeControl-Validation\Tests\runs\<execução>`: `catalog.json`, `results.json`, stdout/stderr por suíte e diretórios de dados isolados. As baterias QA gravam também resultados por caso e JUnit. Capturas e demais artefatos locais ficam em `<suite>-data/reports`, sem sobrescrever resultados de outras execuções.
 
@@ -41,6 +41,7 @@ Relatórios ficam em `C:\CubeControl-Validation\Tests\runs\<execução>`: `catal
 
 | ID | Argumento legado | Requisito | Host WPF |
 | --- | --- | --- | --- |
+| `drag-drop` | `--drag-drop-only` | local | sim |
 | `player-layout` | `--player-layout-only` | local | sim |
 | `overdriven` | `--overdriven-only` | local | sim |
 | `documentation` | `--documentation-only` | local | sim |
@@ -58,7 +59,6 @@ Relatórios ficam em `C:\CubeControl-Validation\Tests\runs\<execução>`: `catal
 | `factory-irs` | `--factory-irs-only` | local | sim |
 | `amp-capacitors` | `--amp-capacitors-only` | local | sim |
 | `hardware-effect-cards` | `--hardware-effect-cards` | hardware | sim |
-| `hardware-advanced-recovery` | `--hardware-advanced-recovery` | hardware | sim |
 | `hardware-advanced-lifecycle` | `--hardware-advanced-lifecycle` | hardware | sim |
 | `advanced-lifecycle` | `--advanced-lifecycle-only` | local | sim |
 | `advanced-interaction` | `--advanced-interaction-only` | local | sim |
@@ -102,6 +102,9 @@ Relatórios ficam em `C:\CubeControl-Validation\Tests\runs\<execução>`: `catal
 | `theme` | `--theme-only` | local | sim |
 | `localization` | `--localization-only` | local | sim |
 | `midi-ports` | `--midi-ports-only` | local | não |
+| `backing-audio-boundaries` | `--backing-audio-boundaries` | local | não |
+| `multitrack-capture` | `--multitrack-capture` | local | não |
+| `backing-daw` | `--backing-daw` | local | sim |
 | `backing-session` | `--backing-session-only` | local | não |
 | `backing-recording` | `--backing-recording-only` | local | não |
 | `firmware-worker` | `--firmware-worker-only` | elevation | não |
@@ -121,9 +124,15 @@ Relatórios ficam em `C:\CubeControl-Validation\Tests\runs\<execução>`: `catal
 
 A regressão de pitch usa uma senoide de 440 Hz a 48 kHz, 25 combinações de velocidade/transposição e uma exportação de sessão. Exige desvio inferior a 5 cents e duração correta. A exportação usa uma janela DSP de 240 ms; a reprodução conserva a configuração anterior de 120 ms. Esse ensaio não certifica qualidade perceptiva, transientes musicais nem latência em dispositivo.
 
-- `hardware`: não abrir MIDI nem gravar no pedal. `hardware-advanced-recovery` continua desatualizado e não é um procedimento de recuperação validado.
+- `hardware`: não abrir MIDI nem gravar no pedal durante a execução local. O cenário `hardware-advanced-recovery` foi removido: dependia de `LoadPendingChorus`, método inexistente, e de recuperação persistida que já não é usada. O seletor antigo é rejeitado antes de abrir dispositivos; `advanced-lifecycle` e `chorus` verificam a recuperação em memória e o tratamento dos arquivos legados com transporte simulado.
 - `audio-device`: reprodução, loopback e perfis que usam saída real não entram no conjunto local; as variantes `backing-offline` e `metronome-offline` preservam as verificações independentes de dispositivo.
 - `online`: a prévia real do YouTube exige execução separada.
 - `elevation`: o worker de firmware usa UAC e precisa de execução explícita, embora seu cenário rejeite o arquivo antes de acessar dispositivos.
 - Casos com parâmetros auxiliares são exercitados por suas suítes: BackingMusic/BackingUiReview por backing-practice; YouTubeDownload/YouTubePreviewData por youtube. Não duplicar esses testes como execuções vazias.
 - Não há alegação de cobertura integral. Novas funcionalidades devem registrar cenário de sucesso, falha/cancelamento e persistência quando aplicável; testes devem observar comportamento, não somente procurar strings no XAML.
+
+`backing-audio-boundaries` verifica ganho/silêncio, conservação de potência do panorama mono, compatibilidade do centro mono legado, limites do panorama, overflow/underrun e retomada do monitor em 44,1/48/96 kHz, escrita apenas no trecho solicitado do buffer e janela RMS com consumo independente do pico. Não usa dispositivos de áudio.
+
+`catalog-contract` verifica IDs e aliases únicos, metadados reconhecidos pelo executor, argumentos inválidos/conflitantes e equivalência entre `--suite midi-ports` e seu alias legado, executando o cenário sintético em processos separados.
+
+`multitrack-capture` verifica conversão de PCM assinado de 16/24/32 bits com amostras conhecidas, cabeçalho WAV finalizado, rejeição de pacotes após encerramento, encerramento repetido preservando falhas, rotas inválidas e monitoramento sem arquivo. Alterações de mix durante a captura não podem trocar canais nem criar outro destino; mute mantém o relógio de captura.

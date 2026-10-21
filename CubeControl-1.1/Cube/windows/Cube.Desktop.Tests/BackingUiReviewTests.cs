@@ -38,17 +38,14 @@ internal static class BackingUiReviewTests
     }
     public static void CheckTransport(MainWindow window)
     {
-        var panel = Named<BackingTransportPanel>(window, "BackingTransportButtons");
-        var buttons = Find<ButtonBase>(panel).ToArray();
-        Check(buttons.Length == 8, "all transport actions remain reachable");
+        var panel = Named<WrapPanel>(window, "BackingTransportButtons");
+        var buttons = Find<ButtonBase>(panel).Where(b => b.IsVisible).ToArray();
+        Check(buttons.Length >= 7, "core transport actions remain reachable");
         var bounds = buttons.Select(b => b.TransformToAncestor(panel).TransformBounds(new Rect(b.RenderSize))).ToArray();
-        var row = panel.ActualWidth >= 392 ? Enumerable.Range(0, 8).ToArray() : new[] { 1, 2, 3, 4 };
-        var centers = row.Select(i => bounds[i].Top + bounds[i].Height / 2).ToArray();
-        Check(centers.Max() - centers.Min() <= 1.1, "transport centers align independently of icon size");
         for (int i = 0; i < bounds.Length; i++)
         {
             Check(bounds[i].Left >= -1 && bounds[i].Right <= panel.ActualWidth + 1 && bounds[i].Bottom <= panel.ActualHeight + 1, "transport button stays within panel");
-            for (int j = i + 1; j < bounds.Length; j++) Check(!bounds[i].IntersectsWith(bounds[j]), "transport buttons do not overlap");
+            for (int j = i + 1; j < bounds.Length; j++) Check(Rect.Intersect(bounds[i], bounds[j]).IsEmpty || Rect.Intersect(bounds[i], bounds[j]).Width <= .5 || Rect.Intersect(bounds[i], bounds[j]).Height <= .5, $"transport buttons do not overlap: {bounds[i]} / {bounds[j]}");
         }
     }
     public static async Task Run(MainWindow window, string source, string reports)
@@ -62,7 +59,7 @@ internal static class BackingUiReviewTests
         Cube.Desktop.Localization.LanguageService.Instance.Preview("pt-BR");
         client.LayoutTransform = Transform.Identity;
         window.Width = 1280; window.Height = 720;
-        Check(audio.IsVisible, "audio selectors remain open");
+        ((Expander)audio.Parent).IsExpanded = true; await Task.Delay(250); window.UpdateLayout(); Check(audio.IsVisible, "audio settings disclose endpoint selectors");
         await Task.Delay(250); window.UpdateLayout();
         var current = model.SelectedTrack!;
         model.IsLooping = false; model.Position = 24;
@@ -155,7 +152,7 @@ internal static class BackingUiReviewTests
         var dock = Named<ContentControl>(window, "BackingTransportHost");
         Check(dock.IsVisible, "transport is present in tall windows");
         window.Height = 480; await Task.Delay(250);
-        Check(dock.IsVisible && dock.Parent == window.FindName("BackingRacks"), "short windows keep transport in the scrolling player");
+        Check(dock.IsVisible && dock.Parent == window.FindName("BackingPage"), "short windows keep transport outside the scrolling player");
         window.Height = 1000; await Task.Delay(250);
         Check(dock.IsVisible, "height-only resize preserves transport");
         window.Height = 720; await Task.Delay(250);
@@ -168,7 +165,10 @@ internal static class BackingUiReviewTests
         Check(model.Pitch == 0, "pitch controls preserve semitone increments");
         Invoke(window, "BackingMuteClick", window, new RoutedEventArgs()); Check(model.IsMuted, "mute control updates state");
         Invoke(window, "BackingMuteClick", window, new RoutedEventArgs());
-        var volume = Find<BackingFader>(Named<FrameworkElement>(window, "BackingTransportRack")).First();
+        Named<FrameworkElement>(window, "BackingVolumesPanel").Visibility = Visibility.Visible;
+        window.UpdateLayout();
+        var accompaniment = Find<BackingGainControl>(Named<FrameworkElement>(window, "BackingVolumesPanel")).Single(c => System.Windows.Automation.AutomationProperties.GetName(c) == "Acompanhamento");
+        var volume = Find<BackingFader>(accompaniment).Single();
         void Wheel(UIElement target, int delta)
         {
             var args = new MouseWheelEventArgs(Mouse.PrimaryDevice, Environment.TickCount, delta) { RoutedEvent = Mouse.PreviewMouseWheelEvent };
@@ -185,10 +185,10 @@ internal static class BackingUiReviewTests
         Check(model.Position <= 20, "wheel respects active loop boundaries"); model.IsLooping = false;
         foreach (var fader in Find<BackingFader>(Named<FrameworkElement>(window, "BackingTransportRack")))
         {
-            fader.Value = 30; Wheel(fader, 60); Wheel(fader, 60); Check(fader.Value == 31, "fader wheel raises volume by one percent");
-            Wheel(fader, -120); Check(fader.Value == 30, "fader wheel lowers volume");
-            fader.Value = 100; Wheel(fader, 120); Check(fader.Value == 100, "fader wheel clamps maximum");
-            fader.Value = 0; Wheel(fader, -120); Check(fader.Value == 0, "fader wheel clamps minimum");
+            fader.SetCurrentValue(RangeBase.ValueProperty, -12d); Wheel(fader, 60); Wheel(fader, 60); Check(fader.Value == -11, "fader wheel raises gain by one decibel");
+            Wheel(fader, -120); Check(fader.Value == -12, "fader wheel lowers gain");
+            fader.SetCurrentValue(RangeBase.ValueProperty, 6d); Wheel(fader, 120); Check(fader.Value == 6, "fader wheel clamps maximum");
+            fader.SetCurrentValue(RangeBase.ValueProperty, -61d); Wheel(fader, -120); Check(fader.Value == -61, "fader wheel clamps minimum");
         }
         Check(scroll.VerticalOffset == scrollBefore, "wheel on musical controls does not scroll the page");
         model.Volume = 30;

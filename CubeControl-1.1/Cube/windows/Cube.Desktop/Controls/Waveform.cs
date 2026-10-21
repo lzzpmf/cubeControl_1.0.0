@@ -67,7 +67,8 @@ public sealed class Waveform : FrameworkElement
         }
         var time = new Rect(38, 24, ActualWidth - 50, 70);
         var frequency = new Rect(38, 145, ActualWidth - 50, 70);
-        dc.DrawRoundedRectangle(ThemeService.Brush("CubeWell"), null, new Rect(RenderSize), 6, 6);
+        double surfaceRadius = ((CornerRadius)FindResource("CubeControlCornerRadius")).TopLeft;
+        dc.DrawRoundedRectangle(ThemeService.Brush("CubeWell"), null, new Rect(RenderSize), surfaceRadius, surfaceRadius);
         Text(LanguageService.T("Impulso · amplitude normalizada"), 10, 4, true);
         Text(LanguageService.T("Frequência · dB relativos ao pico"), 10, 123, true);
         foreach (int db in new[] { 0, -30, -60 })

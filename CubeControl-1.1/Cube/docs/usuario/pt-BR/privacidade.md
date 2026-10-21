@@ -2,7 +2,7 @@
 
 [Primeiros passos](primeiros-passos.md)
 
-Última atualização: 12 de outubro de 2026
+Última atualização: 19 de outubro de 2026
 
 Escopo: aplicativo Windows cubeControl 1.1.0, incluindo criador de amps e Backing Tracks.
 
@@ -15,6 +15,8 @@ O cubeControl é um aplicativo para configurar o pedal Cube Baby por conexão US
 O responsável por esta política é o indicado acima. A referência ao nome do equipamento não identifica, por si só, seu fabricante como responsável pelo aplicativo ou pelo tratamento de dados aqui descrito.
 
 ## 1. Funcionamento local
+
+O manual HTML funciona offline e pesquisa o conteúdo no próprio navegador, sem enviar consultas. Se o navegador permitir, guarda somente a preferência de tema na chave `cube-manual-theme` do armazenamento local. Limpar os dados do navegador remove essa preferência. Links externos e de e-mail são abertos apenas quando acionados pelo usuário.
 
 O aplicativo funciona localmente no computador e não exige criação de conta, nome, e-mail ou cadastro para utilizar suas funções de edição. Na versão abrangida por esta política, não há envio automático de dados a servidores do desenvolvedor, publicidade, rastreamento de uso ou ferramentas de análise de comportamento.
 

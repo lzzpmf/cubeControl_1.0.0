@@ -84,9 +84,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         PreviewKeyUp += SuppressStandaloneAltUp;
         Deactivated += (_, _) => standaloneAltPressed = false;
         PreviewKeyDown += BackingKeyDown;
-        Deactivated += (_, _) => BackingTracks.StopYouTubePreview();
+        Deactivated += (_, _) => { BackingTracks.StopYouTubePreview(); _ = BackingTracks.StopLocalPreview(); };
         Appearance.UiDensity.Initialize();
         InitializeComponent();
+        ConfigureDragDrop();
+        BackingPage.AddHandler(System.Windows.Controls.Primitives.Thumb.DragStartedEvent, new System.Windows.Controls.Primitives.DragStartedEventHandler((_, _) => BackingTracks.BeginClipGesture()));
+        BackingPage.AddHandler(System.Windows.Controls.Primitives.Thumb.DragCompletedEvent, new System.Windows.Controls.Primitives.DragCompletedEventHandler((_, _) => BackingTracks.EndClipGesture()));
         RegisterName("IrLibraryTree", SingleIrLibrary.Tree);
         RegisterName("IrLibrarySearch", SingleIrLibrary.SearchBox); DataContext = Model;
         BackingPage.Loaded += (_, _) =>
@@ -109,8 +112,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             BackingTracks.Zoom *= Math.Pow(2, steps);
             BackingTracks.ViewportStart = anchor - fraction * BackingTracks.ViewportDuration;
         };
-        BackingOverview.PreviewMouseLeftButtonDown += (_, _) => { if (BackingTracks.IsRecording) BackingTracks.FollowRecording = false; };
-        BackingOverview.MenuRequested = (wave, time) => OpenBackingMenu(wave, "wave", time: time);
 
         Model.ConfirmIrWrite = ConfirmIrWriteAsync;
         InitializeZoom();
@@ -293,14 +294,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
-    private void SharedIrLibraryMouseDown(object sender, MouseButtonEventArgs e)
-    {
-        if (Model.IrWorkspaceTab == 1) IrPacksCard.LibraryMouseDown(sender, e);
-    }
-    private void SharedIrLibraryMouseMove(object sender, MouseEventArgs e)
-    {
-        if (Model.IrWorkspaceTab == 1) IrPacksCard.LibraryMouseMove(sender, e);
-    }
+
 
     private bool standaloneAltPressed;
     private void SuppressStandaloneAltDown(object sender, KeyEventArgs e)
@@ -393,7 +387,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 edge = surface.PointToScreen(new Point(surface.ActualWidth, 0));
                 menu.HorizontalOffset += (anchor.X - edge.X) / dpi.DpiScaleX;
             }
-            Controls.SurfaceMotion.SetOffset(surface, 4);
             Controls.SurfaceMotion.SetEnabled(surface, true);
         }
         menu.Opened += async (_, _) =>
@@ -484,7 +477,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         BackingTracks.PageVisible = Tabs.SelectedIndex == 2;
         Model.IrAudition.PanelVisible = Tabs.SelectedIndex == 1;
         UpdateWorkspaceLayout();
-        Workspace.MaxWidth = 1440;
         MoveFooterToPage();
     }
     private void MoveFooterToPage()
@@ -499,6 +491,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void IgnoreSelectorRightClick(object sender, MouseButtonEventArgs e) => e.Handled = true;
 
     private int chainWheelDelta;
+    private int presetWheelDelta;
     private void EditorPageWheel(object sender, MouseWheelEventArgs e)
     {
         // Preserve controls whose wheel has a musical/navigation meaning.
@@ -509,7 +502,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 || node is Controls.Knob { IsEnabled: true }
                 || node == BackingBpmButton
                 || node == BackingSpeedOptions || node == BackingPitchOptions
-                || (node == EffectChain && Model.HasBank)
+                || ((node == EffectChain || node == PresetSelector) && Model.HasBank)
                 || (node == FocusedArt && Model.HasGallery)) return;
             node = node is Visual || node is System.Windows.Media.Media3D.Visual3D
                 ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
@@ -534,6 +527,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
         }
     }
+    private void PresetSelectorLeave(object sender, MouseEventArgs e) => presetWheelDelta = 0;
+    private void PresetSelectorWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (!Model.HasBank) { presetWheelDelta = 0; return; }
+        e.Handled = true;
+        presetWheelDelta += e.Delta;
+        int steps = presetWheelDelta / 120;
+        presetWheelDelta %= 120;
+        if (steps == 0) return;
+        Model.SelectedIndex = Math.Clamp(Model.SelectedIndex - steps, 0, Model.Presets.Length - 1);
+        PresetSelector.ScrollIntoView(Model.Current);
+    }
+
     private void EffectChainLeave(object sender, MouseEventArgs e) => chainWheelDelta = 0;
     private void EffectChainWheel(object sender, MouseWheelEventArgs e)
     {
@@ -573,7 +579,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         SaveGroup.Margin = new Thickness(stackActions ? 0 : 16, stackActions ? 16 : 0, 0, 0);
         SaveGroup.HorizontalAlignment = HorizontalAlignment.Right;
         Grid.SetRow(FootswitchHint, 3);
-        Grid.SetRow(PresetStateText, 2);
         Grid.SetColumnSpan(OutputGroup, 1);
         bool narrow = EditHeaderGrid.ActualWidth < 440;
         if (narrow)
@@ -583,7 +588,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             OutputGroup.Margin = new Thickness(0, 16, 0, 0);
             Grid.SetRow(SaveGroup, 2); Grid.SetColumn(SaveGroup, 0); Grid.SetColumnSpan(SaveGroup, 3);
             SaveGroup.Margin = new Thickness(0, 16, 0, 0);
-            Grid.SetRow(PresetStateText, 3); Grid.SetRow(FootswitchHint, 4);
+            Grid.SetRow(FootswitchHint, 4);
         }
         if (HeaderGrid.ActualWidth < 600)
         {
@@ -610,6 +615,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             if (cell is TextBlock text) text.TextWrapping = TextWrapping.Wrap;
         }
     }
+    private void IrIndividualSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        // The section includes 32 DIPs of card padding: switch at 1800 DIPs.
+        bool wide = IrSectionPanel.ActualWidth >= 1768;
+        IrIndividualLayout.ColumnDefinitions[1].Width = wide ? new GridLength(440) : new GridLength(0);
+        Grid.SetRowSpan(IrAnalysisPanel, wide ? 3 : 1);
+        Grid.SetColumn(IrStatusNotice, wide ? 1 : 0);
+        Grid.SetRow(IrStatusNotice, wide ? 0 : 1);
+        Grid.SetColumn(IrPreparationPanel, wide ? 1 : 0);
+        Grid.SetRow(IrPreparationPanel, wide ? 1 : 2);
+        IrAnalysisPanel.Margin = new Thickness(0, 0, wide ? 16 : 0, 12);
+    }
+
     private void UpdateWorkspaceLayout()
     {
         if (WorkspaceScroll == null) return;
@@ -627,18 +645,51 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             else item.ClearValue(Control.PaddingProperty);
         }
         HeaderGrid.Margin = new Thickness(0, 0, 0, shortViewport ? 8 : 20);
-        bool compact = ClientArea.ActualHeight < 764 || Workspace.ActualWidth < 1000;
-        WorkspaceScroll.VerticalScrollBarVisibility = Tabs.SelectedIndex == 2 ? ScrollBarVisibility.Disabled : compact ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
+        bool compact = Tabs.SelectedIndex == 3 || ClientArea.ActualHeight < 764 || Workspace.ActualWidth < 1000;
+        WorkspaceScroll.VerticalScrollBarVisibility = Tabs.SelectedIndex == 2 ? ScrollBarVisibility.Disabled : compact ? ScrollBarVisibility.Hidden : ScrollBarVisibility.Disabled;
         // A single scrolling owner: natural content height in compact mode, a
         // constrained page viewport in desktop mode. Never force a workspace height.
         Workspace.Height = double.NaN;
         if (AmpEditorHost?.Content is Views.AmpEditor ampEditor) ampEditor.IsCompactLayout = compact;
         foreach (var scroll in new[] { EditorScroll, IrScroll, HelpScroll, BackingTracksScroll })
-            scroll.VerticalScrollBarVisibility = scroll == BackingTracksScroll ? ScrollBarVisibility.Auto : compact ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Auto;
+            scroll.VerticalScrollBarVisibility = scroll == BackingTracksScroll ? ScrollBarVisibility.Hidden : compact ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Hidden;
         FocusedArt.MaxHeight = ClientArea.ActualHeight < 764 ? 160 : 240;
         double margin = ClientArea.ActualWidth < 1000 ? 16 : 24;
         Workspace.Margin = new Thickness(margin, shortViewport ? 12 : 20, margin, 12);
+        pageScrollOwner = Tabs.SelectedIndex == 2 ? BackingTracksScroll : compact ? WorkspaceScroll
+            : Tabs.SelectedIndex switch { 1 => IrScroll, 4 => HelpScroll, _ => EditorScroll };
+        SyncWindowPageScroll();
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(SyncWindowPageScroll));
     }
+    private ScrollViewer? pageScrollOwner;
+    private void PageScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        if (ReferenceEquals(e.OriginalSource, pageScrollOwner)) SyncWindowPageScroll();
+    }
+    private void SyncWindowPageScroll()
+    {
+        if (WindowPageScrollBar == null) return;
+        if (pageScrollOwner == null || !pageScrollOwner.IsVisible)
+        {
+            WindowPageScrollBar.Visibility = Visibility.Collapsed;
+            return;
+        }
+        WindowPageScrollBar.Margin = new Thickness(0,
+            Workspace.Margin.Top + HeaderGrid.ActualHeight + HeaderGrid.Margin.Bottom, 0, Workspace.Margin.Bottom);
+        WindowPageScrollBar.Maximum = pageScrollOwner.ScrollableHeight;
+        WindowPageScrollBar.ViewportSize = pageScrollOwner.ViewportHeight;
+        WindowPageScrollBar.LargeChange = pageScrollOwner.ViewportHeight;
+        WindowPageScrollBar.SmallChange = 48;
+        WindowPageScrollBar.Value = pageScrollOwner.VerticalOffset;
+        WindowPageScrollBar.Visibility = pageScrollOwner.ScrollableHeight > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+    private void WindowPageScroll(object sender, System.Windows.Controls.Primitives.ScrollEventArgs e)
+    {
+        if (pageScrollOwner == null) return;
+        Controls.SmoothScroll.Stop(pageScrollOwner);
+        pageScrollOwner.ScrollToVerticalOffset(e.NewValue);
+    }
+
     internal void ShowNotification(UserNotification notification)
     {
         if (!Dispatcher.CheckAccess()) { Dispatcher.BeginInvoke(() => ShowNotification(notification)); return; }
@@ -672,6 +723,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             MoreOptionsButton.Focus();
         }
         var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = "Conexão USB", Content = new Views.ConnectionDetails { DataContext = Model }, CloseButtonText = "Fechar" };
+        await dialog.ShowLocalizedAsync();
+    }
+    private async void UserManualClick(object sender, RoutedEventArgs e)
+    {
+        if (Documentation.ManualLauncher.TryOpen(AssetPaths.Documents, LanguageService.Instance.Language,
+            Appearance.ThemeService.Instance.IsLight, out string error)) return;
+        var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost)
+        {
+            Title = "Manual do cubeControl", Content = error, CloseButtonText = "Fechar"
+        };
         await dialog.ShowLocalizedAsync();
     }
     private Views.DocumentationWindow? documentationWindow;
@@ -824,24 +885,17 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
         finally { dismissal.Dispose(); galleryOpen = false; }
     }
-    private Point backingDragStart;
-    private BackingTrack? backingDragTrack;
-    private void BackingTrackDragStart(object sender, MouseButtonEventArgs e)
+    private void ConfigureDragDrop()
     {
-        if (BackingButtonAncestor(e.OriginalSource as DependencyObject) != null) { backingDragTrack = null; return; }
-        backingDragStart = e.GetPosition(BackingTrackList);
-        backingDragTrack = e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem item ? item.DataContext as BackingTrack : null;
+        Controls.CubeDragDrop.Attach(BackingTrackList,
+            info => info.SourceItem is BackingTrack track ? (track, DragDropEffects.Move) : (null, DragDropEffects.None));
+        Controls.CubeDragDrop.Attach(BackingPage, over: BackingTracksDragOver, drop: BackingTracksDrop);
+        Controls.CubeDragDrop.Attach(BackingStemList,
+            info => BackingTracks.CanEditSession && info.SourceItem is BackingStem stem ? (stem, DragDropEffects.Move) : (null, DragDropEffects.None),
+            BackingStemsDragOver, BackingStemsDrop);
+        IrPacksCard.ConfigureLibraryDrag(SingleIrLibrary.Tree, () => Model.IrWorkspaceTab == 1);
     }
-    private void BackingTrackDragMove(object sender, MouseEventArgs e)
-    {
-        if (e.LeftButton != MouseButtonState.Pressed || backingDragTrack == null) return;
-        var delta = e.GetPosition(BackingTrackList) - backingDragStart;
-        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
-        var track = backingDragTrack; backingDragTrack = null;
-        try { DragDrop.DoDragDrop(BackingTrackList, new DataObject(typeof(BackingTrack), track), DragDropEffects.Move); }
-        finally { Controls.DragFeedback.Clear(); BackingDropOverlay.Visibility = Visibility.Collapsed; }
-    }
-    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluatePlaylistDrop(DragEventArgs e)
+    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluatePlaylistDrop(Controls.CubeDropContext e)
     {
         if (BackingTracks.CanEditSession && e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Any(IsBackingFile))
             return (DragDropEffects.Copy, -1, null, false);
@@ -856,7 +910,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         return (index < 0 ? DragDropEffects.None : DragDropEffects.Move, index, target, after);
     }
     private static bool IsBackingFile(string path) => System.IO.File.Exists(path) && System.IO.Path.GetExtension(path).ToLowerInvariant() is ".mp3" or ".wav";
-    private void BackingTracksDragOver(object sender, DragEventArgs e)
+    private void BackingTracksDragOver(object sender, Controls.CubeDropContext e)
     {
         var result = EvaluatePlaylistDrop(e); e.Effects = result.Effect;
         BackingDropOverlay.Visibility = Visibility.Collapsed;
@@ -870,49 +924,25 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (e.OriginalSource is DependencyObject origin) Controls.DragFeedback.AutoScroll(origin, e);
         e.Handled = true;
     }
-    private void BackingTracksDrop(object sender, DragEventArgs e)
+    private void BackingTracksDrop(object sender, Controls.CubeDropContext e)
     {
         var result = EvaluatePlaylistDrop(e); e.Effects = result.Effect;
         Controls.DragFeedback.Clear(); BackingDropOverlay.Visibility = Visibility.Collapsed;
-        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) BackingTracks.AddPaths(files);
-        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingTrack)) is BackingTrack track) BackingTracks.MoveTrack(track, result.Index);
+        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) { var animate = Controls.DragMotion.CaptureList(BackingTrackList); BackingTracks.AddPaths(files); animate(); }
+        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingTrack)) is BackingTrack track) { var animate = Controls.DragMotion.CaptureList(BackingTrackList); BackingTracks.MoveTrack(track, result.Index); animate(); }
         e.Handled = true;
     }
-    private void BackingDragLeave(object sender, DragEventArgs e)
-    {
-        if (!BackingPage.IsMouseOver) { BackingDropOverlay.Visibility = Visibility.Collapsed; Controls.DragFeedback.Clear(); }
-    }
-    private Point stemDragStart;
-    private BackingStem? stemDragCandidate;
-    private void BackingStemDragStart(object sender, MouseButtonEventArgs e)
-    {
-        stemDragCandidate = null;
-        if (BackingButtonAncestor(e.OriginalSource as DependencyObject) != null) return;
-        for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null && node != BackingStemList; node = VisualTreeHelper.GetParent(node))
-            if (node is Slider or TextBox) return;
-        stemDragStart = e.GetPosition(BackingStemList);
-        stemDragCandidate = e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingStemList, source) is ListBoxItem item ? item.DataContext as BackingStem : null;
-    }
-    private void BackingStemDragMove(object sender, MouseEventArgs e)
-    {
-        if (e.LeftButton != MouseButtonState.Pressed || stemDragCandidate == null) return;
-        var delta = e.GetPosition(BackingStemList) - stemDragStart;
-        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance && Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
-        var stem = stemDragCandidate; stemDragCandidate = null;
-        try { DragDrop.DoDragDrop(BackingStemList, new DataObject(typeof(BackingStem), stem), DragDropEffects.Move); }
-        finally { Controls.DragFeedback.Clear(); }
-    }
-    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluateStemDrop(DragEventArgs e)
+    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluateStemDrop(Controls.CubeDropContext e)
     {
         if (BackingTracks.SessionStems is not { } stems) return (DragDropEffects.None, -1, null, false);
         if (BackingTracks.CanEditSession && e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Any(IsBackingFile)) return (DragDropEffects.Copy, -1, null, false);
-        if (e.Data.GetData(typeof(BackingStem)) is not BackingStem stem || !stems.Contains(stem)) return (DragDropEffects.None, -1, null, false);
+        if (!BackingTracks.CanEditSession || e.Data.GetData(typeof(BackingStem)) is not BackingStem stem || !stems.Contains(stem)) return (DragDropEffects.None, -1, null, false);
         var target = e.OriginalSource is DependencyObject source ? ItemsControl.ContainerFromElement(BackingStemList, source) as ListBoxItem : null;
         bool after = target != null && e.GetPosition(target).Y >= target.ActualHeight / 2;
         int index = Controls.DropInsertion.Index(stems.IndexOf(stem), target?.DataContext is BackingStem item ? stems.IndexOf(item) : -1, after, stems.Count);
         return (index < 0 ? DragDropEffects.None : DragDropEffects.Move, index, target, after);
     }
-    private void BackingStemsDragOver(object sender, DragEventArgs e)
+    private void BackingStemsDragOver(object sender, Controls.CubeDropContext e)
     {
         var result = EvaluateStemDrop(e); e.Effects = result.Effect;
         UIElement target = result.Target ?? (UIElement)BackingStemList;
@@ -924,32 +954,35 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (e.OriginalSource is DependencyObject origin) Controls.DragFeedback.AutoScroll(origin, e);
         e.Handled = true;
     }
-    private async void BackingStemsDrop(object sender, DragEventArgs e)
+    private async void BackingStemsDrop(object sender, Controls.CubeDropContext e)
     {
         var result = EvaluateStemDrop(e); e.Effects = result.Effect; e.Handled = true; Controls.DragFeedback.Clear();
-        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) await BackingTracks.AddSessionFiles(files);
-        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingStem)) is BackingStem stem) BackingTracks.MoveStem(stem, result.Index);
+        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) { var animate = Controls.DragMotion.CaptureList(BackingStemList); await BackingTracks.AddSessionFiles(files); animate(); }
+        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingStem)) is BackingStem stem) { var animate = Controls.DragMotion.CaptureList(BackingStemList); BackingTracks.MoveStem(stem, result.Index); animate(); }
     }
-    private void BackingStemsDragLeave(object sender, DragEventArgs e) { if (!BackingStemList.IsMouseOver) Controls.DragFeedback.Clear(); e.Handled = true; }
+
     private FrameworkElement? backingViewportHost;
     private void BackingViewportSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(BackingPage.ActualWidth);
-    private void BackingPageSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(e.NewSize.Width);
+    private void BackingPageSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        ApplyBackingLayout(e.NewSize.Width);
+        // Keep the arrangement reachable even at maximum UI zoom on a short window.
+        // The transport reflows without scaling its interaction targets.
+        ConfigureBackingTransport(e.NewSize.Width, e.NewSize.Height);
+        ApplyBackingLayout(e.NewSize.Width);
+    }
     private void BackingLibrarySizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(e.NewSize.Width);
     private void ApplyBackingLayout(double width)
     {
-        if (BackingLibraryLayout == null || BackingTrackList == null || BackingYouTubeScroll == null) return;
-        bool columns = width >= 860;
-        BackingPlaylistColumn.Width = columns ? new GridLength(45, GridUnitType.Star) : new GridLength(0);
-        BackingSearchColumn.Width = new GridLength(columns ? 55 : 1, GridUnitType.Star);
-        BackingLibraryGap.Width = new GridLength(columns ? 16 : 0);
-        Grid.SetColumnSpan(BackingPlaylistPanel, columns ? 1 : 3);
-        Grid.SetColumn(BackingYouTubePanel, columns ? 2 : 0);
-        Grid.SetColumnSpan(BackingYouTubePanel, columns ? 1 : 3);
-        Grid.SetRow(BackingYouTubePanel, columns ? 0 : 1);
-        BackingYouTubePanel.Margin = new Thickness(0, columns ? 0 : 16, 0, 0);
-        BackingTrackList.MaxHeight = BackingYouTubeScroll.MaxHeight = columns ? 480 : double.PositiveInfinity;
-        ScrollViewer.SetVerticalScrollBarVisibility(BackingTrackList, columns ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled);
-        BackingYouTubeScroll.VerticalScrollBarVisibility = columns ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
+        if (BackingLibraryLayout == null || BackingSideColumn == null) return;
+        bool visible = BackingLibraryLayout.Visibility == Visibility.Visible;
+        bool wide = BackingPage.ActualWidth >= 1200;
+        BackingSideColumn.Width = new GridLength(visible && wide ? 310 : 0);
+        Grid.SetColumn(BackingLibraryLayout, wide ? 1 : 0);
+        Grid.SetRow(BackingLibraryLayout, wide ? 1 : 0);
+        Grid.SetRowSpan(BackingLibraryLayout, wide ? 1 : 2);
+        BackingLibraryLayout.Width = wide ? double.NaN : Math.Min(310, Math.Max(180, BackingPage.ActualWidth));
+        BackingLibraryLayout.HorizontalAlignment = wide ? HorizontalAlignment.Stretch : HorizontalAlignment.Right;
     }
     private void BackingSectionClick(object sender, RoutedEventArgs e)
     {
@@ -979,9 +1012,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             var mix = new RadioButton { Content = LanguageService.T("Mixagem da sessão"), IsChecked = BackingTracks.ExportMix, GroupName = "ExportTarget", Margin = new Thickness(0, 8, 0, 0) };
             var isolated = new RadioButton { Content = LanguageService.T("Pista selecionada"), IsChecked = !BackingTracks.ExportMix, IsEnabled = BackingTracks.SelectedStem != null, GroupName = "ExportTarget" };
             var panel = new StackPanel(); panel.Children.Add(mix); panel.Children.Add(isolated); panel.Children.Add(choice);
+            var whole = new RadioButton { Content = LanguageService.T("Sessão inteira"), GroupName = "ExportInterval", IsChecked = !BackingTracks.ExportInterval };
+            var interval = new RadioButton { Content = LanguageService.T("Intervalo A/B"), GroupName = "ExportInterval", IsChecked = BackingTracks.ExportInterval && BackingTracks.HasRange, IsEnabled = BackingTracks.HasRange };
+            panel.Children.Add(whole); panel.Children.Add(interval);
             var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T(BackingTracks.ExportLabel), Content = panel, PrimaryButtonText = LanguageService.T("Exportar"), CloseButtonText = LanguageService.T("Cancelar") };
             if (await dialog.ShowLocalizedAsync() != Wpf.Ui.Controls.ContentDialogResult.Primary) return null;
-            BackingTracks.ExportMix = mix.IsChecked == true;
+            BackingTracks.ExportMix = mix.IsChecked == true; BackingTracks.ExportInterval = interval.IsChecked == true;
             return choice.IsChecked == true;
         }
         finally { backingDialogOpen = false; }
@@ -1000,7 +1036,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         { BackingTracks.StopYouTubePreview(); e.Handled = true; return; }
         if (Tabs.SelectedIndex == 1) return;
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
-            if (node is Controls.YouTubeResultCard) return;
+            if (node is Controls.YouTubeResultCard || node is Controls.BackingClipLane && e.Key is Key.Left or Key.Right or Key.Escape or Key.Apps or Key.F10) return;
         bool backingPage = Tabs.SelectedIndex == 2;
         if (!backingPage && (BackingTracks.SelectedTrack == null || e.Key is not (Key.Space or Key.L or Key.Left or Key.Right or Key.Up or Key.Down))) return;
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
@@ -1015,6 +1051,15 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             if (!backingPage && node is Controls.Knob or Slider) return;
         }
         var modifiers = Keyboard.Modifiers;
+        if (backingPage && BackingStemList.IsKeyboardFocusWithin && BackingTracks.CanEditSession)
+        {
+            Action? edit = modifiers == ModifierKeys.Control ? e.Key switch
+            {
+                Key.Z => () => BackingTracks.UndoEdit(), Key.Y => () => BackingTracks.UndoEdit(true),
+                Key.C => BackingTracks.CopyClips, Key.V => () => BackingTracks.PasteClips(), Key.D => () => BackingTracks.PasteClips(true), _ => null
+            } : modifiers == ModifierKeys.None ? e.Key switch { Key.Delete => BackingTracks.DeleteClips, Key.S => BackingTracks.CutStudioClips, _ => null } : null;
+            if (edit != null) { edit(); e.Handled = true; return; }
+        }
         if (backingPage && (e.Key == Key.Apps || e.Key == Key.F10 && modifiers == ModifierKeys.Shift)
             && OpenBackingKeyboardMenu(e.OriginalSource as DependencyObject)) { e.Handled = true; return; }
         if (BackingButtonAncestor(e.OriginalSource as DependencyObject) is FrameworkElement { Tag: string menuKind } && menuKind is "track" or "wave" or "section" or "speed" or "pitch" or "player" or "metronome" && e.Key is Key.Space or Key.Enter) return;
