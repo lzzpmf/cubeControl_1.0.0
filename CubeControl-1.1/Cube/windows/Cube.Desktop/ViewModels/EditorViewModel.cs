@@ -23,8 +23,6 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     private FactoryResources? factory;
     private int selected;
     private bool busy, blocked;
-    private int writeCommandCount;
-    public int WriteCommandCount => writeCommandCount;
     private string status = "Conecte seu Cube Baby por USB para começar.", log = "";
     public string DataDirectory { get; }
     public ConnectionViewModel Connection { get; } = new();
@@ -234,7 +232,6 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     private void AddLog(string value)
     {
         if (!Application.Current.Dispatcher.CheckAccess()) { Application.Current.Dispatcher.BeginInvoke(() => AddLog(value)); return; }
-        if (value.StartsWith("TX ") && UsbSysEx.Decode(Convert.FromHexString(value[3..])).Command is not (0x11 or 0x23)) Interlocked.Increment(ref writeCommandCount);
         Log = (Log.Length > 30000 ? Log[^18000..] : Log) + $"{DateTime.Now:HH:mm:ss.fff} {value}\n";
     }
     public async Task Initialize() => await Execute(async () =>

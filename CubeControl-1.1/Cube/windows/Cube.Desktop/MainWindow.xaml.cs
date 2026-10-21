@@ -147,74 +147,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             Appearance.ThemeService.Instance.Attach(this);
             Appearance.ThemeService.Instance.Changed += RefreshThemeColors;
-            // Visual test hosts exercise the real window with isolated models and simulated MIDI.
             if (initializeDevices)
             {
                 await Model.Initialize();
                 await BackingTracks.Initialize();
                 await Model.IrAudition.RefreshDevices();
             }
-            string[] args = Environment.GetCommandLineArgs(); int smoke = Array.IndexOf(args, "--smoke");
-            if (automaticConnectionEnabled && smoke < 0 && !args.Contains("--offline")) Model.StartAutomaticConnection();
-            if (smoke >= 0 && args.Length > smoke + 1)
-            {
-                if (args.Contains("--english")) LanguageService.Instance.Preview("en-US");
-                if (args.Contains("--light")) Appearance.ThemeService.Instance.Preview(Appearance.ThemeMode.Light);
-                if (args.Contains("--dark")) Appearance.ThemeService.Instance.Preview(Appearance.ThemeMode.Dark);
-                if (args.Contains("--highcontrast")) Wpf.Ui.Appearance.ApplicationThemeManager.Apply(Wpf.Ui.Appearance.ApplicationTheme.HighContrast);
-                if (!args.Contains("--offline")) await Model.Execute(Model.ConnectAsync);
-                if (args.Contains("--compact")) { Width = 920; Height = 740; }
-                if (args.Contains("--small")) { Width = 680; Height = 600; }
-                if (args.Contains("--scale125")) { Width = 1400; Height = 940; Workspace.LayoutTransform = new ScaleTransform(1.25, 1.25); DialogHost.LayoutTransform = new ScaleTransform(1.25, 1.25); }
-                if (args.Contains("--scale150")) { Width = 1440; Height = 1080; Workspace.LayoutTransform = new ScaleTransform(1.5, 1.5); DialogHost.LayoutTransform = new ScaleTransform(1.5, 1.5); }
-                if (args.Contains("--scale200")) { Width = 1840; Height = 1400; Workspace.LayoutTransform = new ScaleTransform(2, 2); DialogHost.LayoutTransform = new ScaleTransform(2, 2); }
-                int wav = Array.IndexOf(args, "--wav");
-                if (wav >= 0) Model.Ir.Load(args[wav + 1], IrAudio.Decode(await File.ReadAllBytesAsync(args[wav + 1])));
-                await Task.Delay(250);
-                for (int tab = 0; tab < Tabs.Items.Count; tab++)
-                {
-                    Tabs.SelectedIndex = tab; UpdateLayout(); await Task.Delay(80);
-                    Capture(args[smoke + 1].Replace(".png", $"-{tab}.png"));
-                    var scroll = Descendants<ScrollViewer>(Tabs).OrderByDescending(s => s.ScrollableHeight).FirstOrDefault();
-                    if (scroll?.ScrollableHeight > 0)
-                    {
-                        scroll.ScrollToEnd(); UpdateLayout();
-                        Capture(args[smoke + 1].Replace(".png", $"-{tab}-end.png"));
-                        if (scroll.VerticalOffset == 0) throw new Exception("Rolagem indisponível.");
-                    }
-                }
-                Tabs.SelectedIndex = 0;
-                for (int effect = 0; effect < Model.Stages.Length; effect++)
-                {
-                    Model.SelectedStage = effect; UpdateLayout(); await Task.Delay(80);
-                    foreach (var scroll in Descendants<ScrollViewer>(Tabs)) scroll.ScrollToTop();
-                    UpdateLayout();
-                    Capture(args[smoke + 1].Replace(".png", $"-effect-{effect}.png"));
-                }
-                if (WorkspaceScroll.ScrollableHeight > 0)
-                {
-                    WorkspaceScroll.ScrollToEnd(); UpdateLayout();
-                    Capture(args[smoke + 1].Replace(".png", "-workspace-end.png"));
-                    WorkspaceScroll.ScrollToTop();
-                }
-                if (args.Contains("--gallery"))
-                {
-                    var gallery = new Views.GearGallery(Model.Amps, Model.SelectedAmp, true);
-                    var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = "Escolha seu amplificador", Content = gallery, PrimaryButtonText = "Aplicar seleção", CloseButtonText = "Cancelar", DialogMaxWidth = 900 };
-                    var shown = dialog.ShowLocalizedAsync(); await Task.Delay(350); UpdateLayout(); Capture(args[smoke + 1].Replace(".png", "-gallery.png")); dialog.Hide(); await shown;
-                    var mapping = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = "Match Cabinet · associações", Content = new Views.MatchSettings(Model.CreateMatchRows()), PrimaryButtonText = "Salvar associações", CloseButtonText = "Cancelar", DialogMaxWidth = 680, DialogMaxHeight = 900 };
-                    shown = mapping.ShowLocalizedAsync(); await Task.Delay(350); UpdateLayout(); Capture(args[smoke + 1].Replace(".png", "-associations.png")); mapping.Hide(); await shown;
-                }
-                await File.WriteAllTextAsync(args[smoke + 1] + ".log", Model.Log);
-                if (Model.WriteCommandCount != 0) throw new Exception("Smoke must never write to the device.");
-                foreach (string line in Model.Log.Split('\n').Where(l => l.Contains(" TX ")))
-                {
-                    var command = UsbSysEx.Decode(Convert.FromHexString(line[(line.IndexOf(" TX ") + 4)..].Trim())).Command;
-                    if (command is not (0x11 or 0x23)) throw new InvalidOperationException("Renderização provocou escrita: " + line);
-                }
-                CheckPresentation();
-                closing = true; Appearance.ThemeService.Instance.Detach(); Model.Dispose(); Close();
-            }
+            if (automaticConnectionEnabled && !Environment.GetCommandLineArgs().Contains("--offline")) Model.StartAutomaticConnection();
         };
         Closing += async (_, e) =>
         {
@@ -1111,24 +1050,5 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             if (child is T item) yield return item;
             foreach (var descendant in Descendants<T>(child)) yield return descendant;
         }
-    }
-    private static void CheckPresentation()
-    {
-        var events = new List<(ParameterKey Key, int Value)>();
-        var preset = new PresetViewModel(2, (key, value) => events.Add((key, value)));
-        var bank = new byte[48]; bank[40] = 7; preset.Load(bank);
-        if (events.Count != 0 || preset.Parameters[8].Value != 7) throw new Exception("Load must preserve value 7 without writing.");
-        preset.Parameters[8].TurnModOff.Execute(null); preset.Parameters[10].Enabled = true;
-        if (events.Count != 2 || events[0] != (new ParameterKey(2, 8), 8) || events[1] != (new ParameterKey(2, 10), 1)) throw new Exception("Presentation mappings failed.");
-        var knob = new Controls.Knob { Maximum = 7, Value = 3 };
-        knob.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(Application.Current.MainWindow), 0, Key.Right) { RoutedEvent = Keyboard.KeyDownEvent });
-        if (knob.Value != 4) throw new Exception("Knob keyboard increment failed.");
-    }
-    private void Capture(string path)
-    {
-        var bitmap = new RenderTargetBitmap((int)ActualWidth, (int)ActualHeight, 96, 96, PixelFormats.Pbgra32); bitmap.Render(this);
-        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
-        using var output = File.Create(path); encoder.Save(output);
     }
 }

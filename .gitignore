@@ -234,3 +234,9 @@ x86/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# Temporary WPF and local work files
+*_wpftmp.csproj
+/tmp/
+/output/
+/.codex-remote-attachments/

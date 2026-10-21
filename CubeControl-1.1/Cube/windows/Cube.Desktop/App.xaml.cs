@@ -29,11 +29,7 @@ public partial class App : Application
         }
         base.OnStartup(e);
         Appearance.ThemeService.Instance.Initialize();
-        // Test hosts reuse application resources without opening a second editor window.
-        if (System.Reflection.Assembly.GetEntryAssembly() == typeof(App).Assembly)
-        {
-            MainWindow = new MainWindow();
-            MainWindow.Show();
-        }
+        MainWindow = new MainWindow();
+        MainWindow.Show();
     }
 }

@@ -1,7 +1,0 @@
-Mini DAW — 10 conceitos visuais
-Gerados pela ferramenta integrada image_gen em 20/10/2026. Prompts completos em prompts.json.
-01 clássico escuro; 02 clássico claro; 03 edição ampla; 04 foco no mixer; 05 biblioteca ampla; 06 ultracompacto; 07 mixer lateral; 08 gravação; 09 prática com loop; 10 timeline ampla.
-
-Revisão visual: conceitos de composição, não capturas WPF nem especificações pixel-perfect. A geração apresenta diferenças em relação ao pedido: tesoura em vez de navalha; VU frequentemente ao lado do fader; biblioteca do conceito 10 permaneceu aberta; alguns controles do master e indicadores de arraste foram omitidos. Há sombreamento discreto em alguns controles. A biblioteca foi ilustrada principalmente com WAV; a implementação deve contemplar MP3 e downloads conforme pedido.
-
-Direção para implementação: superfícies sólidas, sem glow nem gradientes; recursos e Segoe UI do design system existente; cantos de 4 DIP. Grid/ItemsControl para organização, ComboBox para dispositivos e entradas, ToggleButton para S/M/R e Loop, Slider para ganho/BPM. Timeline, waveform e loop com Canvas/DrawingVisual; pan com controle vetorial simples; mixer com Slider vertical sobre medidor desenhado na MESMA coluna, escala dB à direita. Usar desenho vetorial de navalha para Split; ícones Fluent para Import/Export. Replicar entrada, pan, ganho e S/M/R nos canais do mixer, incluindo opções solicitadas na mix. Validar dimensões, contraste e estados na futura implementação WPF.
