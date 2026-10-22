@@ -39,8 +39,6 @@
     <TextBlock Text="{loc:Translate Value={Binding Label}}" TextAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" MinHeight="24"/>
     <controls:Knob RestoreRequested="RestoreControlRequested" Value="{Binding Position,Mode=TwoWay}" Accent="{Binding Foreground,RelativeSource={RelativeSource AncestorType=ItemsControl}}" Minimum="0" Maximum="1000" FineAdjustment="True" WheelSpeedMultiplier="10" Width="94" Height="94" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding ModificationState}}" ToolTip="{loc:Translate Text='Arraste ou role para ajustar. Shift permite ajuste fino. Duplo clique restaura o ajuste inicial; Backspace também.'}"/>
     <ContentControl Content="{Binding}" ContentTemplate="{StaticResource AmpValue}"/>
-    <TextBlock Text="{loc:Translate Value={Binding Caption}}" TextAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}" MinHeight="20" Margin="0,2,0,0"/>
-    <TextBlock TextAlignment="Center" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}"><Run Text="{loc:Translate Text='Referência carregada'}"/><Run Text=": "/><Run Text="{Binding ReferenceText,Mode=OneWay}"/></TextBlock>
    </StackPanel>
   </DataTemplate>
   <DataTemplate x:Key="AmpEqDial">
@@ -64,7 +62,13 @@
   <SolidColorBrush x:Key="CapacitorAmber" Color="#F0BE72"/>
   <SolidColorBrush x:Key="CapacitorDisplay" Color="#24211C"/>
   <DataTemplate x:Key="CapacitorPanel">
-   <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,16">
+   <Border Padding="20" CornerRadius="{DynamicResource CubeCardCornerRadius}">
+    <Border.Style><Style TargetType="Border">
+     <Setter Property="Background" Value="Transparent"/>
+     <Style.Triggers><DataTrigger Binding="{Binding Path=(ItemsControl.AlternationIndex), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Value="0">
+      <Setter Property="Background" Value="{DynamicResource CubeInset}"/>
+     </DataTrigger></Style.Triggers>
+    </Style></Border.Style>
     <StackPanel>
      <TextBlock Text="{loc:Translate Value={Binding Title}}" FontSize="{DynamicResource CubeFontSizeSubtitle}" FontWeight="SemiBold" TextWrapping="Wrap"/>
      <TextBlock Text="{Binding Subtitle}" FontSize="{DynamicResource CubeFontSizeCaption}" Foreground="{DynamicResource Muted}" Margin="0,3,0,12"/>
@@ -204,7 +208,13 @@
     <TabItem><ScrollViewer Style="{StaticResource AmpScroll}"><Border Style="{StaticResource AmpPanel}"><StackPanel>
      <TextBlock Text="{loc:Translate Text='Resposta e capacitores'}" FontSize="{DynamicResource CubeFontSizeSubtitle}" FontWeight="SemiBold"/>
      <TextBlock Text="{loc:Translate Text='Escolha o caráter. Dose a intensidade. Encontre seu timbre.'}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,4,0,16"/>
-     <ItemsControl ItemsSource="{Binding Amp.CapacitorBanks}" ItemTemplate="{StaticResource CapacitorPanel}"/>
+     <Border Style="{StaticResource Card}" Padding="0" Margin="0,0,0,16">
+      <ItemsControl ItemsSource="{Binding Amp.CapacitorBanks}" ItemTemplate="{StaticResource CapacitorPanel}" AlternationCount="2">
+       <ItemsControl.ItemsPanel><ItemsPanelTemplate>
+        <controls:AdaptivePanel FirstShare="0.5" Breakpoint="900"/>
+       </ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      </ItemsControl>
+     </Border>
      <TextBlock Text="{loc:Translate Text='Perfis de timbre para escuta, inspirados em capacitores. Original preserva o modelo carregado.'}" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}" TextWrapping="Wrap"/>
     </StackPanel></Border></ScrollViewer></TabItem>
    </TabControl>

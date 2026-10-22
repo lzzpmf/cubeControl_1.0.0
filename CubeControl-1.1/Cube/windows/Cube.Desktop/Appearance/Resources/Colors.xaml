@@ -31,7 +31,13 @@
 <sys:String x:Key="CubePalette.CubeWell">ControlFillColorInputActiveBrush</sys:String>
 <sys:String x:Key="CubePalette.CubeBorder">ControlStrokeColorDefaultBrush</sys:String>
 <sys:String x:Key="CubePalette.CubeSelected">CubeSelectedBrush</sys:String>
-<!-- Opaque item states keep selection contrast independent of the host surface. -->
+<!-- Base surface colors: do not promote the library's white/black overlays to opaque fills. -->
+<Color x:Key="CubeCard.Dark">#2B2B2B</Color>
+<Color x:Key="CubeCard.Light">#FFFFFF</Color>
+<Color x:Key="CubeInset.Dark">#303030</Color>
+<Color x:Key="CubeInset.Light">#F3F3F3</Color>
+<Color x:Key="CubeWell.Dark">#202020</Color>
+<Color x:Key="CubeWell.Light">#FFFFFF</Color>
 <Color x:Key="CubeItemRest.Dark">#292929</Color>
 <Color x:Key="CubeItemRest.Light">#FAFAFA</Color>
 <Color x:Key="CubeItemHover.Dark">#3A3A3A</Color>

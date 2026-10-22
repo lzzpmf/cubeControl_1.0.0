@@ -373,6 +373,7 @@
                 </ControlTemplate>
 <BooleanToVisibilityConverter x:Key="Visible"/>
 <Style x:Key="SettingsAction" TargetType="ui:CardAction" BasedOn="{StaticResource {x:Type ui:CardAction}}">
+ <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
  <Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}"/>
    <Setter Property="Padding" Value="16,12"/><Setter Property="MinHeight" Value="64"/>
    <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Margin" Value="0,0,0,8"/>

@@ -75,6 +75,7 @@ public sealed class ThemeService
             bool enabled = !IsHighContrast && !SystemParameters.HighContrast && ReadWindowsTransparency()
                 && WindowBackdrop.IsSupported(WindowBackdropType.Mica);
             UsesBackdrop = enabled;
+            ApplySurfaceMaterials(enabled);
             Application.Current.Resources["CubeWindowBackground"] = enabled ? Brushes.Transparent : Brush("CubeCanvas");
             if (window is FluentWindow fluent)
             {
@@ -89,6 +90,33 @@ public sealed class ThemeService
         }
         finally { applyingBackdrop = false; }
     }
+    // Rebuild from palette sources on every change; never multiply the previous opacity.
+    // Only backgrounds are translucent. Text, icons and selection markers stay opaque.
+    internal void ApplySurfaceMaterials(bool enabled)
+    {
+        var resources = Application.Current.Resources;
+        if (IsHighContrast || SystemParameters.HighContrast)
+        {
+            foreach (string key in new[] { "CubeItemRest", "CubeItemHover", "CubeComboField", "CubeComboFieldHover",
+                "BackingCard", "CubeCard", "CubeInset", "CubeWell" }) resources[key] = SystemColors.WindowBrush;
+            resources["CubeSelected"] = resources["CubeSelectedBrush"] = SystemColors.HighlightBrush;
+            return;
+        }
+        void Surface(string key, Color color, byte alpha)
+        {
+            color.A = enabled ? alpha : (byte)255;
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            resources[key] = brush;
+        }
+        foreach (var (key, alpha) in new (string, byte)[] {
+            ("CubeItemRest", 90), ("CubeItemHover", 135), ("CubeSelectedBrush", 180),
+            ("CubeComboField", 140), ("CubeComboFieldHover", 170), ("BackingCard", 120),
+            ("CubeCard", 100), ("CubeInset", 80), ("CubeWell", 110) })
+            Surface(key, (Color)resources[key + (IsLight ? ".Light" : ".Dark")], alpha);
+        resources["CubeSelected"] = resources["CubeSelectedBrush"];
+    }
+
     private void RefreshWindowIcon()
     {
         bool light = SystemParameters.HighContrast
