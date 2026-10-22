@@ -746,7 +746,7 @@
       <StackPanel><TextBlock Text="{loc:Translate Text='Documentação'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Guias do aplicativo, ajuda e manuais do pedal.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
      </ui:CardAction>
      </WrapPanel>
-     <ui:CardExpander x:Name="PedalShortcutsCard" Style="{StaticResource SettingsExpander}" IsExpanded="True">
+     <ui:CardExpander x:Name="PedalShortcutsCard" Style="{StaticResource SettingsExpander}" Expanded="HelpSectionExpanded" IsExpanded="True">
       <ui:CardExpander.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconKeyboard24}" FontSize="{DynamicResource CubeIconSizeNavigation}"/></ui:CardExpander.Icon>
       <ui:CardExpander.Header><StackPanel><TextBlock Text="{loc:Translate Text='Atalhos no pedal'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Os atalhos abaixo são executados nos footswitches físicos.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel></ui:CardExpander.Header>
       <Grid x:Name="FootswitchTable" SizeChanged="FootswitchTableSizeChanged"><Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
@@ -759,7 +759,7 @@
        <TextBlock Grid.Row="5" Text="Bluetooth" Style="{StaticResource BodyText}"/><TextBlock Grid.Row="5" Grid.Column="1" Text="A + B · 2 s" Style="{StaticResource BodyText}"/><TextBlock Grid.Row="5" Grid.Column="2" Text="{loc:Translate Text='Reproduz música do celular. Este editor usa USB.'}" TextWrapping="Wrap" Style="{StaticResource BodyText}"/>
       </Grid>
      </ui:CardExpander>
-     <ui:CardExpander x:Name="RecoveryCard" Style="{StaticResource SettingsExpander}">
+     <ui:CardExpander x:Name="RecoveryCard" Style="{StaticResource SettingsExpander}" Expanded="HelpSectionExpanded">
       <ui:CardExpander.Header><StackPanel><TextBlock Text="{loc:Translate Text='Recuperação'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Restaure presets ou reinstale o firmware do pedal.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel></ui:CardExpander.Header>
       <ui:CardExpander.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeNavigation}"/></ui:CardExpander.Icon>
       <StackPanel>
@@ -777,12 +777,12 @@
       </WrapPanel>
       </StackPanel>
      </ui:CardExpander>
-     <ui:CardExpander Style="{StaticResource SettingsExpander}">
+     <ui:CardExpander Style="{StaticResource SettingsExpander}" Expanded="HelpSectionExpanded">
       <ui:CardExpander.Header><StackPanel><TextBlock Text="{loc:Translate Text='Últimas operações'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Até 20 operações desta sessão. Duplo clique para retornar a um ajuste.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel></ui:CardExpander.Header><ui:CardExpander.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconInfo24}" FontSize="{DynamicResource CubeIconSizeNavigation}"/></ui:CardExpander.Icon><ListBox ItemsSource="{Binding Operations}" MaxHeight="320" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
        <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><EventSetter Event="MouseDoubleClick" Handler="OperationDoubleClick"/></Style></ListBox.ItemContainerStyle>
        <ListBox.ItemTemplate><DataTemplate><StackPanel Margin="0,4" ToolTip="{loc:Translate Value={Binding Hint}}"><TextBlock Text="{Binding Time,StringFormat=HH:mm:ss}" Style="{StaticResource CaptionText}"/><TextBlock Text="{loc:Translate Value={Binding Description}}" TextWrapping="Wrap" Style="{StaticResource HelpText}"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
       </ListBox></ui:CardExpander>
-     <ui:CardExpander Style="{StaticResource SettingsExpander}">
+     <ui:CardExpander Style="{StaticResource SettingsExpander}" Expanded="HelpSectionExpanded">
       <ui:CardExpander.Header><StackPanel><TextBlock Text="{loc:Translate Text='Registro de comunicação USB'}" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Veja os detalhes da comunicação entre o aplicativo e o pedal.'}" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel></ui:CardExpander.Header><ui:CardExpander.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconPlugConnected24}" FontSize="{DynamicResource CubeIconSizeNavigation}"/></ui:CardExpander.Icon><TextBox Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" Height="210" Background="{DynamicResource CubeWell}" Foreground="{DynamicResource Muted}" BorderThickness="0" FontFamily="Consolas" FontSize="{DynamicResource CubeFontSizeCaption}" VerticalScrollBarVisibility="Auto" TextWrapping="Wrap" Padding="10"/></ui:CardExpander>
     </StackPanel></ScrollViewer>
    </TabItem>

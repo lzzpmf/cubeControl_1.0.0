@@ -610,6 +610,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         SyncWindowPageScroll();
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(SyncWindowPageScroll));
     }
+    private void HelpSectionExpanded(object sender, RoutedEventArgs e)
+    {
+        // Ignore expansion events bubbling up from controls inside a section.
+        if (!ReferenceEquals(sender, e.OriginalSource) ||
+            sender is not Wpf.Ui.Controls.CardExpander { Parent: Panel panel } selected) return;
+        foreach (var section in panel.Children.OfType<Wpf.Ui.Controls.CardExpander>())
+            if (!ReferenceEquals(section, selected))
+                section.SetCurrentValue(Expander.IsExpandedProperty, false);
+    }
+
     private bool suppressIrTabBringIntoView;
     private ScrollViewer? pageScrollOwner;
     private void PageScrollChanged(object sender, ScrollChangedEventArgs e)
