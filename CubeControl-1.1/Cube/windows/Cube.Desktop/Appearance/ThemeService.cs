@@ -210,7 +210,9 @@ public sealed class ThemeService
         IsHighContrast = theme == ApplicationTheme.HighContrast;
         IsLight = theme == ApplicationTheme.Light;
         var resources = Application.Current.Resources;
-        resources["CubeSurfaceBorderThickness"] = new Thickness(0);
+        resources["CubeSurfaceBorderThickness"] = new Thickness(IsLight && !IsHighContrast ? 1 : 0);
+        resources["CubeSurfaceBorderBrush"] = IsLight && !IsHighContrast
+            ? new SolidColorBrush(Color.FromRgb(226, 226, 226)) : Brushes.Transparent;
         bool lightBackground = IsHighContrast
             ? SystemColors.WindowColor.R * 0.299 + SystemColors.WindowColor.G * 0.587 + SystemColors.WindowColor.B * 0.114 >= 128
             : IsLight;

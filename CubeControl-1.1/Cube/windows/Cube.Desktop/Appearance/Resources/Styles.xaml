@@ -320,7 +320,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Border x:Name="Border" Background="{DynamicResource CubeItemRest}" Grid.Row="0" CornerRadius="{TemplateBinding Border.CornerRadius}">
+                        <Border x:Name="Border" BorderBrush="{DynamicResource CubeSurfaceBorderBrush}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" Background="{DynamicResource CubeItemRest}" Grid.Row="0" CornerRadius="{TemplateBinding Border.CornerRadius}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" MinWidth="19"/>
@@ -373,6 +373,7 @@
                 </ControlTemplate>
 <BooleanToVisibilityConverter x:Key="Visible"/>
 <Style x:Key="SettingsAction" TargetType="ui:CardAction" BasedOn="{StaticResource {x:Type ui:CardAction}}">
+ <Setter Property="BorderBrush" Value="{DynamicResource CubeSurfaceBorderBrush}"/>
  <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
  <Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}"/>
    <Setter Property="Padding" Value="16,12"/><Setter Property="MinHeight" Value="64"/>
@@ -388,21 +389,23 @@
 
   </Style>
 <Style x:Key="QuickAction" TargetType="ui:CardAction" BasedOn="{StaticResource SettingsAction}">
+ <Setter Property="BorderBrush" Value="{DynamicResource CubeSurfaceBorderBrush}"/>
    <Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="MaxWidth" Value="440"/>
    <Setter Property="Padding" Value="12,10"/><Setter Property="MinHeight" Value="64"/>
    <Setter Property="Margin" Value="0,0,12,8"/><Setter Property="Foreground" Value="{DynamicResource CubeText}"/>
-   <Setter Property="IsChevronVisible" Value="False"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}"/>
-   <Setter Property="Background" Value="Transparent"/><Setter Property="BorderBrush" Value="Transparent"/>
+   <Setter Property="IsChevronVisible" Value="False"/><Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/><Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}"/>
+   <Setter Property="Background" Value="Transparent"/>
    <Style.Resources>
     <Thickness x:Key="CardActionIconMargin">0,0,16,0</Thickness>
     <SolidColorBrush x:Key="CardBackground" Color="Transparent"/>
     <SolidColorBrush x:Key="CardBorderBrush" Color="Transparent"/>
    </Style.Resources>
   </Style>
-<Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="{DynamicResource CubeCard}"/><Setter Property="CornerRadius" Value="{DynamicResource CubeCardCornerRadius}"/><Setter Property="Padding" Value="{DynamicResource CubeCardPadding}"/><Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}"/><Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/></Style>
+<Style x:Key="Card" TargetType="Border"><Setter Property="Background" Value="{DynamicResource CubeCard}"/><Setter Property="CornerRadius" Value="{DynamicResource CubeCardCornerRadius}"/><Setter Property="Padding" Value="{DynamicResource CubeCardPadding}"/><Setter Property="BorderBrush" Value="{DynamicResource CubeSurfaceBorderBrush}"/><Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/></Style>
 <Style x:Key="CubeButtonStyle" TargetType="ui:Button" BasedOn="{StaticResource DefaultUiButtonStyle}">
+ <Setter Property="BorderBrush" Value="{DynamicResource CubeSurfaceBorderBrush}"/>
  <Setter Property="Border.CornerRadius" Value="{DynamicResource CubeControlCornerRadius}"/>
- <Setter Property="BorderThickness" Value="0"/>
+ <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
    <Setter Property="Padding" Value="{DynamicResource CubeButtonPadding}"/><Setter Property="MinHeight" Value="{DynamicResource CubeControlHeightStandard}"/><Setter Property="MinWidth" Value="0"/><Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="VerticalAlignment" Value="Center"/>
    <Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/><Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
   </Style>
@@ -422,11 +425,11 @@
    <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
    <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
    <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
-   <Setter Property="BorderThickness" Value="0"/>
+   <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Grid>
     <Grid>
-     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}">
+     <Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource CubeSurfaceBorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}">
       <ContentPresenter ContentSource="Content" RecognizesAccessKey="True" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
      </Border>
     </Grid>
@@ -448,7 +451,7 @@
    <Setter Property="Foreground" Value="{DynamicResource CubeText}"/>
    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
-    <Grid><Border x:Name="Surface" Background="{DynamicResource CubeItemRest}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+    <Grid><Border x:Name="Surface" Background="{DynamicResource CubeItemRest}" BorderBrush="{DynamicResource CubeSurfaceBorderBrush}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
     <Border Style="{StaticResource CubeSelectionMarker}"/></Grid>
     <ControlTemplate.Triggers>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
@@ -490,7 +493,7 @@
   <TextBlock Text="{Binding}" TextWrapping="Wrap" TextAlignment="Center"/>
  </DataTemplate></Setter.Value></Setter>
  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
-  <Grid><Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+  <Grid><Border Background="{TemplateBinding Background}" BorderBrush="{DynamicResource CubeSurfaceBorderBrush}"
           BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}">
    <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"
                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"

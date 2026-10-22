@@ -203,8 +203,8 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="0"
+                            BorderBrush="{DynamicResource CubeSurfaceBorderBrush}"
+                            BorderThickness="{DynamicResource CubeSurfaceBorderThickness}"
                             CornerRadius="{TemplateBinding Border.CornerRadius}">
                             <Grid HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                                 <!--

@@ -101,7 +101,7 @@
   <StackPanel DockPanel.Dock="Top">
    <Grid x:Name="AmpHeader">
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <StackPanel>
      <TextBlock Text="{loc:Translate Text='Criador de amps'}" FontSize="{DynamicResource CubeFontSizeTitle}" FontWeight="SemiBold" Margin="0,0,0,8"/>
      <TextBlock Text="{loc:Translate Value={Binding Amp.Name}}" FontSize="{DynamicResource CubeFontSizeSubtitle}" FontWeight="SemiBold" TextWrapping="Wrap"/>
@@ -109,6 +109,8 @@
       <TextBlock Text="{loc:Translate Value={Binding Amp.LocalState}}" Foreground="{DynamicResource AmpAccent}" Margin="0,0,12,0"/>
       <TextBlock Text="{loc:Translate Value={Binding AmpSource}}" Foreground="{DynamicResource Muted}"/>
      </WrapPanel>
+    </StackPanel>
+    <StackPanel Grid.Row="1">
      <TextBlock Text="{loc:Translate Text='Modelo base'}" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}"/>
      <ComboBox x:Name="BaseSelector" Style="{DynamicResource {x:Type ComboBox}}" IsEnabled="{Binding CanEditAmpLocally}" SelectionChanged="BaseSelected" SelectedIndex="-1" HorizontalAlignment="Left" MinWidth="240" MaxWidth="360" Margin="0,4,0,8" AutomationProperties.Name="{loc:Translate Text='Escolha um amp base'}" ToolTip="{loc:Translate Text='Carrega um modelo para edição. Não indica o amp fisicamente ativo.'}"/>
      <WrapPanel IsEnabled="{Binding CanEditAmpLocally}">
@@ -116,7 +118,7 @@
       <ui:Button Content="{loc:Translate Text='Exportar preset'}" Click="ExportClick" IsEnabled="{Binding Amp.Loaded}" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Salva os ajustes atuais em um preset no computador.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowUpload24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
      </WrapPanel>
     </StackPanel>
-    <StackPanel x:Name="GlobalControls" Grid.Column="1" IsEnabled="{Binding CanAdjustAmp}" VerticalAlignment="Top" Margin="0,12,0,0">
+    <StackPanel x:Name="GlobalControls" Grid.Column="1" Grid.Row="1" IsEnabled="{Binding CanAdjustAmp}" VerticalAlignment="Top" Margin="0,-4,0,0">
      <ItemsControl ItemsSource="{Binding Amp.MainControls}" Foreground="{DynamicResource AmpAccent}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/>
     </StackPanel>
    </Grid>

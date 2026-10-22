@@ -123,8 +123,8 @@
                             x:Name="ToggleButtonBorder"
                             Grid.Row="0"
                             Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="0">
+                            BorderBrush="{DynamicResource CubeSurfaceBorderBrush}"
+                            BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
                             <Border.CornerRadius>
                                 <MultiBinding Converter="{StaticResource CubeCornerRadiusSplitConverter}" ConverterParameter="Top">
                                     <Binding RelativeSource="{RelativeSource TemplatedParent}" Path="CornerRadius" />
@@ -178,8 +178,8 @@
                             <Border
                                 x:Name="ContentPresenterBorder" motion:SurfaceMotion.Enabled="True"
                                 Background="{DynamicResource CubeCard}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="0"
+                                BorderBrush="{DynamicResource CubeSurfaceBorderBrush}"
+                                BorderThickness="{DynamicResource CubeSurfaceBorderThickness}"
                                 Visibility="Collapsed">
                                 <Border.CornerRadius>
                                     <MultiBinding Converter="{StaticResource CubeCornerRadiusSplitConverter}" ConverterParameter="Bottom" >

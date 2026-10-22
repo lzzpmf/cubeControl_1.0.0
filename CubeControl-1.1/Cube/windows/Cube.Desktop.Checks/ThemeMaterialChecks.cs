@@ -20,6 +20,11 @@ internal static class ThemeMaterialChecks
         foreach (var mode in new[] { ApplicationTheme.Dark, ApplicationTheme.Light })
         {
             change.Invoke(theme, [mode, Colors.Blue]);
+            var expectedBorder = new Thickness(mode == ApplicationTheme.Light ? 1 : 0);
+            if ((Thickness)app.Resources["CubeSurfaceBorderThickness"] != expectedBorder)
+                throw new Exception("Surface outline must be light-theme only");
+            if (mode == ApplicationTheme.Light && ColorOf("CubeSurfaceBorderBrush") != Color.FromRgb(226, 226, 226))
+                throw new Exception("Light outline must remain neutral gray");
             var text = ThemeService.Brush("CubeText");
             apply.Invoke(theme, [true]);
             var first = keys.ToDictionary(k => k, ColorOf);
