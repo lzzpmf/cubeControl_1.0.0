@@ -50,7 +50,7 @@ public partial class AmpEditor : UserControl
         bool headerWide = ActualWidth >= 800, eqWide = ActualWidth >= 960;
         AmpHeader.ColumnDefinitions[1].Width = headerWide ? GridLength.Auto : new GridLength(0);
         Grid.SetColumn(GlobalControls, headerWide ? 1 : 0); Grid.SetRow(GlobalControls, headerWide ? 1 : 2);
-        GlobalControls.Margin = new Thickness(0, headerWide ? -4 : 16, 0, 0);
+        GlobalControls.Margin = new Thickness(0, headerWide ? 8 : 16, 0, 0);
         ModernEq.ColumnDefinitions[1].Width = new GridLength(eqWide ? 240 : 0);
         Grid.SetColumn(EqControlsPanel, eqWide ? 1 : 0); Grid.SetRow(EqControlsPanel, eqWide ? 0 : 1);
         EqControlsPanel.Margin = eqWide ? new Thickness(12, 0, 0, 0) : new Thickness(0, 8, 0, 0);

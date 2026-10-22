@@ -47,7 +47,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private IInputElement? operationFocus;
     private bool restoringOperationFocus;
     private readonly System.Windows.Threading.DispatcherTimer busyMessageTimer = new() { Interval = TimeSpan.FromSeconds(4) };
-    private static readonly string[] BusyMessages = ["Preparando o palco…", "Nos bastidores do seu som…", "Dando passagem ao seu timbre…"];
+    private static readonly string[] BusyMessages = ["Preparando o palco…", "Nos bastidores do seu som…", "Dando passagem ao seu timbre…", "Afinando os detalhes…", "Seu som vem aí…"];
     private int busyMessageIndex;
     private void UpdateBusyMessage() => BusyMessage.Text = LanguageService.T(BusyMessages[busyMessageIndex]);
     private void BusyStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

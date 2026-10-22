@@ -823,14 +823,16 @@
     </StackPanel>
    </StackPanel>
   </Border>
-  <Border x:Name="BusyOverlay" local:SurfaceMotion.Enabled="True" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="340" Margin="20" SnapsToDevicePixels="True" UseLayoutRounding="True" IsHitTestVisible="False" Visibility="{Binding ShowBusyPanel,Converter={StaticResource Visible}}">
+  <Border x:Name="BusyOverlay" local:SurfaceMotion.Enabled="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="420" MaxWidth="420" Margin="20" SnapsToDevicePixels="True" UseLayoutRounding="True" IsHitTestVisible="False" Visibility="{Binding ShowBusyPanel,Converter={StaticResource Visible}}">
    <Grid>
     <Border x:Name="BusyShadow" Background="{DynamicResource CubeFloatingSurface}" CornerRadius="{DynamicResource CubeCardCornerRadius}" IsHitTestVisible="False">
      <Border.Effect><DropShadowEffect Color="Black" BlurRadius="28" ShadowDepth="6" Direction="270" Opacity="{DynamicResource CubeFloatingShadowOpacity}" RenderingBias="Quality"/></Border.Effect>
     </Border>
     <Border Padding="28,24" CornerRadius="{DynamicResource CubeCardCornerRadius}" Background="{DynamicResource CubeFloatingSurface}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="0">
    <StackPanel>
-    <TextBlock x:Name="BusyMessage" AutomationProperties.LiveSetting="Off" Text="{loc:Translate Text='Preparando o palco…'}" TextAlignment="Center" TextWrapping="Wrap" Style="{StaticResource SectionTitle}"/>
+    <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center">
+     <TextBlock x:Name="BusyMessage" AutomationProperties.LiveSetting="Off" Text="{loc:Translate Text='Preparando o palco…'}" TextAlignment="Center" TextWrapping="NoWrap" Style="{StaticResource SectionTitle}"/>
+    </Viewbox>
     <local:LiveStatusText AutomationProperties.LiveSetting="Polite" Text="{loc:Translate Value={Binding BusyDetail}}" Style="{StaticResource HelpText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,8,0,0"/>
     <ProgressBar Style="{StaticResource InfiniteProgressBar}" x:Name="OperationProgress" AutomationProperties.Name="{loc:Translate Value={Binding BusyDetail}}" Margin="0,12,0,0"/>
     <TextBlock Text="{loc:Translate Value={Binding Ir.State}}" Visibility="{Binding Ir.TransferActive,Converter={StaticResource Visible}}" Style="{StaticResource HelpText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,8,0,0"/>
