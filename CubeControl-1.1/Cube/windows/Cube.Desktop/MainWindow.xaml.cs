@@ -124,6 +124,21 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Model.ConfirmIrWrite = ConfirmIrWriteAsync;
         InitializeZoom();
         MoveFooterToPage();
+        IrWorkspaceTabs.PreviewMouseLeftButtonDown += (_, e) =>
+        {
+            if (e.OriginalSource is not DependencyObject source ||
+                ItemsControl.ContainerFromElement(IrWorkspaceTabs, source) is not TabItem) return;
+
+            // Tab selection can restore focus inside the new panel. Keep that
+            // deferred BringIntoView from moving the page after a header click.
+            suppressIrTabBringIntoView = true;
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ContextIdle,
+                new Action(() => suppressIrTabBringIntoView = false));
+        };
+        IrWorkspaceTabs.RequestBringIntoView += (_, e) =>
+        {
+            if (suppressIrTabBringIntoView) e.Handled = true;
+        };
         Workspace.RequestBringIntoView += (_, e) =>
         {
             if (Model.Busy || restoringOperationFocus) e.Handled = true;
@@ -595,6 +610,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         SyncWindowPageScroll();
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(SyncWindowPageScroll));
     }
+    private bool suppressIrTabBringIntoView;
     private ScrollViewer? pageScrollOwner;
     private void PageScrollChanged(object sender, ScrollChangedEventArgs e)
     {
@@ -796,7 +812,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         if (galleryOpen || !Model.HasGallery || Model.Busy || (!Model.IsAmp && !Model.CanEdit)) return;
         galleryOpen = true;
-        var gallery = new Views.GearGallery(Model.IsAmp ? Model.Amps : Model.Cabinets, Model.FocusedGear, Model.IsAmp);
+        int ampDestination = Model.SelectedAmp.Value;
+        var gallery = new Views.GearGallery(Model.IsAmp ? Model.AmpGalleryItems : Model.Cabinets, Model.FocusedGear, Model.IsAmp);
         var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Content = gallery, PrimaryButtonText = "Aplicar seleção", CloseButtonText = "Cancelar", DialogMaxWidth = 900 };
         var title = new DockPanel { LastChildFill = true };
         var close = new Wpf.Ui.Controls.Button { Icon = Cube.Desktop.Appearance.AppIcons.Create(Wpf.Ui.Controls.SymbolRegular.Dismiss24), Width = 40, Height = 40, MinHeight = 40, BorderThickness = new Thickness(0), Padding = new Thickness(0), Margin = new Thickness(16, 0, 0, 0), Appearance = Wpf.Ui.Controls.ControlAppearance.Transparent, ToolTip = LanguageService.T("Fechar") };
@@ -811,7 +828,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         try
         {
             if (await dialog.ShowLocalizedAsync() == Wpf.Ui.Controls.ContentDialogResult.Primary && gallery.Selected != null && Model.CanEdit)
-                Model.ChooseGear(gallery.Selected);
+            {
+                if (gallery.Selected.UploadPreset is { } preset)
+                {
+                    if (!Model.CanUseAmp) return;
+                    Model.Amp.Load(preset.Build(), preset.Name);
+                    Model.Amp.Slot = ampDestination;
+                    await Model.WriteAmpAsync();
+                }
+                else Model.ChooseGear(gallery.Selected);
+            }
         }
         finally { dismissal.Dispose(); galleryOpen = false; }
     }

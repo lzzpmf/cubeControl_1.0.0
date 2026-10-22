@@ -5,8 +5,10 @@ using Cube.Protocol;
 
 namespace Cube.Desktop.ViewModels;
 
-public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? cabinetId = null, string? ampImage = null) : Observable
+public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? cabinetId = null, string? ampImage = null, AmpEqPreset? uploadPreset = null) : Observable
 {
+    public AmpEqPreset? UploadPreset => uploadPreset;
+    public bool RequiresUpload => uploadPreset != null;
     public string Id => id;
     public int Value => value;
     public string Name => name;

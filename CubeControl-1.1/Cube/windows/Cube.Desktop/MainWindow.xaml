@@ -371,7 +371,6 @@
           <StackPanel><TextBlock Text="{loc:Translate Text='Criar amp'}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Text='Escolha a base do seu timbre.'}" TextWrapping="Wrap" Style="{StaticResource HelpText}" Margin="0,4,0,0"/></StackPanel>
          </ui:CardAction>
          </UniformGrid>
-         <ui:Button x:Name="UploadAmpButton" Content="{loc:Translate Text='Subir amp'}" Click="UploadAmpClick" HorizontalAlignment="Left" Margin="0,0,0,12" Visibility="{Binding IsAmp,Converter={StaticResource Visible}}" IsEnabled="{Binding CanUseAmp}" ToolTip="{loc:Translate Text='Carregue uma varia??o de EQ ou um arquivo .bin no slot de amp selecionado.'}" AutomationProperties.Name="{loc:Translate Text='Subir amp no slot selecionado'}"/>
          </StackPanel>
          <TextBlock Text="{loc:Translate Value={Binding FocusedGear.Description}}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,14" FontSize="{DynamicResource CubeFontSizeCaption}" LineHeight="16"><TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding IsAmp}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding IsCabinet}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
 

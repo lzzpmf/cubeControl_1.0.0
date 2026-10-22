@@ -2,13 +2,34 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Cube.Desktop.ViewModels;
 
 namespace Cube.Desktop.Controls;
 
 public partial class IrLibraryBrowser : UserControl
 {
-    public IrLibraryBrowser() => InitializeComponent();
+    public IrLibraryBrowser()
+    {
+        InitializeComponent();
+        Tree.AddHandler(TreeViewItem.ExpandedEvent, new RoutedEventHandler(FolderExpanded));
+    }
+
+    private void FolderExpanded(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not TreeViewItem item) return;
+        // Wait for the expanded rows (and any collapsed sibling brand) to lay out.
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+        {
+            if (!item.IsLoaded || !item.IsExpanded || item.Items.Count == 0) return;
+            item.UpdateLayout();
+            if (item.ItemContainerGenerator.ContainerFromIndex(0) is not TreeViewItem child) return;
+            child.ApplyTemplate();
+            // Reveal a usable child row, not the whole potentially huge subtree.
+            var header = child.Template.FindName("PART_Header", child) as FrameworkElement ?? child;
+            header.BringIntoView();
+        }));
+    }
     public TreeView Tree => IrLibraryTree;
     public FrameworkElement SearchBox => IrLibrarySearch;
     private void FolderClick(object sender, MouseButtonEventArgs e)

@@ -240,6 +240,7 @@ public sealed partial class EditorViewModel
     public void ChooseGear(GearItem item)
     {
         if (!CanEdit) return;
+        if (item.RequiresUpload) return; // Catalog uploads must go through the confirmed write flow.
         if (item.Kind == "amp") QueueAmpMatch(item.Value);
         else if (item.Kind == "cab") Current.Parameters[9].Value = item.Value;
         else if (item.Kind == "chorus") Current.Musical.ChooseChorus.Execute(null);

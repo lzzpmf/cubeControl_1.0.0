@@ -6,6 +6,11 @@ namespace Cube.Desktop.ViewModels;
 
 public sealed partial class EditorViewModel
 {
+    public GearItem[] AmpGalleryItems => Amps.Concat(AmpEqPresets.All.Select(p =>
+        WithImage(new GearItem($"amp-upload-{p.BaseIndex}", -1, p.Name,
+            EquipmentCatalog.Amps[p.BaseIndex].Category, "amp", "#D5AD7D", p.Description,
+            ampImage: p.ImageName, uploadPreset: p)))).ToArray();
+
     private string AmpArtworkSlotsPath => Path.Combine(DataDirectory, "amp-artwork-slots-v1.json");
 
     // Only remember which slots need identification. Never trust a saved label without reading the device.
@@ -23,7 +28,7 @@ public sealed partial class EditorViewModel
         }
     }
 
-    private void IdentifyAmpArtwork(int slot, byte[] bytes, bool remember = true)
+    private void IdentifyAmpArtwork(int slot, byte[] bytes, bool remember = true, bool refresh = true)
     {
         var variation = AmpEqPresets.All.FirstOrDefault(p => bytes.AsSpan().SequenceEqual(p.Build()));
         if (variation != null)
@@ -52,7 +57,7 @@ public sealed partial class EditorViewModel
                 Amps[slot] = WithImage(new GearItem($"amp-custom-{slot}", slot, $"Amp do slot {slot + 1}",
                     "Personalizado", "amp", "#D5AD7D"));
         }
-        Notify(nameof(Amps)); RefreshEditor();
+        if (refresh) { Notify(nameof(Amps)); RefreshEditor(); }
         if (!remember || session == null) return;
         try
         {
@@ -72,9 +77,19 @@ public sealed partial class EditorViewModel
     {
         Amps = EquipmentCatalog.Amps.Select((reference, i) => WithImage(new GearItem($"amp-{i}", i,
             reference.Name, reference.Category, "amp", "#D5AD7D", reference.Description, reference.Alias))).ToArray();
-        Notify(nameof(Amps)); RefreshEditor();
-        if (session == null || !ReadAmpArtworkSlots().TryGetValue(session.IdentityHex, out var slots)) return;
-        foreach (int slot in (slots ?? []).Distinct().Where(i => i >= 0 && i < EquipmentCatalog.Amps.Count))
-            IdentifyAmpArtwork(slot, await session.ReadAmpSlot(slot), remember: false);
+        try
+        {
+            if (session == null || !ReadAmpArtworkSlots().TryGetValue(session.IdentityHex, out var slots)) return;
+            var knownSlots = (slots ?? []).Distinct().Where(i => i >= 0 && i < EquipmentCatalog.Amps.Count).ToArray();
+            for (int i = 0; i < knownSlots.Length; i++)
+            {
+                int slot = knownSlots[i];
+                BusyDetail = Status = $"Identificando amps do pedal: {i}/{knownSlots.Length} (slot {slot + 1})…";
+                IdentifyAmpArtwork(slot, await session.ReadAmpSlot(slot), remember: false, refresh: false);
+            }
+            if (knownSlots.Length > 0)
+                BusyDetail = Status = $"Amps identificados: {knownSlots.Length}/{knownSlots.Length}.";
+        }
+        finally { Notify(nameof(Amps)); RefreshEditor(); }
     }
 }

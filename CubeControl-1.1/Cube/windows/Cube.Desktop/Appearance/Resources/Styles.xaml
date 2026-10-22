@@ -473,6 +473,7 @@
  </ControlTemplate></Setter.Value></Setter>
 </Style>
 <Style x:Key="CubeWorkspaceTab" TargetType="TabItem">
+ <Setter Property="FontWeight" Value="Normal"/>
  <Setter Property="MinHeight" Value="{DynamicResource CubeControlHeightStandard}"/>
  <Setter Property="Padding" Value="{DynamicResource CubeButtonPadding}"/>
  <Setter Property="Margin" Value="0,0,8,8"/>
@@ -500,7 +501,6 @@
     <Setter Property="Background" Value="{DynamicResource CubeSelected}"/>
     <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
 
-    <Setter Property="FontWeight" Value="SemiBold"/>
    </Trigger>
 
    <Trigger Property="IsEnabled" Value="False">

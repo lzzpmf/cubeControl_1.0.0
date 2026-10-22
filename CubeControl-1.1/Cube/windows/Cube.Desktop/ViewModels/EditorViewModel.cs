@@ -279,7 +279,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         LoadingDevice = true;
         try
         {
-            await LoadBank();
+            await LoadBank(refreshAmpArtwork: false);
             // USB unplugging can preserve RAM; power-off can restore the saved bank.
             // Keep Save available when the pedal still contains the unsaved edits.
             if (previousEdits != null && previousEdits.SequenceEqual(confirmed!))
@@ -288,6 +288,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
                 UpdateStates();
             }
             await RefreshInventoryAsync();
+            await RefreshKnownAmpArtworkAsync();
         }
         finally { LoadingDevice = wasLoading; }
         NotifyUser("Pedal reconhecido", originalRam == null
@@ -297,7 +298,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
             Wpf.Ui.Controls.ControlAppearance.Success);
     }
 
-    private async Task LoadBank()
+    private async Task LoadBank(bool refreshAmpArtwork = true)
     {
         BusyDetail = "Lendo presets A/B/C do aparelho…";
         var bank = await session!.ReadBank(); CubeBabyProfile.ValidateBank(bank); await BackupBank(bank, "leitura");
@@ -305,7 +306,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         history.Clear(); pendingMatches.Clear(); revisions.Clear(); gesture = null;
         blocked = false; ErrorMessage = ""; SetupQueue();
         foreach (var preset in Presets) { preset.Load(bank); preset.State = "Lido do aparelho"; }
-        await RefreshKnownAmpArtworkAsync();
+        if (refreshAmpArtwork) await RefreshKnownAmpArtworkAsync();
         Status = "Pronto. Ajustes são enviados durante o gesto; Salvar grava o banco A/B/C."; Refresh();
     }
     private void SetupQueue()
