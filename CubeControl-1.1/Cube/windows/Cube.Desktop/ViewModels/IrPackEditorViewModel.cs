@@ -28,7 +28,7 @@ public sealed class IrPackEditorViewModel : Observable
         owner.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(EditorViewModel.SelectedIrPack) && !loading && !Dirty) Load(owner.SelectedIrPack);
-            if (e.PropertyName == nameof(EditorViewModel.Busy)) RefreshState();
+            if (e.PropertyName is nameof(EditorViewModel.Busy) or nameof(EditorViewModel.Connected)) RefreshState();
         };
         Load(owner.SelectedIrPack);
     }
@@ -110,12 +110,13 @@ public sealed class IrPackEditorViewModel : Observable
         string suffix = Localization.LanguageService.T(" (cópia)");
         Name = Name[..Math.Min(Name.Length, 120 - suffix.Length)] + suffix; Dirty = true;
     });
-    public ICommand SavePack => Action(async () => { if (await EnsureDetailsAsync(true)) Save(); }, () => CanEdit && !ReadOnly && HasEntries);
-    public ICommand DiscardChanges => Action(async () => { if (await owner.Ask("Descartar alterações não salvas?")) Load(owner.IrPacks.FirstOrDefault(p => p.Id == origin?.Id) ?? owner.IrPacks.FirstOrDefault()); }, () => Dirty);
+    public ICommand SavePack => Action(async () => { if (await EnsureDetailsAsync(true) && await owner.StopPackPreviewAsync()) Save(); }, () => CanEdit && !ReadOnly && HasEntries);
+    public ICommand DiscardChanges => Action(async () => { if (await owner.Ask("Descartar alterações não salvas?") && await owner.StopPackPreviewAsync()) Load(owner.IrPacks.FirstOrDefault(p => p.Id == origin?.Id) ?? owner.IrPacks.FirstOrDefault()); }, () => Dirty);
     public ICommand DeletePack => Action(async () =>
     {
         if (ReadOnly || current?.Definition == null || !owner.IrPacks.Any(p => p.Id == current.Id)) { Message = "Selecione um pack pessoal salvo."; return; }
         if (!await owner.Ask("Excluir este pack pessoal?")) return;
+        if (!await owner.StopPackPreviewAsync()) return;
         owner.PackStore.Delete(current.Definition); Dirty = false; owner.ReloadIrPacks(); Load(owner.SelectedIrPack);
     }, () => CanDelete);
     private ICommand Action(Func<Task> action, Func<bool>? enabled = null) => new UiCommand(async () =>
@@ -126,6 +127,7 @@ public sealed class IrPackEditorViewModel : Observable
     public Func<Task<PackDraftDecision>>? ChooseDraftDecision { get; set; }
     public async Task<bool> ConfirmDiscard()
     {
+        if (!await owner.StopPackPreviewAsync()) return false;
         if (!Dirty) return true;
         PackDraftDecision choice;
         if (ChooseDraftDecision != null) choice = await ChooseDraftDecision();
@@ -234,9 +236,10 @@ public sealed class IrPackEditorViewModel : Observable
     }
     public IrPackDefinition ApplicationDraft() => Draft() with { Name = string.IsNullOrWhiteSpace(Name) ? "Montagem atual" : Name.Trim() };
     public void ReportError(string error) => Message = error;
-    public bool AssignIr(int index, IrLibraryEntry entry)
+    public async Task<bool> AssignIr(int index, IrLibraryEntry entry)
     {
         if (!CanEdit || index is < 0 or > 7 || !PackLibrary.Entries.Contains(entry)) return false;
+        if (owner.PackPreviewSlot == Slots[index] && !await owner.StopPackPreviewAsync()) return false;
         var reference = owner.PackStore.Reference(index, entry.RelativePath, IrViewModel.DisplayName(entry.FullPath, entry.Collection));
         if (Slots[index].Entry == reference) return false;
         Slots[index].Load(reference);
@@ -247,14 +250,17 @@ public sealed class IrPackEditorViewModel : Observable
         if (!CanEdit || source is < 0 or > 7 || destination is < 0 or > 7 || source == destination || Slots[source].Entry == null) return false;
         var entry = Slots[source].Entry;
         if (entry == (Slots[destination].Entry == null ? null : Slots[destination].Entry! with { Slot = source })) return false;
-        Slots[source].Load(Slots[destination].Entry); Slots[destination].Load(entry); Changed(); return true;
+        var active = owner.PackPreviewSlot;
+        Slots[source].Load(Slots[destination].Entry); Slots[destination].Load(entry);
+        if (active == Slots[source]) owner.MovePackPreview(Slots[source], Slots[destination]);
+        else if (active == Slots[destination]) owner.MovePackPreview(Slots[destination], Slots[source]);
+        Changed(); return true;
     }
-    internal ICommand UseIr(IrPackSlotViewModel slot) => Action(() =>
+    internal ICommand UseIr(IrPackSlotViewModel slot) => Action(async () =>
     {
-        if (SelectedIr != null) AssignIr(slot.Index, SelectedIr);
-        return Task.CompletedTask;
+        if (SelectedIr != null) await AssignIr(slot.Index, SelectedIr);
     }, () => CanEdit && SelectedIr != null);
-    internal ICommand Remove(IrPackSlotViewModel slot) => Action(() => { slot.Load(null); Changed(); return Task.CompletedTask; }, () => CanEdit && slot.Entry != null);
+    internal ICommand Remove(IrPackSlotViewModel slot) => Action(async () => { if (owner.PackPreviewSlot == slot && !await owner.StopPackPreviewAsync()) return; slot.Load(null); Changed(); }, () => CanEdit && slot.Entry != null);
     internal ICommand Move(IrPackSlotViewModel slot, int offset) => Action(() =>
     {
         SwapSlots(slot.Index, slot.Index + offset); return Task.CompletedTask;
@@ -296,7 +302,13 @@ public sealed class IrPackSlotViewModel : Observable
         get => Entry?.Distance ?? 80;
         set { if (double.IsFinite(value)) Distance = Math.Clamp((int)Math.Round(value), 0, 99).ToString(); }
     }
-    public bool CanSetDistance => editor.CanEdit && Entry != null;
+    public bool CanSetDistance => (editor.CanEdit || (IsPreviewing && editor.Owner.PackPreviewSending)) && Entry != null;
+    public bool IsPreviewing => editor.Owner.PackPreviewSlot == this;
+    public string PreviewHint => IsPreviewing ? "Encerrar prévia" : "Ouvir este IR no pedal";
+    public string PreviewStatus => !IsPreviewing ? "" : editor.Owner.ErrorMessage.Length > 0 ? editor.Owner.ErrorMessage : editor.Owner.PackPreviewSending ? "Atualizando prévia…"
+        : !editor.Owner.Ir.PreviewConfirmed ? "Prévia pendente · restauração não confirmada" : "Prévia ativa no pedal";
+    public bool CanPreview => editor.Owner.CanOperate && HasEntry && Problem.Length == 0;
+    public ICommand Preview => new UiCommand(async () => await editor.Owner.TogglePackPreviewAsync(this), () => CanPreview);
     public string Distance
     {
         get => (Entry?.Distance ?? 80).ToString();
@@ -304,7 +316,7 @@ public sealed class IrPackSlotViewModel : Observable
         {
             if (!CanSetDistance) return;
             if (int.TryParse(value, out int number) && number is >= 0 and <= 99)
-            { if (number != Entry!.Distance) { Entry = Entry with { Distance = number }; editor.Changed(); } }
+            { if (number != Entry!.Distance) { Entry = Entry with { Distance = number }; editor.Changed(); editor.Owner.QueuePackDistance(this); } }
             else editor.ReportError("Use uma distância de 0 a 99.");
             Notify(); Notify(nameof(DistanceValue));
         }
@@ -319,5 +331,5 @@ public sealed class IrPackSlotViewModel : Observable
         Problem = Entry == null ? "" : editor.Owner.PackStore.Resolve(new IrPackDefinition { Name = "Slot", Entries = [Entry] }).Problem;
         Refresh();
     }
-    internal void Refresh() { Notify(nameof(ShowRemove)); Notify(nameof(Editable)); Notify(nameof(HasEntry)); Notify(nameof(Name)); Notify(nameof(CaptureSummary)); Notify(nameof(Problem)); Notify(nameof(Distance)); Notify(nameof(DistanceValue)); Notify(nameof(Image)); Notify(nameof(ImageHint)); Notify(nameof(CanSetDistance)); }
+    internal void Refresh() { Notify(nameof(IsPreviewing)); Notify(nameof(CanPreview)); Notify(nameof(PreviewStatus)); Notify(nameof(PreviewHint)); Notify(nameof(ShowRemove)); Notify(nameof(Editable)); Notify(nameof(HasEntry)); Notify(nameof(Name)); Notify(nameof(CaptureSummary)); Notify(nameof(Problem)); Notify(nameof(Distance)); Notify(nameof(DistanceValue)); Notify(nameof(Image)); Notify(nameof(ImageHint)); Notify(nameof(CanSetDistance)); }
 }

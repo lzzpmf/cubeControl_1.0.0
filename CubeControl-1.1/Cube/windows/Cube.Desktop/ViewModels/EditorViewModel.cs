@@ -164,7 +164,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         finally { previewCheckTask = null; }
     }
     private bool liveParameterOperation;
-    public async Task Execute(Func<Task> action, bool changesEffects = false, bool advancedEffect = false, bool liveEdit = false, int? advancedStage = null)
+    public async Task Execute(Func<Task> action, bool changesEffects = false, bool advancedEffect = false, bool liveEdit = false, int? advancedStage = null, bool packPreviewEdit = false)
     {
         if (Busy) return;
         if (!advancedEffect)
@@ -191,6 +191,12 @@ public sealed partial class EditorViewModel : Observable, IDisposable
             }
             if (queue != null && !blocked) await queue.Flush();
             if (changesEffects && !await ConfirmAdvancedPreviewChangeAsync()) return;
+            if (!packPreviewEdit && PackPreviewSlot != null)
+            {
+                ++packPreviewGeneration; pendingPackDistance = null;
+                await RestorePreviewAsync();
+                PackPreviewSlot = null; RefreshPackPreview();
+            }
             await action();
         }
         catch (Exception ex)
@@ -583,7 +589,9 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     public async Task EndPreviewAsync()
     {
+        ++packPreviewGeneration; pendingPackDistance = null;
         await RestorePreviewAsync();
+        PackPreviewSlot = null; RefreshPackPreview();
         // Clear the picker only after restoration succeeds; failed previews stay recoverable.
         irSelectionGeneration++;
         IrLibrary.ClearSelection();

@@ -340,6 +340,9 @@
                         </Grid>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsBrand}" Value="False">
+                            <Setter TargetName="Border" Property="BorderThickness" Value="0"/>
+                        </DataTrigger>
                         <Trigger Property="HasItems" Value="False">
                             <Setter TargetName="Expander" Property="Visibility" Value="Hidden"/>
                         </Trigger>

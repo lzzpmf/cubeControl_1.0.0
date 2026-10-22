@@ -3,6 +3,12 @@
   "Code": "pt-BR",
   "Name": "Português (Brasil)",
   "Strings": {
+    "Ouvir este IR no pedal": "Ouvir este IR no pedal",
+    "O movimento ajusta o volume do IR; não altera a distância física da captura.": "O movimento ajusta o volume do IR; não altera a distância física da captura.",
+    "Perto": "Perto",
+    "Longe": "Longe",
+    "Atualizando prévia…": "Atualizando prévia…",
+    "Prévia ativa no pedal": "Prévia ativa no pedal",
     "Controles da sessão": "Controles da sessão",
     "Duração": "Duração",
     "Prévia ao passar o mouse": "Prévia ao passar o mouse",

@@ -250,6 +250,12 @@
    <Grid><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <Grid Grid.Row="0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
 
+    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="12,8" Margin="0,0,0,12" Visibility="{Binding HasPackPreview,Converter={StaticResource Visible}}">
+     <DockPanel>
+      <ui:Button DockPanel.Dock="Right" Content="{loc:Translate Text='Encerrar prévia'}" Command="{Binding EndPreview}" Margin="12,0,0,0"/>
+      <StackPanel><TextBlock Text="{Binding Ir.File}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Value={Binding Ir.PreviewLabel}}" Style="{StaticResource HelpText}" TextWrapping="Wrap"/></StackPanel>
+     </DockPanel>
+    </Border>
     <TabControl x:Name="Tabs" SelectedIndex="0" Grid.Row="1" Style="{StaticResource HiddenTabs}" BorderThickness="0" Background="Transparent">
      <TabItem Header="{loc:Translate Text='Pedaleira'}"><ScrollViewer x:Name="EditorScroll" ScrollChanged="PageScrollChanged" local:SurfaceMotion.Enabled="True" local:SurfaceMotion.Offset="8" PreviewMouseWheel="EditorPageWheel" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel>
      <TextBlock Text="{loc:Translate Text='Controle seu dispositivo'}" TextWrapping="Wrap" Margin="0,0,0,6" Style="{StaticResource TitleText}"/>

@@ -41,7 +41,7 @@ public sealed partial class IrPackStore(string libraryDirectory, string dataDire
         if (new FileInfo(path).Length > 32 * 1024 * 1024) throw new FormatException("WAV excede 32 MB.");
         return new(slot, relativePath.Replace('\\', '/'), Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))), name, distance);
     }
-    private string ResolvePath(string relative)
+    public string ResolvePath(string relative)
     {
         bool imported = relative.StartsWith("Imported/", StringComparison.Ordinal);
         string root = Path.GetFullPath(imported ? ImportedDirectory : libraryDirectory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;

@@ -3,6 +3,12 @@
   "Code": "en-US",
   "Name": "English",
   "Strings": {
+    "Ouvir este IR no pedal": "Audition this IR on the pedal",
+    "O movimento ajusta o volume do IR; não altera a distância física da captura.": "Movement adjusts IR volume; it does not change the physical capture distance.",
+    "Perto": "Near",
+    "Longe": "Far",
+    "Atualizando prévia…": "Updating preview…",
+    "Prévia ativa no pedal": "Preview active on the pedal",
     "Controles da sessão": "Session controls",
     "Duração": "Duration",
     "Prévia ao passar o mouse": "Preview on hover",

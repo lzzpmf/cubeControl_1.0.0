@@ -71,7 +71,7 @@ public partial class IrPackEditor : UserControl
         e.Handled = true;
     }
 
-    private void SlotDrop(object sender, CubeDropContext e)
+    private async void SlotDrop(object sender, CubeDropContext e)
     {
         DragFeedback.Clear();
         if (sender is Border { DataContext: IrPackSlotViewModel slot } card && DataContext is IrPackEditorViewModel model)
@@ -79,7 +79,7 @@ public partial class IrPackEditor : UserControl
             card.Tag = null; e.Effects = DropEffect(e, slot);
             try
             {
-                if (e.Effects == DragDropEffects.Copy && e.Data.GetData(typeof(LibraryDrag)) is LibraryDrag library) { if (model.AssignIr(slot.Index, library.Entry)) DragMotion.Settle(card); }
+                if (e.Effects == DragDropEffects.Copy && e.Data.GetData(typeof(LibraryDrag)) is LibraryDrag library) { if (await model.AssignIr(slot.Index, library.Entry)) DragMotion.Settle(card); }
                 else if (e.Effects == DragDropEffects.Move && e.Data.GetData(typeof(SlotDrag)) is SlotDrag source) {
                     var origin = Cards(this).FirstOrDefault(x => x.DataContext is IrPackSlotViewModel item && item.Index == source.Index);
                     if (origin != null) DragMotion.Swap(this, SlotContent(origin), SlotContent(card), () => model.SwapSlots(source.Index, slot.Index));
