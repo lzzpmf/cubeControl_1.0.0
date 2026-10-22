@@ -246,11 +246,12 @@
                                         Grid.Column="0"
                                         Grid.ColumnSpan="2"
                                         Margin="0">
+                                        <!-- Open on release: the aligned popup overlaps this button. -->
                                         <ToggleButton
                                             Name="ToggleButton"
                                             HorizontalAlignment="Stretch"
                                             VerticalAlignment="Stretch"
-                                            ClickMode="Press"
+                                            ClickMode="Release"
                                             Focusable="False"
                                             Foreground="{TemplateBinding Foreground}"
                                             IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
@@ -267,12 +268,15 @@
                                             Style="{StaticResource CubeDefaultComboBoxTextBoxStyle}" />
                                     </Grid>
                                 </Grid>
+                                <!-- PART_Popup lets ComboBox manage capture, focus and dismissal.
+                                     StaysOpen leaves dismissal to ComboBox, not a second popup capture. -->
                                 <Popup
-                                    x:Name="Popup"
+                                    x:Name="PART_Popup"
                                     motion:ComboBoxPopupPlacement.Enabled="{Binding Path=(motion:ComboBoxPopupPlacement.Enabled), RelativeSource={RelativeSource TemplatedParent}}"
                                     VerticalAlignment="Center"
                                     AllowsTransparency="True"
                                     Focusable="False"
+                                    StaysOpen="True"
                                     IsOpen="{TemplateBinding IsDropDownOpen}"
                                     Placement="{TemplateBinding Popup.Placement}"
                                     PlacementTarget="{Binding ElementName=ContentBorder}"
@@ -322,8 +326,6 @@
                                 </Popup>
                             </Grid>
                         </Border>
-                        <Border
-                            x:Name="AccentBorder" BorderBrush="{DynamicResource CubeFocus}" BorderThickness="1" CornerRadius="{TemplateBinding Border.CornerRadius}" Visibility="Collapsed" IsHitTestVisible="False" />
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsDropDownOpen" Value="True">
@@ -356,7 +358,7 @@
                         <Trigger Property="HasItems" Value="False">
                             <Setter TargetName="DropDownBorder" Property="MinHeight" Value="{StaticResource CubeComboBoxPopupMinHeight}" />
                         </Trigger>
-                        <Trigger SourceName="Popup" Property="Popup.AllowsTransparency" Value="False">
+                        <Trigger SourceName="PART_Popup" Property="Popup.AllowsTransparency" Value="False">
                             <Setter TargetName="DropDownBorder" Property="CornerRadius" Value="0" />
                         </Trigger>
                         <Trigger Property="IsGrouping" Value="True">
@@ -367,13 +369,6 @@
                             <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
                             <Setter TargetName="PART_ContentPresenter" Property="Visibility" Value="Hidden" />
                         </Trigger>
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsEnabled" Value="True" />
-                                <Condition Property="IsKeyboardFocusWithin" Value="True" />
-                            </MultiTrigger.Conditions>
-                            <Setter TargetName="AccentBorder" Property="Visibility" Value="Visible" />
-                        </MultiTrigger>
                         <MultiTrigger>
                             <MultiTrigger.Conditions>
                                 <Condition Property="IsEnabled" Value="True" />
