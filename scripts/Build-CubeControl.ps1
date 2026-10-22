@@ -290,7 +290,7 @@ try {
     Prepare-YouTubeTools
     $sources = Get-SourceHashes
     $publishArgs = @('publish', $projectPath, '-c', $configuration, '-r', 'win-x64',
-        '--self-contained', 'true', '--artifacts-path', $OutputRoot,
+        '--self-contained', 'true', '--force', '--artifacts-path', $OutputRoot,
         '-p:CubeUnifiedPublish=true', '-o', $staging)
     if ($Simulation) { $publishArgs += '-p:CubeSimulation=true' }
     & dotnet @publishArgs

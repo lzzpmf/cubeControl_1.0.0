@@ -9,38 +9,7 @@
   <SolidColorBrush x:Key="AmpAccent" Color="#8DB9AC"/>
   <SolidColorBrush x:Key="AmpBandA" Color="#FFA293"/>
   <SolidColorBrush x:Key="AmpBandB" Color="#73C6DE"/>
-  <!-- Button proportions with ListBoxItem selection and keyboard semantics. -->
-  <Style x:Key="AmpSectionSelector" TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
-   <Setter Property="MinHeight" Value="40"/><Setter Property="MinWidth" Value="0"/>
-   <Setter Property="Padding" Value="16,8"/><Setter Property="Margin" Value="0,0,8,8"/>
-   <Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/>
-   <Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="VerticalAlignment" Value="Center"/>
-   <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
-   <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
-   <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
-   <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
-   <Setter Property="BorderThickness" Value="0"/>
-   <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}"/>
-   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Grid>
-    <Grid>
-     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}">
-      <ContentPresenter ContentSource="Content" RecognizesAccessKey="True" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-     </Border>
-    </Grid>
-    <Border Style="{StaticResource CubeSelectionMarker}"/></Grid><ControlTemplate.Triggers>
-     <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
-     <Trigger Property="IsSelected" Value="True">
-      <Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource CubeAccent}"/>
-     </Trigger>
-     <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource CubeFocus}"/></Trigger>
-     <Trigger Property="IsEnabled" Value="False">
-      <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/><Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}"/>
-     </Trigger>
-    </ControlTemplate.Triggers>
-   </ControlTemplate></Setter.Value></Setter>
-  </Style>
+  <Style x:Key="AmpSectionSelector" TargetType="ListBoxItem" BasedOn="{StaticResource CubeSelectionButtonStyle}"/>
   <Style x:Key="AmpPanel" TargetType="Border">
    <Setter Property="Padding" Value="0,16,0,0"/>
    <Setter Property="Margin" Value="0,0,0,12"/>
@@ -137,7 +106,7 @@
       <TextBlock Text="{loc:Translate Value={Binding AmpSource}}" Foreground="{DynamicResource Muted}"/>
      </WrapPanel>
      <TextBlock Text="{loc:Translate Text='Modelo base'}" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}"/>
-     <ComboBox x:Name="BaseSelector" IsEnabled="{Binding CanEditAmpLocally}" SelectionChanged="BaseSelected" SelectedIndex="-1" HorizontalAlignment="Left" MinWidth="240" MaxWidth="360" Margin="0,4,0,8" AutomationProperties.Name="{loc:Translate Text='Escolha um amp base'}" ToolTip="{loc:Translate Text='Carrega um modelo para edição. Não indica o amp fisicamente ativo.'}"/>
+     <ComboBox x:Name="BaseSelector" Style="{DynamicResource {x:Type ComboBox}}" IsEnabled="{Binding CanEditAmpLocally}" SelectionChanged="BaseSelected" SelectedIndex="-1" HorizontalAlignment="Left" MinWidth="240" MaxWidth="360" Margin="0,4,0,8" AutomationProperties.Name="{loc:Translate Text='Escolha um amp base'}" ToolTip="{loc:Translate Text='Carrega um modelo para edição. Não indica o amp fisicamente ativo.'}"/>
      <WrapPanel IsEnabled="{Binding CanEditAmpLocally}">
       <ui:Button Content="{loc:Translate Text='Importar preset'}" Click="ImportClick" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Carrega um preset do computador e aplica ao som atual.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowDownload24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
       <ui:Button Content="{loc:Translate Text='Exportar preset'}" Click="ExportClick" IsEnabled="{Binding Amp.Loaded}" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Salva os ajustes atuais em um preset no computador.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowUpload24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>

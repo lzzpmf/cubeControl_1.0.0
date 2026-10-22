@@ -1023,7 +1023,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             AmpEditorHost.Content = new Views.AmpEditor(Model);
         UpdateWorkspaceLayout();
         Navigation.SelectedIndex = 3;
-        Dispatcher.BeginInvoke(new Action(() => ((Views.AmpEditor)AmpEditorHost.Content).ChooseBase()));
     }
 
     private async void MatchSettingsClick(object sender, RoutedEventArgs e)

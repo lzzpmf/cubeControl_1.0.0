@@ -411,10 +411,41 @@
   </Style>
 <Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Setter Property="Margin" Value="0,0,8,8"/></Style>
 <Style TargetType="ComboBox" BasedOn="{StaticResource CubeDefaultComboBoxStyle}"><Setter Property="MinWidth" Value="160"/><Setter Property="Margin" Value="0,0,12,0"/></Style>
+  <!-- Button proportions with ListBoxItem selection and keyboard semantics. -->
+  <Style x:Key="CubeSelectionButtonStyle" TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+   <Setter Property="MinHeight" Value="40"/><Setter Property="MinWidth" Value="0"/>
+   <Setter Property="Padding" Value="16,8"/><Setter Property="Margin" Value="0,0,8,8"/>
+   <Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/>
+   <Setter Property="HorizontalAlignment" Value="Left"/><Setter Property="VerticalAlignment" Value="Center"/>
+   <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
+   <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
+   <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}"/>
+   <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}"/>
+   <Setter Property="BorderThickness" Value="0"/>
+   <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Grid>
+    <Grid>
+     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}">
+      <ContentPresenter ContentSource="Content" RecognizesAccessKey="True" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+     </Border>
+    </Grid>
+    <Border Style="{StaticResource CubeSelectionMarker}"/></Grid><ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
+     <Trigger Property="IsSelected" Value="True">
+      <Setter Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource CubeAccent}"/>
+     </Trigger>
+     <Trigger Property="IsEnabled" Value="False">
+      <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/><Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}"/>
+     </Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
 <Style x:Key="SelectionTile" TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
    <Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Margin" Value="0,0,8,8"/><Setter Property="Padding" Value="12"/>
    <Setter Property="Foreground" Value="{DynamicResource CubeText}"/>
-   <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}"/>
+   <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
     <Grid><Border x:Name="Surface" Background="{DynamicResource CubeItemRest}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
     <Border Style="{StaticResource CubeSelectionMarker}"/></Grid>
@@ -450,7 +481,7 @@
  <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
 
  <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
- <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}"/>
+ <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
  <Setter Property="HorizontalContentAlignment" Value="Center"/>
  <Setter Property="VerticalContentAlignment" Value="Center"/>
  <Setter Property="HeaderTemplate"><Setter.Value><DataTemplate>
@@ -738,7 +769,7 @@
  <Setter Property="Padding" Value="{StaticResource CompactMusicCardPadding}"/><Setter Property="Margin" Value="0,0,0,4"/>
  <Setter Property="MinHeight" Value="64"/><Setter Property="Foreground" Value="{DynamicResource CubeText}"/>
  <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
- <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}"/>
+ <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
   <Grid>
    <Border Style="{StaticResource CompactMusicCardSurface}" Margin="0" Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}">

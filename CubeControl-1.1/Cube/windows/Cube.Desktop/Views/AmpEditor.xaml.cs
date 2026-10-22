@@ -94,7 +94,6 @@ public partial class AmpEditor : UserControl
     }
     private int selectedBase = -1;
     private bool selectingBase;
-    public void ChooseBase() { BaseSelector.Focus(); BaseSelector.IsDropDownOpen = true; }
     private async void BaseSelected(object sender, SelectionChangedEventArgs e)
     {
         if (!IsLoaded || selectingBase || BaseSelector.SelectedIndex < 0) return;

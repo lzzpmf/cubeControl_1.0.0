@@ -5,22 +5,10 @@
    <ListBox x:Name="Filter" SelectionChanged="FilterChanged" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,12,0,0" HorizontalAlignment="Left" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Categoria'}">
     <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
     <ListBox.ItemContainerStyle>
-     <Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
+     <Style TargetType="ListBoxItem" BasedOn="{StaticResource CubeSelectionButtonStyle}">
       <Setter Property="Padding" Value="12,8"/><Setter Property="Margin" Value="0,0,8,4"/>
       <Setter Property="MinHeight" Value="36"/><Setter Property="MinWidth" Value="72"/>
-      <Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/>
-      <Setter Property="Foreground" Value="{DynamicResource CubeText}"/><Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}"/>
-      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Grid>
-       <Border x:Name="FilterSurface" Background="{DynamicResource CubeItemRest}" CornerRadius="{DynamicResource CubeControlCornerRadius}" Padding="{TemplateBinding Padding}">
-        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-       </Border>
-       <Border x:Name="FilterFocus" BorderBrush="{DynamicResource CubeFocus}" BorderThickness="1" CornerRadius="{DynamicResource CubeControlCornerRadius}" Visibility="Collapsed" IsHitTestVisible="False"/></Grid><ControlTemplate.Triggers>
-        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="FilterSurface" Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
-        <Trigger Property="IsSelected" Value="True"><Setter TargetName="FilterSurface" Property="Background" Value="{DynamicResource CubeSelected}"/><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/><Setter Property="FontWeight" Value="SemiBold"/></Trigger>
-        <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="FilterFocus" Property="Visibility" Value="Visible"/></Trigger>
-        <Trigger Property="IsEnabled" Value="False"><Setter TargetName="FilterSurface" Property="Background" Value="{DynamicResource CubeItemRest}"/><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="FilterFocus" Property="Visibility" Value="Collapsed"/></Trigger>
-       </ControlTemplate.Triggers>
-      </ControlTemplate></Setter.Value></Setter>
+      <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="FontWeight" Value="SemiBold"/></Trigger></Style.Triggers>
      </Style>
     </ListBox.ItemContainerStyle>
    </ListBox>
