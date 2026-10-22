@@ -68,7 +68,7 @@ public sealed partial class EditorViewModel
     public bool LoadingDevice { get => loadingDevice; private set { if (Set(ref loadingDevice, value)) RefreshPresentation(); } }
     public bool ShowConnectAction => !Connected || LoadingDevice;
     public string ConnectActionLabel => LoadingDevice ? "Carregando dispositivo" : "Conectar e carregar";
-    public string HeaderConnectionStatus => LoadingDevice || SearchingPorts ? BusyDetail : blocked ? "Conexão requer atenção" : ConnectionSummary;
+    public string HeaderConnectionStatus => blocked ? "Conexão requer atenção" : ConnectionSummary;
     public string BankSaveStatus => Dirty ? "Alterações não gravadas" : "Banco A/B/C sem alterações pendentes";
     public Wpf.Ui.Controls.ControlAppearance SaveAppearance => Wpf.Ui.Controls.ControlAppearance.Primary;
     private string busyDetail = "Aguarde a conclusão da operação.";
@@ -79,7 +79,7 @@ public sealed partial class EditorViewModel
     public bool ShowBusyPanel => Busy && !awaitingPackReview && !liveParameterOperation && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
     public bool ShowBusyRing => ShowBusyPanel && !ReadingInventory && !ShowTransferProgress;
     public bool ShowTransferProgress => Busy && !ReadingInventory && Ir.TransferActive && Ir.HasMeasuredProgress;
-    public string BusyDetail { get => busyDetail; private set { if (Set(ref busyDetail, value)) Notify(nameof(HeaderConnectionStatus)); } }
+    public string BusyDetail { get => busyDetail; private set => Set(ref busyDetail, value); }
     public int InventoryReadCount { get => inventoryReadCount; private set => Set(ref inventoryReadCount, value); }
     public bool ReadingInventory { get => readingInventory; private set { if (Set(ref readingInventory, value)) RefreshPresentation(); } }
     private string errorMessage = "";

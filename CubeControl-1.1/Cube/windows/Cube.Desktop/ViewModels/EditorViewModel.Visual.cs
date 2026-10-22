@@ -188,32 +188,8 @@ public sealed partial class EditorViewModel
         string hash = CabinetInventory.Hash(bytes);
         if (inventory.Slots.FirstOrDefault(c => c.Slot == slot) is { } previous && previous.Hash != hash) soundContentRevision++;
         preferences.IrNames.TryGetValue(hash, out var name);
-        if (!string.IsNullOrWhiteSpace(name))
-        {
-            string clean = name.EndsWith(".wav", StringComparison.OrdinalIgnoreCase) ? Path.GetFileNameWithoutExtension(name) : name;
-            if (!resolvedIrNames.TryGetValue(hash, out var resolved))
-            {
-                var matches = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var entry in IrLibrary.Entries.Where(e => e.Name.Equals(clean, StringComparison.OrdinalIgnoreCase)))
-                {
-                    try
-                    {
-                        var audio = IrAudio.Decode(File.ReadAllBytes(entry.FullPath));
-                        for (int distance = 0; distance < 100; distance++)
-                            if (audio.Sector(distance).AsSpan().SequenceEqual(bytes))
-                            { matches.Add(IrViewModel.DisplayName(entry.FullPath, entry.Collection)); break; }
-                    }
-                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException) { }
-                }
-                resolved = matches.Count == 1 ? matches.Single() : clean;
-                resolvedIrNames[hash] = resolved;
-            }
-            if (name != resolved)
-            {
-                name = resolved; preferences.IrNames[hash] = name;
-            }
-        }
         inventory.Update(slot, bytes, name); RebuildCabinets();
+        _ = RecoverCaptureAsync(hash, bytes.ToArray(), name);
     }
     private readonly Dictionary<string, string> resolvedIrNames = [];
     private void RebuildCabinets()
@@ -226,14 +202,14 @@ public sealed partial class EditorViewModel
             items.Add(WithImage(new(cab?.Hash ?? $"unverified-{i}", i + 1, cab?.Name ?? $"IR personalizado — slot {i + 1}", cab?.Category ?? "Não verificado", "cab", "#C5B77F",
                 reference?.Description ?? (cab?.CabinetId?.StartsWith("pack-bfin-", StringComparison.Ordinal) == true
                     ? "Pack BFIN reconhecido pelo conteúdo. O modelo do gabinete ainda não foi confirmado; a imagem é genérica."
-                    : "Conteúdo sem referência de equipamento identificada. Nome e imagem personalizados são metadados locais."), reference?.Alias ?? "", cab?.CabinetId)));
+                    : "Conteúdo sem referência de equipamento identificada. Nome e imagem personalizados são metadados locais."), reference?.Alias ?? "", cab?.CabinetId, capture: cab == null ? null : Captures.Get(cab.Hash))));
         }
         Cabinets = items.ToArray();
         Ir.UpdateSlots(Enumerable.Range(0, 8).Select(i =>
         {
             var cab = inventory.Slots.FirstOrDefault(c => c.Slot == i);
             string name = cab != null && (cab.CabinetId != null || preferences.IrNames.ContainsKey(cab.Hash)) ? cab.Name : "IR não identificado";
-            return $"Slot {i + 1} — {name}";
+            return $"Slot {i + 1} — {(cab != null && Captures.Get(cab.Hash) != null ? Cabinets[i + 1].Name : name)}";
         }));
         Notify(nameof(Cabinets)); Notify(nameof(CanMatch)); RefreshEditor();
     }

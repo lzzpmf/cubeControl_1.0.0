@@ -640,18 +640,20 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         int slot = Ir.Slot, distance = Ir.Distance;
         var audio = Ir.Audio;
         string file = Ir.File;
+        string sourcePath = Ir.SourcePath;
         try
         {
             string message = $"Gravar {file}?\nDestino: {Ir.Slots[slot]}\n\nDistância: {distance}%\nO conteúdo atual será substituído.\nO conteúdo anterior será mantido em memória durante esta sessão.";
             var choice = ConfirmIrWrite != null ? await ConfirmIrWrite(message) : (Confirmed: await Ask(message), ImagePath: (string?)null);
             if (!choice.Confirmed || !CanOperate) return;
-            await Execute(() => WriteIrAsync(slot, audio, distance, file, choice.ImagePath));
+            await Execute(() => WriteIrAsync(slot, audio, distance, file, choice.ImagePath, sourcePath: sourcePath));
         }
         catch (Exception ex) { Status = ErrorMessage = ex.Message; }
         finally { confirmingIrWrite = false; Refresh(); }
     }
-    private async Task WriteIrAsync(int slot, IrAudio audio, int distance, string file, string? imagePath, bool announceCompletion = true)
+    private async Task WriteIrAsync(int slot, IrAudio audio, int distance, string file, string? imagePath, bool announceCompletion = true, string? sourcePath = null)
     {
+        var capture = sourcePath == null ? null : await CaptureForWriteAsync(sourcePath, audio.Sector(distance), distance);
         BusyDetail = "Preservando o slot de IR em memória…";
         var data = audio.Sector(distance);
         var current = await session!.ReadIrSlot(slot, Progress()); await BackupIr(slot, current);
@@ -659,7 +661,11 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         BusyDetail = "Gravando e verificando IR…";
         await session.ReplaceIr(slot, current, data, async bytes => { await BackupIr(slot, bytes); }, Progress());
         string hash = CabinetInventory.Hash(data);
+        RememberCapture(hash, capture);
         preferences.IrNames[hash] = file;
+        try { SavePackIrNames(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { NotifyFailure("IR gravado, mas não foi possível salvar seu nome: " + ex.Message); }
         resolvedIrNames[hash] = file;
         if (imagePath != null)
         {
@@ -785,6 +791,9 @@ public sealed partial class EditorViewModel : Observable, IDisposable
                 if (pack.Definition != null)
                 {
                     string hash = CabinetInventory.Hash(pack.Sectors[i]);
+                    var source = pack.Definition.Entries.FirstOrDefault(e => e.Slot == i);
+                    if (source != null)
+                        RememberCapture(hash, await CaptureForWriteAsync(source.RelativePath, pack.Sectors[i], source.Distance));
                     preferences.IrNames[hash] = pack.SlotName(i);
                     resolvedIrNames[hash] = pack.SlotName(i);
                     SavePackIrNames();

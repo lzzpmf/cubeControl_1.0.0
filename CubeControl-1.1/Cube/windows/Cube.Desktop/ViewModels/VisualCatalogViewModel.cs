@@ -5,13 +5,16 @@ using Cube.Protocol;
 
 namespace Cube.Desktop.ViewModels;
 
-public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? cabinetId = null, string? ampImage = null, AmpEqPreset? uploadPreset = null) : Observable
+public sealed class GearItem(string id, int value, string name, string category, string kind, string color, string description = "", string alias = "", string? cabinetId = null, string? ampImage = null, AmpEqPreset? uploadPreset = null, CabinetCapture? capture = null) : Observable
 {
     public AmpEqPreset? UploadPreset => uploadPreset;
     public bool RequiresUpload => uploadPreset != null;
     public string Id => id;
     public int Value => value;
-    public string Name => name;
+    public string Name => string.IsNullOrWhiteSpace(capture?.Title) ? name : capture.Title;
+    public string CaptureSummary => capture?.Summary ?? "";
+    public string CaptureHint => capture?.Hint ?? "";
+    public bool HasCapture => CaptureSummary.Length > 0;
     // Model specifications, not an analysis of the recorded IR. Sources: docs/referencias/cabinet-characteristics.md.
     public string Category => kind == "cab" ? cabinetId switch
     {
@@ -27,12 +30,12 @@ public sealed class GearItem(string id, int value, string name, string category,
     } : category;
     public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindCabinet(cabinetId) != null
         ? "Características do modelo de referência; a captura do IR pode variar."
-        : kind == "cab" && CabinetArtwork.ForIr(null, name) != null
+        : kind == "cab" && CabinetArtwork.ForIr(null, name, capture?.Metadata) != null
             ? "Arte ilustrativa baseada nos metadados ou no nome do IR; não confirma o gabinete da captura." : null;
     public string Kind => kind;
     public string Color => Appearance.ThemeService.ModuleColor(color);
     public void RefreshColor() => Notify(nameof(Color));
-    public string Description => description;
+    public string Description => capture?.Hint ?? description;
     public string Alias => alias;
     public ImageSource? DefaultImage => ReadImage(AssetPaths.Image(ampImage ?? ((cabinetId ?? id) switch
     {
@@ -51,11 +54,11 @@ public sealed class GearItem(string id, int value, string name, string category,
         "delay" => "delayCuvave.png",
         "reverb" => "reverbCuvave.png",
         _ when kind == "cab" => CabinetArtwork.ForIdentity(cabinetId ?? id)
-            ?? CabinetArtwork.ForIr(null, name) ?? CabinetArtwork.Generic,
+            ?? CabinetArtwork.ForIr(null, name, capture?.Metadata) ?? CabinetArtwork.Generic,
         _ => "not-provided.png"
     })));
     // Brief effect explanations; sources in docs/referencias/effect-descriptions.md.
-    public string Subtitle => kind switch
+    public string Subtitle => capture != null ? capture.Speaker : kind switch
     {
         "chorus" => "Mistura o som original com uma cópia levemente desafinada, criando corpo e movimento.",
         "phaser" => "Cria uma varredura de fase que dá ao timbre um movimento ondulante.",

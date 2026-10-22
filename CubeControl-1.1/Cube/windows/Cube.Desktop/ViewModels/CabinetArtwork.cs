@@ -26,8 +26,9 @@ internal static class CabinetArtwork
     {
         if (metadata == null && relativePath != null)
             Metadata.Value.TryGetValue(relativePath.Replace('\\', '/'), out metadata);
-        string key = Normalize(string.Join(" ", metadata?.Brand, metadata?.CabinetModel,
-            metadata?.CollectionId, relativePath, name));
+        string key = Normalize(metadata != null
+            ? string.Join(" ", metadata.Brand, metadata.CabinetModel, metadata.CollectionId)
+            : string.Join(" ", relativePath, name));
         // Structured configuration wins over directory and display-name hints.
         string configuration = Configuration(metadata?.SpeakerConfiguration);
         if (configuration.Length == 0) configuration = Configuration(relativePath);

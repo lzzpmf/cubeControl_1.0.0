@@ -44,7 +44,7 @@ public sealed partial class EditorViewModel
                     return;
                 }
 
-                await WriteIrAsync(slot, audio, distance, entry.Name, null, announceCompletion: false);
+                await WriteIrAsync(slot, audio, distance, entry.Name, null, announceCompletion: false, sourcePath: entry.FullPath);
                 try
                 {
                     BusyDetail = "Aplicando IR gravado…";
