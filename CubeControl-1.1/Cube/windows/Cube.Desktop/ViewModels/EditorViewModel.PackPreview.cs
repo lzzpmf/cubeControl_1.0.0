@@ -31,27 +31,36 @@ public sealed partial class EditorViewModel
     {
         if (!CanOperate || slot.Entry == null || slot.Problem.Length != 0) return;
         ++packPreviewGeneration; pendingPackDistance = null;
-        await Execute(async () =>
+        bool sending = PackPreviewSlot != slot;
+        if (sending) slot.SetPreviewSending(true);
+        try
         {
-            if (PackPreviewSlot == slot) { await EndPreviewAsync(); return; }
-            var entry = slot.Entry;
-            string path = PackStore.ResolvePath(entry.RelativePath);
-            var audio = await Task.Run(() =>
+            await Execute(async () =>
             {
-                if (new FileInfo(path).Length > 32 * 1024 * 1024) throw new FormatException("WAV excede 32 MB.");
-                byte[] bytes = File.ReadAllBytes(path);
-                if (!Convert.ToHexString(SHA256.HashData(bytes)).Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase))
-                    throw new FormatException("IR modificado na biblioteca.");
-                return IrAudio.Decode(bytes);
-            });
-            Ir.Load(path, audio);
-            Ir.Distance = entry.Distance;
-            PackPreviewSlot = slot;
+                if (PackPreviewSlot == slot) { await EndPreviewAsync(); return; }
+                var entry = slot.Entry;
+                string path = PackStore.ResolvePath(entry.RelativePath);
+                var audio = await Task.Run(() =>
+                {
+                    if (new FileInfo(path).Length > 32 * 1024 * 1024) throw new FormatException("WAV excede 32 MB.");
+                    byte[] bytes = File.ReadAllBytes(path);
+                    if (!Convert.ToHexString(SHA256.HashData(bytes)).Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase))
+                        throw new FormatException("IR modificado na biblioteca.");
+                    return IrAudio.Decode(bytes);
+                });
+                Ir.Load(path, audio);
+                Ir.Distance = entry.Distance;
+                PackPreviewSlot = slot;
+                RefreshPackPreview();
+                await PreviewCoreAsync(null);
+                RefreshPackPreview();
+            }, liveEdit: true, packPreviewEdit: true);
+        }
+        finally
+        {
+            if (sending) slot.SetPreviewSending(false);
             RefreshPackPreview();
-            await PreviewCoreAsync(null);
-            RefreshPackPreview();
-        }, liveEdit: true, packPreviewEdit: true);
-        RefreshPackPreview();
+        }
     }
 
     internal async Task<bool> StopPackPreviewAsync()
@@ -83,18 +92,29 @@ public sealed partial class EditorViewModel
             if (Busy) continue;
             int distance = pendingPackDistance!.Value;
             pendingPackDistance = null;
-            PackPreviewSending = true; RefreshPackPreview();
+            var sendingSlot = PackPreviewSlot;
+            PackPreviewSending = true;
+            sendingSlot.SetPreviewSending(true, updating: true);
+            RefreshPackPreview();
             bool applied = false;
-            await Execute(async () =>
+            try
             {
-                if (generation != packPreviewGeneration || Ir.Audio == null) return;
-                Ir.Distance = distance;
-                Ir.PreviewConfirmed = false;
-                await session!.ApplyIrRam(new(1, Ir.Audio.LivePayload(distance)));
-                Ir.PreviewConfirmed = true;
-                applied = true;
-            }, liveEdit: true, packPreviewEdit: true);
-            PackPreviewSending = false; RefreshPackPreview();
+                await Execute(async () =>
+                {
+                    if (generation != packPreviewGeneration || Ir.Audio == null) return;
+                    Ir.Distance = distance;
+                    Ir.PreviewConfirmed = false;
+                    await session!.ApplyIrRam(new(1, Ir.Audio.LivePayload(distance)));
+                    Ir.PreviewConfirmed = true;
+                    applied = true;
+                }, liveEdit: true, packPreviewEdit: true);
+            }
+            finally
+            {
+                PackPreviewSending = false;
+                sendingSlot.SetPreviewSending(false);
+                RefreshPackPreview();
+            }
             if (!applied) { pendingPackDistance = null; return; }
         }
         }

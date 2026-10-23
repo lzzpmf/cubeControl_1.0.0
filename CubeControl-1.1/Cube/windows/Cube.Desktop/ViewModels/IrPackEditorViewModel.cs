@@ -299,13 +299,27 @@ public sealed class IrPackSlotViewModel : Observable
         : "Imagem de referência do gabinete.";
     public double DistanceValue
     {
-        get => Entry?.Distance ?? 80;
-        set { if (double.IsFinite(value)) Distance = Math.Clamp((int)Math.Round(value), 0, 99).ToString(); }
+        // The pedal distance attenuates the IR: expose the inverse as volume.
+        get => 99 - (Entry?.Distance ?? 80);
+        set { if (double.IsFinite(value)) Distance = (99 - Math.Clamp((int)Math.Round(value), 0, 99)).ToString(); }
     }
     public bool CanSetDistance => (editor.CanEdit || (IsPreviewing && editor.Owner.PackPreviewSending)) && Entry != null;
+    public bool IsPreviewSending { get; private set; }
+    private bool previewUpdating;
+    private bool previewEnding;
+    public string PreviewSendingText => previewEnding ? "Encerrando prévia…" : previewUpdating ? "Atualizando prévia…" : "Enviando IR ao pedal…";
+    internal void SetPreviewSending(bool sending, bool updating = false, bool ending = false)
+    {
+        IsPreviewSending = sending;
+        previewUpdating = updating;
+        previewEnding = ending;
+        Notify(nameof(IsPreviewSending));
+        Notify(nameof(PreviewSendingText));
+        Notify(nameof(PreviewStatus));
+    }
     public bool IsPreviewing => editor.Owner.PackPreviewSlot == this;
     public string PreviewHint => IsPreviewing ? "Encerrar prévia" : "Ouvir este IR no pedal";
-    public string PreviewStatus => !IsPreviewing ? "" : editor.Owner.ErrorMessage.Length > 0 ? editor.Owner.ErrorMessage : editor.Owner.PackPreviewSending ? "Atualizando prévia…"
+    public string PreviewStatus => IsPreviewSending ? "" : !IsPreviewing ? "" : editor.Owner.ErrorMessage.Length > 0 ? editor.Owner.ErrorMessage : editor.Owner.PackPreviewSending ? "Atualizando prévia…"
         : !editor.Owner.Ir.PreviewConfirmed ? "Prévia pendente · restauração não confirmada" : "Prévia ativa no pedal";
     public bool CanPreview => editor.Owner.CanOperate && HasEntry && Problem.Length == 0;
     public ICommand Preview => new UiCommand(async () => await editor.Owner.TogglePackPreviewAsync(this), () => CanPreview);

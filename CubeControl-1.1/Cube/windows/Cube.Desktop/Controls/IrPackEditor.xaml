@@ -10,10 +10,10 @@
    <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="local:MicrophoneFader">
     <Grid Background="Transparent">
-     <Border Height="2" Margin="30,0" Background="{DynamicResource CubeBorder}" VerticalAlignment="Center"/>
+     <Border Height="2" Margin="20,0" Background="{DynamicResource CubeBorder}" VerticalAlignment="Center"/>
      <Track x:Name="PART_Track" Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" Value="{Binding Value,RelativeSource={RelativeSource TemplatedParent},Mode=TwoWay}">
       <Track.DecreaseRepeatButton><RepeatButton Command="Slider.DecreaseLarge" Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.DecreaseRepeatButton>
-      <Track.Thumb><Thumb Width="64" Height="36" Cursor="Hand"><Thumb.Template><ControlTemplate TargetType="Thumb"><Grid Background="Transparent"><Image Source="{Binding MicrophoneImage,RelativeSource={RelativeSource AncestorType=local:MicrophoneFader}}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/></Grid></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
+      <Track.Thumb><Thumb Width="40" Height="40" Cursor="Hand"><Thumb.Template><ControlTemplate TargetType="Thumb"><Grid Background="Transparent"><Image Source="{Binding MicrophoneImage,RelativeSource={RelativeSource AncestorType=local:MicrophoneFader}}" Width="32" Height="32" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/></Grid></ControlTemplate></Thumb.Template></Thumb></Track.Thumb>
       <Track.IncreaseRepeatButton><RepeatButton Command="Slider.IncreaseLarge" Focusable="False"><RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template></RepeatButton></Track.IncreaseRepeatButton>
      </Track>
     </Grid>
@@ -66,15 +66,18 @@
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:IrPackGridPanel MinimumCardWidth="180"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
       <Border FocusVisualStyle="{DynamicResource DefaultControlFocusVisualStyle}" x:Name="SlotCard" CornerRadius="{DynamicResource CubeCardCornerRadius}" Padding="12" Focusable="True" AllowDrop="True"
-       Loaded="SlotLoaded" PreviewKeyDown="SlotKeyDown"
+       Loaded="SlotLoaded" PreviewKeyDown="SlotKeyDown" PreviewMouseLeftButtonDown="SlotMouseDown" PreviewMouseMove="SlotMouseMove" PreviewMouseLeftButtonUp="SlotMouseUp" ToolTip="{loc:Translate Value={Binding PreviewHint}}"
 
-       AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Name}">
+       AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{loc:Translate Value={Binding PreviewHint}}">
        <Border.Style><Style TargetType="Border">
-        <Setter Property="Background" Value="{DynamicResource CubeInset}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}"/>
+        <Setter Property="Background" Value="{DynamicResource CubeItemRest}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CubeSurfaceBorderBrush}"/>
         <Setter Property="BorderThickness" Value="{DynamicResource CubeSurfaceBorderThickness}"/>
         <Style.Triggers>
+         <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
          <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></Trigger>
+         <DataTrigger Binding="{Binding IsPreviewing}" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></DataTrigger>
+         <DataTrigger Binding="{Binding CanPreview}" Value="True"><Setter Property="Cursor" Value="Hand"/></DataTrigger>
         </Style.Triggers>
        </Style></Border.Style>
        <Border.ContextMenu><ContextMenu DataContext="{Binding PlacementTarget.DataContext,RelativeSource={RelativeSource Self}}">
@@ -86,21 +89,28 @@
        </ContextMenu></Border.ContextMenu>
        <Grid>
         <StackPanel>
-         <TextBlock Text="{Binding Title}" Style="{StaticResource CaptionText}" Height="40" Margin="0,0,84,0" VerticalAlignment="Center"/>
+         <TextBlock Text="{Binding Title}" Style="{StaticResource CaptionText}" Height="40" Margin="0,0,44,0" VerticalAlignment="Center"/>
          <StackPanel x:Name="SlotContent">
          <local:GearArt Kind="cab" Image="{Binding Image}" Accent="{DynamicResource CubeAccent}" Height="112" Margin="0,4,0,8" ToolTip="{loc:Translate Value={Binding ImageHint}}" AutomationProperties.HelpText="{loc:Translate Value={Binding ImageHint}}"/>
-         <TextBlock Text="{loc:Translate Value={Binding Name}}" Style="{StaticResource BodyStrongText}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="40" ToolTip="{Binding Name}"/>
+         <StackPanel Visibility="{Binding IsPreviewSending,Converter={StaticResource Visible}}" Margin="0,0,0,8">
+          <ProgressBar Style="{StaticResource InfiniteProgressBar}" AutomationProperties.Name="{loc:Translate Value={Binding PreviewSendingText}}" AutomationProperties.HelpText="{Binding Title}"/>
+          <TextBlock Text="{loc:Translate Value={Binding PreviewSendingText}}" Style="{StaticResource HelpText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>
+         </StackPanel>
+         <TextBlock Text="{loc:Translate Value={Binding Name}}" Style="{StaticResource CaptionText}" Foreground="{DynamicResource CubeText}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="40" ToolTip="{Binding Name}"/>
          <TextBlock Text="{Binding CaptureSummary}" Style="{StaticResource PackNotice}" TextWrapping="Wrap" Margin="0,4,0,0"/>
          <StackPanel Margin="0,8,0,4" HorizontalAlignment="Stretch">
           <TextBlock Text="{loc:Translate Text='Volume'}" Style="{StaticResource HelpText}" HorizontalAlignment="Center"/>
           <local:MicrophoneFader Value="{Binding DistanceValue,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Minimum="0" Maximum="99" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" Orientation="Horizontal" Height="40" MaxWidth="180" HorizontalAlignment="Stretch" IsEnabled="{Binding CanSetDistance}" ToolTip="{loc:Translate Text='O movimento ajusta o volume do IR; não altera a distância física da captura.'}" AutomationProperties.Name="{loc:Translate Text='Volume'}" AutomationProperties.HelpText="{Binding Title}"/>
-          <Grid MaxWidth="180"><TextBlock Text="{loc:Translate Text='Perto'}" Style="{StaticResource HelpText}" HorizontalAlignment="Left"/><TextBlock Text="{loc:Translate Text='Longe'}" Style="{StaticResource HelpText}" HorizontalAlignment="Right"/></Grid>
+          <Grid MaxWidth="180" Height="24" Margin="0,2,0,0">
+           <ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker124}" FontSize="20" Width="20" Height="20" HorizontalAlignment="Left" Foreground="{DynamicResource Muted}" Focusable="False" ToolTip="{loc:Translate Text='Menos volume'}" AutomationProperties.Name="{loc:Translate Text='Menos volume'}"/>
+           <ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker224}" FontSize="20" Width="20" Height="20" HorizontalAlignment="Right" Foreground="{DynamicResource Muted}" Focusable="False" ToolTip="{loc:Translate Text='Mais volume'}" AutomationProperties.Name="{loc:Translate Text='Mais volume'}"/>
+          </Grid>
           <TextBlock Text="{loc:Translate Value={Binding PreviewStatus}}" Style="{StaticResource PackNotice}" TextWrapping="Wrap" Margin="0,4,0,0"/>
          </StackPanel>
          <TextBlock Text="{loc:Translate Value={Binding Problem}}" Style="{StaticResource PackNotice}" MaxHeight="32" TextTrimming="CharacterEllipsis" ToolTip="{Binding Problem}"/>
          </StackPanel>
         </StackPanel>
-        <ui:Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,44,0" Command="{Binding Remove}" Appearance="Transparent" Width="40" Height="40" Padding="0" AutomationProperties.Name="{loc:Translate Text='Remover IR'}" AutomationProperties.HelpText="{Binding Title}" ToolTip="{loc:Translate Text='Remover IR'}">
+        <ui:Button HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding Remove}" Appearance="Transparent" Width="40" Height="40" Padding="0" AutomationProperties.Name="{loc:Translate Text='Remover IR'}" AutomationProperties.HelpText="{Binding Title}" ToolTip="{loc:Translate Text='Remover IR'}">
          <ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}">
           <Setter Property="Visibility" Value="Visible"/>
           <Style.Triggers>
@@ -110,10 +120,7 @@
          <ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconDelete24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon>
         </ui:Button>
 
-        <ui:Button HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding Preview}" IsEnabled="{Binding CanPreview}" Width="40" Height="40" Padding="0" Visibility="{Binding HasEntry,Converter={StaticResource Visible}}" ToolTip="{loc:Translate Value={Binding PreviewHint}}" AutomationProperties.Name="{loc:Translate Value={Binding PreviewHint}}" AutomationProperties.HelpText="{Binding Title}">
-         <ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}"><Setter Property="Appearance" Value="Transparent"/><Style.Triggers><DataTrigger Binding="{Binding IsPreviewing}" Value="True"><Setter Property="Background" Value="{DynamicResource CubeSelected}"/></DataTrigger></Style.Triggers></Style></ui:Button.Style>
-         <ui:Button.Icon><ui:SymbolIcon FontSize="{DynamicResource CubeIconSizeAction}"><ui:SymbolIcon.Style><Style TargetType="ui:SymbolIcon"><Setter Property="Symbol" Value="{StaticResource CubeIconSpeaker224}"/><Style.Triggers><DataTrigger Binding="{Binding IsPreviewing}" Value="True"><Setter Property="Symbol" Value="{StaticResource CubeIconStop24}"/></DataTrigger></Style.Triggers></Style></ui:SymbolIcon.Style></ui:SymbolIcon></ui:Button.Icon>
-        </ui:Button>
+
        </Grid>
       </Border>
      </DataTemplate></ItemsControl.ItemTemplate>

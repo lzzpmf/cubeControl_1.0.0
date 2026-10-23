@@ -151,7 +151,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         SourceInitialized += (_, _) => Appearance.WindowWorkArea.ClampInitialSize(this);
         busyMessageTimer.Tick += (_, _) => { busyMessageIndex = (busyMessageIndex + 1) % BusyMessages.Length; UpdateBusyMessage(); };
         Model.PropertyChanged += BusyStateChanged;
-        Closed += (_, _) => { BackingTracks.Dispose(); busyMessageTimer.Stop(); Model.PropertyChanged -= BusyStateChanged; };
+        Closed += (_, _) =>
+        {
+            try { BackingTracks.Dispose(); }
+            catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+            busyMessageTimer.Stop(); Model.PropertyChanged -= BusyStateChanged;
+        };
         snackbarService.SetSnackbarPresenter(Notifications);
         Model.NotificationRequested += ShowNotification;
         Closed += (_, _) => Model.NotificationRequested -= ShowNotification;
@@ -182,29 +187,39 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         };
         Closing += async (_, e) =>
         {
-            _ = Model.IrAudition.StopAsync();
             if (closing) return;
             e.Cancel = true;
             if (closeInProgress) return;
             closeInProgress = true;
             try
             {
-            if (Model.Busy) { await ShowNoticeAsync("Aguarde a operação terminar antes de fechar."); return; }
-            if (!CommitBackingInput() || !await BackingTracks.ConfirmProjectCloseAsync()) return;
-            if (!await Model.PackEditor.ConfirmDiscard()) return;
-            if (Model.Dirty && !await Model.Ask("Há ajustes aplicados que não foram salvos. Fechar o editor?")) return;
-            if (Enumerable.Range(1, 4).Any(Model.AdvancedPreviewHasChanges) && !await Model.Ask("Os ajustes dos efeitos estão apenas na RAM. Encerrar as prévias e restaurar os parâmetros anteriores antes de fechar?")) return;
-            try
-            {
-                await Model.Flush(); await Model.EndDelayPreviewAsync(); await Model.EndReverbPreviewAsync(); await Model.EndChorusPreviewAsync(); await Model.EndPhaserPreviewAsync();
-                if (await Model.RestoreAmpAsync() == false) throw new IOException(Model.AmpPreviewMessage);
-                await Model.EndPreviewAsync();
-            }
-            catch (Exception ex)
-            {
-                if (!await Model.Ask(ex.Message + "\nFechar mesmo assim? Os snapshots em memória serão descartados.")) return;
-            }
-            closing = true; Appearance.ThemeService.Instance.Detach(); Model.Dispose(); _ = Dispatcher.BeginInvoke(new Action(Close));
+                if (!await Model.Ask("Fechar o CubeControl? Alterações não salvas serão descartadas.")) return;
+                IsEnabled = false;
+                // Closing must not wait indefinitely for a disconnected or busy pedal.
+                using var stop = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                async Task RestoreForExit()
+                {
+                    await Model.IrAudition.StopAsync();
+                    if (Model.Busy) return;
+                    Func<Task>[] steps = [Model.Flush, Model.EndDelayPreviewAsync, Model.EndReverbPreviewAsync,
+                        Model.EndChorusPreviewAsync, Model.EndPhaserPreviewAsync,
+                        async () => { await Model.RestoreAmpAsync(); }, Model.EndPreviewAsync];
+                    foreach (var step in steps)
+                    {
+                        stop.Token.ThrowIfCancellationRequested();
+                        await step();
+                    }
+                }
+                try { await RestoreForExit().WaitAsync(stop.Token); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+                closing = true;
+                try { Appearance.ThemeService.Instance.Detach(); Model.Dispose(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
+                _ = Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    Close();
+                    Application.Current.Shutdown();
+                }));
             }
             finally { closeInProgress = false; }
         };
@@ -295,7 +310,20 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         standaloneAltPressed = false;
     }
 
-    private void NavigationWheel(object sender, MouseWheelEventArgs e) => e.Handled = true;
+    private int navigationWheelDelta;
+    private void NavigationLeave(object sender, MouseEventArgs e) => navigationWheelDelta = 0;
+    private void NavigationWheel(object sender, MouseWheelEventArgs e)
+    {
+        e.Handled = true;
+        if (Navigation.Items.Count == 0 || !Navigation.IsEnabled)
+        { navigationWheelDelta = 0; return; }
+        navigationWheelDelta += e.Delta;
+        int steps = navigationWheelDelta / 120;
+        navigationWheelDelta %= 120;
+        if (steps == 0) return;
+        Navigation.SelectedIndex = Math.Clamp(Navigation.SelectedIndex - steps, 0, Navigation.Items.Count - 1);
+        Navigation.ScrollIntoView(Navigation.SelectedItem);
+    }
     private void NavigationChanged(object sender, SelectionChangedEventArgs e)
     {
         if (Tabs == null || e.Source != Navigation || Navigation.SelectedIndex < 0) return;

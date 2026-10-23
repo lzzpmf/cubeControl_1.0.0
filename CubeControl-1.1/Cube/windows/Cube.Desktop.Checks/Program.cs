@@ -10,7 +10,7 @@ class Check {
  static void Assert(bool ok,string text){if(!ok)throw new Exception(text);Console.WriteLine("PASS: "+text);}
  static object Call(object o,string name,params object[] args)=>o.GetType().GetMethod(name,Flags)!.Invoke(o,args)!;
  static async Task<CabinetCapture> Match(IrLibraryEntry[] entries,byte[] sector,int? volume=80)=>await Task.Run(()=> (CabinetCapture)typeof(EditorViewModel).GetMethod("MatchCapture",BindingFlags.NonPublic|BindingFlags.Static)!.Invoke(null,new object[]{entries,sector,volume})!);
- [STAThread] static void Main(string[] args) { if (args.Contains("--backing-hardware")) BackingHardwareChecks.Run(); else if (args.Contains("--backing-performance")) BackingPerformanceChecks.Run(); else if (args.Contains("--backing")) BackingProjectChecks.Run(); else if (args.Contains("--theme")) ThemeMaterialChecks.Run(); else Run(); }
+ [STAThread] static void Main(string[] args) { if (args.Contains("--closing")) ClosingChecks.Run(args.Contains("--busy")); else if (args.Contains("--backing-hardware")) BackingHardwareChecks.Run(); else if (args.Contains("--backing-performance")) BackingPerformanceChecks.Run(); else if (args.Contains("--backing")) BackingProjectChecks.Run(); else if (args.Contains("--theme")) ThemeMaterialChecks.Run(); else Run(); }
  static void Run(){var app=new Cube.Desktop.App();app.InitializeComponent();SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
  var task=Tests();var frame=new DispatcherFrame();task.ContinueWith(_=>app.Dispatcher.BeginInvoke(new Action(()=>frame.Continue=false)));Dispatcher.PushFrame(frame);task.GetAwaiter().GetResult();app.Shutdown();}
  static async Task Tests(){
@@ -39,6 +39,29 @@ class Check {
  await vm.EndPreviewAsync();
  Assert(!vm.Ir.PreviewActive && fake.Ram.AsSpan(0x768,2052).SequenceEqual(originalIr),"editor restores snapshot captured in DSP state 2");
  fake.Observe=null;
+ var previewSlot=vm.PackEditor.Slots[0];
+ Call(previewSlot,"Load",new IrPackEntry(0,sample.RelativePath,sample.Metadata.Sha256,sample.Name,80));
+ Assert(previewSlot.DistanceValue==19,"pack volume reflects inverse distance without changing the saved value");
+ previewSlot.DistanceValue=99;
+ Assert(previewSlot.Entry.Distance==0,"rightmost pack volume uses minimum attenuation");
+ previewSlot.DistanceValue=0;
+ Assert(previewSlot.Entry.Distance==99,"leftmost pack volume uses maximum attenuation");
+ previewSlot.DistanceValue=19;
+ Assert(previewSlot.Entry.Distance==80,"pack volume round trip preserves stored distance");
+ bool sawSending=false;
+ fake.Observe=_=>{sawSending|=previewSlot.IsPreviewSending;};
+ var previewTask=(Task)Call(vm,"TogglePackPreviewAsync",previewSlot);
+ Assert(previewSlot.IsPreviewSending && !vm.PackEditor.Slots[1].IsPreviewSending,"pack progress starts immediately on the selected card only");
+ await previewTask;
+ Assert(sawSending && !previewSlot.IsPreviewSending && vm.Ir.PreviewConfirmed,"pack progress covers transfer and clears after confirmation");
+ bool sawEnding=false;
+ fake.Observe=_=>{sawEnding|=previewSlot.IsPreviewSending && previewSlot.PreviewSendingText=="Encerrando prévia…";};
+ await vm.EndPreviewAsync();
+ Assert(sawEnding && !previewSlot.IsPreviewSending && !vm.Ir.PreviewActive,"ending pack preview shows progress during restoration and clears it afterwards");
+ fake.Observe=null;
+ Call(previewSlot,"Load",new IrPackEntry(0,sample.RelativePath,new string('0',64),sample.Name,80));
+ await (Task)Call(vm,"TogglePackPreviewAsync",previewSlot);
+ Assert(!previewSlot.IsPreviewSending && !vm.Ir.PreviewActive,"invalid pack file clears progress without starting preview");
  await (Task)Call(vm,"WriteIrAsync",0,bytes,80,sample.Name,null,false,sample.FullPath);
  string hash=CabinetInventory.Hash(sector);
  Assert(vm.Cabinets[1].Name==capture.Title && vm.Cabinets[1].CaptureSummary==capture.Summary,"verified write updates cabinet");

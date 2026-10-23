@@ -140,14 +140,14 @@
    <Setter Property="Height" Value="116"/><Setter Property="Margin" Value="18,0"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><Grid>
     <Grid>
-     <Border x:Name="Surface" Background="{DynamicResource CubeItemRest}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}">
+     <Border x:Name="Surface" Background="{DynamicResource CubeItemRest}" BorderBrush="{DynamicResource CubeSurfaceBorderBrush}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" CornerRadius="{DynamicResource CubeControlCornerRadius}">
       <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
      </Border>
 
     </Grid>
     <Border Style="{StaticResource CubeSelectionMarker}"/></Grid><ControlTemplate.Triggers>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
-     <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeSelected}"/><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource CubeAccent}"/></Trigger>
+     <Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeSelected}"/></Trigger>
 
      <Trigger Property="IsEnabled" Value="False"><Setter Property="Foreground" Value="{DynamicResource CubeDisabledText}"/><Setter TargetName="Surface" Property="Background" Value="{DynamicResource CubeItemRest}"/></Trigger>
     </ControlTemplate.Triggers>
@@ -191,7 +191,7 @@
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Border x:Name="NavigationHeader" VerticalAlignment="Center" Background="Transparent" Padding="0" Margin="0">
-     <ListBox x:Name="Navigation" PreviewMouseWheel="NavigationWheel" PreviewMouseRightButtonDown="IgnoreSelectorRightClick" PreviewMouseRightButtonUp="IgnoreSelectorRightClick" SelectedIndex="0" SelectionChanged="NavigationChanged" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Navegação principal'}">
+     <ListBox x:Name="Navigation" PreviewMouseWheel="NavigationWheel" MouseLeave="NavigationLeave" PreviewMouseRightButtonDown="IgnoreSelectorRightClick" PreviewMouseRightButtonUp="IgnoreSelectorRightClick" SelectedIndex="0" SelectionChanged="NavigationChanged" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Navegação principal'}">
       <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
       <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem" BasedOn="{StaticResource DefaultListBoxItemStyle}">
        <Setter Property="FocusVisualStyle" Value="{DynamicResource DefaultControlFocusVisualStyle}"/><Setter Property="Padding" Value="12,10"/><Setter Property="MinHeight" Value="72"/><Setter Property="Margin" Value="0,0,8,4"/>
@@ -243,16 +243,10 @@
      <ui:Button ToolTip="{loc:Translate Text='Gerencia a conexão USB com o pedal.'}" Grid.Column="1" Content="{loc:Translate Value={Binding ConnectActionLabel}}" Command="{Binding Connect}" Appearance="Primary" MinHeight="40" Margin="0" VerticalAlignment="Center" Visibility="{Binding ShowConnectAction,Converter={StaticResource Visible}}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconPlugConnected24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
     </Grid>
    </Grid>
-  <ScrollViewer x:Name="WorkspaceScroll" ScrollChanged="PageScrollChanged" Grid.Row="1" PreviewMouseWheel="EditorPageWheel" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled">
+  <ScrollViewer Background="{DynamicResource CubeCanvas}" x:Name="WorkspaceScroll" ScrollChanged="PageScrollChanged" Grid.Row="1" PreviewMouseWheel="EditorPageWheel" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled">
    <Grid><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <Grid Grid.Row="0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
 
-    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="12,8" Margin="0,0,0,12" Visibility="{Binding HasPackPreview,Converter={StaticResource Visible}}">
-     <DockPanel>
-      <ui:Button DockPanel.Dock="Right" Content="{loc:Translate Text='Encerrar prévia'}" Command="{Binding EndPreview}" Margin="12,0,0,0"/>
-      <StackPanel><TextBlock Text="{Binding Ir.File}" TextWrapping="Wrap" Style="{StaticResource BodyStrongText}"/><TextBlock Text="{loc:Translate Value={Binding Ir.PreviewLabel}}" Style="{StaticResource HelpText}" TextWrapping="Wrap"/></StackPanel>
-     </DockPanel>
-    </Border>
     <TabControl x:Name="Tabs" SelectedIndex="0" Grid.Row="1" Style="{StaticResource HiddenTabs}" BorderThickness="0" Background="Transparent">
      <TabItem Header="{loc:Translate Text='Pedaleira'}"><ScrollViewer x:Name="EditorScroll" ScrollChanged="PageScrollChanged" local:SurfaceMotion.Enabled="True" local:SurfaceMotion.Offset="8" PreviewMouseWheel="EditorPageWheel" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel>
      <TextBlock Text="{loc:Translate Text='Controle seu dispositivo'}" TextWrapping="Wrap" Margin="0,0,0,6" Style="{StaticResource TitleText}"/>
@@ -476,7 +470,7 @@
     <ScrollViewer x:Name="IrScroll" ScrollChanged="PageScrollChanged" local:SurfaceMotion.Enabled="True" local:SurfaceMotion.Offset="8" PreviewMouseWheel="PageMouseWheel" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel Margin="0,0,0,24">
      <TextBlock Text="{loc:Translate Text='Gerenciar IRs'}" TextWrapping="Wrap" Margin="0,0,0,6" Style="{StaticResource TitleText}"/>
      <TextBlock Text="{loc:Translate Text='Ouça um arquivo no pedal antes de substituir um slot. Prévia e gravação são ações separadas.'}" Foreground="{DynamicResource Muted}" Margin="0,0,0,12" TextWrapping="Wrap" Style="{StaticResource BodyText}"/>
-     <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,0,12">
+     <Border Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,0,12">
       <local:AdaptivePanel x:Name="IrSectionPanel" FirstShare="0.3" FirstMinWidth="356" FirstMaxWidth="416" Breakpoint="1040">
        <StackPanel IsEnabled="{Binding CanChooseIr}" Margin="0,0,16,12">
         <Grid Margin="0,0,0,8"><Grid.RowDefinitions><RowDefinition Height="Auto" SharedSizeGroup="IrSectionHeader"/></Grid.RowDefinitions>
@@ -589,7 +583,7 @@
 
      </StackPanel></Border>
         </Grid></TabItem>
-        <TabItem Header="{loc:Translate Text='Packs de IRs (8 slots)'}">
+        <TabItem Header="{loc:Translate Text='Packs de IRs'}">
          <local:IrPackEditor x:Name="IrPacksCard" DataContext="{Binding PackEditor}" Margin="0,12,0,0"/>
         </TabItem>
        </TabControl>

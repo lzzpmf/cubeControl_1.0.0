@@ -100,6 +100,7 @@ public sealed class ThemeService
             foreach (string key in new[] { "CubeItemRest", "CubeItemHover", "CubeComboField", "CubeComboFieldHover",
                 "BackingCard", "CubeCard", "CubeInset", "CubeWell" }) resources[key] = SystemColors.WindowBrush;
             resources["CubeSelected"] = resources["CubeSelectedBrush"] = SystemColors.HighlightBrush;
+            resources["CubeLibraryItemBackground"] = SystemColors.WindowBrush;
             return;
         }
         void Surface(string key, Color color, byte alpha)
@@ -115,6 +116,7 @@ public sealed class ThemeService
             ("CubeCard", 100), ("CubeInset", 80), ("CubeWell", 110) })
             Surface(key, (Color)resources[key + (IsLight ? ".Light" : ".Dark")], alpha);
         resources["CubeSelected"] = resources["CubeSelectedBrush"];
+        resources["CubeLibraryItemBackground"] = IsLight ? resources["CubeItemRest"] : Brushes.Transparent;
     }
 
     private void RefreshWindowIcon()

@@ -28,6 +28,10 @@ internal static class ThemeMaterialChecks
             var text = ThemeService.Brush("CubeText");
             apply.Invoke(theme, [true]);
             var first = keys.ToDictionary(k => k, ColorOf);
+            if (mode == ApplicationTheme.Dark && ColorOf("CubeLibraryItemBackground").A != 0)
+                throw new Exception("Dark library items must have no rest fill");
+            if (mode == ApplicationTheme.Light && ColorOf("CubeLibraryItemBackground") != ColorOf("CubeItemRest"))
+                throw new Exception("Light library items must retain their rest surface");
             foreach (var key in new[] { "CubeCard", "CubeInset", "CubeWell" })
             {
                 var color = first[key];

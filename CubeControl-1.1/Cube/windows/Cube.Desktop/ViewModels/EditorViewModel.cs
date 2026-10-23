@@ -124,7 +124,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Import = Command(ImportAsync, () => CanEdit, changesEffects: true);
         ChooseWav = Command(ChooseWavAsync, () => !Busy);
         PreviewIr = Command(PreviewAsync, () => CanOperate && Ir.Audio != null);
-        EndPreview = Command(EndPreviewAsync, () => Connected && !Busy && originalRam != null);
+        EndPreview = new UiCommand(async () => await Execute(EndPreviewAsync, packPreviewEdit: true), () => Connected && !Busy && originalRam != null);
         EndAmpPreview = new UiCommand(async () => await RestoreAmpAsync(), () => CanRestoreAmp);
         WriteIr = new UiCommand(async () => await ConfirmWriteIrAsync(), () => CanOperate && Ir.Audio != null && !confirmingIrWrite);
         ReadSlot = Command(ReadSlotAsync, () => CanOperate);
@@ -589,15 +589,25 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     }
     public async Task EndPreviewAsync()
     {
-        ++packPreviewGeneration; pendingPackDistance = null;
-        await RestorePreviewAsync();
-        PackPreviewSlot = null; RefreshPackPreview();
-        // Clear the picker only after restoration succeeds; failed previews stay recoverable.
-        irSelectionGeneration++;
-        IrLibrary.ClearSelection();
-        Ir.ClearLoadedFile();
-        Refresh();
+        var endingSlot = PackPreviewSlot;
+        endingSlot?.SetPreviewSending(true, ending: true);
+        try
+        {
+            ++packPreviewGeneration; pendingPackDistance = null;
+            await RestorePreviewAsync();
+            PackPreviewSlot = null; RefreshPackPreview();
+            // Clear the picker only after restoration succeeds; failed previews stay recoverable.
+            irSelectionGeneration++;
+            IrLibrary.ClearSelection();
+            Ir.ClearLoadedFile();
+            Refresh();
+        }
+        finally
+        {
+            endingSlot?.SetPreviewSending(false);
+        }
     }
+
     private async Task RestorePreviewAsync()
     {
         if (originalRam == null) return;

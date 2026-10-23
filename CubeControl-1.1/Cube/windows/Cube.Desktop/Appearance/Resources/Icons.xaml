@@ -1,5 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:local="clr-namespace:Cube.Desktop.Controls" xmlns:loc="clr-namespace:Cube.Desktop.Localization" xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 <ui:SymbolRegular x:Key="CubeIconStop24">Stop24</ui:SymbolRegular>
+<ui:SymbolRegular x:Key="CubeIconSpeaker124">Speaker124</ui:SymbolRegular>
 <ui:SymbolRegular x:Key="CubeIconSpeakerMute24">SpeakerMute24</ui:SymbolRegular>
 <ui:SymbolRegular x:Key="CubeIconSoundWaveCircle24">SoundWaveCircle24</ui:SymbolRegular>
 <ui:SymbolRegular x:Key="CubeIconSearch24">Search24</ui:SymbolRegular>

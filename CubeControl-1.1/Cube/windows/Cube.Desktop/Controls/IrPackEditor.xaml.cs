@@ -13,6 +13,8 @@ namespace Cube.Desktop.Controls;
 public partial class IrPackEditor : UserControl
 {
     private bool selecting;
+    private Border? pressedCard;
+    private Point cardPressPosition;
     public IrPackEditor() => InitializeComponent();
     private void OpenMenuClick(object sender, RoutedEventArgs e)
     {
@@ -43,11 +45,10 @@ public partial class IrPackEditor : UserControl
         for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
         {
             var child = VisualTreeHelper.GetChild(root, i);
-            if (child is Border { DataContext: IrPackSlotViewModel } card) yield return card;
+            if (child is Border { Name: "SlotCard", DataContext: IrPackSlotViewModel } card) yield return card;
             foreach (var nested in Cards(child)) yield return nested;
         }
     }
-    private static FrameworkElement SlotContent(Border card) => (FrameworkElement)((StackPanel)((Grid)card.Child).Children[0]).Children[1];
     private DragDropEffects DropEffect(CubeDropContext e, IrPackSlotViewModel slot)
     {
         if (DataContext is not IrPackEditorViewModel { CanEdit: true } model) return DragDropEffects.None;
@@ -82,7 +83,7 @@ public partial class IrPackEditor : UserControl
                 if (e.Effects == DragDropEffects.Copy && e.Data.GetData(typeof(LibraryDrag)) is LibraryDrag library) { if (await model.AssignIr(slot.Index, library.Entry)) DragMotion.Settle(card); }
                 else if (e.Effects == DragDropEffects.Move && e.Data.GetData(typeof(SlotDrag)) is SlotDrag source) {
                     var origin = Cards(this).FirstOrDefault(x => x.DataContext is IrPackSlotViewModel item && item.Index == source.Index);
-                    if (origin != null) DragMotion.Swap(this, SlotContent(origin), SlotContent(card), () => model.SwapSlots(source.Index, slot.Index));
+                    if (origin != null) DragMotion.Swap(this, origin, card, () => model.SwapSlots(source.Index, slot.Index));
                 }
                 if (e.Effects != DragDropEffects.None) card.Focus();
             }
@@ -90,10 +91,43 @@ public partial class IrPackEditor : UserControl
         }
         e.Handled = true;
     }
+    private void SlotMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        pressedCard = null;
+        if (sender is not Border card || e.ClickCount != 1 ||
+            CubeDragDrop.IsInteractive(e.OriginalSource as DependencyObject, card)) return;
+        pressedCard = card;
+        cardPressPosition = e.GetPosition(card);
+    }
+    private void SlotMouseMove(object sender, MouseEventArgs e)
+    {
+        if (pressedCard is not { } card) return;
+        var delta = e.GetPosition(card) - cardPressPosition;
+        if (e.LeftButton != MouseButtonState.Pressed ||
+            Math.Abs(delta.X) >= SystemParameters.MinimumHorizontalDragDistance ||
+            Math.Abs(delta.Y) >= SystemParameters.MinimumVerticalDragDistance) pressedCard = null;
+    }
+    private void SlotMouseUp(object sender, MouseButtonEventArgs e)
+    {
+        var card = pressedCard;
+        pressedCard = null;
+        if (card == null || !ReferenceEquals(sender, card) ||
+            CubeDragDrop.IsInteractive(e.OriginalSource as DependencyObject, card)) return;
+        if (card.DataContext is IrPackSlotViewModel slot && slot.Preview.CanExecute(null))
+        {
+            card.Focus();
+            slot.Preview.Execute(null);
+            e.Handled = true;
+        }
+    }
     private void SlotKeyDown(object sender, KeyEventArgs e)
     {
-        if (e.Key == Key.Delete && sender is Border { DataContext: IrPackSlotViewModel slot } && slot.Remove.CanExecute(null))
+        if (sender is not Border { DataContext: IrPackSlotViewModel slot } card ||
+            CubeDragDrop.IsInteractive(e.OriginalSource as DependencyObject, card)) return;
+        if (e.Key == Key.Delete && slot.Remove.CanExecute(null))
         { slot.Remove.Execute(null); e.Handled = true; }
+        else if ((e.Key is Key.Enter or Key.Space) && !e.IsRepeat && slot.Preview.CanExecute(null))
+        { slot.Preview.Execute(null); e.Handled = true; }
     }
     private async void PackSelectionChanged(object sender, SelectionChangedEventArgs e)
     {

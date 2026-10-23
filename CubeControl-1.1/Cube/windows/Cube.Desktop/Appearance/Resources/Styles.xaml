@@ -320,7 +320,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <Border x:Name="Border" BorderBrush="{DynamicResource CubeSurfaceBorderBrush}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" Background="{DynamicResource CubeItemRest}" Grid.Row="0" CornerRadius="{TemplateBinding Border.CornerRadius}">
+                        <Border x:Name="Border" BorderBrush="{DynamicResource CubeSurfaceBorderBrush}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" Background="{DynamicResource CubeLibraryItemBackground}" Grid.Row="0" CornerRadius="{TemplateBinding Border.CornerRadius}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" MinWidth="19"/>

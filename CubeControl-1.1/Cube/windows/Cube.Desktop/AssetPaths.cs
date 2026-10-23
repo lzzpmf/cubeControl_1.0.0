@@ -62,6 +62,8 @@ internal static class AssetPaths
         ["microphone-distance-side.png"] = "Images/Equipment/Microphones/microphone-distance-side.png",
         ["pack-ribbon-microphone.png"] = "Images/Equipment/Microphones/pack-ribbon-microphone.png",
         ["pack-dynamic-microphone.png"] = "Images/Equipment/Microphones/pack-dynamic-microphone.png",
+        ["pack-circular-microphone.png"] = "Images/Equipment/Microphones/pack-circular-microphone.png",
+        ["pack-minimal-ribbon-microphone.png"] = "Images/Equipment/Microphones/pack-minimal-ribbon-microphone.png",
         ["micGenerico.png"] = "Images/Equipment/Microphones/micGenerico.png",
         ["orange-v30-2x12.png"] = "Images/Equipment/Cabinets/orange-v30-2x12.png",
         ["orange-v30-vertical-2x12.png"] = "Images/Equipment/Cabinets/orange-v30-vertical-2x12.png",

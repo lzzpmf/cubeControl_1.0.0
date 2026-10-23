@@ -4,7 +4,7 @@
 The pedal has eight IR slots. Their contents may have been replaced: a slot number does not identify a cabinet. The included library works offline.
 
 ## Shared library
-**Manage IRs** has **Individual analysis and preview** and **IR packs (8 slots)** tabs sharing the same library, search and selection. The individual tab opens initially; the selected tab is retained during the session. In Packs, selecting a file only makes it available for slot assembly. Switching tabs does not apply IRs or discard the draft; an active preview remains on the pedal. Return to the individual tab to end it.
+**Manage IRs** has **Individual analysis and preview** and **IR packs** tabs sharing the same library, search and selection. The individual tab opens initially; the selected tab is retained during the session. In Packs, selecting a file only makes it available for slot assembly. Switching tabs does not apply IRs or discard the draft; an active preview remains on the pedal. Return to the individual tab to end it.
 
 ## Import and try an IR
 Choose an impulse-response WAV in the interface and check the reported compatibility. An IR WAV is neither an amp file nor a Backing Tracks song. IR preview changes pedal RAM without replacing any of the eight stored slots. Choosing an external WAV or selecting an IR in the individual library starts preview automatically when the pedal is connected and the session is not blocked; without a connection, it only prepares the local file. The previous state remains in memory for this app session; use End preview before closing.

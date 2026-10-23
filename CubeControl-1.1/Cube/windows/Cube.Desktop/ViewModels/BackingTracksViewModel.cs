@@ -518,7 +518,7 @@ public sealed partial class BackingTracksViewModel : Observable, IDisposable
         StopYouTubePreview(); StopMonitor(); meterTimer.Stop(); disposed = true; lifetime.Cancel(); waveformCancellation?.Cancel(); exportCancellation?.Cancel(); positionTimer.Stop(); parameterTimer.Stop();
         LanguageService.Instance.PropertyChanged -= MusicLanguageChanged;
         engine.Changed -= EngineChanged; engine.Dispose();
-        try { Task.WhenAll(backgroundWork.ToArray()).GetAwaiter().GetResult(); } catch (Exception ex) { if (ex is not OperationCanceledException) Log(ex); }
+        try { Task.WhenAll(backgroundWork.ToArray()).Wait(TimeSpan.FromSeconds(2)); } catch (Exception ex) { if (ex is not OperationCanceledException) Log(ex); }
         if (watcher != null) { watcher.Added -= DeviceChanged; watcher.Removed -= DeviceChanged; watcher.Updated -= DeviceChanged; if (watcher.Status is DeviceWatcherStatus.Started or DeviceWatcherStatus.EnumerationCompleted) watcher.Stop(); }
         lifetime.Dispose();
     }

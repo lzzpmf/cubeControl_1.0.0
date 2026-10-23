@@ -4,7 +4,7 @@
 O pedal tem oito slots de IR. O conteúdo pode ter sido substituído: não confunda o número do slot com a identidade do gabinete. A biblioteca incluída pode ser usada offline.
 
 ## Biblioteca compartilhada
-**Gerenciar IRs** oferece as abas **Análise e prévia individual** e **Packs de IRs (8 slots)**, com a mesma biblioteca, busca e seleção. A aba individual abre inicialmente; a escolha fica preservada durante a sessão. Em Packs, selecionar um arquivo apenas o disponibiliza para montar os slots. Trocar de aba não aplica IRs nem descarta a montagem; uma prévia já ativa permanece no pedal. Volte à aba individual para encerrá-la.
+**Gerenciar IRs** oferece as abas **Análise e prévia individual** e **Packs de IRs**, com a mesma biblioteca, busca e seleção. A aba individual abre inicialmente; a escolha fica preservada durante a sessão. Em Packs, selecionar um arquivo apenas o disponibiliza para montar os slots. Trocar de aba não aplica IRs nem descarta a montagem; uma prévia já ativa permanece no pedal. Volte à aba individual para encerrá-la.
 
 ## Importar e experimentar
 Escolha um WAV de resposta de impulso pela interface e observe a compatibilidade informada. Um WAV de IR não é um arquivo de amp nem uma música para Backing Tracks. A prévia de IR altera a RAM do pedal, sem substituir nenhum dos oito slots gravados. Escolher um WAV externo ou selecionar um IR na biblioteca individual inicia a prévia automaticamente quando o pedal está conectado e a sessão não está bloqueada; sem conexão, apenas prepara o arquivo local. O estado anterior fica em memória nesta execução para restauração; use Encerrar prévia antes de fechar.
