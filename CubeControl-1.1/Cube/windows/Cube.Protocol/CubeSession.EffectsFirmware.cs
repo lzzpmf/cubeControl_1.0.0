@@ -9,8 +9,8 @@ public sealed partial class CubeSession
     private const int EffectControlsLength = 0x764 - EffectControlsStart;
     private bool effectsFirmwareB;
     public string? EffectsFirmware { get; private set; }
-    private uint EffectsPhysicalStateOffset => effectsFirmwareB ? 0xFFFD81F6u : 0xFFFD8202u;
-    private uint EffectsBankAliasOffset => effectsFirmwareB ? 0xFFFD8270u : 0xFFFD827Cu;
+    private uint EffectsPhysicalStateOffset => effectsFirmwareVd612 ? unchecked(0x80CB16u - Vd612DspBase) : effectsFirmwareB ? 0xFFFD81F6u : 0xFFFD8202u;
+    private uint EffectsBankAliasOffset => effectsFirmwareVd612 ? unchecked(0x80CBBCu - Vd612DspBase) : effectsFirmwareB ? 0xFFFD8270u : 0xFFFD827Cu;
 
     public async Task<PhaserResearchSnapshot> ReadEffectPreviewState(int stage, CancellationToken ct = default)
     {
@@ -126,6 +126,8 @@ public sealed partial class CubeSession
 
     private uint EffectsAddress(uint legacy)
     {
+        if (effectsFirmwareVd612)
+            throw new NotSupportedException("Esta coleta experimental usa endereços de outro firmware e não está disponível no VD612.");
         if (effectsFirmwareB)
         {
             foreach (var range in FirmwareBSignatures)

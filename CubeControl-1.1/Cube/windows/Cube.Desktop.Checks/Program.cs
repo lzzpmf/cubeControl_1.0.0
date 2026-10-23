@@ -10,7 +10,7 @@ class Check {
  static void Assert(bool ok,string text){if(!ok)throw new Exception(text);Console.WriteLine("PASS: "+text);}
  static object Call(object o,string name,params object[] args)=>o.GetType().GetMethod(name,Flags)!.Invoke(o,args)!;
  static async Task<CabinetCapture> Match(IrLibraryEntry[] entries,byte[] sector,int? volume=80)=>await Task.Run(()=> (CabinetCapture)typeof(EditorViewModel).GetMethod("MatchCapture",BindingFlags.NonPublic|BindingFlags.Static)!.Invoke(null,new object[]{entries,sector,volume})!);
- [STAThread] static void Main(string[] args) { if (args.Contains("--closing")) ClosingChecks.Run(args.Contains("--busy")); else if (args.Contains("--backing-hardware")) BackingHardwareChecks.Run(); else if (args.Contains("--backing-performance")) BackingPerformanceChecks.Run(); else if (args.Contains("--backing")) BackingProjectChecks.Run(); else if (args.Contains("--theme")) ThemeMaterialChecks.Run(); else Run(); }
+ [STAThread] static void Main(string[] args) { if (args.Contains("--effects-firmware")) EffectsFirmwareChecks.Run().GetAwaiter().GetResult(); else if (args.Contains("--closing")) ClosingChecks.Run(args.Contains("--busy")); else if (args.Contains("--youtube") || args.Contains("--backing")) YouTubeDownloaderChecks.Run(); else if (args.Contains("--theme")) ThemeMaterialChecks.Run(); else Run(); }
  static void Run(){var app=new Cube.Desktop.App();app.InitializeComponent();SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
  var task=Tests();var frame=new DispatcherFrame();task.ContinueWith(_=>app.Dispatcher.BeginInvoke(new Action(()=>frame.Continue=false)));Dispatcher.PushFrame(frame);task.GetAwaiter().GetResult();app.Shutdown();}
  static async Task Tests(){
@@ -29,7 +29,17 @@ class Check {
  Assert(await Match(new[]{sample,conflict},sector)==null,"conflicting candidates stay unidentified");
  Assert(await Match(new[]{sample with{Metadata=sample.Metadata with{Sha256=new string('0',64)}}},sector)==null,"changed source hash rejected");
  var sparse=new CabinetCapture(new IrLibraryMetadata(),"external.wav");Assert(sparse.Title=="" && sparse.Summary=="","missing metadata stays hidden");
- var probable=capture with{Metadata=capture.Metadata with{Identification="probable"}};Assert(probable.Title!=capture.Title,"probable label retained");
+ var probable=capture with{Metadata=capture.Metadata with{Identification="probable",IdentificationEvidence="Identificação provável: referência local."}};
+ Assert(probable.Title==capture.Title && probable.Metadata.ModelLabel==capture.Metadata.ModelLabel,"probable classification adds no text to IR and cabinet names");
+ var library=new IrLibraryViewModel(()=>true,Path.Combine(data,"empty-library"));
+ foreach(string identification in new[]{"probable","confirmed","unknown"}){
+ var metadata=probable.Metadata with{Identification=identification};
+ library.Selected=sample with{Metadata=metadata};string details=library.SelectedDetails;
+ Assert(details.Contains(metadata.ModelLabel) && details.Contains("Fontes:") && details.Contains(metadata.MicrophoneLabel),"IR details retain capture information: "+identification);
+ Assert(identification=="probable" ? !details.Contains("Identificação:") && !details.Contains("Evidência:") && metadata.IdentificationLabel=="" : details.Contains("Identificação: "+metadata.IdentificationLabel) && details.Contains("Evidência: "+metadata.IdentificationEvidence),"identification details hidden only for probable IRs: "+identification);
+ }
+ var restoredProbable=System.Text.Json.JsonSerializer.Deserialize<CabinetCapture>(System.Text.Json.JsonSerializer.Serialize(probable));
+ Assert(restoredProbable.Title==capture.Title && restoredProbable.Metadata.Identification=="probable" && restoredProbable.Metadata.IdentificationEvidence==probable.Metadata.IdentificationEvidence,"saved associations hide probable label while retaining internal metadata");
  var fake=new FakeConnection();var session=new CubeSession(fake);await session.Identify();typeof(EditorViewModel).GetField("session",Flags)!.SetValue(vm,session);
  fake.Ram[0x764]=2;
  var originalIr=fake.Ram.AsSpan(0x768,2052).ToArray();

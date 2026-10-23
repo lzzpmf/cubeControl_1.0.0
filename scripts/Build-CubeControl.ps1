@@ -255,7 +255,7 @@ try {
     if (-not $locked) { throw 'Outro build do CubeControl esta em andamento.' }
     if ($CompileOnly) {
         if ($Start) { throw 'CompileOnly nao pode ser combinado com Start.' }
-        # Compile managed/WPF/native code without publishing or running verification suites.
+        # Compile managed/WPF code without publishing or running verification suites.
         $compileRoot = $OutputRoot
         $compileArgs = @('build', $projectPath, '-c', $configuration, '-r', 'win-x64',
             '--artifacts-path', $compileRoot)
@@ -276,17 +276,6 @@ try {
     Assert-ChildPath $staging $stagingRoot
     Assert-ChildPath $backup $stagingRoot
     [IO.Directory]::CreateDirectory($staging) | Out-Null
-    # Wildcard WPF resources silently omit a missing file. Require REC for the
-    # official dark artwork and every finish before starting tools or compilation.
-    $controlsRoot = Join-Path $workspace 'Cube.Desktop\Assets\Images\Controls'
-    $recordArtwork = @(Join-Path $controlsRoot 'BackingTrack\record.png')
-    $recordArtwork += @(Get-ChildItem -LiteralPath (Join-Path $controlsRoot 'Finishes') -Directory |
-        ForEach-Object { Join-Path $_.FullName 'record.png' })
-    foreach ($recordFile in $recordArtwork) {
-        if (-not (Test-Path -LiteralPath $recordFile -PathType Leaf)) {
-            throw "Arte REC obrigatoria ausente: $recordFile"
-        }
-    }
     Prepare-YouTubeTools
     $sources = Get-SourceHashes
     $publishArgs = @('publish', $projectPath, '-c', $configuration, '-r', 'win-x64',
@@ -296,7 +285,7 @@ try {
     & dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falha na compilacao. O pacote anterior foi preservado.' }
     Assert-SameHashes $sources (Get-SourceHashes)
-    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll', 'CubeBackingDsp.dll', 'NAudio.Core.dll', 'NAudio.Wasapi.dll', 'Tools\YouTube\yt-dlp.exe', 'Tools\YouTube\ffmpeg.exe', 'Tools\YouTube\ffprobe.exe', 'Tools\YouTube\deno.exe', 'Tools\YouTube\versions.json') {
+    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll', 'NAudio.Core.dll', 'NAudio.Wasapi.dll', 'Tools\YouTube\yt-dlp.exe', 'Tools\YouTube\ffmpeg.exe', 'Tools\YouTube\ffprobe.exe', 'Tools\YouTube\deno.exe', 'Tools\YouTube\versions.json') {
         if (-not (Test-Path -LiteralPath (Join-Path $staging $required) -PathType Leaf)) {
             throw "Arquivo obrigatorio ausente do pacote: $required"
         }

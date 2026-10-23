@@ -21,14 +21,7 @@ public sealed record CabinetCapture(IrLibraryMetadata Metadata, string SourceNam
         }
         return string.Join(" · ", parts);
     }
-    public string Title
-    {
-        get
-        {
-            string title = Join(Metadata.Brand, Metadata.CabinetModel, Metadata.SpeakerConfiguration?.Replace('x', '×'));
-            return title + (title.Length > 0 && Metadata.Identification == "probable" ? " · identificação provável" : "");
-        }
-    }
+    public string Title => Join(Metadata.Brand, Metadata.CabinetModel, Metadata.SpeakerConfiguration?.Replace('x', '×'));
     public string Speaker => Join(Metadata.SpeakerLabel);
     public string Summary => Join(Metadata.Microphone, Metadata.Position,
         string.IsNullOrWhiteSpace(Metadata.Microphone) ? null : $"{Metadata.CaptureDistanceMm} mm");

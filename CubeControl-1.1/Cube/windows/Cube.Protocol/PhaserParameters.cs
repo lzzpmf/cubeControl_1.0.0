@@ -36,12 +36,13 @@ public sealed record PhaserParameters(float Step, float Lower, float Upper, floa
         return result;
     }
     public static bool IsDynamicOffset(int offset) => offset is >= 0x658 and < 0x65C or >= 0xF6C and < 0xF70;
-    internal static bool IsModulationDynamicOffset(byte[] dsp, int offset) => dsp[0x63C] == 3 &&
+    internal static bool IsActiveState(byte state) => state is 2 or 3;
+    internal static bool IsModulationDynamicOffset(byte[] dsp, int offset) => IsActiveState(dsp[0x63C]) &&
         (dsp[0x63D] == 5 ? offset is >= 0x68C and < 0x694 : dsp[0x63D] == 2 && offset is >= 0x658 and < 0x65C);
     internal static void ValidateConcurrentModulation(byte[] dsp)
     {
         if (dsp[0x63C] == 0) return;
-        if (dsp[0x63C] != 3) throw new FormatException("Modulação em transição; aguarde a estabilização do efeito.");
+        if (!IsActiveState(dsp[0x63C])) throw new FormatException("Modulação em transição; aguarde a estabilização do efeito.");
         if (dsp[0x63D] == 5) ChorusParameters.ValidateStructure(dsp);
         else if (dsp[0x63D] == 2) Read(dsp);
         else throw new FormatException("Estrutura de modulação desconhecida.");
@@ -94,7 +95,7 @@ public sealed record PhaserRecovery(string Format, string Mapping, string Identi
         Previous.Validate(); Target.Validate(); PhaserParameters.Read(OriginalDsp);
         int slot = PhysicalState[0];
         if (Bank[slot * 16 + 8] is < 9 or > 15 || Bank[slot * 16 + 11] != 1 ||
-            OriginalDsp[0x63C] != 3 || OriginalDsp[0x63D] != 2 || OriginalDsp[0x640] != 1 ||
+            !PhaserParameters.IsActiveState(OriginalDsp[0x63C]) || OriginalDsp[0x63D] != 2 || OriginalDsp[0x640] != 1 ||
             BinaryPrimitives.ReadSingleLittleEndian(OriginalDsp.AsSpan(0x648)) != 5000)
             throw new FormatException("Backup não representa um phaser ativo compatível.");
     }

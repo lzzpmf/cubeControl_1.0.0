@@ -62,7 +62,9 @@ public sealed class IrLibraryViewModel : Observable
         {
             if (Selected?.Metadata is not { } m) return Selected == null ? "" : $"Nome original: {Selected.Name}\n{Selected.RelativePath}\nMetadados de captura não informados.";
             return $"Origem: Overdriven.fr · {m.Collection}" + (m.IsPreview ? " · SP1-PREVIEW" : "")
-                + $"\nCatálogo: {m.Brand} · {m.SpeakerConfiguration} · {m.ModelLabel}\nIdentificação: {m.IdentificationLabel}\nEvidência: {m.IdentificationEvidence}\nFontes: {string.Join(" · ", m.Sources)}"
+                + $"\nCatálogo: {m.Brand} · {m.SpeakerConfiguration} · {m.ModelLabel}"
+                + (m.Identification == "probable" ? "" : $"\nIdentificação: {m.IdentificationLabel}\nEvidência: {m.IdentificationEvidence}")
+                + $"\nFontes: {string.Join(" · ", m.Sources)}"
                 + $"\nCaixa: {m.Cabinet}\nFalante: {m.Speaker}\nMicrofone: {m.MicrophoneLabel}"
                 + $"\nPosição: {m.Position} · {m.PositionDescription}\nDistância de captura aproximada: {m.CaptureDistanceMm} mm"
                 + $"\nPotência: {m.PowerAmp} · Pré de microfone: {m.MicPreamp}"

@@ -19,7 +19,7 @@ public sealed partial class CubeSession
             var snapshot = await ReadChorusPreviewCore(ct);
             if (physicalSlot is < 0 or > 2 || !snapshot.PhysicalState.SequenceEqual(new byte[] { (byte)physicalSlot, 1 }))
                 throw new IOException("Selecione na aplicação o preset ativo fisicamente e use modo PRESET.");
-            if (snapshot.Bank[physicalSlot * 16 + 8] is > 6 || snapshot.Bank[physicalSlot * 16 + 11] != 1 || snapshot.Dsp[0x63C] != 3)
+            if (snapshot.Bank[physicalSlot * 16 + 8] is > 6 || snapshot.Bank[physicalSlot * 16 + 11] != 1 || !PhaserParameters.IsActiveState(snapshot.Dsp[0x63C]))
                 throw new ArgumentException("Ative o chorus e a seção delay/modulação no preset físico antes de ler.");
             var parameters = ChorusParameters.Read(snapshot.Dsp);
             var recovery = new ChorusRecovery("cubecontrol-chorus-recovery-v1", ChorusParameters.Mapping, IdentityHex,

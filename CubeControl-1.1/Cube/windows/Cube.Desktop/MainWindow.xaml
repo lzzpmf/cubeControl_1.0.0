@@ -673,20 +673,6 @@
     <ui:Button Content="{loc:Translate Text='Parar'}" Command="{Binding Stop}"/>
    </WrapPanel>
   </Border>
-  <Border x:Name="BackingMiniPlayer" DataContext="{Binding BackingTracks,RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowMiniPlayer,Converter={StaticResource Visible}}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="24" Padding="12" CornerRadius="{DynamicResource CubeCardCornerRadius}" Background="{DynamicResource CubeFloatingSurface}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}" local:SurfaceMotion.Enabled="True">
-   <Border.Effect><DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.15"/></Border.Effect>
-   <StackPanel>
-    <TextBlock MouseLeftButtonUp="BackingReturnClick" Cursor="Hand" Text="{Binding SelectedTrack.Title}" ToolTip="{Binding SelectedTrack.Title}" MaxWidth="210" TextTrimming="CharacterEllipsis" FontSize="{DynamicResource CubeFontSizeCaption}" Margin="4,0,4,8" Foreground="{DynamicResource CubeText}"/>
-    <ProgressBar Minimum="0" Maximum="{Binding Duration}" Value="{Binding Position}" Height="3" Margin="4,0,4,6" IsHitTestVisible="False"/><TextBlock Text="{loc:Translate Value={Binding Status}}" Visibility="{Binding HasError,Converter={StaticResource Visible}}" TextWrapping="Wrap" MaxWidth="220"/>
-    <StackPanel Orientation="Horizontal">
-     <StackPanel.Resources><Style TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}"><Setter Property="Margin" Value="2,0"/><Setter Property="Appearance" Value="Transparent"/></Style></StackPanel.Resources>
-     <ui:Button Command="{Binding Previous}" ToolTip="{loc:Translate Text='Faixa anterior'}" AutomationProperties.Name="{loc:Translate Text='Faixa anterior'}"><ui:SymbolIcon Symbol="{StaticResource CubeIconPrevious24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button>
-     <ui:Button Command="{Binding PlayPause}" Appearance="Primary" ToolTip="{loc:Translate Value={Binding PlayLabel}}" AutomationProperties.Name="{loc:Translate Value={Binding PlayLabel}}"><ui:SymbolIcon Symbol="{Binding PlayIcon}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button>
-     <ui:Button Command="{Binding Stop}" ToolTip="{loc:Translate Text='Parar'}" AutomationProperties.Name="{loc:Translate Text='Parar'}"><ui:SymbolIcon Symbol="{StaticResource CubeIconStop24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button>
-     <ui:Button Command="{Binding Next}" ToolTip="{loc:Translate Text='Próxima faixa'}" AutomationProperties.Name="{loc:Translate Text='Próxima faixa'}"><ui:SymbolIcon Symbol="{StaticResource CubeIconNext24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button>
-    </StackPanel>
-   </StackPanel>
-  </Border>
   <Border x:Name="BusyOverlay" local:SurfaceMotion.Enabled="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="420" MaxWidth="420" Margin="20" SnapsToDevicePixels="True" UseLayoutRounding="True" IsHitTestVisible="False" Visibility="{Binding ShowBusyPanel,Converter={StaticResource Visible}}">
    <Grid>
     <Border x:Name="BusyShadow" Background="{DynamicResource CubeFloatingSurface}" CornerRadius="{DynamicResource CubeCardCornerRadius}" IsHitTestVisible="False">

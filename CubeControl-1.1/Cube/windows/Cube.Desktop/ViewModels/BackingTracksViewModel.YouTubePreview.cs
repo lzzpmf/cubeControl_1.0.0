@@ -54,8 +54,7 @@ public sealed partial class BackingTracksViewModel
 
     public async Task PreviewYouTube(YouTubeResult video, bool immediate = false)
     {
-        if (!CanEditSession) return;
-        await StopLocalPreview();
+        if (disposed) return;
         if (immediate && youtubePreview != null && YouTubePreviewId == video.Id)
         { previewPromotion?.TrySetResult(); return; }
         StopYouTubePreview();
@@ -74,7 +73,7 @@ public sealed partial class BackingTracksViewModel
             if (!immediate) await Task.WhenAny(Task.Delay(250, request.Token), promotion.Task).WaitAsync(request.Token);
             PreviewTiming?.Invoke("hover", dwell.Elapsed.TotalMilliseconds);
             request.Token.ThrowIfCancellationRequested();
-            if (IsLoading || !PageVisible || SelectedOutput == null) return;
+            if (!PageVisible || SelectedOutput == null) return;
             YouTubePreviewActive = true;
             YouTubePreviewStatus = "Preparando prévia…";
             UpdateYouTubePreviewVolume();
@@ -82,18 +81,9 @@ public sealed partial class BackingTracksViewModel
                 token => dispatcher.InvokeAsync(async () =>
                 {
                     token.ThrowIfCancellationRequested();
-                    if (youtubePreview != request || disposed || IsLoading) throw new OperationCanceledException(token);
+                    if (youtubePreview != request || disposed) throw new OperationCanceledException(token);
                     if (BeforePlayback != null) await BeforePlayback();
                     token.ThrowIfCancellationRequested();
-                    if (IsPlaying)
-                    {
-                        await engine.Pause();
-                        token.ThrowIfCancellationRequested();
-                        UpdatePosition();
-                        State = BackingPlaybackState.Paused;
-                        if (SelectedTrack != null) SelectedTrack.State = "Pausada";
-                        positionTimer.Stop();
-                    }
                 }, System.Windows.Threading.DispatcherPriority.Normal, token).Task.Unwrap(),
                 () => Dispatch(() =>
                 {
@@ -105,7 +95,6 @@ public sealed partial class BackingTracksViewModel
                         UpdatePreviewWave(video.Id, frame);
                 }));
             previewWorker = worker;
-            backgroundWork.Add(worker);
             await worker;
             if (youtubePreview == request && !disposed) YouTubePreviewStatus = "Prévia concluída";
         }
@@ -117,7 +106,6 @@ public sealed partial class BackingTracksViewModel
         }
         finally
         {
-            if (worker != null) backgroundWork.Remove(worker);
             if (previewWorker == worker) previewWorker = null;
             if (youtubePreview == request) { previewPromotion = null; youtubePreview = null; YouTubePreviewActive = false; }
         }

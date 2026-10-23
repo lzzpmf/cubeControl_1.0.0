@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Publica uma copia de teste sem baixar ou incluir ferramentas do YouTube.
 .EXAMPLE
@@ -68,7 +68,7 @@ try {
     & $dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw "Falha na publicacao. Saida de diagnostico preservada em: $runRoot" }
 
-    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'coreclr.dll', 'CubeBackingDsp.dll') {
+    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'coreclr.dll') {
         if (-not (Test-Path -LiteralPath (Join-Path $destination $required) -PathType Leaf)) {
             throw "Arquivo obrigatorio ausente: $required"
         }

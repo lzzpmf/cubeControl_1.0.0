@@ -18,12 +18,12 @@ public sealed class IrAuditionService : IIrAuditionService
 {
     private readonly BackingAudioEngine engine = new();
     public BackingPlaybackSnapshot Snapshot => engine.Snapshot;
-    public Task Open(string path, string output, double duration, bool loop, double volume) => engine.Open(path, output, 0, 1, 0, loop, 0, duration, volume, false);
+    public Task Open(string path, string output, double duration, bool loop, double volume) => engine.Open(path, output, loop, volume);
     public float ConsumePeak() => engine.ConsumeOutputPeak();
     public Task Play() => engine.Play();
     public Task Pause() => engine.Pause();
     public Task Clear() => engine.Clear();
-    public Task Configure(bool loop, double duration) => engine.Configure(1, 0, loop, 0, duration);
+    public Task Configure(bool loop, double duration) => engine.Configure(loop);
     public Task Volume(double volume, bool muted) => engine.SetVolume(volume, muted);
     public void Dispose() => engine.Dispose();
 }

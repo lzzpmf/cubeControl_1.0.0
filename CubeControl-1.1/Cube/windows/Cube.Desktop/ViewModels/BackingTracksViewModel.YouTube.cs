@@ -14,14 +14,6 @@ public sealed partial class BackingTracksViewModel
     private string youtubeStatus = "", youtubeDownloadStatus = "";
     private bool youtubeSearching, youtubeDownloading;
     private double youtubePercent;
-    private string? pendingDownloadPath;
-    public bool HasPendingDownload => pendingDownloadPath != null && File.Exists(pendingDownloadPath);
-    public ICommand InsertDownloadedAudio => new UiCommand(() => Start(InsertDownloadedAsync()), () => CanEditSession && HasPendingDownload);
-    private async Task InsertDownloadedAsync()
-    {
-        if (pendingDownloadPath == null) return;
-        await AddSessionFiles([pendingDownloadPath]); pendingDownloadPath = null; Notify(nameof(HasPendingDownload));
-    }
     private bool previewOnHover;
     public bool PreviewOnHover
     {
@@ -77,6 +69,7 @@ public sealed partial class BackingTracksViewModel
     public ICommand CancelYouTubeDownload => new UiCommand(() => youtubeDownload?.Cancel(), () => YouTubeDownloading);
     private async void SearchYouTube()
     {
+        if (disposed) return;
         StopYouTubePreview();
         ClearCompletedYouTubeDownload();
         youtubeSearch?.Cancel();
@@ -137,7 +130,7 @@ public sealed partial class BackingTracksViewModel
             await YouTubeService.DownloadAsync(result, destination, new Progress<YouTubeProgress>(p =>
             { if (!disposed && youtubeDownload == request && !request.IsCancellationRequested) { YouTubeDownloadStatus = p.Stage; YouTubePercent = Math.Clamp(p.Percent, 0, 100); } }), request.Token);
             request.Token.ThrowIfCancellationRequested();
-            if (!disposed) { RememberYouTubeDownload(result.Id, destination); pendingDownloadPath = destination; Notify(nameof(HasPendingDownload)); YouTubeDownloadStatus = "MP3 salvo. Use Adicionar ao projeto."; }
+            if (!disposed) { RememberYouTubeDownload(result.Id, destination); YouTubeDownloadStatus = "MP3 salvo."; }
         }
         catch (OperationCanceledException) { if (!disposed) YouTubeDownloadStatus = "Download cancelado."; }
         catch (Exception ex) { if (!disposed) YouTubeDownloadStatus = YouTubeError(ex); }

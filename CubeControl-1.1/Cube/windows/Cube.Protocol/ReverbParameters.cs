@@ -50,7 +50,7 @@ public sealed record ReverbParameters(float Dry, float Wet, int Decay, int Retur
             throw new FormatException("Contexto de reverb inválido.");
         CubeBabyProfile.ValidateBank(bank);
         int slot = physical[0];
-        if (bank[slot * 16 + 3] == 0 || bank[slot * 16 + 10] != 1 || dsp[0x6E0] != 3)
+        if (bank[slot * 16 + 3] == 0 || bank[slot * 16 + 10] != 1 || !PhaserParameters.IsActiveState(dsp[0x6E0]))
             throw new FormatException("Ative o reverb e a seção reverb/cabinet no preset físico antes de ler.");
         PhaserParameters.ValidateConcurrentModulation(dsp);
         for (int i = 1; i < 0x84; i++)

@@ -47,7 +47,7 @@ public sealed record DelayParameters(int TimeSamples, float Feedback, float Dept
         if (bank.Length != 48 || dsp.Length != 0xF70 || physical.Length != 2 || physical[0] > 2 || physical[1] != 1)
             throw new FormatException("Contexto de delay inválido.");
         CubeBabyProfile.ValidateBank(bank);
-        if (bank[physical[0] * 16 + 11] != 1 || dsp[0x694] != 3)
+        if (bank[physical[0] * 16 + 11] != 1 || !PhaserParameters.IsActiveState(dsp[0x694]))
             throw new FormatException("Ative a seção delay/modulação no preset físico antes de ler.");
         PhaserParameters.ValidateConcurrentModulation(dsp);
         if (dsp[0x695] != 0 || !dsp.AsSpan(0x6A4, 56).SequenceEqual(Filters))

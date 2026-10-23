@@ -7,6 +7,7 @@ public sealed partial class CubeSession
     {
         if (delayFirmwareVerified) return;
         await VerifyPhaserFirmware(ct);
+        if (effectsFirmwareVd612) return;
         foreach (var (address, size, hash) in new (uint, int, string)[]
         {
             (0x831AC0, 0x484, "5f808479d3b3a74ef2f00ab184b9a61681211064260e908effb5313fcd097451"),

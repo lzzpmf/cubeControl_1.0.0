@@ -24,6 +24,7 @@ internal sealed class BackingDecoder : IDisposable
     public void Seek(long frame) => reader.Position = Math.Clamp(frame * reader.WaveFormat.BlockAlign, 0, reader.Length);
     public int Read(float[] buffer, int offset, int count) => samples.Read(buffer.AsSpan(offset, count));
     public int Read(float[] buffer) => samples.Read(buffer);
+    public int Read(Span<float> buffer) => samples.Read(buffer);
     public void Dispose() => reader.Dispose();
 }
 

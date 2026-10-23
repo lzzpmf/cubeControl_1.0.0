@@ -43,7 +43,7 @@ public sealed record ChorusParameters(float Depth, float Step, float Mix, float 
     internal static void ValidateStructure(byte[] dsp)
     {
         Read(dsp);
-        if (dsp[0x63C] != 3 || dsp[0x63D] != 5)
+        if (!PhaserParameters.IsActiveState(dsp[0x63C]) || dsp[0x63D] != 5)
             throw new FormatException("Snapshot não representa um chorus ativo compatível.");
         // Only b0 is editable. Nonzero recursive coefficients would invalidate the feedback bound.
         foreach (int start in new[] { 0x654, 0x670 })

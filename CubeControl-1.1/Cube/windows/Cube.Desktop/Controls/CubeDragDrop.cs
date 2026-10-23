@@ -42,7 +42,7 @@ internal sealed class CubeDragDrop : DefaultDragHandler, IDropTarget
         while (node != null && node != boundary)
         {
             if (node is ButtonBase or TextBoxBase or PasswordBox or Slider or ComboBox or Thumb
-                or Knob or BackingClipLane or BackingWaveform or BackingGainControl or BackingFader) return true;
+                or Knob or BackingWaveform or BackingFader) return true;
             node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
         }
         return false;

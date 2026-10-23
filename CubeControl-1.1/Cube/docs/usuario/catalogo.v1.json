@@ -406,34 +406,16 @@
         {
           "language": "pt-BR",
           "title": "Backing Tracks",
-          "summary": "Player, ajustes pela roda do mouse, mixer, metrônomo e busca no YouTube.",
-          "keywords": [
-            "MP3",
-            "WAV",
-            "YouTube",
-            "BPM",
-            "loop",
-            "Bluetooth",
-            "áudio",
-            "audio"
-          ],
+          "summary": "Busca no YouTube, prévia de áudio e download MP3.",
+          "keywords": ["MP3", "YouTube", "download", "prévia", "preview", "áudio", "audio"],
           "format": "markdown",
           "path": "guias/pt-BR/backing-tracks.md"
         },
         {
           "language": "en-US",
           "title": "Backing Tracks",
-          "summary": "Player, mouse wheel adjustments, mixer, metronome and YouTube search.",
-          "keywords": [
-            "MP3",
-            "WAV",
-            "YouTube",
-            "BPM",
-            "loop",
-            "Bluetooth",
-            "áudio",
-            "audio"
-          ],
+          "summary": "YouTube search, audio previews and MP3 downloads.",
+          "keywords": ["MP3", "YouTube", "download", "prévia", "preview", "áudio", "audio"],
           "format": "markdown",
           "path": "guias/en-US/backing-tracks.md"
         }

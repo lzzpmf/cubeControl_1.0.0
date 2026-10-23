@@ -8,6 +8,7 @@
     <NoWarn>$(NoWarn);CS8632</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <None Update="Fixtures/Vd612/*.bin" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="../Cube.Desktop/Cube.Desktop.csproj" />
     <Compile Include="../Cube.Desktop/Simulation/FakeConnection.cs" Link="FakeConnection.cs" Condition="'$(CubeSimulation)' != 'true'" />
     <None Include="../Cube.Desktop/MainWindow.xaml" Link="Source/MainWindow.xaml" CopyToOutputDirectory="PreserveNewest" />

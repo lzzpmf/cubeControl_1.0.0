@@ -64,24 +64,4 @@
 <ui:SymbolRegular x:Key="CubeIconGauge24">Gauge24</ui:SymbolRegular>
 <ui:SymbolRegular x:Key="CubeIconGuitar24">Guitar24</ui:SymbolRegular>
 <ui:SymbolRegular x:Key="CubeIconTimer24">Timer24</ui:SymbolRegular>
-<!-- Mechanical metronome, drawn on the same 24-unit grid as the Fluent icons. -->
-<Style x:Key="CubeMetronomeIcon" TargetType="Control">
- <Setter Property="Width" Value="{DynamicResource CubeIconSizeNavigation}"/>
- <Setter Property="Height" Value="{DynamicResource CubeIconSizeNavigation}"/>
- <Setter Property="VerticalAlignment" Value="Center"/>
- <Setter Property="Focusable" Value="False"/>
- <Setter Property="IsHitTestVisible" Value="False"/>
- <Setter Property="Template">
-  <Setter.Value>
-   <ControlTemplate TargetType="Control">
-    <Viewbox>
-     <Canvas Width="24" Height="24">
-      <Path Data="M 10,3 L 14,3 L 19,21 L 5,21 Z M 6.2,17 L 17.8,17 M 12,17 L 17,5 M 14.3,8.8 L 17.1,10"
-            Stroke="{TemplateBinding Foreground}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-     </Canvas>
-    </Viewbox>
-   </ControlTemplate>
-  </Setter.Value>
- </Setter>
-</Style>
 </ResourceDictionary>

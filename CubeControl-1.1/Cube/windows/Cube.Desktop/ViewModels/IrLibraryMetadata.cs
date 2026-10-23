@@ -34,9 +34,8 @@ public sealed record IrLibraryMetadata
     public string Format { get; init; } = "";
     public double DurationMs { get; init; }
     public string MicrophoneLabel => MicrophoneModel is { Length: > 0 } ? $"{Microphone} · inspirado em {MicrophoneModel}" : Microphone;
-    public string IdentificationLabel => Identification switch { "confirmed" => "Documentada", "probable" => "Identificação provável", _ => "Não identificada" };
-    public string ModelLabel => (CabinetModel.Length > 0 ? CabinetModel + " · " + SpeakerLabel : Collection)
-        + (Identification == "probable" ? " · identificação provável" : "");
+    public string IdentificationLabel => Identification switch { "confirmed" => "Documentada", "probable" => "", _ => "Não identificada" };
+    public string ModelLabel => CabinetModel.Length > 0 ? CabinetModel + " · " + SpeakerLabel : Collection;
     public string VariantLabel => string.Join(" · ", Variants.Select(v => v switch
     {
         "LC" => "Corte de graves (LC)", "LC45" => "Corte de graves 45 Hz (LC45)",

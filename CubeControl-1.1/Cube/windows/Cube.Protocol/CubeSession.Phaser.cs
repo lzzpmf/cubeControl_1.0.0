@@ -181,6 +181,10 @@ public sealed partial class CubeSession
                     .CopyTo(dsp, EffectControlsStart);
             }
             else dsp = await ReadChunks(4, 0, 0xF70, ct).ConfigureAwait(false);
+            // VD612 workers initialize to state 2 and process states >= 2. Keep raw
+            // snapshots intact; legacy profiles continue to require their verified state 3.
+            if (!effectsFirmwareVd612 && new[] { 0x63C, 0x694, 0x6E0 }.Any(i => dsp[i] == 2))
+                throw new IOException("Efeito em transição; aguarde a estabilização antes de ler.");
             if (!(await ReadInternal(0, 48, ct).ConfigureAwait(false)).SequenceEqual(bank))
                 throw new IOException("Banco mudou durante a captura.");
             if (!(await ReadInternal(EffectsPhysicalStateOffset, 2, ct, 4).ConfigureAwait(false)).SequenceEqual(state))
@@ -191,6 +195,11 @@ public sealed partial class CubeSession
     private async Task VerifyPhaserFirmware(CancellationToken ct)
     {
         if (phaserFirmwareVerified) return;
+        if (HashMatches(await ReadInternal(Vd612ReaderOffset, 12, ct, 4), Vd612ReaderHash))
+        {
+            await VerifyVd612Firmware(ct);
+            return;
+        }
         var reader = await ReadInternal(unchecked(0x832108u - 0x8347F8u), 12, ct, 4);
         if (HashMatches(reader, "e3b09baf62e6fc2895eceaaef0db5acfe035b53a171f3e00b52af442f1dbd965"))
             effectsFirmwareB = false;

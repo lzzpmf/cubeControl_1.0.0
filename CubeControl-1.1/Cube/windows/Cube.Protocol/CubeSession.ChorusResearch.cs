@@ -31,6 +31,7 @@ public sealed partial class CubeSession
     {
         if (chorusFirmwareVerified) return;
         await VerifyPhaserFirmware(ct);
+        if (effectsFirmwareVd612) return;
         foreach (var (address, size, hash) in new (uint, int, string)[]
         {
             (0x8326B4, 0x110, "4b3f852a0f15934beacea107471de2877f89052d3eaef4652bead312a28369aa"),

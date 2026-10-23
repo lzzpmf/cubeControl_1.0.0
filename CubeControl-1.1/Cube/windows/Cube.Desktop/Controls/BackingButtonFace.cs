@@ -59,13 +59,6 @@ public sealed class BackingButtonFace : FrameworkElement
         if (SystemParameters.HighContrast || ThemeService.Instance.IsHighContrast || string.IsNullOrEmpty(Art))
         {
             var brush = SystemParameters.HighContrast || ThemeService.Instance.IsHighContrast ? SystemColors.WindowTextBrush : (Brush)(TryFindResource("CubeText") ?? Brushes.White);
-            if (Art == "record")
-            {
-                var center = new Point(ActualWidth / 2, ActualHeight / 2);
-                dc.DrawEllipse(SystemColors.WindowBrush, new Pen(brush, IsActive ? 3 : 1.5), center, size * .42, size * .42);
-                dc.DrawEllipse(brush, null, center, size * .17, size * .17);
-                return;
-            }
             var text = new FormattedText(Glyph, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight, new Typeface("Segoe UI Symbol"), size * .48, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
             if (string.IsNullOrEmpty(Art))
             {
@@ -76,8 +69,7 @@ public sealed class BackingButtonFace : FrameworkElement
             return;
         }
         bool official = TryFindResource("CubePlayerUsesOfficialArtwork") is not false;
-        var image = Art == "record" && TryFindResource("CubePlayerRecordFace") is ImageSource recordFace ? recordFace
-            : !official && TryFindResource("CubePlayerButtonFace") is ImageSource face ? face : Load(Art);
+        var image = !official && TryFindResource("CubePlayerButtonFace") is ImageSource face ? face : Load(Art);
         double scale = size / Math.Max(image.Width, image.Height);
         var bounds = new Rect((ActualWidth - image.Width * scale) / 2, (ActualHeight - image.Height * scale) / 2, image.Width * scale, image.Height * scale);
         dc.DrawImage(image, bounds);
@@ -85,10 +77,10 @@ public sealed class BackingButtonFace : FrameworkElement
         {
             dc.PushOpacity(.3);
             dc.PushOpacityMask(new ImageBrush(image) { Stretch = Stretch.Fill });
-            dc.DrawRectangle((Brush)(TryFindResource(Art == "record" ? "CubeRecordingIndicator" : "BackingPlayed") ?? Brushes.SteelBlue), null, bounds);
+            dc.DrawRectangle((Brush)(TryFindResource("BackingPlayed") ?? Brushes.SteelBlue), null, bounds);
             dc.Pop(); dc.Pop();
         }
-        if (!official && Art != "record")
+        if (!official)
         {
             var brush = (Brush)(TryFindResource(IsActive ? "BackingPlayed" : "CubePlayerGlyph") ?? Brushes.Black);
             if (Art is "sound" or "mute")

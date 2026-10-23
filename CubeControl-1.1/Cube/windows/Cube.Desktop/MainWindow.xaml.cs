@@ -11,19 +11,6 @@ using System.Windows.Input;
 namespace Cube.Desktop;
 public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
-    private void BackingPlaylistItemSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (sender is not Grid row || row.Children[0] is not StackPanel details) return;
-        // The content grid excludes the shared 12-DIP padding and one-DIP border.
-        bool compact = e.NewSize.Width + 26 < 480;
-        if (details.Children[0] is TextBlock title)
-            title.TextWrapping = compact ? TextWrapping.Wrap : TextWrapping.NoWrap;
-        if (details.Children[1] is TextBlock metadata)
-        {
-            metadata.TextWrapping = compact ? TextWrapping.Wrap : TextWrapping.NoWrap;
-            metadata.TextTrimming = TextTrimming.CharacterEllipsis;
-        }
-    }
     // Compatibility names also keep automation clients pointed at the shared browser.
     private TreeView IrLibraryTree => SingleIrLibrary.Tree;
     protected override void OnPreviewMouseDown(MouseButtonEventArgs e)
@@ -80,7 +67,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         BackingTracks = new BackingTracksViewModel(Model.DataDirectory);
         Model.IrAudition.BeforePlayback = BackingTracks.StopForIrAudition;
         BackingTracks.BeforePlayback = Model.IrAudition.StopAsync;
-        BackingTracks.ChooseExportMode = ChooseBackingExportMode;
         PreviewKeyDown += SuppressStandaloneAltDown;
         PreviewKeyUp += SuppressStandaloneAltUp;
         Deactivated += (_, _) => standaloneAltPressed = false;
@@ -93,36 +79,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             else if (Navigation.SelectedItem is ListBoxItem item) item.Focus();
             e.Handled = true;
         };
-        Deactivated += (_, _) => { BackingTracks.StopYouTubePreview(); _ = BackingTracks.StopLocalPreview(); };
+        Deactivated += (_, _) => { BackingTracks.StopYouTubePreview(); };
         Appearance.UiDensity.Initialize();
         InitializeComponent();
         ConfigureDragDrop();
-        ConfigureBackingProjects();
-        BackingPage.AddHandler(System.Windows.Controls.Primitives.Thumb.DragStartedEvent, new System.Windows.Controls.Primitives.DragStartedEventHandler((_, _) => BackingTracks.BeginClipGesture()));
-        BackingPage.AddHandler(System.Windows.Controls.Primitives.Thumb.DragCompletedEvent, new System.Windows.Controls.Primitives.DragCompletedEventHandler((_, _) => BackingTracks.EndClipGesture()));
         RegisterName("IrLibraryTree", SingleIrLibrary.Tree);
         RegisterName("IrLibrarySearch", SingleIrLibrary.SearchBox); DataContext = Model;
-        BackingPage.Loaded += (_, _) =>
-        {
-            var host = VisualTreeHelper.GetParent(BackingPage) as FrameworkElement;
-            if (host != backingViewportHost)
-            {
-                if (backingViewportHost != null) backingViewportHost.SizeChanged -= BackingViewportSizeChanged;
-                backingViewportHost = host;
-                if (host != null) host.SizeChanged += BackingViewportSizeChanged;
-            }
-            ApplyBackingLayout(BackingPage.ActualWidth);
-        };
-        BackingMainWave.MenuRequested = (wave, time) => OpenBackingMenu(wave, "wave", time: time);
-        BackingMainWave.ZoomRequested = (steps, fraction) =>
-        {
-            if (BackingTracks.Duration <= 0) return;
-            if (BackingTracks.IsRecording) BackingTracks.FollowRecording = false;
-            double anchor = BackingTracks.ViewportStart + fraction * BackingTracks.ViewportDuration;
-            BackingTracks.Zoom *= Math.Pow(2, steps);
-            BackingTracks.ViewportStart = anchor - fraction * BackingTracks.ViewportDuration;
-        };
-
         Model.ConfirmIrWrite = ConfirmIrWriteAsync;
         InitializeZoom();
         MoveFooterToPage();
@@ -486,8 +448,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             if (node is Controls.AmpEqGraph eq && eq.FilterAt(e.GetPosition(eq)) >= 0) return;
             if (node is Controls.BackingFader { IsEnabled: true } or Controls.BackingWaveform { IsOverview: false }
                 || node is Controls.Knob { IsEnabled: true }
-                || node == BackingBpmButton
-                || node == BackingSpeedOptions || node == BackingPitchOptions
                 || ((node == EffectChain || node == PresetSelector) && Model.HasBank)
                 || (node == FocusedArt && Model.HasGallery)) return;
             node = node is Visual || node is System.Windows.Media.Media3D.Visual3D
@@ -892,190 +852,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     }
     private void ConfigureDragDrop()
     {
-        Controls.CubeDragDrop.Attach(BackingTrackList,
-            info => info.SourceItem is BackingTrack track ? (track, DragDropEffects.Move) : (null, DragDropEffects.None));
-        Controls.CubeDragDrop.Attach(BackingPage, over: BackingTracksDragOver, drop: BackingTracksDrop);
-        Controls.CubeDragDrop.Attach(BackingStemList,
-            info => BackingTracks.CanEditSession && info.SourceItem is BackingStem stem ? (stem, DragDropEffects.Move) : (null, DragDropEffects.None),
-            BackingStemsDragOver, BackingStemsDrop);
         IrPacksCard.ConfigureLibraryDrag(SingleIrLibrary.Tree, () => Model.IrWorkspaceTab == 1);
-    }
-    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluatePlaylistDrop(Controls.CubeDropContext e)
-    {
-        if (BackingTracks.CanEditSession && e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Any(IsBackingFile))
-            return (DragDropEffects.Copy, -1, null, false);
-        if (e.Data.GetData(typeof(BackingTrack)) is not BackingTrack track || !BackingTracks.Tracks.Contains(track))
-            return (DragDropEffects.None, -1, null, false);
-        Point point = e.GetPosition(BackingTrackList);
-        if (point.X < 0 || point.Y < 0 || point.X > BackingTrackList.ActualWidth || point.Y > BackingTrackList.ActualHeight)
-            return (DragDropEffects.None, -1, null, false);
-        var target = e.OriginalSource is DependencyObject source ? ItemsControl.ContainerFromElement(BackingTrackList, source) as ListBoxItem : null;
-        bool after = target != null && e.GetPosition(target).Y >= target.ActualHeight / 2;
-        int index = Controls.DropInsertion.Index(BackingTracks.Tracks.IndexOf(track), target?.DataContext is BackingTrack item ? BackingTracks.Tracks.IndexOf(item) : -1, after, BackingTracks.Tracks.Count);
-        return (index < 0 ? DragDropEffects.None : DragDropEffects.Move, index, target, after);
-    }
-    private static bool IsBackingFile(string path) => System.IO.File.Exists(path) && System.IO.Path.GetExtension(path).ToLowerInvariant() is ".mp3" or ".wav";
-    private void BackingTracksDragOver(object sender, Controls.CubeDropContext e)
-    {
-        var result = EvaluatePlaylistDrop(e); e.Effects = result.Effect;
-        BackingDropOverlay.Visibility = Visibility.Collapsed;
-        UIElement target = result.Target ?? (UIElement)BackingTrackList;
-        string source = e.Data.GetData(typeof(BackingTrack)) is BackingTrack track ? track.Title : LanguageService.T("Arquivos de áudio");
-        string action = result.Effect == DragDropEffects.Copy ? LanguageService.T("Adicionar à playlist")
-            : result.Effect == DragDropEffects.None ? LanguageService.T("Destino inválido")
-            : result.Target?.DataContext is BackingTrack item ? LanguageService.T(result.After ? "Mover depois de" : "Mover antes de") + " “" + item.Title + "”"
-            : LanguageService.T("Mover para o fim");
-        Controls.DragFeedback.Show(target, source + " → " + action, e.GetPosition(target), result.Effect != DragDropEffects.None, result.Target == null ? null : result.After);
-        if (e.OriginalSource is DependencyObject origin) Controls.DragFeedback.AutoScroll(origin, e);
-        e.Handled = true;
-    }
-    private void BackingTracksDrop(object sender, Controls.CubeDropContext e)
-    {
-        var result = EvaluatePlaylistDrop(e); e.Effects = result.Effect;
-        Controls.DragFeedback.Clear(); BackingDropOverlay.Visibility = Visibility.Collapsed;
-        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) { var animate = Controls.DragMotion.CaptureList(BackingTrackList); BackingTracks.AddPaths(files); animate(); }
-        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingTrack)) is BackingTrack track) { var animate = Controls.DragMotion.CaptureList(BackingTrackList); BackingTracks.MoveTrack(track, result.Index); animate(); }
-        e.Handled = true;
-    }
-    private (DragDropEffects Effect, int Index, ListBoxItem? Target, bool After) EvaluateStemDrop(Controls.CubeDropContext e)
-    {
-        if (BackingTracks.SessionStems is not { } stems) return (DragDropEffects.None, -1, null, false);
-        if (BackingTracks.CanEditSession && e.Data.GetData(DataFormats.FileDrop) is string[] files && files.Any(IsBackingFile)) return (DragDropEffects.Copy, -1, null, false);
-        if (!BackingTracks.CanEditSession || e.Data.GetData(typeof(BackingStem)) is not BackingStem stem || !stems.Contains(stem)) return (DragDropEffects.None, -1, null, false);
-        var target = e.OriginalSource is DependencyObject source ? ItemsControl.ContainerFromElement(BackingStemList, source) as ListBoxItem : null;
-        bool after = target != null && e.GetPosition(target).Y >= target.ActualHeight / 2;
-        int index = Controls.DropInsertion.Index(stems.IndexOf(stem), target?.DataContext is BackingStem item ? stems.IndexOf(item) : -1, after, stems.Count);
-        return (index < 0 ? DragDropEffects.None : DragDropEffects.Move, index, target, after);
-    }
-    private void BackingStemsDragOver(object sender, Controls.CubeDropContext e)
-    {
-        var result = EvaluateStemDrop(e); e.Effects = result.Effect;
-        UIElement target = result.Target ?? (UIElement)BackingStemList;
-        string source = e.Data.GetData(typeof(BackingStem)) is BackingStem stem ? stem.Title : LanguageService.T("Arquivos de áudio");
-        string action = result.Effect == DragDropEffects.Copy ? LanguageService.T("Adicionar pistas à sessão")
-            : result.Effect == DragDropEffects.None ? LanguageService.T("Destino inválido")
-            : result.Target?.DataContext is BackingStem item ? LanguageService.T(result.After ? "Mover depois de" : "Mover antes de") + " “" + item.Title + "”" : LanguageService.T("Mover para o fim");
-        Controls.DragFeedback.Show(target, source + " → " + action, e.GetPosition(target), result.Effect != DragDropEffects.None, result.Target == null ? null : result.After);
-        if (e.OriginalSource is DependencyObject origin) Controls.DragFeedback.AutoScroll(origin, e);
-        e.Handled = true;
-    }
-    private async void BackingStemsDrop(object sender, Controls.CubeDropContext e)
-    {
-        var result = EvaluateStemDrop(e); e.Effects = result.Effect; e.Handled = true; Controls.DragFeedback.Clear();
-        if (result.Effect == DragDropEffects.Copy && e.Data.GetData(DataFormats.FileDrop) is string[] files) { var animate = Controls.DragMotion.CaptureList(BackingStemList); await BackingTracks.AddSessionFiles(files); animate(); }
-        else if (result.Effect == DragDropEffects.Move && e.Data.GetData(typeof(BackingStem)) is BackingStem stem) { var animate = Controls.DragMotion.CaptureList(BackingStemList); BackingTracks.MoveStem(stem, result.Index); animate(); }
-    }
-
-    private FrameworkElement? backingViewportHost;
-    private void BackingViewportSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(BackingPage.ActualWidth);
-    internal void BackingPageSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        ApplyBackingLayout(e.NewSize.Width);
-        // Keep the arrangement reachable even at maximum UI zoom on a short window.
-        // The transport reflows without scaling its interaction targets.
-        ConfigureBackingTransport(e.NewSize.Width, e.NewSize.Height);
-        ApplyBackingLayout(e.NewSize.Width);
-    }
-    private void BackingLibrarySizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(e.NewSize.Width);
-    private void ApplyBackingLayout(double width) => BackingView?.ApplyPanels();
-    private void BackingSectionClick(object sender, RoutedEventArgs e)
-    {
-        if (sender is FrameworkElement { DataContext: BackingSection section })
-        {
-            BackingTracks.SelectedSection = section;
-            if (BackingTracks.GoToSection.CanExecute(null)) BackingTracks.GoToSection.Execute(null);
-        }
-    }
-    private void BackingDisableLoopClick(object sender, RoutedEventArgs e) => BackingTracks.IsLooping = false;
-    private void IrAuditionLoopClick(object sender, RoutedEventArgs e) => Model.IrAudition.Loop = !Model.IrAudition.Loop;
-    private void BackingLoopClick(object sender, RoutedEventArgs e) => BackingTracks.IsLooping = !BackingTracks.IsLooping;
-    private void BackingReturnClick(object sender, MouseButtonEventArgs e) { Navigation.SelectedIndex = Tabs.SelectedIndex = 2; BackingTracks.PageVisible = true; e.Handled = true; }
-    private void BackingTrackDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        if (BackingButtonAncestor(e.OriginalSource as DependencyObject) == null && e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem) { BackingTracks.PlaySelected(); e.Handled = true; }
-    }
-    private void BackingParameterStart(object sender, MouseButtonEventArgs e) => BackingTracks.BeginParameterGesture();
-    private void BackingParameterEnd(object sender, MouseEventArgs e) => BackingTracks.EndParameterGesture();
-    private async Task<bool?> ChooseBackingExportMode()
-    {
-        if (backingDialogOpen) return null;
-        backingDialogOpen = true;
-        try
-        {
-            var choice = new CheckBox { Content = LanguageService.T("Aplicar velocidade e tom da sessão"), IsChecked = true, Margin = new Thickness(0, 8, 0, 8) };
-            var mix = new RadioButton { Content = LanguageService.T("Mixagem da sessão"), IsChecked = BackingTracks.ExportMix, GroupName = "ExportTarget", Margin = new Thickness(0, 8, 0, 0) };
-            var isolated = new RadioButton { Content = LanguageService.T("Pista selecionada"), IsChecked = !BackingTracks.ExportMix, IsEnabled = BackingTracks.SelectedStem != null, GroupName = "ExportTarget" };
-            var panel = new StackPanel(); panel.Children.Add(mix); panel.Children.Add(isolated); panel.Children.Add(choice);
-            var whole = new RadioButton { Content = LanguageService.T("Sessão inteira"), GroupName = "ExportInterval", IsChecked = !BackingTracks.ExportInterval };
-            var interval = new RadioButton { Content = LanguageService.T("Intervalo A/B"), GroupName = "ExportInterval", IsChecked = BackingTracks.ExportInterval && BackingTracks.HasRange, IsEnabled = BackingTracks.HasRange };
-            panel.Children.Add(whole); panel.Children.Add(interval);
-            var dialog = new Wpf.Ui.Controls.ContentDialog(DialogHost) { Title = LanguageService.T(BackingTracks.ExportLabel), Content = panel, PrimaryButtonText = LanguageService.T("Exportar"), CloseButtonText = LanguageService.T("Cancelar") };
-            if (await dialog.ShowLocalizedAsync() != Wpf.Ui.Controls.ContentDialogResult.Primary) return null;
-            BackingTracks.ExportMix = mix.IsChecked == true; BackingTracks.ExportInterval = interval.IsChecked == true;
-            return choice.IsChecked == true;
-        }
-        finally { backingDialogOpen = false; }
-    }
-    private void BackingKnobStart(object sender, RoutedEventArgs e) { BackingTracks.BeginParameterGesture(); e.Handled = true; }
-    private void BackingKnobEnd(object sender, RoutedEventArgs e) { BackingTracks.EndParameterGesture(); e.Handled = true; }
-    private void BackingSelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (e.AddedItems.Count > 0 && e.AddedItems[0] is BackingTrack track) BackingTracks.SelectedTrack = track;
-        if (BackingTrackList.SelectedItem != BackingTracks.SelectedTrack) BackingTrackList.SetCurrentValue(System.Windows.Controls.Primitives.Selector.SelectedItemProperty, BackingTracks.SelectedTrack);
-    }
-    private void BackingKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Handled || backingDialogOpen) return;
-        if (e.Key == Key.Escape && BackingTracks.YouTubePreviewId != null)
-        { BackingTracks.StopYouTubePreview(); e.Handled = true; return; }
-        if (Tabs.SelectedIndex == 1) return;
-        for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
-            if (node is Controls.YouTubeResultCard || node is Controls.BackingClipLane && e.Key is Key.Left or Key.Right or Key.Escape or Key.Apps or Key.F10) return;
-        bool backingPage = Tabs.SelectedIndex == 2;
-        if (!backingPage && (BackingTracks.SelectedTrack == null || e.Key is not (Key.Space or Key.L or Key.Left or Key.Right or Key.Up or Key.Down))) return;
-        for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null; node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
-        {
-            if (ReferenceEquals(node, BackingMetronomePanel))
-            {
-                if ((e.Key == Key.Apps || e.Key == Key.F10 && Keyboard.Modifiers == ModifierKeys.Shift) && OpenBackingKeyboardMenu(e.OriginalSource as DependencyObject)) e.Handled = true;
-                return;
-            }
-            if (node is System.Windows.Controls.Primitives.TextBoxBase or ComboBox or MenuItem or Wpf.Ui.Controls.ContentDialog) return;
-            if (node is Slider && e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End or Key.PageUp or Key.PageDown) return;
-            if (!backingPage && node is Controls.Knob or Slider) return;
-        }
-        var modifiers = Keyboard.Modifiers;
-        if (backingPage && BackingTracks.CanEditSession && (BackingStemList.IsKeyboardFocusWithin || modifiers == ModifierKeys.Control && e.Key is Key.Z or Key.Y))
-        {
-            Action? edit = modifiers == ModifierKeys.Control ? e.Key switch
-            {
-                Key.Z => () => BackingTracks.UndoEdit(), Key.Y => () => BackingTracks.UndoEdit(true),
-                Key.C => BackingTracks.CopyClips, Key.V => () => BackingTracks.PasteClips(), Key.D => () => BackingTracks.PasteClips(true), _ => null
-            } : modifiers == ModifierKeys.None ? e.Key switch { Key.Delete => BackingTracks.DeleteClips, Key.S => BackingTracks.CutStudioClips, _ => null } : null;
-            if (edit != null) { edit(); e.Handled = true; return; }
-        }
-        if (backingPage && (e.Key == Key.Apps || e.Key == Key.F10 && modifiers == ModifierKeys.Shift)
-            && OpenBackingKeyboardMenu(e.OriginalSource as DependencyObject)) { e.Handled = true; return; }
-        if (BackingButtonAncestor(e.OriginalSource as DependencyObject) is FrameworkElement { Tag: string menuKind } && menuKind is "track" or "wave" or "section" or "speed" or "pitch" or "player" or "metronome" && e.Key is Key.Space or Key.Enter) return;
-        ICommand? command = null;
-        if (BackingTrackList.IsKeyboardFocusWithin)
-        {
-            if (e.Key == Key.Delete && modifiers == ModifierKeys.None) command = BackingTracks.RemoveTrack;
-            else if (e.Key == Key.Enter && modifiers == ModifierKeys.None) { BackingTracks.PlaySelected(); e.Handled = true; return; }
-            else if (e.Key == Key.Up && modifiers == ModifierKeys.Alt) command = BackingTracks.MoveUp;
-            else if (e.Key == Key.Down && modifiers == ModifierKeys.Alt) command = BackingTracks.MoveDown;
-        }
-        if (command == null && modifiers is ModifierKeys.None or ModifierKeys.Shift)
-        {
-            if (e.Key is Key.Left or Key.Right) { BackingTracks.Position += (e.Key == Key.Left ? -1 : 1) * (modifiers == ModifierKeys.Shift ? 10 : 5); e.Handled = true; return; }
-            if (modifiers != ModifierKeys.None) return;
-            if (e.Key is Key.Up or Key.Down) { BackingTracks.Speed += e.Key == Key.Up ? 5 : -5; e.Handled = true; return; }
-            if (e.IsRepeat && e.Key is Key.Space or Key.L) { e.Handled = true; return; }
-            command = e.Key switch { Key.Space => BackingTracks.PlayPause, _ => null };
-            if (e.Key == Key.Home) { BackingTracks.Position = BackingTracks.IsLooping ? BackingTracks.RangeStart : 0; e.Handled = true; }
-            if (e.Key == Key.L) { BackingTracks.IsLooping = !BackingTracks.IsLooping; e.Handled = true; }
-        }
-        if (command?.CanExecute(null) == true) { command.Execute(null); e.Handled = true; }
     }
     private async void AdvancedEffectClick(object sender, RoutedEventArgs e)
         => await Model.ToggleEffectCardAsync();
