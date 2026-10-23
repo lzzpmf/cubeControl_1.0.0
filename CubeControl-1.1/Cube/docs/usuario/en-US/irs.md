@@ -29,6 +29,21 @@ The **Apply** and **Restore original IRs** actions appear below the grid. **Save
 
 Binary BFI/BFIN packs are available through the separate **Restore original IRs** action when original resources are available. See [Backups and recovery](recuperacao.md).
 
+The BFIN pack identified by content uses the following references, with matching names, images and descriptions. **Off** is separate from the eight IRs; it occupies the first row in the source table, before Line 6 Vetta.
+
+| IR slot | BFIN reference | Cab type |
+|---|---|---|
+| 1 | Line 6 Vetta | 2×12 |
+| 2 | Marshall 1960AV | 4×12 |
+| 3 | Marshall 1960A T75 LA610 | 4×12 |
+| 4 | VHT Deliverance | 2×12 |
+| 5 | Soldano | 2×12 |
+| 6 | Peavey 5150 + Mesa Oversized | 4×12 |
+| 7 | JSX KT77 + Mesa Stiletto AKG C1000 | 4×12 |
+| 8 | Diezel V30 SM57 (Soldano HR PowerAmp) | 4×12 |
+
+References follow recognized content even when moved to another slot. Custom names and images remain available.
+
 ### Limits and partial application
 Individual WAVs and WAVs in a portable pack are limited to 32 MiB per file. The pack validates all WAV hashes and formats before copying them to the imported library; changed or invalid files are rejected. Importing a ZIP can already copy WAVs to user data before you save the draft.
 

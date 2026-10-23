@@ -14,6 +14,7 @@ class Check {
  static void Run(){var app=new Cube.Desktop.App();app.InitializeComponent();SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
  var task=Tests();var frame=new DispatcherFrame();task.ContinueWith(_=>app.Dispatcher.BeginInvoke(new Action(()=>frame.Continue=false)));Dispatcher.PushFrame(frame);task.GetAwaiter().GetResult();app.Shutdown();}
  static async Task Tests(){
+ await IrRamChecks();
  string data=Path.Combine(Path.GetTempPath(),"CubeControl-CabinetCapture-Checks",Guid.NewGuid().ToString("N"));
  var vm=new EditorViewModel(data);
  var entries=vm.IrLibrary.Entries.Where(e=>e.Metadata!=null).ToArray();Assert(entries.Length>0,"catalog loaded");
@@ -30,6 +31,14 @@ class Check {
  var sparse=new CabinetCapture(new IrLibraryMetadata(),"external.wav");Assert(sparse.Title=="" && sparse.Summary=="","missing metadata stays hidden");
  var probable=capture with{Metadata=capture.Metadata with{Identification="probable"}};Assert(probable.Title!=capture.Title,"probable label retained");
  var fake=new FakeConnection();var session=new CubeSession(fake);await session.Identify();typeof(EditorViewModel).GetField("session",Flags)!.SetValue(vm,session);
+ fake.Ram[0x764]=2;
+ var originalIr=fake.Ram.AsSpan(0x768,2052).ToArray();
+ fake.Observe=p=>{if(p.Command==0x23 && p.Payload[0]==4 && System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(p.Payload.AsSpan(1))==0x764 && fake.Ram[0x764]==1)fake.Ram[0x764]=2;};
+ await (Task)Call(vm,"LoadWavAndPreviewAsync",sample.FullPath,bytes,null,null);
+ Assert(vm.Ir.PreviewConfirmed && vm.Ir.PreviewActive,"individual WAV preview accepts DSP state 2 through editor");
+ await vm.EndPreviewAsync();
+ Assert(!vm.Ir.PreviewActive && fake.Ram.AsSpan(0x768,2052).SequenceEqual(originalIr),"editor restores snapshot captured in DSP state 2");
+ fake.Observe=null;
  await (Task)Call(vm,"WriteIrAsync",0,bytes,80,sample.Name,null,false,sample.FullPath);
  string hash=CabinetInventory.Hash(sector);
  Assert(vm.Cabinets[1].Name==capture.Title && vm.Cabinets[1].CaptureSummary==capture.Summary,"verified write updates cabinet");
@@ -67,5 +76,29 @@ class Check {
  Assert(caption.Text==capture.Summary && caption.TextAlignment==TextAlignment.Right && caption.ActualWidth<=width && caption.ActualHeight>0,"capture layout at width "+width);
  }
  vm.Dispose();reloaded.Dispose();failVm.Dispose();legacy.Dispose();
+ }
+ static async Task IrRamChecks(){
+ var payload=Enumerable.Range(0,2052).Select(i=>(byte)(i*17)).ToArray();
+ foreach(byte snapshotFlag in new byte[]{1,2,3}) foreach(byte returnedFlag in new byte[]{1,2,3}) {
+ var fake=new FakeConnection();using var session=new CubeSession(fake);await session.Identify();
+ fake.Observe=p=>{if(p.Command==0x23 && p.Payload[0]==4 && System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(p.Payload.AsSpan(1))==0x764 && fake.Ram[0x764]==1)fake.Ram[0x764]=returnedFlag;};
+ await session.ApplyIrRam(new(snapshotFlag,payload));
+ Assert(fake.Ram.AsSpan(0x768,2052).SequenceEqual(payload) && fake.Erases==0 && fake.FlashWrites==0,$"IR active snapshot {snapshotFlag} accepts DSP state {returnedFlag}, RAM only");
+ }
+ foreach(byte returnedFlag in new byte[]{0,4,5,255}) {
+ var fake=new FakeConnection();using var session=new CubeSession(fake);await session.Identify();
+ fake.Observe=p=>{if(p.Command==0x23 && p.Payload[0]==4 && System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(p.Payload.AsSpan(1))==0x764)fake.Ram[0x764]=returnedFlag;};
+ try{await session.ApplyIrRam(new(1,payload));throw new Exception("Invalid IR state accepted");}catch(IOException ex){Assert(ex.Message.Contains("Ativação"),$"IR rejects DSP state {returnedFlag}");}
+ }
+ {
+ var fake=new FakeConnection();using var session=new CubeSession(fake);await session.Identify();
+ await session.ApplyIrRam(new(0,payload));Assert(fake.Ram[0x764]==0,"IR bypass restored");
+ bool corrupt=true;fake.Observe=p=>{if(corrupt && p.Command==0x23 && p.Payload[0]==4 && System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(p.Payload.AsSpan(1))==0x768){fake.Ram[0x77C]^=1;corrupt=false;}};
+ try{await session.ApplyIrRam(new(1,payload));throw new Exception("Corrupt IR accepted");}catch(IOException ex){Assert(ex.Message.Contains("0x77C") && fake.Ram[0x764]==0,"IR corruption rejected before activation, exact address reported");}
+ int writes=fake.Writes;
+ try{await session.ApplyIrRam(new(5,payload));throw new Exception("Invalid snapshot accepted");}catch(ArgumentException){Assert(fake.Writes==writes,"unsupported snapshot rejected before mutation");}
+ fake.Observe=null;fake.Ram[0x764]=5;
+ try{await session.ReadIrRam();throw new Exception("Unrestorable snapshot accepted");}catch(IOException){Assert(fake.Writes==writes,"unsupported DSP state cannot become a recovery snapshot");}
+ }
  }
 }

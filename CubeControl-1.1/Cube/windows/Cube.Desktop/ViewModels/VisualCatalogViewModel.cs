@@ -18,18 +18,20 @@ public sealed class GearItem(string id, int value, string name, string category,
     // Model specifications, not an analysis of the recorded IR. Sources: docs/referencias/cabinet-characteristics.md.
     public string Category => kind == "cab" ? cabinetId switch
     {
-        "pack-bfi-cab-0" => "2×12 · Traseira aberta · Celestion customizados",
-        "pack-bfi-cab-1" => "4×12 · Frente inclinada · Celestion G12-Vintage",
-        "pack-bfi-cab-2" => "4×12 · Frente inclinada · Celestion G12T-75",
-        "pack-bfi-cab-3" => "2×12 · Frente reta",
-        "pack-bfi-cab-4" => "2×12 · Disposição horizontal",
-        "pack-bfi-cab-5" => "4×12 · Caixa oversized · Graves encorpados",
-        "pack-bfi-cab-6" => "4×12 · Graves firmes · Médios pronunciados",
-        "pack-bfi-cab-7" => "4×12 · Celestion Vintage 30",
+        "pack-bfi-cab-0" or "pack-bfin-cab-0" => "2×12 · Traseira aberta · Celestion customizados",
+        "pack-bfi-cab-1" or "pack-bfin-cab-1" => "4×12 · Frente inclinada · Celestion G12-Vintage",
+        "pack-bfi-cab-2" or "pack-bfin-cab-2" => "4×12 · Frente inclinada · Celestion G12T-75",
+        "pack-bfi-cab-3" or "pack-bfin-cab-3" => "2×12 · Frente reta",
+        "pack-bfi-cab-4" or "pack-bfin-cab-4" => "2×12 · Ilustração vertical",
+        "pack-bfi-cab-5" or "pack-bfin-cab-5" => "4×12 · Caixa oversized · Graves encorpados",
+        "pack-bfi-cab-6" or "pack-bfin-cab-6" => "4×12 · Graves firmes · Médios pronunciados",
+        "pack-bfi-cab-7" or "pack-bfin-cab-7" => "4×12 · Celestion Vintage 30",
         _ => category
     } : category;
-    public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindCabinet(cabinetId) != null
-        ? "Características do modelo de referência; a captura do IR pode variar."
+    public string? CategoryHint => kind == "cab" && EquipmentCatalog.FindCabinet(cabinetId) is { } reference
+        ? reference.Category == "2×12"
+            ? "Ilustração vertical; não representa necessariamente o formato físico do modelo de referência."
+            : "Características do modelo de referência; a captura do IR pode variar."
         : kind == "cab" && CabinetArtwork.ForIr(null, name, capture?.Metadata) != null
             ? "Arte ilustrativa baseada nos metadados ou no nome do IR; não confirma o gabinete da captura." : null;
     public string Kind => kind;

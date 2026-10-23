@@ -200,9 +200,7 @@ public sealed partial class EditorViewModel
             var cab = inventory.Slots.FirstOrDefault(x => x.Slot == i);
             var reference = EquipmentCatalog.FindCabinet(cab?.CabinetId);
             items.Add(WithImage(new(cab?.Hash ?? $"unverified-{i}", i + 1, cab?.Name ?? $"IR personalizado — slot {i + 1}", cab?.Category ?? "Não verificado", "cab", "#C5B77F",
-                reference?.Description ?? (cab?.CabinetId?.StartsWith("pack-bfin-", StringComparison.Ordinal) == true
-                    ? "Pack BFIN reconhecido pelo conteúdo. O modelo do gabinete ainda não foi confirmado; a imagem é genérica."
-                    : "Conteúdo sem referência de equipamento identificada. Nome e imagem personalizados são metadados locais."), reference?.Alias ?? "", cab?.CabinetId, capture: cab == null ? null : Captures.Get(cab.Hash))));
+                reference?.Description ?? "Conteúdo sem referência de equipamento identificada. Nome e imagem personalizados são metadados locais.", reference?.Alias ?? "", cab?.CabinetId, capture: cab == null ? null : Captures.Get(cab.Hash))));
         }
         Cabinets = items.ToArray();
         Ir.UpdateSlots(Enumerable.Range(0, 8).Select(i =>

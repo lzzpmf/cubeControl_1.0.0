@@ -21,7 +21,8 @@ public static class EquipmentCatalog
         new("PRS Archon", "Mr Smith Dist", "Distortion", "Canal Distortion.")
     ]);
 
-    // Index 0 is IR slot 1. OFF is a separate protocol value, not an IR sector.
+    // BFI and BFIN share these model references, with distinct content signatures.
+    // Index 0 is IR slot 1 (row 2 in the supplied table). OFF is not an IR sector.
     public static IReadOnlyList<EquipmentReference> Cabinets { get; } = Array.AsReadOnly<EquipmentReference>(
     [
         new("Line 6 Vetta 2×12", "Line 6 Vetta", "2×12", "Microfone desconhecido."),
@@ -35,6 +36,8 @@ public static class EquipmentCatalog
     ]);
 
     public static EquipmentReference? FindCabinet(string? cabinetId)
-        => cabinetId != null && cabinetId.StartsWith("pack-bfi-cab-", StringComparison.Ordinal)
-            && int.TryParse(cabinetId[13..], out int index) && index >= 0 && index < Cabinets.Count ? Cabinets[index] : null;
+        => cabinetId != null && (cabinetId.StartsWith("pack-bfi-cab-", StringComparison.Ordinal)
+            || cabinetId.StartsWith("pack-bfin-cab-", StringComparison.Ordinal))
+            && int.TryParse(cabinetId[(cabinetId.LastIndexOf('-') + 1)..], out int index)
+            && index >= 0 && index < Cabinets.Count ? Cabinets[index] : null;
 }

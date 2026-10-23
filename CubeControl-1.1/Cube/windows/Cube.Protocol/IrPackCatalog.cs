@@ -39,8 +39,12 @@ public static class IrPackCatalog
     public static (string Pack, int Index)? Identify(string hash)
         => Signatures.TryGetValue(hash, out var match) ? match : null;
     public static string CabinetId(string pack, int index) => $"pack-{pack}-cab-{index}";
-    public static string CabinetName(string pack, int index) => pack == "bfi"
-        ? EquipmentCatalog.Cabinets[index].Name : $"Pack BFIN · IR {index + 1}";
+    public static string CabinetName(string pack, int index) => pack switch
+    {
+        "bfi" => EquipmentCatalog.Cabinets[index].Name,
+        "bfin" => $"{EquipmentCatalog.Cabinets[index].Alias} · {EquipmentCatalog.Cabinets[index].Category}",
+        _ => $"Pack BFIN · IR {index + 1}"
+    };
     public static IReadOnlyList<IrPack> LoadAvailable(string directory)
     {
         var packs = new List<IrPack>();

@@ -11,15 +11,14 @@ internal static class CabinetArtwork
 
     internal static string? ForIdentity(string? id) => id switch
     {
-        "pack-bfi-cab-0" => "Line 6 Vetta.png",
-        "pack-bfi-cab-1" => "Marshall 1960AV.png",
-        "pack-bfi-cab-2" => "Marshall 1960A 4\u00d712 com G12T-75.png",
-        "pack-bfi-cab-3" => "VHT Deliverance.png",
-        "pack-bfi-cab-4" => "Soldano.png",
-        "pack-bfi-cab-5" => "Peavey 5150 + Mesa Oversized.png",
-        "pack-bfi-cab-6" => "JSX KT77 + Mesa Stiletto AKG C1000.png",
-        "pack-bfi-cab-7" => "Diezel V30 SM57 (Soldano HR PowerAmp).png",
-        string key when key.StartsWith("pack-bfin-cab-", StringComparison.Ordinal) => Generic,
+        "pack-bfi-cab-0" or "pack-bfin-cab-0" => "Line 6 Vetta.png",
+        "pack-bfi-cab-1" or "pack-bfin-cab-1" => "Marshall 1960AV.png",
+        "pack-bfi-cab-2" or "pack-bfin-cab-2" => "Marshall 1960A 4\u00d712 com G12T-75.png",
+        "pack-bfi-cab-3" or "pack-bfin-cab-3" => "VHT Deliverance.png",
+        "pack-bfi-cab-4" or "pack-bfin-cab-4" => "Soldano.png",
+        "pack-bfi-cab-5" or "pack-bfin-cab-5" => "Peavey 5150 + Mesa Oversized.png",
+        "pack-bfi-cab-6" or "pack-bfin-cab-6" => "JSX KT77 + Mesa Stiletto AKG C1000.png",
+        "pack-bfi-cab-7" or "pack-bfin-cab-7" => "Diezel V30 SM57 (Soldano HR PowerAmp).png",
         _ => null
     };
     internal static string? ForIr(string? relativePath, string? name, IrLibraryMetadata? metadata = null)
@@ -61,11 +60,13 @@ internal static class CabinetArtwork
         }
         if (key.Contains("orange") && configuration == "2x12") return "orange-v30-2x12.png";
         if (key.Contains("vox") && key.Contains("ac30") && key.Contains("blue") && Fits("2x12")) return "vox-ac30-blue-2x12.png";
+        // All 2x12 illustrations are vertical front-view slant renderings;
+        // their orientation does not assert the physical shape of the reference model.
         // These unbranded illustrations express count, not an equipment identity.
         return configuration switch
         {
             "1x12" => "cabinet-generic-front.png",
-            "2x12" => "zilla-fatboy-2x12.png",
+            "2x12" => "cabinet-vertical-2x12.png",
             "4x12" => "marshall-1960-custom-4x12.png",
             _ => null
         };
