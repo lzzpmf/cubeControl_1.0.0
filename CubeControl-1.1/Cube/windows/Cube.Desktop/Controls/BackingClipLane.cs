@@ -37,7 +37,7 @@ public sealed class BackingClipLane : FrameworkElement
     }
     private void Update(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is "ClipRevision" or "Position" or "ViewportStart" or "ViewportDuration" or "TrackHeight" or "IsRecording") InvalidateVisual();
+        if (e.PropertyName is "ClipRevision" or "Position" or "ViewportStart" or "ViewportDuration" or "TrackHeight" or "IsRecording" or "TransportBpm" or "SessionMeter" or "FirstBeatOffset") InvalidateVisual();
         if (e.PropertyName == "ClipRevision" && UIElementAutomationPeer.FromElement(this) is LanePeer peer)
             peer.RefreshClips();
     }
@@ -93,7 +93,9 @@ public sealed class BackingClipLane : FrameworkElement
             dc.DrawRoundedRectangle(Brush("CubeInset"), null, bounds, 4, 4);
             dc.DrawRoundedRectangle(tint, new Pen(Brush(selected ? "CubeAccent" : "CubeBorder"), selected ? 2 : 1), bounds, 4, 4);
             dc.PushClip(new RectangleGeometry(bounds));
-            var text = new FormattedText(clip.Name, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), TryFindResource("CubeFontSizeCaption") is double size ? size : 12, Brush("CubeText"), VisualTreeHelper.GetDpi(this).PixelsPerDip) { MaxTextWidth = Math.Max(1, Math.Min(ActualWidth, bounds.Width) - 16), MaxTextHeight = 20, Trimming = TextTrimming.CharacterEllipsis };
+            string label = clip.Name;
+            if (clip.Id != Guid.Empty && clip.ActiveTake?.Layers.Any(l => !System.IO.File.Exists(l.Source)) == true) label += " · " + LanguageService.T("Áudio ausente");
+            var text = new FormattedText(label, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), TryFindResource("CubeFontSizeCaption") is double size ? size : 12, Brush("CubeText"), VisualTreeHelper.GetDpi(this).PixelsPerDip) { MaxTextWidth = Math.Max(1, Math.Min(ActualWidth, bounds.Width) - 16), MaxTextHeight = 20, Trimming = TextTrimming.CharacterEllipsis };
             dc.DrawText(text, new Point(left + 8, bounds.Top + 2));
             double center = bounds.Top + 22 + Math.Max(0, bounds.Height - 24) / 2, amplitude = Math.Max(0, bounds.Height - 26) / 2;
             var pen = new Pen(trackBrush, 1);
@@ -110,11 +112,19 @@ public sealed class BackingClipLane : FrameworkElement
                     double source = layer.SourceStart + local / layer.RecordedSpeed;
                     int index = (int)(source / Math.Max(.001, wave.Duration) * wave.Peaks.Length);
                     if (index < 0 || index >= wave.Peaks.Length) continue;
-                    double peak = wave.Peaks[index] * amplitude;
+                    double envelope = BackingClipEdit.Envelope(Time(x) - clip.Position, clip.Duration, clip.FadeIn, clip.FadeOut, clip.EqualPowerIn, clip.EqualPowerOut);
+                    double peak = wave.Peaks[index] * amplitude * envelope;
                     dc.DrawLine(pen, new Point(x, center - peak), new Point(x, center + peak));
                 }
             }
             dc.Pop();
+            double inX = Math.Clamp(X(clip.Position + clip.FadeIn), bounds.Left + 8, Math.Max(bounds.Left + 8, bounds.Right - 8));
+            double outX = Math.Clamp(X(clip.End - clip.FadeOut), bounds.Left + 8, Math.Max(bounds.Left + 8, bounds.Right - 8));
+            var handle = Brush("CubeText");
+            dc.DrawRectangle(handle, null, new Rect(inX - 3, bounds.Top + 16, 6, 6));
+            dc.DrawRectangle(handle, null, new Rect(outX - 3, bounds.Top + 16, 6, 6));
+            dc.DrawLine(new Pen(handle, 1), new Point(bounds.Left, bounds.Bottom - 3), new Point(inX, bounds.Top + 19));
+            dc.DrawLine(new Pen(handle, 1), new Point(outX, bounds.Top + 19), new Point(bounds.Right, bounds.Bottom - 3));
         }
         double playhead = X(Model.Position); dc.DrawLine(new Pen(Brush("CubeText"), 2), new(playhead, 0), new(playhead, ActualHeight));
         if (IsKeyboardFocused) dc.DrawRectangle(null, new Pen(Brush("CubeFocus"), 1), new Rect(RenderSize));
@@ -134,6 +144,13 @@ public sealed class BackingClipLane : FrameworkElement
         if (hit.Clip.Duration < .001) { e.Handled = true; return; }
         dragClip = hit.Clip; origin = point; moved = false;
         gesture = point.X - hit.Bounds.Left < 8 ? "left" : hit.Bounds.Right - point.X < 8 ? "right" : "move";
+        if (point.Y - hit.Bounds.Top is >= 12 and <= 26)
+        {
+            double inX = Math.Clamp(X(hit.Clip.Position + hit.Clip.FadeIn), hit.Bounds.Left + 8, Math.Max(hit.Bounds.Left + 8, hit.Bounds.Right - 8));
+            double outX = Math.Clamp(X(hit.Clip.End - hit.Clip.FadeOut), hit.Bounds.Left + 8, Math.Max(hit.Bounds.Left + 8, hit.Bounds.Right - 8));
+            if (Math.Abs(point.X - inX) <= 8) gesture = "fadeIn";
+            else if (Math.Abs(point.X - outX) <= 8) gesture = "fadeOut";
+        }
         Model.BeginClipGesture(); CaptureMouse(); e.Handled = true;
     }
     protected override void OnMouseMove(MouseEventArgs e)
@@ -150,6 +167,12 @@ public sealed class BackingClipLane : FrameworkElement
             return;
         }
         var clip = dragClip;
+        if (gesture is "fadeIn" or "fadeOut")
+        {
+            double amount = Math.Clamp(gesture == "fadeIn" ? Time(point.X) - clip.Position : clip.End - Time(point.X), 0, clip.Duration);
+            Model.ReplaceClip(Stem, gesture == "fadeIn" ? clip with { FadeIn = amount } : clip with { FadeOut = amount });
+            return;
+        }
         if (gesture == "left") { time = Math.Clamp(time, Math.Max(0, clip.Position + (clip.ActiveTake?.Layers.Select(l => l.Position).DefaultIfEmpty(0).Min() ?? 0)), clip.End - .001); clip = clip.Trim(time, clip.End); }
         else if (gesture == "right") { time = Math.Clamp(time, clip.Position + .001, clip.Position + (clip.ActiveTake?.Layers.Select(l => l.Position + l.Duration).DefaultIfEmpty(clip.Duration).Max() ?? clip.Duration)); clip = clip.Trim(clip.Position, time); }
         Model.ReplaceClip(Stem, clip);
@@ -206,7 +229,7 @@ public sealed class BackingClipLane : FrameworkElement
         Add("Dividir no cursor", Model.SplitClips); Add("Copiar", Model.CopyClips); Add("Colar", () => Model.PasteClips()); Add("Duplicar clipes", () => Model.PasteClips(true)); Add("Excluir clipes", Model.DeleteClips);
         if (Stem.Clips.FirstOrDefault(c => Model.SelectedClips.Contains(c.Id)) is { } clip)
         {
-            Add("Localizar áudio do clipe", () => { var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "MP3/WAV|*.mp3;*.wav" }; if (dialog.ShowDialog() == true && clip.ActiveTake?.Layers.FirstOrDefault() is { } layer) _ = Model.RelinkClipSource(Stem, layer.Source, dialog.FileName); });
+            Add("Localizar áudio do clipe", () => { var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "MP3/WAV|*.mp3;*.wav" }; if (dialog.ShowDialog() == true && (clip.ActiveTake?.Layers.FirstOrDefault(l => !System.IO.File.Exists(l.Source)) ?? clip.ActiveTake?.Layers.FirstOrDefault()) is { } layer) _ = Model.RelinkClipSource(Stem, layer.Source, dialog.FileName); });
             var destinations = new MenuItem { Header = LanguageService.T("Mover para pista"), IsEnabled = Model.CanEditSession };
             foreach (var destination in Model.SessionStems ?? []) { var item = new MenuItem { Header = destination.Name }; item.Click += (_, _) => { Model.BeginClipGesture(); Model.MoveClips(0, destination); Model.EndClipGesture(); }; destinations.Items.Add(item); }
             menu.Items.Add(destinations);

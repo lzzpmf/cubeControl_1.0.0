@@ -93,7 +93,7 @@ public sealed partial class BackingTracksViewModel
         }
         catch (Exception ex) { Log(ex); }
     }
-    public BackingOutput? SelectedInput { get => selectedInput; set { if (CanChangeRecordingInput && Set(ref selectedInput, value)) { savedInputId = value?.Id; if (SelectedTrack != null) SelectedTrack.CaptureEndpoint = savedInputId; RefreshInputChoices(); RestartMonitorForDeviceChange(); } } }
+    public BackingOutput? SelectedInput { get => selectedInput; set { if (!restoring && CanChangeRecordingInput && Set(ref selectedInput, value)) { savedInputId = value?.Id; if (SelectedTrack != null) SelectedTrack.CaptureEndpoint = savedInputId; RefreshInputChoices(); RestartMonitorForDeviceChange(); SaveDevicePreferences(); } } }
     private BackingMultitrackCapture? liveCapture;
     private bool suppressMonitorChanges;
     public bool IsMonitoring => liveCapture != null || recording != null;
@@ -136,12 +136,12 @@ public sealed partial class BackingTracksViewModel
     private void RefreshPractice()
     {
         RefreshMetronome(); UpdateMetronome(false);
-        Zoom = 1; ViewportStart = 0; SelectedSection = null;
         foreach (var name in new[] { nameof(BpmBadge), nameof(KeyBadge), nameof(PresetBadge), nameof(Bpm), nameof(CurrentBpm), nameof(OriginalKey), nameof(CurrentKey), nameof(LinkedPreset), nameof(PresetHint), nameof(Sections), nameof(SelectedSection) }) Notify(name);
     }
     private void LoadInputs()
     {
         if (!CanChangeRecordingInput) return;
+        bool previousRestoring = restoring; restoring = true;
         try
         {
             string? id = SelectedInput?.Id ?? savedInputId;
@@ -150,15 +150,17 @@ public sealed partial class BackingTracksViewModel
             foreach (var device in enumerator.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
                 using (device) Inputs.Add(new(device.ID, device.FriendlyName));
             if (id != null && !Inputs.Any(x => x.Id == id)) Inputs.Add(new(id, Cube.Desktop.Localization.LanguageService.T("Dispositivo indisponível"), false));
-            SelectedInput = Inputs.FirstOrDefault(x => x.Id == id);
+            selectedInput = Inputs.FirstOrDefault(x => x.Id == id); savedInputId = id;
+            Notify(nameof(SelectedInput)); RefreshInputChoices(); RestartMonitorForDeviceChange();
         }
         catch (Exception ex) { Error("Não foi possível listar as entradas de áudio.", ex); }
+        finally { restoring = previousRestoring; }
     }
     private void RestartMonitorForDeviceChange()
     {
         if (IsRecording) return;
         StopMonitor();
-        if (SessionStems?.Any(s => s.IsMonitoring) != true) return;
+        if (SessionStems?.Any(s => s.IsMonitoring || s.IsArmed) != true) return;
         if (SelectedInput?.Available == true && SelectedOutput != null) StartMonitor();
         else
         {
@@ -172,7 +174,6 @@ public sealed partial class BackingTracksViewModel
         if (SelectedInput == null || SelectedOutput == null || IsRecording) return;
         try
         {
-            if (SessionStems?.Any(s => s.IsMonitoring) != true && SelectedStem != null) SelectedStem.IsMonitoring = true;
             if (liveCapture != null) return;
             liveCapture = new(SelectedInput.Id, CaptureRoutes(false));
             liveCapture.Start(); Start(engine.SetMonitor(SelectedOutput.Id, liveCapture.MonitorProvider));

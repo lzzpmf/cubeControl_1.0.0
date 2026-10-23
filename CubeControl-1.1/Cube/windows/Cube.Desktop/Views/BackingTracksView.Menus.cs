@@ -7,25 +7,25 @@ using System.Windows.Media;
 using Cube.Desktop.Localization;
 using Cube.Desktop.ViewModels;
 
-namespace Cube.Desktop;
+namespace Cube.Desktop.Views;
 
-public partial class MainWindow
+public partial class BackingTracksView
 {
     private void BackingNumberKey(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter && sender is TextBox field)
         { field.GetBindingExpression(TextBox.TextProperty)?.UpdateSource(); e.Handled = true; }
     }
-    private void BackingBpmClick(object sender, RoutedEventArgs e) => EditMetronomeNumber(false, true);
+    internal void BackingBpmClick(object sender, RoutedEventArgs e) => EditMetronomeNumber(false, true);
     private int backingBpmWheelDelta;
     private int backingSpeedWheelDelta;
     private int backingPitchWheelDelta;
-    private void BackingTempoLeave(object sender, MouseEventArgs e)
+    internal void BackingTempoLeave(object sender, MouseEventArgs e)
     {
         if (sender == BackingSpeedOptions) backingSpeedWheelDelta = 0;
         else backingPitchWheelDelta = 0;
     }
-    private void BackingTempoWheel(object sender, MouseWheelEventArgs e)
+    internal void BackingTempoWheel(object sender, MouseWheelEventArgs e)
     {
         e.Handled = true;
         bool speed = sender == BackingSpeedOptions;
@@ -49,7 +49,7 @@ public partial class MainWindow
     }
     private void BackingMixerClick(object sender, RoutedEventArgs e)
     {
-        BackingVolumesPanel.Visibility = BackingVolumesPanel.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+        BackingTracks.MixerOpen = !BackingTracks.MixerOpen;
     }
     private void BackingMixerResetClick(object sender, RoutedEventArgs e) => BackingTracks.ResetMixerVolumes();
     private void BackingMixerMuteClick(object sender, RoutedEventArgs e)
@@ -67,16 +67,16 @@ public partial class MainWindow
         fader.SetCurrentValue(System.Windows.Controls.Primitives.RangeBase.ValueProperty, (fader.Tag as string) switch { "guitar" => 0d, "click" => 100d, _ => 30d });
         e.Handled = true;
     }
-    private bool backingDialogOpen;
+    private bool backingDialogOpen { get => Owner?.BackingDialogOpen ?? false; set { if (Owner != null) Owner.BackingDialogOpen = value; } }
     private ContextMenu? backingOpenMenu;
     private static DependencyObject? BackingParent(DependencyObject node) => node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
-    private static ButtonBase? BackingButtonAncestor(DependencyObject? node)
+    internal static ButtonBase? BackingButtonAncestor(DependencyObject? node)
     {
         for (; node != null; node = BackingParent(node)) if (node is ButtonBase button) return button;
         return null;
     }
     private void BackingMuteClick(object sender, RoutedEventArgs e) => BackingTracks.IsMuted = !BackingTracks.IsMuted;
-    private void BackingMenuClick(object sender, RoutedEventArgs e)
+    internal void BackingMenuClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement element && element.Tag is string kind)
             OpenBackingMenu(element, kind, element.DataContext as BackingTrack, element.DataContext as BackingSection);
@@ -89,7 +89,7 @@ public partial class MainWindow
         if (e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(BackingTrackList, source) is ListBoxItem { DataContext: BackingTrack track } item)
         { OpenBackingMenu(item, "track", track, atMouse: true); e.Handled = true; }
     }
-    private void BackingContextOpening(object sender, ContextMenuEventArgs e)
+    internal void BackingContextOpening(object sender, ContextMenuEventArgs e)
     {
         if (e.Handled || sender is not FrameworkElement element || element.Tag is not string kind) return;
         e.Handled = true;
@@ -104,7 +104,7 @@ public partial class MainWindow
         }
         OpenBackingMenu(element, kind, track, section, atMouse: e.CursorLeft >= 0);
     }
-    private void OpenBackingMenu(FrameworkElement owner, string kind, BackingTrack? track = null, BackingSection? section = null, double? time = null, bool atMouse = false)
+    internal void OpenBackingMenu(FrameworkElement owner, string kind, BackingTrack? track = null, BackingSection? section = null, double? time = null, bool atMouse = false)
     {
         if (backingOpenMenu != null) backingOpenMenu.IsOpen = false;
         var model = BackingTracks;
@@ -230,7 +230,7 @@ public partial class MainWindow
         menu.Closed += (_, _) => { if (backingOpenMenu == menu) backingOpenMenu = null; };
         menu.IsOpen = true;
     }
-    private bool OpenBackingKeyboardMenu(DependencyObject? source)
+    internal bool OpenBackingKeyboardMenu(DependencyObject? source)
     {
         var original = source as FrameworkElement;
         for (var node = source; node != null; node = BackingParent(node))
@@ -310,7 +310,7 @@ public partial class MainWindow
     private async void ImportMetronomeWav()
     {
         var picker = new Microsoft.Win32.OpenFileDialog { Filter = "WAV (*.wav)|*.wav", Title = LanguageService.T("Importar som WAV") };
-        if (picker.ShowDialog(this) == true) await BackingTracks.ImportMetronomeSound(picker.FileName);
+        if (picker.ShowDialog(Window.GetWindow(this)) == true) await BackingTracks.ImportMetronomeSound(picker.FileName);
     }
     private void BackingMetronomeBpmKey(object sender, KeyEventArgs e)
     {

@@ -31,6 +31,8 @@ public sealed class BackingStem : Observable
     private int inputChannel, inputChannels = 1;
     private BackingTake? activeTake;
     private bool canEditRouting = true;
+    private bool canAdjustMix = true;
+    public bool CanAdjustMix { get => canAdjustMix; internal set => Set(ref canAdjustMix, value); }
     public bool CanEditRouting { get => canEditRouting; internal set => Set(ref canEditRouting, value); }
     public bool LegacyMono { get; set; }
     public ObservableCollection<BackingTake> Takes { get; } = [];
@@ -49,18 +51,18 @@ public sealed class BackingStem : Observable
         ? t with { Source = Source, Offset = Offset, RecordedSpeed = RecordedSpeed, RecordedPitch = RecordedPitch, LegacyMono = LegacyMono } : t).ToArray();
     public void EnsureTake()
     {
-        if (activeTake != null || string.IsNullOrEmpty(Source)) return;
+        if (activeTake != null || ClipsInitialized || string.IsNullOrEmpty(Source)) return;
         var take = new BackingTake(Guid.NewGuid(), Source, Offset, RecordedSpeed, RecordedPitch, LegacyMono: LegacyMono);
         Takes.Add(take); activeTake = take; Notify(nameof(ActiveTake));
     }
-    public string Name { get => string.IsNullOrWhiteSpace(name) ? Path.GetFileNameWithoutExtension(Source) : name; set { if (Set(ref name, value.Trim())) Notify(nameof(Title)); } }
+    public string Name { get => string.IsNullOrWhiteSpace(name) ? Path.GetFileNameWithoutExtension(Source) : name; set { if (CanEditRouting && !string.IsNullOrWhiteSpace(value) && Set(ref name, value.Trim())) Notify(nameof(Title)); } }
     public string Color { get => color; set { if (value.Length == 7 && value[0] == '#' && int.TryParse(value[1..], System.Globalization.NumberStyles.HexNumber, null, out _)) Set(ref color, value); } }
     public bool IsArmed { get => armed; set { if (CanEditRouting) Set(ref armed, value); } }
     public bool IsMonitoring { get => monitoring; set { if (CanEditRouting) Set(ref monitoring, value); } }
     public BackingInputChoice InputChoice { get => new(InputChannel, InputChannels); set { if (value != null && CanEditRouting) { InputChannel = value.First; InputChannels = value.Count; Notify(); } } }
     public int InputChannel { get => inputChannel; set { if (CanEditRouting) Set(ref inputChannel, Math.Max(0, value)); } }
     public int InputChannels { get => inputChannels; set { if (CanEditRouting) Set(ref inputChannels, Math.Clamp(value, 1, 2)); } }
-    public double Pan { get => pan; set { if (double.IsFinite(value)) Set(ref pan, Math.Clamp(value, -1, 1)); } }
+    public double Pan { get => pan; set { if (CanAdjustMix && double.IsFinite(value)) Set(ref pan, Math.Clamp(value, -1, 1)); } }
     public double GainDb { get => BackingMixMath.ToDb(Volume / 100); set { if (double.IsFinite(value)) Volume = BackingMixMath.FromDb(value) * 100; } }
     private BackingMeterReading meter = BackingMeterReading.Silent;
     public BackingMeterReading Meter { get => meter; internal set => Set(ref meter, value); }
@@ -75,11 +77,11 @@ public sealed class BackingStem : Observable
     public string Source { get => source; set { if (Set(ref source, value)) { Notify(nameof(Title)); Notify(nameof(Name)); } } }
     public string Title => Name;
     public string State { get => state; set => Set(ref state, value); }
-    public bool IsMuted { get => muted; set { if (Set(ref muted, value)) Notify(nameof(MuteLabel)); } }
-    public bool IsSolo { get => solo; set { if (Set(ref solo, value)) Notify(nameof(SoloLabel)); } }
+    public bool IsMuted { get => muted; set { if (CanAdjustMix && Set(ref muted, value)) Notify(nameof(MuteLabel)); } }
+    public bool IsSolo { get => solo; set { if (CanAdjustMix && Set(ref solo, value)) Notify(nameof(SoloLabel)); } }
     public string MuteLabel => IsMuted ? "Restaurar som da pista" : "Silenciar pista";
     public string SoloLabel => IsSolo ? "Desativar solo da pista" : "Ouvir pista em solo";
-    public double Volume { get => volume; set { if (double.IsFinite(value)) { if (Set(ref volume, Math.Clamp(value, 0, BackingMixMath.MaximumGain * 100))) Notify(nameof(GainDb)); } } }
+    public double Volume { get => volume; set { if (CanAdjustMix && double.IsFinite(value)) { if (Set(ref volume, Math.Clamp(value, 0, BackingMixMath.MaximumGain * 100))) Notify(nameof(GainDb)); } } }
     public double Offset { get => offset; set { if (double.IsFinite(value)) Set(ref offset, value); } }
     public double RecordedSpeed { get; set; } = 1;
     public double RecordedPitch { get; set; }
@@ -88,6 +90,14 @@ public sealed class BackingStem : Observable
     public float[] Peaks { get => peaks; set => Set(ref peaks, value); }
     public bool IsProvisional { get; set; }
     internal BackingStemSource AudioSource => new(Id, Source, Offset, RecordedSpeed, RecordedPitch, IsMuted, IsSolo, Volume / 100, Pan, LegacyMono);
+    internal void RebindMedia(BackingProjectStem saved)
+    {
+        source = saved.Source;
+        Takes.Clear(); foreach (var take in saved.Takes) Takes.Add(take);
+        activeTake = Takes.FirstOrDefault(t => t.Id == saved.ActiveTake);
+        Clips.Clear(); Clips.AddRange(saved.Clips);
+        Notify(nameof(Source));
+    }
 }
 
 public sealed partial class BackingTracksViewModel
@@ -100,7 +110,7 @@ public sealed partial class BackingTracksViewModel
     public double TrackHeight { get => trackHeight; set => Set(ref trackHeight, Math.Clamp(value, 80, 320)); }
     private BackingStem? selectedStem;
     public BackingStem? SelectedStem { get => selectedStem; set { if (Set(ref selectedStem, value)) { Notify(nameof(Peaks)); CommandManager.InvalidateRequerySuggested(); } } }
-    public bool CanEditSession => !IsRecording && !recordingFinalizing;
+    public bool CanEditSession => !IsRecording && !recordingFinalizing && !projectBusy && !IsExporting;
     private double latencyCompensationMs;
     public double LatencyCompensationMs
     {
@@ -130,8 +140,8 @@ public sealed partial class BackingTracksViewModel
         };
         AddEmptyStem = new UiCommand(() =>
         {
-            if (SelectedTrack == null) { var track = new BackingTrack(Path.Combine(recordingDirectory, "Session.wav")) { Bpm = 120, ManualBpm = true, AccompanimentGain = 1 }; track.Stems.Clear(); Tracks.Add(track); SelectedTrack = track; }
-            var stem = new BackingStem { Source = Path.Combine(recordingDirectory, Guid.NewGuid() + ".wav"), Name = "Nova pista", LegacyMono = false, ClipsInitialized = true };
+            if (SelectedTrack == null) { var track = new BackingTrack(Path.Combine(recordingDirectory, "New.session")) { Name = LanguageService.T("Novo projeto"), Bpm = 120, ManualBpm = true, AccompanimentGain = 1 }; track.Stems.Clear(); Tracks.Add(track); SelectedTrack = track; }
+            var stem = new BackingStem { Source = Path.Combine(recordingDirectory, Guid.NewGuid() + ".wav"), Name = LanguageService.T(SessionStems!.Count == 0 ? "Guitarra" : "Nova pista"), Color = "#58BFA6", LegacyMono = false, ClipsInitialized = true };
             SessionStems!.Add(stem); AttachStem(stem); SelectedStem = stem; PersistSession();
         }, () => CanEditSession);
         DuplicateStem = new UiCommand(() =>
@@ -183,7 +193,7 @@ public sealed partial class BackingTracksViewModel
         if (SelectedTrack is { } selected)
         {
             masterVolume = selected.MasterGain; volume = selected.AccompanimentGain * 100;
-            savedInputId = selected.CaptureEndpoint;
+            if (!devicePreferencesLoaded && savedInputId == null) savedInputId = selected.CaptureEndpoint;
             selectedInput = Inputs.FirstOrDefault(x => x.Id == savedInputId);
             if (selectedInput == null && savedInputId != null) { selectedInput = new(savedInputId, LanguageService.T("Dispositivo indisponível"), false); Inputs.Add(selectedInput); }
             RefreshInputChoices(); Notify(nameof(SelectedInput)); Notify(nameof(Volume)); Notify(nameof(AccompanimentDb)); Notify(nameof(MasterDb));
@@ -196,6 +206,7 @@ public sealed partial class BackingTracksViewModel
     private void AttachStem(BackingStem stem)
     {
         if (!attachedStems.Add(stem)) return;
+        stem.CanEditRouting = CanEditSession; stem.CanAdjustMix = CanAdjustMix;
         stem.EnsureTake();
         EnsureClips(stem);
         stem.PropertyChanged += StemChanged;
@@ -211,7 +222,7 @@ public sealed partial class BackingTracksViewModel
         if (e.PropertyName == nameof(BackingStem.ActiveTake)) { if (recordingFinalizing) { PersistSession(); return; } Start(LoadSessionWaves()); Start(engine.RefreshSession(SessionSources())); PersistSession(); return; }
         if (e.PropertyName is nameof(BackingStem.Name) or nameof(BackingStem.Color) or nameof(BackingStem.InputChannel) or nameof(BackingStem.InputChannels)) { PersistSession(); if (e.PropertyName is nameof(BackingStem.InputChannel) or nameof(BackingStem.InputChannels)) RestartMonitorForDeviceChange(); return; }
         if (e.PropertyName == nameof(BackingStem.IsMonitoring)) { if (suppressMonitorChanges) return; Notify(nameof(MonitoredInputs)); if (recording != null) recording.SetRoutes(CaptureRoutes(true)); else RestartMonitorForDeviceChange(); return; }
-        if (e.PropertyName == nameof(BackingStem.IsArmed)) { Changed(); return; }
+        if (e.PropertyName == nameof(BackingStem.IsArmed)) { RestartMonitorForDeviceChange(); Changed(); return; }
         if (e.PropertyName is not (nameof(BackingStem.Pan) or nameof(BackingStem.IsMuted) or nameof(BackingStem.IsSolo) or nameof(BackingStem.Volume))) return;
         if (SessionStems?.Contains(stem) == true) { Start(engine.SetStemMix(SessionSources())); (recording ?? liveCapture)?.SetRoutes(CaptureRoutes(IsRecording)); }
         PersistSession();
@@ -230,13 +241,18 @@ public sealed partial class BackingTracksViewModel
     private async Task AddSessionFilesCore(IEnumerable<string> files)
     {
         if (!CanEditSession || SelectedTrack is not { } track) return;
-        foreach (string file in files)
+        foreach (string candidate in files)
         {
+            string file = candidate;
             if (!File.Exists(file) || Path.GetExtension(file).ToLowerInvariant() is not (".mp3" or ".wav")) continue;
-            var stem = new BackingStem { Source = Path.GetFullPath(file) }; track.Stems.Add(stem); AttachStem(stem);
+            file = await OwnProjectAudioAsync(file);
+            if (SelectedTrack != track || !CanEditSession) return;
+            if (string.IsNullOrEmpty(track.AnalysisSource)) track.AnalysisSource = File.Exists(track.Source) ? track.Source : file;
+            var stem = new BackingStem { Source = Path.GetFullPath(file), Name = Path.GetFileNameWithoutExtension(candidate) }; track.Stems.Add(stem); AttachStem(stem); PersistSession();
         }
         PersistSession(); await LoadSessionWaves();
         if (SelectedTrack == track) await engine.RefreshSession(SessionSources());
+        ScheduleMusic();
     }
     private async Task LoadSessionWaves()
     {
@@ -273,6 +289,9 @@ public sealed partial class BackingTracksViewModel
     }
     private void PersistSession()
     {
+        MarkProjectChanged();
+        // Legacy playlists are import sources. Portable projects have their own recovery/save lifecycle.
+        if (!string.IsNullOrEmpty(projectDirectory)) return;
         if (!playlistLoaded || disposed || editingGesture) return;
         SaveState = "Salvando…"; sessionSaveTimer.Stop(); sessionSaveTimer.Start();
     }

@@ -26,7 +26,7 @@ public sealed partial class BackingTracksViewModel
         try
         {
             var buffer = BuiltInMetronomeSounds.Contains(sound) ? null : MetronomeSoundBuffer.Load(sound);
-            customMetronomeSound = buffer; metronomeSound = sound; Notify(nameof(MetronomeSound)); UpdateMetronome();
+            customMetronomeSound = buffer; metronomeSound = sound; Notify(nameof(MetronomeSound)); UpdateMetronome(); MarkProjectChanged();
         }
         catch (Exception ex) { Error("Não foi possível carregar o som do metrônomo.", ex); }
     }
@@ -54,7 +54,7 @@ public sealed partial class BackingTracksViewModel
     private bool followTrack, metronomeEnabled, metronomeAccent = true;
     private double metronomeBpm = 120, metronomeVolume = 100;
     private string metronomeMeter = "4/4";
-    private int countInBars, metronomeBeat;
+    private int countInBars = 1, metronomeBeat;
     private int metronomeGeneration;
     private bool metronomeStarting;
     public ICommand ToggleMetronome { get; private set; } = null!;
@@ -87,7 +87,7 @@ public sealed partial class BackingTracksViewModel
     public double MetronomeVolume { get => metronomeVolume; set { if (double.IsFinite(value) && Set(ref metronomeVolume, Math.Clamp(value, 0, BackingMixMath.MaximumGain * 100))) { Notify(nameof(ClickDb)); UpdateMetronome(); } } }
     public string MetronomeMeter { get => FollowTrack && SelectedTrack != null ? SessionMeter : metronomeMeter; set { if (FollowTrack && SelectedTrack != null) { SessionMeter = value; Notify(); } else if (MetronomeMeters.Contains(value) && Set(ref metronomeMeter, value)) UpdateMetronome(); } }
     public bool MetronomeAccent { get => metronomeAccent; set { if (Set(ref metronomeAccent, value)) UpdateMetronome(); } }
-    public int CountInBars { get => countInBars; set { if (value is >= 0 and <= 2 && Set(ref countInBars, value)) UpdateMetronome(); } }
+    public int CountInBars { get => countInBars; set { if (CanEditSession && value is >= 0 and <= 2 && Set(ref countInBars, value)) { UpdateMetronome(); MarkProjectChanged(); } } }
     public double FirstBeatOffset
     {
         get => SelectedTrack != null && metronomeOffsets.TryGetValue(SelectedTrack.Source, out double value) ? value : 0;

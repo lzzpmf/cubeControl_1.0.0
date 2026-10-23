@@ -34,7 +34,7 @@ API BackingDsp * backing_create_offline(int channels, int rate) noexcept {
 API void backing_destroy(BackingDsp *p) noexcept { delete p; }
 API int backing_prepare(BackingDsp *p, double speed, double semitones) noexcept {
     try {
-        if (!p || !std::isfinite(speed) || speed < 1.0 / 3.0 || speed > 3.0 || !std::isfinite(semitones) || std::abs(semitones) > 12) return -1;
+        if (!p || !std::isfinite(speed) || speed < 0.32 || speed > 3.07 || !std::isfinite(semitones) || std::abs(semitones) > 12) return -1;
         p->stretch.reset(); p->stretch.setTransposeSemitones(semitones);
         return p->stretch.outputSeekLength(speed);
     } catch (...) { return -1; }

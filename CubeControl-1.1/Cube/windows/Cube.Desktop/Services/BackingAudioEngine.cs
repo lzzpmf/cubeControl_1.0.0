@@ -23,6 +23,7 @@ public sealed class BackingAudioEngine : IDisposable
     private BackingSessionAudio? processing;
     private BackingStemSource[] stems = [];
     private bool recordingClock;
+    private double? recordingStopPosition;
     private ISampleProvider? provider, monitorProvider;
     private MetronomeSampleProvider? independentClick;
     private float[] monitorBlock = [], clickBlock = [];
@@ -119,9 +120,10 @@ public sealed class BackingAudioEngine : IDisposable
         if (path != null && output != null) Rebuild(position, resume);
     });
     public Task SetStemMix(BackingStemSource[] sources) => Invoke(() => { stems = sources; processing?.SetMix(sources); });
-    public Task SetRecordingClock(bool enabled) => Invoke(() =>
+    public Task SetRecordingClock(bool enabled, double? stopPosition = null) => Invoke(() =>
     {
         recordingClock = enabled;
+        recordingStopPosition = enabled ? stopPosition : null;
         if (processing != null) processing.KeepAlive = enabled;
     });
     public Task RefreshSession(BackingStemSource[] sources) => Invoke(() =>
@@ -133,6 +135,18 @@ public sealed class BackingAudioEngine : IDisposable
     {
         (double Position, long Timestamp) result = default;
         await Invoke(() => { UpdateClock(); result = (snapshot.Position, System.Diagnostics.Stopwatch.GetTimestamp()); });
+        return result;
+    }
+    internal async Task<BackingCaptureWindow> RecordingWindow(double sourceStart, double? sourceEnd, double latencyMs)
+    {
+        BackingCaptureWindow result = new(double.PositiveInfinity, double.PositiveInfinity);
+        await Invoke(() =>
+        {
+            double now = System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency;
+            double elapsed = output == null ? 0 : output.GetPosition() / (double)output.OutputWaveFormat.AverageBytesPerSecond;
+            double first = now - elapsed + countInFrames / (double)(processing?.WaveFormat.SampleRate ?? 48000) - latencyMs / 1000;
+            result = new(first, sourceEnd is double end ? first + (end - sourceStart) / speed : double.PositiveInfinity);
+        });
         return result;
     }
     public Task SetVolume(double level, bool mute) => Invoke(() => { volume = Math.Clamp(level, 0, BackingMixMath.MaximumGain); muted = mute; });
@@ -173,7 +187,7 @@ public sealed class BackingAudioEngine : IDisposable
         output.PlaybackStopped += (_, args) =>
         {
             if (disposed) return;
-            try { commands.Add(() => { if (output != current) return; if (args.Exception != null) Fail(args.Exception); else if (eof) Publish(BackingPlaybackState.Ended, processing!.Duration); }); }
+            try { commands.Add(() => { if (output != current) return; if (args.Exception != null) Fail(args.Exception); else if (eof) Publish(BackingPlaybackState.Ended, recordingStopPosition ?? processing!.Duration); }); }
             catch (InvalidOperationException) { }
         };
         output.Init(queue); Fill();
@@ -190,7 +204,16 @@ public sealed class BackingAudioEngine : IDisposable
             int count;
             if (prelude) { count = (int)Math.Min(block.Length, countInRemaining * provider.WaveFormat.Channels); Array.Clear(block); }
             else if (HasAuxiliary && !transportRunning) { count = block.Length; Array.Clear(block); }
-            else count = provider.Read(block);
+            else
+            {
+                int wanted = block.Length;
+                if (recordingClock && recordingStopPosition is double stop)
+                {
+                    long remaining = (long)Math.Round((stop - start) / speed * provider.WaveFormat.SampleRate) - (renderedFrames - countInFrames);
+                    wanted = (int)Math.Min(wanted, Math.Max(0, remaining) * provider.WaveFormat.Channels);
+                }
+                count = wanted == 0 ? 0 : provider.Read(block.AsSpan(0, wanted));
+            }
             if (count == 0) { eof = true; queue.Complete(); break; }
             if (monitorBlock.Length < count) { monitorBlock = new float[count]; clickBlock = new float[count]; }
             Array.Clear(monitorBlock, 0, count); Array.Clear(clickBlock, 0, count);
@@ -205,7 +228,7 @@ public sealed class BackingAudioEngine : IDisposable
                 masterGain += Math.Clamp((float)masterVolume - masterGain, -step, step);
                 double sourceTime = prelude ? metronome.Offset + renderedFrames * speed / provider.WaveFormat.SampleRate
                     : MetronomeClick.SourcePosition(renderedFrames - countInFrames, provider.WaveFormat.SampleRate, start, speed, looping, loopStart, loopEnd);
-                float click = (transportRunning || !HasAuxiliary ? MetronomeClick.Sample(metronome, sourceTime, speed) : 0) + clickBlock[i];
+                float click = ((prelude || !metronome.CountInOnly) && (transportRunning || !HasAuxiliary) ? MetronomeClick.Sample(metronome, sourceTime, speed) : 0) + clickBlock[i];
                 clickMaximum = Math.Max(clickMaximum, Math.Abs(click));
                 clickSignal.Add(click, click);
                 for (int c = 0; c < channels; c++)

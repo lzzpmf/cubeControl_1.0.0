@@ -7,23 +7,23 @@ using Cube.Desktop.Controls;
 using Cube.Desktop.Localization;
 using Cube.Desktop.ViewModels;
 
-namespace Cube.Desktop;
+namespace Cube.Desktop.Views;
 
-public partial class MainWindow
+public partial class BackingTracksView
 {
-    private void ToggleBackingLibrary(object sender, RoutedEventArgs e) { BackingLibraryLayout.Visibility = BackingLibraryLayout.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible; ApplyBackingLayout(BackingPage.ActualWidth); }
+    internal void ToggleBackingLibrary(object sender, RoutedEventArgs e) { BackingTracks.LibraryOpen = !BackingTracks.LibraryOpen; }
     private void BackingGoToStart(object sender, RoutedEventArgs e) => BackingTracks.Position = 0;
     private void BackingUndo(object sender, RoutedEventArgs e) => BackingTracks.UndoEdit();
     private void BackingRedo(object sender, RoutedEventArgs e) => BackingTracks.UndoEdit(true);
-    private void BackingTransportSizeChanged(object sender, SizeChangedEventArgs e) =>
+    internal void BackingTransportSizeChanged(object sender, SizeChangedEventArgs e) =>
         ConfigureBackingTransport(BackingPage.ActualWidth, BackingPage.ActualHeight);
-    private void ConfigureBackingTransport(double width, double height)
+    internal void ConfigureBackingTransport(double width, double height)
     {
         if (BackingWorkspace == null || BackingTransportHost == null) return;
-        BackingWorkspace.Height = Math.Max(360, height - BackingTransportHost.ActualHeight);
+        BackingWorkspace.MinHeight = 300;
     }
-    private void SessionTrackWidthChanged(object sender, SizeChangedEventArgs e) => BackingTracks.TrackHeaderWidth = 335;
-    private void SessionTrackLayoutUpdated(object? sender, EventArgs e)
+    internal void SessionTrackWidthChanged(object sender, SizeChangedEventArgs e) => BackingTracks.TrackHeaderWidth = 260;
+    internal void SessionTrackLayoutUpdated(object? sender, EventArgs e)
     {
         if (!BackingStemList.IsVisible || BackingMainWave.Parent is not FrameworkElement rulerHost) return;
         // Use a realized waveform, not the outer ListBox width: its viewport excludes
@@ -46,13 +46,13 @@ public partial class MainWindow
             Math.Abs(BackingMainWave.Margin.Right - margin.Right) > .1)
             BackingMainWave.Margin = margin;
     }
-    private void BackingTrackHeightWheel(object sender, MouseWheelEventArgs e)
+    internal void BackingTrackHeightWheel(object sender, MouseWheelEventArgs e)
     {
         if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) return;
         BackingTracks.Zoom *= e.Delta > 0 ? 1.25 : .8;
         e.Handled = true;
     }
-    private void SessionStemContextOpening(object sender, ContextMenuEventArgs e)
+    internal void SessionStemContextOpening(object sender, ContextMenuEventArgs e)
     {
         if (sender is not FrameworkElement { DataContext: BackingStem stem } element) return;
         BackingTracks.SelectedStem = stem;

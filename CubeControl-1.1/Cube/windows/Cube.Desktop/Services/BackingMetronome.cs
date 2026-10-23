@@ -3,7 +3,7 @@ using NAudio.Wave;
 namespace Cube.Desktop.Services;
 
 public sealed record MetronomeSettings(bool Enabled = false, double Bpm = 120, int Beats = 4,
-    bool EighthNotes = false, bool Accent = true, double Volume = 1, double Offset = 0, int CountInBars = 0, string Sound = "Click", MetronomeSoundBuffer? CustomSound = null)
+    bool EighthNotes = false, bool Accent = true, double Volume = 1, double Offset = 0, int CountInBars = 0, string Sound = "Click", MetronomeSoundBuffer? CustomSound = null, bool CountInOnly = false)
 {
     public double Interval => 60 / Bpm / (EighthNotes ? 2 : 1);
     public bool Valid => double.IsFinite(Bpm) && Bpm >= 20 && Bpm <= 300 && Beats is 2 or 3 or 4 or 6

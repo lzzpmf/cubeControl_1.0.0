@@ -5,15 +5,15 @@ using System.Windows.Media;
 using Cube.Desktop.Localization;
 using Cube.Desktop.ViewModels;
 
-namespace Cube.Desktop;
+namespace Cube.Desktop.Views;
 
-public partial class MainWindow
+public partial class BackingTracksView
 {
-    private void StudioPitchStep(object sender, RoutedEventArgs e)
+    internal void StudioPitchStep(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: string step } && int.TryParse(step, out int delta)) BackingTracks.Pitch += delta;
     }
-    private void StudioOptionsClick(object sender, RoutedEventArgs e)
+    internal void StudioOptionsClick(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu();
         void Add(string label, Action action)
@@ -22,7 +22,16 @@ public partial class MainWindow
             item.Click += (_, _) => action(); menu.Items.Add(item);
         }
         Add("Nova pista", () => BackingTracks.AddEmptyStem.Execute(null));
-        Add("Sessões e entrada", () => { BackingSessionsPopup.DataContext = BackingTracks; BackingSessionsPopup.IsOpen = true; });
+        Add("Dados do projeto", () => { if (BackingTracks.CanEditSession && BackingTracks.SelectedTrack is { } project) EditBackingTrack(project); });
+        Add("Novo projeto", () => BackingTracks.NewProject.Execute(null));
+        var legacy = new MenuItem { Header = LanguageService.T("Importar sessão anterior") };
+        foreach (var track in BackingTracks.Tracks.Where(t => System.IO.Path.GetExtension(t.Source).ToLowerInvariant() is ".wav" or ".mp3"))
+        {
+            var item = new MenuItem { Header = track.Title, IsEnabled = BackingTracks.CanEditSession };
+            item.Click += async (_, _) => await BackingTracks.ImportLegacyTrackAsync(track);
+            legacy.Items.Add(item);
+        }
+        menu.Items.Add(legacy);
         Add("Biblioteca de áudio", () => ToggleBackingLibrary(sender, e));
         Add("Adicionar pasta", () => BackingTracks.AddLibraryFolder.Execute(null));
         Add("Parar pré-escuta", () => { BackingTracks.StopYouTubePreview(); _ = BackingTracks.StopLocalPreview(); });
@@ -30,17 +39,17 @@ public partial class MainWindow
         Add("Refazer", () => BackingTracks.UndoEdit(true));
         menu.PlacementTarget = sender as UIElement; menu.IsOpen = true;
     }
-    private async void PreviewLocalFile(object sender, RoutedEventArgs e)
+    internal async void PreviewLocalFile(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: LocalAudioFile file }) await BackingTracks.PreviewLocalAudio(file);
     }
-    private async void InsertLocalFile(object sender, RoutedEventArgs e)
+    internal async void InsertLocalFile(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { Tag: LocalAudioFile file })
             try { await BackingTracks.InsertLocalAudio(file.Path); }
-            catch (Exception ex) { MessageBox.Show(this, ex.Message, LanguageService.T("Importar áudio")); }
+            catch (Exception ex) { MessageBox.Show(Window.GetWindow(this), ex.Message, LanguageService.T("Importar áudio")); }
     }
-    private void LocalFileContextOpening(object sender, ContextMenuEventArgs e)
+    internal void LocalFileContextOpening(object sender, ContextMenuEventArgs e)
     {
         if (sender is not FrameworkElement { DataContext: LocalAudioFile file } element) return;
         var menu = new ContextMenu();
@@ -53,8 +62,8 @@ public partial class MainWindow
         menu.PlacementTarget = element; menu.IsOpen = true; e.Handled = true;
     }
     private Point? localFileDragOrigin;
-    private void LocalFileDragStart(object sender, MouseButtonEventArgs e) => localFileDragOrigin = e.GetPosition(this);
-    private void LocalFileDrag(object sender, MouseEventArgs e)
+    internal void LocalFileDragStart(object sender, MouseButtonEventArgs e) => localFileDragOrigin = e.GetPosition(this);
+    internal void LocalFileDrag(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed) { localFileDragOrigin = null; return; }
         if (localFileDragOrigin is not { } origin || sender is not FrameworkElement { DataContext: LocalAudioFile file } element) return;

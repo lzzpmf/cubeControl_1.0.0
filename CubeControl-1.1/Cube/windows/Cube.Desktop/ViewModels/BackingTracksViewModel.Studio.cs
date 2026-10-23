@@ -7,9 +7,19 @@ using Cube.Desktop.Services;
 
 namespace Cube.Desktop.ViewModels;
 
-public sealed record LocalAudioFile(string Path, string Name, double Seconds, long Bytes, string Category)
+public sealed record LocalAudioFile(string Path, string Name, double Seconds, long Bytes, string Category) : System.ComponentModel.INotifyPropertyChanged
 {
     public string Details => $"{BackingTracksViewModel.FormatTime(Seconds)}    {Bytes / 1048576d:0.0} MB";
+    private bool previewing;
+    public bool IsPreviewing => previewing;
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+    internal void SetPreview(bool value)
+    {
+        if (previewing == value) return; previewing = value;
+        foreach (string p in new[] { nameof(IsPreviewing), nameof(PreviewLabel), nameof(PreviewIcon) }) PropertyChanged?.Invoke(this, new(p));
+    }
+    public string PreviewLabel => IsPreviewing ? "Parar pré-escuta" : "Pré-ouvir";
+    public Wpf.Ui.Controls.SymbolRegular PreviewIcon => IsPreviewing ? Wpf.Ui.Controls.SymbolRegular.Stop24 : Wpf.Ui.Controls.SymbolRegular.Play24;
 }
 
 public sealed partial class BackingTracksViewModel
@@ -135,7 +145,7 @@ public sealed partial class BackingTracksViewModel
         {
             string category = libraryCategories.GetValueOrDefault(file.Path, "");
             if ((LocalCategory == "Todos" || LocalCategory == category) && file.Name.Contains(LocalSearch, StringComparison.CurrentCultureIgnoreCase))
-                LocalFiles.Add(file with { Category = category });
+            { var item = file with { Category = category }; item.SetPreview(file.Path == localPreviewPath); LocalFiles.Add(item); }
         }
     }
     public void CategorizeLocalFile(LocalAudioFile file, string category)
@@ -151,14 +161,17 @@ public sealed partial class BackingTracksViewModel
         if (target == null || SessionStems?.Contains(target) != true) return;
         var session = SelectedTrack;
         double at = Math.Max(0, position ?? Position);
+        string importedName = System.IO.Path.GetFileName(file);
+        file = await OwnProjectAudioAsync(file);
         var wave = await BackingAudioProcessing.Analyze(file, lifetime.Token, 32768);
         if (wave.Duration <= 0) return;
         if (disposed || !CanEditSession || session != SelectedTrack || SessionStems?.Contains(target) != true) return;
+        if (session != null && string.IsNullOrEmpty(session.AnalysisSource)) session.AnalysisSource = File.Exists(session.Source) ? session.Source : file;
         BeginClipGesture();
-        var take = new BackingClipTake(Guid.NewGuid(), System.IO.Path.GetFileNameWithoutExtension(file), [new(Guid.NewGuid(), file, 0, 0, wave.Duration)]);
-        var clip = new BackingClip(Guid.NewGuid(), System.IO.Path.GetFileName(file), at, wave.Duration, [take], take.Id);
+        var take = new BackingClipTake(Guid.NewGuid(), System.IO.Path.GetFileNameWithoutExtension(importedName), [new(Guid.NewGuid(), file, 0, 0, wave.Duration)]);
+        var clip = new BackingClip(Guid.NewGuid(), importedName, at, wave.Duration, [take], take.Id);
         ClipWaves[file] = wave; target.Clips.Add(clip); target.ClipsInitialized = true;
-        SelectClip(target, clip, false); EndClipGesture();
+        SelectClip(target, clip, false); EndClipGesture(); ScheduleMusic();
     }
     public async Task PreviewLocalAudio(LocalAudioFile file)
     {
@@ -167,7 +180,17 @@ public sealed partial class BackingTracksViewModel
         if (!File.Exists(file.Path)) { Status = "Arquivo ausente"; return; }
         if (localPreviewPath == file.Path) { await StopLocalPreview(); return; }
         int generation = ++localPreviewGeneration;
-        StopYouTubePreview(); localPreviewEngine ??= new();
+        StopYouTubePreview();
+        if (localPreviewEngine == null)
+        {
+            localPreviewEngine = new();
+            localPreviewEngine.Changed += snapshot => Dispatch(() =>
+            {
+                if (snapshot.State is not (BackingPlaybackState.Ended or BackingPlaybackState.Error) || snapshot.Source != localPreviewPath) return;
+                localPreviewPath = null; RefreshLocalPreviews();
+                if (snapshot.Error != null) Error("Não foi possível pré-ouvir o arquivo.", snapshot.Error);
+            });
+        }
         try
         {
             await localPreviewEngine.Open(file.Path, SelectedOutput.Id, 0, 1, 0, false, 0, file.Seconds, .7, false);
@@ -175,13 +198,15 @@ public sealed partial class BackingTracksViewModel
             if (IsPlaying) await engine.Pause();
             if (BeforePlayback != null) await BeforePlayback();
             if (generation != localPreviewGeneration || disposed || !CanEditSession) return;
-            localPreviewPath = file.Path; await localPreviewEngine.Play();
+            localPreviewPath = file.Path; RefreshLocalPreviews(); await localPreviewEngine.Play();
         }
-        catch (Exception ex) { localPreviewPath = null; Error("Não foi possível pré-ouvir o arquivo.", ex); }
+        catch (Exception ex) { localPreviewPath = null; RefreshLocalPreviews(); Error("Não foi possível pré-ouvir o arquivo.", ex); }
     }
     public async Task StopLocalPreview()
     {
-        localPreviewGeneration++; localPreviewPath = null;
+        localPreviewGeneration++; bool refresh = localPreviewPath != null; localPreviewPath = null;
+        if (refresh) RefreshLocalPreviews();
         if (localPreviewEngine != null) await localPreviewEngine.Clear();
     }
+    private void RefreshLocalPreviews() { foreach (var file in LocalFiles) file.SetPreview(file.Path == localPreviewPath); }
 }

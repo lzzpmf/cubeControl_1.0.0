@@ -42,6 +42,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     public EditorViewModel Model { get; }
     public BackingTracksViewModel BackingTracks { get; }
     private bool closing;
+    private bool closeInProgress;
     private readonly bool automaticConnectionEnabled;
     private readonly Wpf.Ui.SnackbarService snackbarService = new();
     private IInputElement? operationFocus;
@@ -96,6 +97,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Appearance.UiDensity.Initialize();
         InitializeComponent();
         ConfigureDragDrop();
+        ConfigureBackingProjects();
         BackingPage.AddHandler(System.Windows.Controls.Primitives.Thumb.DragStartedEvent, new System.Windows.Controls.Primitives.DragStartedEventHandler((_, _) => BackingTracks.BeginClipGesture()));
         BackingPage.AddHandler(System.Windows.Controls.Primitives.Thumb.DragCompletedEvent, new System.Windows.Controls.Primitives.DragCompletedEventHandler((_, _) => BackingTracks.EndClipGesture()));
         RegisterName("IrLibraryTree", SingleIrLibrary.Tree);
@@ -183,7 +185,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             _ = Model.IrAudition.StopAsync();
             if (closing) return;
             e.Cancel = true;
+            if (closeInProgress) return;
+            closeInProgress = true;
+            try
+            {
             if (Model.Busy) { await ShowNoticeAsync("Aguarde a operação terminar antes de fechar."); return; }
+            if (!CommitBackingInput() || !await BackingTracks.ConfirmProjectCloseAsync()) return;
             if (!await Model.PackEditor.ConfirmDiscard()) return;
             if (Model.Dirty && !await Model.Ask("Há ajustes aplicados que não foram salvos. Fechar o editor?")) return;
             if (Enumerable.Range(1, 4).Any(Model.AdvancedPreviewHasChanges) && !await Model.Ask("Os ajustes dos efeitos estão apenas na RAM. Encerrar as prévias e restaurar os parâmetros anteriores antes de fechar?")) return;
@@ -198,6 +205,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 if (!await Model.Ask(ex.Message + "\nFechar mesmo assim? Os snapshots em memória serão descartados.")) return;
             }
             closing = true; Appearance.ThemeService.Instance.Detach(); Model.Dispose(); _ = Dispatcher.BeginInvoke(new Action(Close));
+            }
+            finally { closeInProgress = false; }
         };
     }
     private bool noticeOpen;
@@ -582,7 +591,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (WorkspaceScroll == null) return;
         // At high DPI / very short work areas, keep every command reachable by scrolling
         // the content and footer beneath the permanently visible navigation.
-        bool shortViewport = ClientArea.ActualHeight < 400;
+        bool backingCompact = Tabs.SelectedIndex == 2 && (ClientArea.ActualHeight < 620 || Workspace.ActualWidth < 900);
+        bool shortViewport = ClientArea.ActualHeight < 400 || backingCompact;
+        ConnectionGroup.Visibility = backingCompact ? Visibility.Collapsed : Visibility.Visible;
         foreach (ListBoxItem item in Navigation.Items)
         {
             if (item.Content is not StackPanel row) continue;
@@ -929,7 +940,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private FrameworkElement? backingViewportHost;
     private void BackingViewportSizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(BackingPage.ActualWidth);
-    private void BackingPageSizeChanged(object sender, SizeChangedEventArgs e)
+    internal void BackingPageSizeChanged(object sender, SizeChangedEventArgs e)
     {
         ApplyBackingLayout(e.NewSize.Width);
         // Keep the arrangement reachable even at maximum UI zoom on a short window.
@@ -938,18 +949,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         ApplyBackingLayout(e.NewSize.Width);
     }
     private void BackingLibrarySizeChanged(object sender, SizeChangedEventArgs e) => ApplyBackingLayout(e.NewSize.Width);
-    private void ApplyBackingLayout(double width)
-    {
-        if (BackingLibraryLayout == null || BackingSideColumn == null) return;
-        bool visible = BackingLibraryLayout.Visibility == Visibility.Visible;
-        bool wide = BackingPage.ActualWidth >= 1200;
-        BackingSideColumn.Width = new GridLength(visible && wide ? 310 : 0);
-        Grid.SetColumn(BackingLibraryLayout, wide ? 1 : 0);
-        Grid.SetRow(BackingLibraryLayout, 1);
-        Grid.SetRowSpan(BackingLibraryLayout, 1);
-        BackingLibraryLayout.Width = wide ? double.NaN : Math.Min(310, Math.Max(0, BackingPage.ActualWidth));
-        BackingLibraryLayout.HorizontalAlignment = wide ? HorizontalAlignment.Stretch : HorizontalAlignment.Right;
-    }
+    private void ApplyBackingLayout(double width) => BackingView?.ApplyPanels();
     private void BackingSectionClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement { DataContext: BackingSection section })
@@ -974,7 +974,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         backingDialogOpen = true;
         try
         {
-            var choice = new CheckBox { Content = LanguageService.T("Aplicar velocidade e tom da sessão"), IsChecked = false, Margin = new Thickness(0, 8, 0, 8) };
+            var choice = new CheckBox { Content = LanguageService.T("Aplicar velocidade e tom da sessão"), IsChecked = true, Margin = new Thickness(0, 8, 0, 8) };
             var mix = new RadioButton { Content = LanguageService.T("Mixagem da sessão"), IsChecked = BackingTracks.ExportMix, GroupName = "ExportTarget", Margin = new Thickness(0, 8, 0, 0) };
             var isolated = new RadioButton { Content = LanguageService.T("Pista selecionada"), IsChecked = !BackingTracks.ExportMix, IsEnabled = BackingTracks.SelectedStem != null, GroupName = "ExportTarget" };
             var panel = new StackPanel(); panel.Children.Add(mix); panel.Children.Add(isolated); panel.Children.Add(choice);
@@ -1017,7 +1017,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             if (!backingPage && node is Controls.Knob or Slider) return;
         }
         var modifiers = Keyboard.Modifiers;
-        if (backingPage && BackingStemList.IsKeyboardFocusWithin && BackingTracks.CanEditSession)
+        if (backingPage && BackingTracks.CanEditSession && (BackingStemList.IsKeyboardFocusWithin || modifiers == ModifierKeys.Control && e.Key is Key.Z or Key.Y))
         {
             Action? edit = modifiers == ModifierKeys.Control ? e.Key switch
             {

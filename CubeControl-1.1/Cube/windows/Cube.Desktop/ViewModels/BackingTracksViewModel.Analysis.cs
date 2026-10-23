@@ -14,10 +14,13 @@ public sealed partial class BackingTracksViewModel
     private CancellationTokenSource? musicCancellation;
     private bool musicRunning;
     internal Task MusicAnalysisTask { get; private set; } = Task.CompletedTask;
+    private static string MusicSource(BackingTrack track) => File.Exists(track.AnalysisSource) ? track.AnalysisSource
+        : File.Exists(track.Source) ? track.Source
+        : track.Stems.SelectMany(s => s.Clips).SelectMany(c => c.ActiveTake?.Layers ?? []).Select(l => l.Source).FirstOrDefault(File.Exists) ?? track.Source;
     private static string MusicIdentity(BackingTrack track)
     {
-        var file = new FileInfo(track.Source);
-        return $"music-v{BackingMusicAnalysis.AlgorithmVersion}|" + track.Source + "|" + (file.Exists ? $"{file.Length}|{file.LastWriteTimeUtc.Ticks}" : "missing");
+        var source = MusicSource(track); var file = new FileInfo(source);
+        return $"music-v{BackingMusicAnalysis.AlgorithmVersion}|" + source + "|" + (file.Exists ? $"{file.Length}|{file.LastWriteTimeUtc.Ticks}" : "missing");
     }
     private void ScheduleMusic()
     {
@@ -55,7 +58,8 @@ public sealed partial class BackingTracksViewModel
                     if (!musicCache.TryGetValue(identity, out var result))
                     {
                         MusicAnalysisCount++;
-                        var work = Task.Run(() => BackingMusicAnalysis.Analyze(target.Source, cancellation.Token), cancellation.Token);
+                        string source = MusicSource(target);
+                        var work = Task.Run(() => BackingMusicAnalysis.Analyze(source, cancellation.Token), cancellation.Token);
                         backgroundWork.Add(work);
                         try { result = await work; } finally { backgroundWork.Remove(work); }
                         if (musicCache.Count >= 256) musicCache.Remove(musicCache.Keys.First());
@@ -79,7 +83,7 @@ public sealed partial class BackingTracksViewModel
     internal void ApplyMusicResult(BackingTrack target, BackingMusicResult result)
     {
         if (!Tracks.Contains(target)) return;
-        if (!target.ManualBpm) target.Bpm = result.Bpm;
+        target.SuggestedBpm = result.Bpm;
         if (!target.ManualKey) target.OriginalKey = result.Key;
         target.TempoConfidence = result.TempoConfidence; target.KeyConfidence = result.KeyConfidence;
         target.RefreshMusic(); if (target == SelectedTrack) RefreshPractice();

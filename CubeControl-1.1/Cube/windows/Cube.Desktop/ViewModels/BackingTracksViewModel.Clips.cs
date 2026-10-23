@@ -11,9 +11,11 @@ public sealed partial class BackingTracksViewModel
     public Dictionary<string, (double Duration, float[] Peaks)> ClipWaves { get; } = new(StringComparer.OrdinalIgnoreCase);
     private int clipRevision;
     public int ClipRevision => clipRevision;
-    public bool SnapEnabled { get; set; } = true;
+    private bool snapEnabled = true;
+    public bool SnapEnabled { get => snapEnabled; set { if (CanEditSession && Set(ref snapEnabled, value)) MarkProjectChanged(); } }
     public string[] SnapDivisions { get; } = ["Bar", "1/2", "1/4", "1/8", "1/16"];
-    public string SnapDivision { get; set; } = "1/4";
+    private string snapDivision = "1/4";
+    public string SnapDivision { get => snapDivision; set { if (CanEditSession && SnapDivisions.Contains(value) && Set(ref snapDivision, value)) MarkProjectChanged(); } }
     public bool ExportInterval { get; set; }
     private string saveState = "Salvo automaticamente";
     public string SaveState { get => saveState; private set => Set(ref saveState, value); }
@@ -28,14 +30,14 @@ public sealed partial class BackingTracksViewModel
         return Math.Max(0, FirstBeatOffset + Math.Round((time - FirstBeatOffset) / step) * step);
     }
     private sealed record EditStem(Guid Id, string Source, string Name, string Color, double Volume, double Pan,
-        bool Muted, bool Solo, int Input, int Channels, bool LegacyMono, BackingClip[] Clips);
+        bool Muted, bool Solo, int Input, int Channels, bool LegacyMono, BackingClip[] Clips, BackingTake[] Takes, Guid? ActiveTake);
     private sealed record EditState(EditStem[] Stems, double Master, double Bus);
     private sealed class EditHistory { public EditState? Current; public Stack<EditState> Undo = new(); public Stack<EditState> Redo = new(); }
     private readonly Dictionary<Guid, EditHistory> editHistories = [];
     private bool restoringEdit, editingGesture;
     private EditHistory? History => SelectedTrack == null ? null : editHistories.GetValueOrDefault(SelectedTrack.SessionId);
     private EditState SnapshotEdit() => new((SessionStems ?? []).Select(s => new EditStem(s.Id, s.Source, s.Name, s.Color, s.Volume, s.Pan,
-        s.IsMuted, s.IsSolo, s.InputChannel, s.InputChannels, s.LegacyMono, s.Clips.ToArray())).ToArray(), masterVolume, Volume);
+        s.IsMuted, s.IsSolo, s.InputChannel, s.InputChannels, s.LegacyMono, s.Clips.ToArray(), s.SnapshotTakes(), s.ActiveTake?.Id)).ToArray(), masterVolume, Volume);
     private void InitializeHistory()
     {
         if (SelectedTrack == null) return;
@@ -71,6 +73,8 @@ public sealed partial class BackingTracksViewModel
             {
                 var stem = new BackingStem { Id = x.Id, Source = x.Source, Name = x.Name, Color = x.Color, Volume = x.Volume,
                     Pan = x.Pan, IsMuted = x.Muted, IsSolo = x.Solo, InputChannel = x.Input, InputChannels = x.Channels, LegacyMono = x.LegacyMono, ClipsInitialized = true };
+                foreach (var take in x.Takes) stem.Takes.Add(take);
+                stem.ActiveTake = stem.Takes.FirstOrDefault(t => t.Id == x.ActiveTake);
                 if (routes.TryGetValue(x.Id, out var route)) { stem.IsArmed = route.IsArmed; stem.IsMonitoring = route.IsMonitoring; }
                 stem.Clips.AddRange(x.Clips); SessionStems.Add(stem); AttachStem(stem);
             }
@@ -88,7 +92,7 @@ public sealed partial class BackingTracksViewModel
         NotifyClips();
     }
     public IEnumerable<(BackingStem Stem, BackingClip Clip)> SelectedClipItems() => (SessionStems ?? []).SelectMany(s => s.Clips.Where(c => SelectedClips.Contains(c.Id)).Select(c => (s, c)));
-    private void NotifyClips() { clipRevision++; Notify(nameof(ClipRevision)); CommandManager.InvalidateRequerySuggested(); }
+    private void NotifyClips() { clipRevision++; Notify(nameof(ClipRevision)); RefreshClipPresentation(); CommandManager.InvalidateRequerySuggested(); }
     private void ClipsChanged()
     {
         NotifyClips();
@@ -177,6 +181,15 @@ public sealed partial class BackingTracksViewModel
                 ? l with { Source = newPath, Duration = l.Duration > 0 ? Math.Min(l.Duration, Math.Max(0, wave.Duration - l.SourceStart) * l.RecordedSpeed) : wave.Duration * l.RecordedSpeed } : l).ToArray() }).ToArray();
             stem.Clips[i] = clip with { Takes = takes, Duration = clip.Duration > 0 ? clip.Duration : takes.SelectMany(t => t.Layers).Select(l => l.Position + l.Duration).DefaultIfEmpty(0).Max() };
         }
+        for (int i = 0; i < stem.Takes.Count; i++)
+        {
+            if (!string.Equals(stem.Takes[i].Source, oldPath, StringComparison.OrdinalIgnoreCase)) continue;
+            var replacement = stem.Takes[i] with { Source = newPath };
+            bool active = stem.ActiveTake?.Id == replacement.Id;
+            stem.Takes[i] = replacement;
+            if (active && !replacement.Incomplete) stem.ActiveTake = replacement;
+        }
+        if (string.Equals(stem.Source, oldPath, StringComparison.OrdinalIgnoreCase)) stem.Source = newPath;
         stem.State = "Pronta"; ClipsChanged(); EndClipGesture();
     }
     private void EnsureClips(BackingStem stem)

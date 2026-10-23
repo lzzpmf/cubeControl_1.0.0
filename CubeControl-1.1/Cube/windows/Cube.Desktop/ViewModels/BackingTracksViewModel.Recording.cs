@@ -12,6 +12,11 @@ public sealed partial class BackingTracksViewModel
     private string recordingDirectory = "", playlistPath = "";
     private string? lastRecording;
     private bool recordingFinalizing, playlistLoaded, playlistLoadFailed;
+    private bool recordingPreparing;
+    private double recordingStart;
+    private double? recordingLimit;
+    private BackingCaptureWindow? captureWindow;
+    private bool recordingWasLooping;
     private BackingTrack? recordingTrack;
     private readonly List<(BackingStem Stem, string Path, BackingTake? Previous)> recordingTargets = [];
     private (double Position, long Timestamp) recordingAnchor;
@@ -21,7 +26,7 @@ public sealed partial class BackingTracksViewModel
     public ICommand ToggleRecording { get; private set; } = null!;
     public bool IsRecording => recording != null;
     public bool CanChangeRecordingInput => !IsRecording && !recordingFinalizing;
-    public string RecordingLabel => recordingFinalizing ? RecordingState : IsRecording ? "Parar e salvar gravação" : "Iniciar gravação";
+    public string RecordingLabel => recordingFinalizing ? RecordingState : IsRecording ? "Encerrar tomada" : "Gravar";
     public string RecordingState => recordingFinalizing ? "Finalizando gravação…" : IsRecording ? "Gravando áudio" : "Pronto para gravar";
     public string RecordingHelp => !HasRecordingInput ? "Selecione uma entrada para gravar." : "Arme as pistas e escolha seus canais de entrada antes de REC.";
     public string RecordingTime => FormatTime(recording != null && recordingTargets.Count > 0 ? recording.Snapshot(recordingTargets[0].Stem.Id).Seconds : 0, true);
@@ -34,12 +39,12 @@ public sealed partial class BackingTracksViewModel
         recordingDirectory = Path.Combine(dataDirectory, "Recordings");
         playlistPath = Path.Combine(dataDirectory, "backing-playlist-v1.json");
         ToggleRecording = new UiCommand(() => Start(ToggleRecordingSession()),
-            () => !disposed && !recordingFinalizing && (IsRecording || HasRecordingInput && SelectedOutput != null && SessionStems?.Any(s => s.IsArmed) == true));
+            () => !disposed && !recordingFinalizing && (IsRecording || CanEditSession && HasRecordingInput && SelectedOutput != null && SessionStems?.Any(s => s.IsArmed) == true));
         recordingTimer.Tick += (_, _) => UpdateRecordingWave();
         PropertyChanged += (_, e) => { if (e.PropertyName == nameof(SelectedInput)) { Notify(nameof(RecordingHelp)); PersistSession(); Changed(); } };
         Inputs.CollectionChanged += (_, _) => { Notify(nameof(RecordingHelp)); Changed(); };
     }
-    private BackingCaptureRoute[] CaptureRoutes(bool writing) => SessionStems?.Where(s => s.IsMonitoring || writing && s.IsArmed).Select(s => new BackingCaptureRoute(s.Id, s.InputChannel, s.InputChannels,
+    private BackingCaptureRoute[] CaptureRoutes(bool writing) => SessionStems?.Where(s => s.IsMonitoring || s.IsArmed).Select(s => new BackingCaptureRoute(s.Id, s.InputChannel, s.InputChannels,
         writing ? recordingTargets.FirstOrDefault(t => t.Stem == s).Path : null,
         s.IsMonitoring, s.Volume / 100, s.Pan, s.IsMuted || SessionStems.Any(x => x.IsSolo) && !s.IsSolo)).ToArray() ?? [];
 
@@ -48,11 +53,16 @@ public sealed partial class BackingTracksViewModel
         await StopLocalPreview();
         if (disposed || recordingFinalizing) return;
         if (IsRecording) { await StopRecordingAsync(); return; }
+        if (!CanEditSession) return;
         if (!HasRecordingInput || SelectedOutput == null || SessionStems?.Any(s => s.IsArmed) != true) return;
         CommitEditHistory();
         Directory.CreateDirectory(recordingDirectory);
-        recordingTrack = SelectedTrack; recordingFinalizing = true; recordingEndAnchor = null;
-        StopMonitor(); looping = false; parameterTimer.Stop();
+        recordingTrack = SelectedTrack; recordingPreparing = true; recordingFinalizing = true; recordingEndAnchor = null;
+        recordingWasLooping = IsLooping;
+        recordingStart = IsLooping && HasRange ? RangeStart : Position;
+        recordingLimit = IsLooping && HasRange ? RangeEnd : null;
+        position = recordingStart; Notify(nameof(Position));
+        StopMonitor(); StopIndependentMetronome(); looping = false; parameterTimer.Stop();
         foreach (var stem in SessionStems.Where(s => s.IsArmed))
         {
             stem.EnsureTake();
@@ -66,13 +76,22 @@ public sealed partial class BackingTracksViewModel
             // Open every writer and validate every route before transport/capture starts.
             recording = new BackingMultitrackCapture(SelectedInput!.Id, CaptureRoutes(true));
             await engine.SetMonitor(SelectedOutput.Id, recording.MonitorProvider);
-            await engine.SetRecordingClock(true);
-            await engine.ConfigureMetronome(MetronomeConfiguration() with { Enabled = FollowTrack && metronomeEnabled && Bpm > 0 });
+            await engine.SetRecordingClock(true, recordingLimit);
+            await engine.ConfigureMetronome(MetronomeConfiguration() with { Enabled = CountInBars > 0 || metronomeEnabled, Bpm = TransportBpm,
+                Beats = int.Parse(SessionMeter[..1]), EighthNotes = SessionMeter == "6/8", CountInOnly = !metronomeEnabled });
             await engine.Open(SelectedTrack!.Source, SelectedOutput.Id, Position, Speed / 100, Pitch, false, 0, Duration, Volume / 100, IsMuted, SessionSources());
-            await engine.Play(false);
+            recording.SetWindow(new(double.PositiveInfinity, double.PositiveInfinity));
+            recording.Start();
+            await recording.WaitForFirstPacket(lifetime.Token);
+            await engine.Play(true);
             recordingAnchor = await engine.CaptureClock();
-            foreach (var target in recordingTargets) { target.Stem.State = "Gravando áudio"; target.Stem.Peaks = []; }
-            recording.Start(); recordingTimer.Start(); FollowRecording = true;
+            captureWindow = await engine.RecordingWindow(recordingStart, recordingLimit, LatencyCompensationMs);
+            recording.SetWindow(captureWindow);
+            var currentRecording = recording;
+            recording.WindowCompleted += () => Dispatch(() => { if (recording == currentRecording) Start(StopRecordingAsync()); });
+            foreach (var target in recordingTargets) { target.Stem.State = "Gravando áudio"; target.Stem.Peaks = []; target.Stem.Length = 0; target.Stem.Offset = recordingStart; }
+            recordingTimer.Start(); journalTimer.Start(); FollowRecording = true;
+            MarkProjectChanged();
             Status = "Gravação em andamento."; HasError = false;
             _ = ObserveRecording(recording);
         }
@@ -83,7 +102,7 @@ public sealed partial class BackingTracksViewModel
             await engine.SetRecordingClock(false); await engine.Pause();
             Error("Não foi possível iniciar a gravação. Verifique a entrada e o destino.", ex);
         }
-        finally { recordingFinalizing = false; RefreshRecording(); }
+        finally { recordingPreparing = false; recordingFinalizing = false; RefreshRecording(); if (recording?.WindowReached == true) Start(StopRecordingAsync()); }
     }
     private async Task StopRecordingAsync()
     {
@@ -92,7 +111,7 @@ public sealed partial class BackingTracksViewModel
         recordingEndAnchor = await engine.CaptureClock();
         var error = await session.Stop(); CompleteRecording(session, error); await recordingTransport;
     }
-    private async Task StopTransportAsync() { await StopRecordingAsync(); await StopPlayback(); }
+    private async Task StopTransportAsync() { if (IsRecording) await StopRecordingAsync(); else await StopPlayback(); }
     private async Task ObserveRecording(BackingMultitrackCapture session)
     {
         var error = await session.Completion;
@@ -110,7 +129,7 @@ public sealed partial class BackingTracksViewModel
     private void CompleteRecording(BackingMultitrackCapture session, Exception? error)
     {
         if (!ReferenceEquals(recording, session)) return;
-        recordingFinalizing = true; recordingTimer.Stop(); UpdateRecordingWave();
+        recordingFinalizing = true; recordingTimer.Stop(); journalTimer.Stop(); UpdateRecordingWave();
         session.Dispose(); error ??= session.Completion.GetAwaiter().GetResult(); recording = null;
         RestoreRecordingTargets();
         double outputClockRatio = 1;
@@ -123,23 +142,28 @@ public sealed partial class BackingTracksViewModel
         {
             var captured = session.Snapshot(target.Stem.Id);
             if (captured.Seconds <= 0 || !File.Exists(target.Path)) continue;
-            double offset = recordingAnchor.Position + (session.FirstCaptureSeconds - recordingAnchor.Timestamp / (double)System.Diagnostics.Stopwatch.Frequency - LatencyCompensationMs / 1000) * Speed / 100;
+            double offset = recordingStart + Math.Max(0, session.FirstWrittenSeconds - (captureWindow?.Start ?? session.FirstWrittenSeconds)) * Speed / 100;
             var take = new BackingTake(Guid.NewGuid(), target.Path, offset, Speed / 100 * Math.Clamp(session.ClockRatio * outputClockRatio, .98, 1.02), Pitch, error != null, LegacyMono: false);
             target.Stem.Takes.Add(take);
             if (error == null)
             {
-                var alternative = new BackingClipTake(take.Id, Path.GetFileNameWithoutExtension(target.Path),
+                int number = target.Stem.Takes.Where(t => !t.Incomplete && File.Exists(t.Source)).Select(t => t.Source).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+                var alternative = new BackingClipTake(take.Id, Cube.Desktop.Localization.LanguageService.T("Tomada") + $" {number:00}",
                     [new(Guid.NewGuid(), target.Path, 0, 0, captured.Seconds * take.RecordedSpeed, take.RecordedSpeed, take.RecordedPitch)]);
-                var clip = new BackingClip(Guid.NewGuid(), target.Stem.Name, offset, captured.Seconds * take.RecordedSpeed, [alternative], take.Id);
+                double length = captured.Seconds * take.RecordedSpeed;
+                if (recordingLimit is double limit) length = Math.Min(length, Math.Max(0, limit - offset));
+                if (length <= 0) continue;
+                var clip = new BackingClip(Guid.NewGuid(), target.Stem.Name, offset, length, [alternative], take.Id);
                 var clips = BackingClipEdit.Overdub(target.Stem.Clips, clip);
                 target.Stem.Clips.Clear(); target.Stem.Clips.AddRange(clips);
                 ClipWaves[target.Path] = (captured.Seconds, captured.Peaks);
+                SelectClip(target.Stem, clip, false);
             }
             target.Stem.State = error == null ? "Gravação salva" : "Gravação interrompida";
             lastRecording = target.Path;
         }
         recordingTargets.Clear(); recordingTrack = null;
-        try { SaveRecordingPlaylist(); } catch (Exception ex) { error ??= ex; }
+        Start(SaveRecoveryAsync());
         if (error != null) Error("Gravação interrompida. As tomadas recuperáveis foram preservadas.", error);
         else { Status = "Gravação salva na sessão."; HasError = false; }
         if (!disposed) { recordingTransport = FinishRecordingTransport(); Start(recordingTransport); }
@@ -152,9 +176,14 @@ public sealed partial class BackingTracksViewModel
         {
             await engine.SetMonitor(SelectedOutput?.Id ?? "", null); await engine.Pause();
             await engine.SetRecordingClock(false); await engine.RefreshSession(SessionSources());
+            await engine.ConfigureMetronome(MetronomeConfiguration() with { Enabled = FollowTrack && metronomeEnabled });
             await LoadSessionWaves(); RefreshSessionDuration();
+            looping = recordingWasLooping && HasRange; Notify(nameof(IsLooping));
+            position = recordingStart; await engine.Seek(position); Notify(nameof(Position)); Notify(nameof(TimeLabel));
+            MarkProjectChanged();
+            if (!FollowTrack && metronomeEnabled) StartIndependentMetronome();
         }
-        finally { recordingFinalizing = false; CommitEditHistory(); NotifyClips(); RefreshRecording(); if (SessionStems?.Any(s => s.IsMonitoring) == true) StartMonitor(); }
+        finally { recordingFinalizing = false; CommitEditHistory(); NotifyClips(); RefreshRecording(); RestartMonitorForDeviceChange(); }
     }
     private void UpdateRecordingWave()
     {
@@ -163,7 +192,7 @@ public sealed partial class BackingTracksViewModel
         foreach (var target in recordingTargets)
         {
             var captured = session.Snapshot(target.Stem.Id); var stem = target.Stem;
-            if (double.IsFinite(session.FirstCaptureSeconds)) stem.Offset = recordingAnchor.Position + (session.FirstCaptureSeconds - recordingAnchor.Timestamp / (double)System.Diagnostics.Stopwatch.Frequency - LatencyCompensationMs / 1000) * Speed / 100;
+            if (double.IsFinite(session.FirstWrittenSeconds)) stem.Offset = recordingStart + Math.Max(0, session.FirstWrittenSeconds - (captureWindow?.Start ?? session.FirstWrittenSeconds)) * Speed / 100;
             stem.RecordedSpeed = Speed / 100; stem.RecordedPitch = Pitch;
             stem.Length = captured.Seconds; stem.Peaks = captured.Peaks;
             Duration = Math.Max(Duration, stem.Offset + stem.TimelineLength);
@@ -240,7 +269,7 @@ public sealed partial class BackingTracksViewModel
             if (saved.Version < 4 && !File.Exists(playlistPath + $".v{saved.Version}.bak")) File.Copy(playlistPath, playlistPath + $".v{saved.Version}.bak", overwrite: false);
             masterVolume = double.IsFinite(saved.MasterVolume) ? Math.Clamp(saved.MasterVolume, 0, BackingMixMath.MaximumGain) : 1;
             Start(engine.SetMasterVolume(masterVolume)); Notify(nameof(MasterDb));
-            savedInputId = saved.InputId;
+            if (!devicePreferencesLoaded) savedInputId = saved.InputId;
             foreach (var track in loaded) Tracks.Add(track);
             latencyCompensationMs = double.IsFinite(saved.LatencyMs) ? Math.Clamp(saved.LatencyMs, -1000, 1000) : 0;
             Notify(nameof(LatencyCompensationMs)); SelectedTrack ??= Tracks.FirstOrDefault(); Changed();
@@ -267,7 +296,7 @@ public sealed partial class BackingTracksViewModel
             session.Dispose();
             CompleteRecording(session, session.Completion.GetAwaiter().GetResult());
         }
-        if (playlistLoaded || Tracks.Count > 0)
+        if (string.IsNullOrEmpty(projectDirectory) && (playlistLoaded || Tracks.Count > 0))
             try { SaveRecordingPlaylist(); } catch (Exception ex) { Error("Não foi possível salvar a playlist.", ex); }
         recordingTimer.Stop(); sessionSaveTimer.Stop();
         foreach (var stem in attachedStems.ToArray()) DetachStem(stem);

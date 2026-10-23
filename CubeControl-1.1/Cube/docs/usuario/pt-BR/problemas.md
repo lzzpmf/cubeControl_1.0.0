@@ -13,10 +13,10 @@ Ajustes ao vivo não equivalem a gravação persistente. Salve o banco para A/B/
 Confira se o MP3/WAV ainda existe no caminho original e se a saída de áudio está disponível. Verifique volume e mute. Busca do YouTube precisa de rede; reprodução local não.
 
 ## REC indisponível ou gravação sem áudio
-Selecione uma entrada válida acima do player e confira se ela recebe sinal no Windows. REC captura somente essa entrada; volume, mute e monitor do mixer não determinam o áudio gravado. Backing track e metrônomo não são incluídos automaticamente. REC novamente salva a gravação em uma nova faixa; Parar também encerra a reprodução. Se a entrada desconectar ou houver falha, preserve o WAV recuperável indicado. Arquivos sem amostras não geram faixa; se o WAV foi salvo mas a playlist falhou, a mensagem informa o caminho preservado. Veja [Gravar](backing-tracks.md#pistas-e-mixer).
+Selecione a entrada e os canais em Preparar guitarra e arme a pista. O nível de entrada funciona com Ouvir entrada desligado. REC não captura automaticamente acompanhamento ou metrônomo. Encerrar tomada ou Parar finaliza e volta ao início da tomada; com Loop A/B ativo, a passagem termina em B. Após uma interrupção, restaure o projeto e use Recuperar tomada interrompida. Veja [Gravar](backing-tracks.md#gravar-e-revisar-tomadas).
 
 ## O WAV exportado soa diferente do player
-A exportação ignora volume e mute. Velocidade e transposição só entram quando a opção correspondente é marcada no diálogo. A seleção A/B define o trecho exportado mesmo com loop desligado. Consulte [Exportar](backing-tracks.md#sessão-e-controles).
+A mixagem exportada considera ganho, pan, mute, solo e Master. Aplicar velocidade e tom vem marcado; A/B pode definir o intervalo mesmo sem loop ativo. Na exportação de pista isolada, mute/solo são ignorados. Consulte [Exportar](backing-tracks.md#exportar-e-atalhos).
 
 ## Um documento não abre
 Os guias são incluídos no pacote. Se faltarem arquivos, extraia novamente o pacote completo. PDFs precisam de um leitor associado no Windows. Links web precisam de navegador e conexão.

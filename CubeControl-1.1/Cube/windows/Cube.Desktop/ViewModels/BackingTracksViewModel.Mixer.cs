@@ -6,7 +6,7 @@ namespace Cube.Desktop.ViewModels;
 public sealed partial class BackingTracksViewModel
 {
     private double masterVolume = 1;
-    public double MasterDb { get => BackingMixMath.ToDb(masterVolume); set { if (!double.IsFinite(value)) return; masterVolume = BackingMixMath.FromDb(value); if (SelectedTrack != null) SelectedTrack.MasterGain = masterVolume; Notify(); Start(engine.SetMasterVolume(masterVolume)); PersistSession(); } }
+    public double MasterDb { get => BackingMixMath.ToDb(masterVolume); set { if (!CanAdjustMix || !double.IsFinite(value)) return; masterVolume = BackingMixMath.FromDb(value); if (SelectedTrack != null) SelectedTrack.MasterGain = masterVolume; Notify(); Start(engine.SetMasterVolume(masterVolume)); PersistSession(); } }
     public double AccompanimentDb { get => BackingMixMath.ToDb(Volume / 100); set => Volume = BackingMixMath.FromDb(value) * 100; }
     public double ClickDb { get => BackingMixMath.ToDb(MetronomeVolume / 100); set => MetronomeVolume = BackingMixMath.FromDb(value) * 100; }
     private BackingMeterReading masterReading = BackingMeterReading.Silent;
@@ -37,8 +37,8 @@ public sealed partial class BackingTracksViewModel
             if (!inputEnvelopes.TryGetValue(stem.Id, out var inputEnvelope)) inputEnvelopes[stem.Id] = inputEnvelope = new();
             stem.InputMeter = inputEnvelope.Update(captured.Input.Peak, IsMonitoring, now);
             stem.InputRmsDb = IsMonitoring && captured.Input.Rms > 0 ? Math.Max(-60, 20 * Math.Log10(captured.Input.Rms)) : -60;
-            if (stem.IsMonitoring || stem.IsArmed && IsRecording) signal = captured.Monitor;
-            stem.Meter = envelope.Update(signal.Peak, IsPlaying || stem.IsMonitoring, now);
+            if (stem.IsMonitoring || stem.IsArmed) signal = captured.Input;
+            stem.Meter = envelope.Update(signal.Peak, IsPlaying || stem.IsMonitoring || stem.IsArmed, now);
             stem.RmsDb = IsPlaying || stem.IsMonitoring ? (signal.Rms > 0 ? Math.Max(-60, 20 * Math.Log10(signal.Rms)) : -60) : -60;
         }
         TrackMeter = trackEnvelope.Update(engine.ConsumeTrackPeak(), IsPlaying, now);

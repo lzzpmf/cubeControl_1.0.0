@@ -10,7 +10,7 @@ class Check {
  static void Assert(bool ok,string text){if(!ok)throw new Exception(text);Console.WriteLine("PASS: "+text);}
  static object Call(object o,string name,params object[] args)=>o.GetType().GetMethod(name,Flags)!.Invoke(o,args)!;
  static async Task<CabinetCapture> Match(IrLibraryEntry[] entries,byte[] sector,int? volume=80)=>await Task.Run(()=> (CabinetCapture)typeof(EditorViewModel).GetMethod("MatchCapture",BindingFlags.NonPublic|BindingFlags.Static)!.Invoke(null,new object[]{entries,sector,volume})!);
- [STAThread] static void Main(string[] args) { if (args.Contains("--theme")) ThemeMaterialChecks.Run(); else Run(); }
+ [STAThread] static void Main(string[] args) { if (args.Contains("--backing-hardware")) BackingHardwareChecks.Run(); else if (args.Contains("--backing-performance")) BackingPerformanceChecks.Run(); else if (args.Contains("--backing")) BackingProjectChecks.Run(); else if (args.Contains("--theme")) ThemeMaterialChecks.Run(); else Run(); }
  static void Run(){var app=new Cube.Desktop.App();app.InitializeComponent();SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
  var task=Tests();var frame=new DispatcherFrame();task.ContinueWith(_=>app.Dispatcher.BeginInvoke(new Action(()=>frame.Continue=false)));Dispatcher.PushFrame(frame);task.GetAwaiter().GetResult();app.Shutdown();}
  static async Task Tests(){

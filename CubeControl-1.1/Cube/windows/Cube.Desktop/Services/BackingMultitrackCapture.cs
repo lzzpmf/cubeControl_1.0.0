@@ -7,6 +7,8 @@ namespace Cube.Desktop.Services;
 internal sealed record BackingCaptureRoute(Guid Id, int FirstChannel, int Channels, string? Destination,
     bool Monitor, double Gain, double Pan, bool Muted = false);
 
+internal sealed record BackingCaptureWindow(double Start, double End);
+
 // One WASAPI endpoint and one capture clock for all armed/monitored routes.
 internal sealed class BackingMultitrackCapture : IDisposable
 {
@@ -29,9 +31,30 @@ internal sealed class BackingMultitrackCapture : IDisposable
     private readonly List<Sink> sinks = [];
     private BackingMonitorBuffer monitor = null!;
     private readonly TaskCompletionSource<Exception?> completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource firstPacket = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public Task WaitForFirstPacket(CancellationToken ct) => firstPacket.Task.WaitAsync(TimeSpan.FromSeconds(2.5), ct);
     private bool closed;
     private int disposed;
     private float[] input = [], mixed = [];
+    private BackingCaptureWindow? window;
+    public event Action? WindowCompleted;
+    private volatile bool windowCompleted;
+    public bool WindowReached => windowCompleted;
+    private readonly List<(byte[] Data, bool Silent, double Time)> pendingPackets = [];
+    private int pendingBytes;
+    internal void SetWindow(BackingCaptureWindow value)
+    {
+        if (double.IsNaN(value.Start) || double.IsNaN(value.End) || value.End < value.Start) throw new ArgumentOutOfRangeException(nameof(value));
+        lock (sync)
+        {
+            window = value;
+            if (!double.IsPositiveInfinity(value.Start))
+            {
+                foreach (var packet in pendingPackets) Process(packet.Data, packet.Silent, packet.Time, replay: true);
+                pendingPackets.Clear(); pendingBytes = 0;
+            }
+        }
+    }
     private Exception? failure;
     public Task<Exception?> Completion => completion.Task;
     public double FirstCaptureSeconds { get; private set; } = double.NaN;
@@ -65,7 +88,10 @@ internal sealed class BackingMultitrackCapture : IDisposable
                             double ratio = (qpc / 10000000d - FirstCaptureSeconds) / (capturedFrames / (double)SampleRate);
                             if (ratio is >= .98 and <= 1.02) ClockRatio = ratio;
                         }
-                        Process(data, (flags & AudioClientBufferFlags.Silent) != 0);
+                        double packetTime = qpc > 0 && (flags & AudioClientBufferFlags.TimestampError) == 0
+                            ? qpc / 10000000d : System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency - data.Length / (double)format.AverageBytesPerSecond;
+                        Process(data, (flags & AudioClientBufferFlags.Silent) != 0, packetTime);
+                        firstPacket.TrySetResult();
                     }
                 }
                 catch (Exception ex) { failure = ex; try { capture.StopRecording(); } catch { Finish(ex); } }
@@ -90,9 +116,9 @@ internal sealed class BackingMultitrackCapture : IDisposable
             }
             monitor = new(SampleRate); MonitorProvider = monitor;
     }
-    internal void ProcessPacket(ReadOnlySpan<byte> data, bool silent = false)
+    internal void ProcessPacket(ReadOnlySpan<byte> data, bool silent = false, double packetTime = 0)
     {
-        lock (sync) { if (closed) throw new ObjectDisposedException(nameof(BackingMultitrackCapture)); Process(data, silent); }
+        lock (sync) { if (closed) throw new ObjectDisposedException(nameof(BackingMultitrackCapture)); Process(data, silent, packetTime); }
     }
     public void Start() => capture?.StartRecording();
     public void SetRoutes(BackingCaptureRoute[] routes)
@@ -101,9 +127,19 @@ internal sealed class BackingMultitrackCapture : IDisposable
             if (routes.FirstOrDefault(r => r.Id == sink.Route.Id) is { } route)
                 sink.Route = sink.Route with { Monitor = route.Monitor, Gain = route.Gain, Pan = route.Pan, Muted = route.Muted };
     }
-    private void Process(ReadOnlySpan<byte> data, bool silent)
+    private void Process(ReadOnlySpan<byte> data, bool silent, double packetTime = 0, bool replay = false)
     {
+        if (!replay && window != null && double.IsPositiveInfinity(window.Start))
+        {
+            pendingPackets.Add((data.ToArray(), silent, packetTime)); pendingBytes += data.Length;
+            while (pendingBytes > format.AverageBytesPerSecond && pendingPackets.Count > 1)
+            { pendingBytes -= pendingPackets[0].Data.Length; pendingPackets.RemoveAt(0); }
+        }
         int frames = data.Length / format.BlockAlign, samples = frames * format.Channels;
+        int first = window == null ? 0 : (int)Math.Clamp(Math.Ceiling((window.Start - packetTime) * SampleRate), 0, frames);
+        int last = window == null ? frames : (int)Math.Clamp(Math.Ceiling((window.End - packetTime) * SampleRate), 0, frames);
+        last = Math.Max(first, last);
+        if (last > first && double.IsNaN(FirstWrittenSeconds)) FirstWrittenSeconds = packetTime + first / (double)SampleRate;
         if (input.Length < samples) input = new float[samples];
         bool floating = format.Encoding == WaveFormatEncoding.IeeeFloat || format is WaveFormatExtensible ext && ext.SubFormat == new Guid("00000003-0000-0010-8000-00aa00389b71");
         int width = format.BitsPerSample / 8;
@@ -117,7 +153,7 @@ internal sealed class BackingMultitrackCapture : IDisposable
                 4 => System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(bytes) / 2147483648f,
                 _ => throw new InvalidDataException("Unsupported capture format.")
             };
-            InputPeak.Add(Math.Abs(input[i]));
+            if (!replay) InputPeak.Add(Math.Abs(input[i]));
         }
         if (mixed.Length < frames * 2) mixed = new float[frames * 2];
         Array.Clear(mixed, 0, frames * 2);
@@ -133,12 +169,13 @@ internal sealed class BackingMultitrackCapture : IDisposable
                 float right = route.Channels == 2 ? input[f * format.Channels + route.FirstChannel + 1] : left;
                 sink.Samples[f * route.Channels] = left;
                 if (route.Channels == 2) sink.Samples[f * 2 + 1] = right;
-                sink.Peak = Math.Max(sink.Peak, Math.Max(Math.Abs(left), Math.Abs(right)));
-                if (++sink.PeakFrames >= Math.Max(1, SampleRate / 100) * sink.PeakStride)
+                if (f >= first && f < last) sink.Peak = Math.Max(sink.Peak, Math.Max(Math.Abs(left), Math.Abs(right)));
+                if (f >= first && f < last && ++sink.PeakFrames >= Math.Max(1, SampleRate / 100) * sink.PeakStride)
                 {
                     sink.Peaks.Add(sink.Peak); sink.Peak = 0; sink.PeakFrames = 0;
                     if (sink.Peaks.Count >= 32768) { for (int j = 0; j < sink.Peaks.Count / 2; j++) sink.Peaks[j] = Math.Max(sink.Peaks[j * 2], sink.Peaks[j * 2 + 1]); sink.Peaks.RemoveRange(sink.Peaks.Count / 2, sink.Peaks.Count / 2); sink.PeakStride *= 2; }
                 }
+                if (replay) continue;
                 sink.InputMeter.Add(left, right);
                 float desiredGain = route.Monitor && !route.Muted ? (float)route.Gain : 0;
                 sink.Gain += Math.Clamp(desiredGain - sink.Gain, -1f / 240, 1f / 240);
@@ -152,12 +189,14 @@ internal sealed class BackingMultitrackCapture : IDisposable
                     mixed[f * 2 + 1] += monitorRight;
                 }
             }
-            sink.Writer?.WriteSamples(sink.Samples, 0, count);
-            sink.Frames += frames;
+            if (last > first) sink.Writer?.WriteSamples(sink.Samples, first * route.Channels, (last - first) * route.Channels);
+            sink.Frames += last - first;
         }
-        capturedFrames += frames;
-        monitor.Write(mixed.AsSpan(0, frames * 2));
+        if (!replay) { capturedFrames += frames; monitor.Write(mixed.AsSpan(0, frames * 2)); }
+        if (window != null && !windowCompleted && packetTime + frames / (double)SampleRate >= window.End)
+        { windowCompleted = true; _ = Task.Run(() => WindowCompleted?.Invoke()); }
     }
+    public double FirstWrittenSeconds { get; private set; } = double.NaN;
     public ((float Peak, float Rms) Input, (float Peak, float Rms) Monitor) ConsumeMeters(Guid id)
     {
         lock (sync) { var sink = sinks.FirstOrDefault(s => s.Route.Id == id); return sink == null ? default : (sink.InputMeter.Consume(), sink.MonitorMeter.Consume()); }
@@ -177,6 +216,8 @@ internal sealed class BackingMultitrackCapture : IDisposable
         lock (sync)
         {
             if (closed) return; closed = true; failure ??= error;
+            firstPacket.TrySetCanceled();
+            pendingPackets.Clear(); pendingBytes = 0;
             foreach (var sink in sinks) try { sink.Writer?.Dispose(); sink.Writer = null; } catch (Exception ex) { failure ??= ex; }
             completion.TrySetResult(failure);
         }
