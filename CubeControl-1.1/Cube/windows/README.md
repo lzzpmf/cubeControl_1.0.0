@@ -22,7 +22,7 @@ Para abrir um pacote existente sem conexão automática, execute `CubeControl.ex
 ## Estrutura
 
 - `Cube.Desktop`: interface WPF, Studio para tocar e estudar em Backing Tracks, recursos e comunicação com o pedal real.
-- `Cube.Studio.Core`: prática não persistente, acompanhamento, tentativas independentes e histórico de trim/exclusão. O editor legado continua isolado para compatibilidade dos testes, sem acesso no fluxo novo.
+- `Cube.Studio.Core`: prática não persistente, acompanhamento, tentativas independentes e histórico de trim/exclusão. O editor legado sem uso foi arquivado em `_old/` na raiz do repositório.
 - `Cube.Studio.Audio`: captura/reprodução ASIO e WASAPI, análise, mix e exportação.
 - `Cube.Studio.Audio/Native`: wrapper C++ e fontes vendorizadas do Signalsmith Stretch/Linear; `Build.ps1` gera `CubeStudioDsp.dll` em `studio-native` na raiz externa de artefatos, em `%LOCALAPPDATA%\CubeControl-BuildCache\studio-native` nos builds diretos; a publicação usa intermediários temporários.
 - `Cube.Usb`: comunicação MIDI pelas APIs do Windows.
