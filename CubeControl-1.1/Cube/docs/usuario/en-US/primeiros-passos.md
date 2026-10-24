@@ -1,7 +1,7 @@
 # Getting started
 
 ## Install and open
-Extract the complete package to a folder on your computer and open `CubeControl.exe`. Keep the package folders next to the executable. The published package does not require the .NET SDK. Simulation is a separate package.
+Extract the complete package to a folder on your computer and open `CubeControl.exe`. Keep the package folders next to the executable. The published package does not require the .NET SDK.
 
 ## Connect the Cube Baby
 1. Power on the guitar Cube Baby and connect a USB data cable to the computer.
@@ -17,7 +17,7 @@ Select the same A/B/C in the app as on the physical pedal. Open a Pedalboard mod
 ## Customize reading
 Theme, language and zoom are in the ellipsis menu. Documentation works offline without a pedal. Guides follow the app language; PDFs display their own language.
 
-Zoom ranges from 50% to 200% in 10% steps. Use Ctrl +, Ctrl − and Ctrl 0 to increase, decrease and reset to 100%; this does not change Windows DPI. Theme, language and zoom are shared with the simulation edition.
+Zoom ranges from 50% to 200% in 10% steps. Use Ctrl +, Ctrl − and Ctrl 0 to increase, decrease and reset to 100%; this does not change Windows DPI.
 
 For connection issues, see [Troubleshooting](problemas.md).
 

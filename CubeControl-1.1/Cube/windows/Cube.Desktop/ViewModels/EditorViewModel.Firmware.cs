@@ -24,9 +24,6 @@ public sealed partial class EditorViewModel
     public ICommand RefreshFirmwareList { get; private set; } = null!;
     public ICommand InstallFirmware { get; private set; } = null!;
     private bool CanInstallFirmware => !Busy && !Connected && SelectedFirmware != null
-#if CUBE_SIMULATION
-        && false
-#endif
         ;
 
     private void InitializeFirmware()

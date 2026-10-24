@@ -20,6 +20,6 @@ Double-click a knob or fader to restore the loaded reference; Backspace with the
 - Restore attempts to return the RAM captured at the start of preview.
 - Save to pedal replaces the sector for the slot shown in the confirmation. This is persistent and cannot be undone through preset history.
 
-Keep backups and read [Recovery](recuperacao.md). In simulation, device amp reading, preview and writing are disabled; local files remain available.
+Keep backups and read [Recovery](recuperacao.md).
 
 After a successful write, select another amp on the pedal and return to reload the slot. Byte read-back confirmation does not prove retention after power-off or physical sound reloading.

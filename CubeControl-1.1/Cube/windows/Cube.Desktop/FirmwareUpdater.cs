@@ -86,9 +86,6 @@ internal static class FirmwareUpdater
         void Report(UpdateMessage message) => writer.WriteLine(JsonSerializer.Serialize(message));
         try
         {
-#if CUBE_SIMULATION
-            throw new InvalidOperationException("Atualização de firmware indisponível na simulação.");
-#else
             byte[] file = Validate(args[1]);
             if (!Convert.ToHexString(SHA256.HashData(file)).Equals(args[2], StringComparison.OrdinalIgnoreCase))
                 throw new IOException("O firmware foi alterado após a confirmação. Selecione-o novamente.");
@@ -141,7 +138,6 @@ internal static class FirmwareUpdater
                 Thread.Sleep(500);
             }
             throw new IOException("Firmware gravado e verificado, mas o retorno ao modo normal não foi confirmado. Desligue e ligue o pedal para concluir.");
-#endif
         }
         catch (Exception ex)
         {

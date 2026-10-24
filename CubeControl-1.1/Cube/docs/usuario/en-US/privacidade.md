@@ -15,7 +15,7 @@ The app uses MIDI port names and pedal identification to connect; presets, effec
 Names, paths and selected content may contain personal information. Avoid unnecessary personal details.
 
 ## Storage and retention
-Preferences and images generally reside in `%LOCALAPPDATA%\CubeControl`. Simulation editor data uses `%LOCALAPPDATA%\CubeControl-Simulation`; theme, language and zoom remain shared. Exported files go to your chosen location.
+Preferences and images generally reside in `%LOCALAPPDATA%\CubeControl`. Exported files go to your chosen location.
 
 Studio practice stays in memory without automatic restoration. Temporary recordings reside in `PracticeRecordings/<run>` under active app data; confirmed discard cleans only owned temporary files, and failures preserve recoverable audio. Older playlist, metronome and project files remain untouched. Devices and buffers reside in `studio-audio-v1.json`; software monitoring always starts off. The download folder and IDs mapped to completed files remain in `youtube-downloads-v1.json`, preserving existing preferences. Hover preparation uses a bounded memory cache; only Listen starts sound. Images reside in `Images`, with associations in `gear-images-v1.json`. Automatic bank, IR, amp and effect recovery snapshots remain in memory, without automatic pending-preview files or restoration after restart. Backups, downloads and exported audio stay in chosen locations. See [Backups and recovery](recuperacao.md). Persistent files remain until replaced or deleted; backups have no general automatic expiry. Uninstalling the executable does not remove this data. Pedal settings remain independently on the device.
 

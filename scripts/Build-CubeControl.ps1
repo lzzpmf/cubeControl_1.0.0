@@ -1,5 +1,5 @@
-﻿param(
-    [switch]$Simulation,
+﻿[CmdletBinding()]
+param(
     [switch]$CompileOnly,
     [switch]$Start,
     [string]$OutputRoot = 'C:\CubeControl-Build'
@@ -81,7 +81,7 @@ function Prepare-YouTubeTools {
     # Reuse the installed package instead of retaining another copy of every tool.
     $candidates = @((Join-Path $destination 'Tools\YouTube'),
         (Join-Path $publishRoot "CubeControl-$version\Tools\YouTube"),
-        (Join-Path $publishRoot "CubeControl-Simulation-$version\Tools\YouTube"), $tools) | Select-Object -Unique
+        $tools) | Select-Object -Unique
     foreach ($candidate in $candidates) {
         Assert-ChildPath $candidate $OutputRoot
         $statePath = Join-Path $candidate 'versions.json'
@@ -257,8 +257,8 @@ try {
     [xml]$project = Get-Content -LiteralPath $projectPath
     $version = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText
     if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Versao do projeto invalida.' }
-    $configuration = if ($Simulation) { 'Simulation' } else { 'Release' }
-    $name = if ($Simulation) { "CubeControl-Simulation-$version" } else { "CubeControl-$version" }
+    $configuration = 'Release'
+    $name = "CubeControl-$version"
     $publishRoot = Join-Path $OutputRoot 'publish'
     $destination = Join-Path $publishRoot $name
     $executable = Join-Path $destination 'CubeControl.exe'
@@ -275,7 +275,6 @@ try {
         $compileArgs = @('build', $projectPath, '-c', $configuration, '-r', 'win-x64',
             '--artifacts-path', $compileRoot, "-p:CubeYouTubeToolsPath=$compileTools",
             '-p:DebugType=None', '-p:DebugSymbols=false')
-        if ($Simulation) { $compileArgs += '-p:CubeSimulation=true' }
         & dotnet @compileArgs
         if ($LASTEXITCODE -ne 0) { throw "Falha na compilacao: $compileRoot" }
         Write-Host "Compilacao concluida, sem testes ou publicacao: $compileRoot"
@@ -301,7 +300,6 @@ try {
         "-p:CubeYouTubeToolsPath=$youTubeTools",
         '-p:DebugType=None', '-p:DebugSymbols=false',
         '-p:CubeUnifiedPublish=true', '-o', $staging)
-    if ($Simulation) { $publishArgs += '-p:CubeSimulation=true' }
     & dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falha na compilacao. O pacote anterior foi preservado.' }
     Assert-SameHashes $sources (Get-SourceHashes)

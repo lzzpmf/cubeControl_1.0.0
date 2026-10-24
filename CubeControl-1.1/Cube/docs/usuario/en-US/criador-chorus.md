@@ -7,7 +7,7 @@ Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalbo
 Depth, estimated speed, processed-branch mix, feedback, waveform and delayed/combined branch gains. Processed-branch mix is not a wet percentage.
 
 ## Files and restoration
-Import `.chorus.json` prepares local settings; Apply settings sends them to an active preview. Export does not write to the pedal. There is no persistent flash write or preview for this effect on the simulated device.
+Import `.chorus.json` prepares local settings; Apply settings sends them to an active preview. Export does not write to the pedal. There is no persistent flash write.
 
 Restore chorus, normal disconnection, reading again and normal closing attempt to return the original parameters. Lost connection or a context change stops writes; an attempted restoration is not confirmation of success.
 

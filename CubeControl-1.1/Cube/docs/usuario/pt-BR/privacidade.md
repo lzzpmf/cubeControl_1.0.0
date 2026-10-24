@@ -42,7 +42,7 @@ Informações técnicas não identificam necessariamente uma pessoa. Entretanto,
 
 ## 3. Armazenamento e conservação
 
-Preferências, imagens personalizadas e metadados são armazenados, em geral, na pasta `%LOCALAPPDATA%\CubeControl` do seu usuário do Windows. A edição de simulação utiliza `%LOCALAPPDATA%\CubeControl-Simulation` para dados do editor, inclusive Backing Tracks; tema, idioma e zoom permanecem compartilhados na pasta `CubeControl`. Arquivos exportados ficam no local escolhido por você.
+Preferências, imagens personalizadas e metadados são armazenados, em geral, na pasta `%LOCALAPPDATA%\CubeControl` do seu usuário do Windows. Arquivos exportados ficam no local escolhido por você.
 
 O estudo do Studio permanece em memória, sem restauração automática. Gravações temporárias ficam em `PracticeRecordings/<execução>` no diretório de dados ativo; descarte confirmado limpa apenas temporários próprios, e falhas preservam áudio recuperável. Arquivos antigos de playlist, metrônomo e projetos permanecem intocados. Dispositivos e buffers ficam em `studio-audio-v1.json`; retorno por software sempre inicia desligado. Pasta de downloads e IDs associados a arquivos concluídos ficam em `youtube-downloads-v1.json`, preservando preferências existentes. Preparar uma prévia por hover usa um cache limitado em memória; só Ouvir inicia som. Imagens ficam em `Images`, com associações em `gear-images-v1.json`. As cópias automáticas de recuperação de banco, IR, amp e efeitos ficam em memória, sem arquivos automáticos `pending-*-preview.json` nem retomada após reiniciar. Backups, downloads e áudios exportados ficam nos destinos escolhidos. O [guia de recuperação](recuperacao.md) descreve esses limites.
 

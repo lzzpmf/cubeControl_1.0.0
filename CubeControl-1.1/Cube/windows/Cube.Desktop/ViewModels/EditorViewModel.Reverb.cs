@@ -25,9 +25,6 @@ public sealed partial class EditorViewModel
         : !CanStartReverb ? "Recurso indisponível durante a operação ou edição em RAM atual."
         : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartReverb => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !ReverbPreviewActive
-#if CUBE_SIMULATION
-        && false
-#endif
         ;
     public bool CanRestoreReverb => Connected && !Busy && ReverbPreviewActive;
     public bool CanEditReverb => Reverb.Loaded && (!Busy || reverbSendTask != null) && !reverbStopped;

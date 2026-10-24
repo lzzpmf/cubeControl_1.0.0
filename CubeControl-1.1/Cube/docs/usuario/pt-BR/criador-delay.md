@@ -7,7 +7,7 @@ Selecione fisicamente o modo PRESET e o A/B/C desejado no pedal. Na Pedaleira, a
 O gráfico oferece profundidade e velocidade de modulação temporal, tempo em amostras internas e resolução fina de realimentação/mistura. Profundidade e velocidade são percentuais do original: profundidade zero elimina a oscilação, velocidade zero congela sua fase. A velocidade efetiva depende do tempo. Mistura interna 50 mantém direto e eco integrais; não é uma soma complementar wet/dry. A equivalência do tempo em milissegundos não foi comprovada por áudio.
 
 ## Arquivos e restauração
-Importar `.delay.json` prepara ajustes locais; Aplicar ajustes envia para a prévia ativa. Exportar não escreve no pedal. Não há gravação persistente em flash nem prévia desse efeito no dispositivo simulado.
+Importar `.delay.json` prepara ajustes locais; Aplicar ajustes envia para a prévia ativa. Exportar não escreve no pedal. Não há gravação persistente em flash.
 
 Restaurar delay, desconexão normal, releitura e fechamento normal tentam devolver os parâmetros originais. Perda de conexão ou mudança de contexto interrompem os envios; uma tentativa de restauração não equivale a confirmação de sucesso.
 

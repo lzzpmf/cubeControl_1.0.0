@@ -25,9 +25,6 @@ public sealed partial class EditorViewModel
         : !CanStartDelay ? "Recurso indisponível durante a operação ou edição em RAM atual."
         : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartDelay => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !DelayPreviewActive
-#if CUBE_SIMULATION
-        && false
-#endif
         ;
     public bool CanRestoreDelay => Connected && !Busy && DelayPreviewActive;
     public bool CanEditDelay => Delay.Loaded && (!Busy || delaySendTask != null) && !delayStopped;

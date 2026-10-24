@@ -113,7 +113,7 @@ not grant product distribution rights. Distribution with cubeControl requires
 a written agreement from the owner. The project owner reported a lifetime
 authorization for CubeControl dated 2026-10-09, ID
 6a11b8c9-6ad9-48ce-994b-6cd025a4d1ae. See
-Cube/docs/overdriven-distribution-agreement.txt in the source.
+_old/CubeControl-1.1/Cube/docs/overdriven-distribution-agreement.txt in the source repository.
 The microphone-position reference photo is not bundled.
 
 GongSolutions.WPF.DragDrop (gong-wpf-dragdrop) 4.0.0

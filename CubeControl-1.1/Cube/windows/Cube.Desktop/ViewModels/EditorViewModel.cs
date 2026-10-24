@@ -13,9 +13,6 @@ namespace Cube.Desktop.ViewModels;
 public sealed partial class EditorViewModel : Observable, IDisposable
 {
     private CubeSession? session;
-#if CUBE_SIMULATION
-    private readonly FakeConnection simulatedDevice = new();
-#endif
     private LiveEditQueue? queue;
     private byte[]? baseline, confirmed, edited;
     private IrRamSnapshot? originalRam;
@@ -90,17 +87,6 @@ public sealed partial class EditorViewModel : Observable, IDisposable
     {
         IrAudition = new IrAuditionViewModel(this, auditionService);
         DataDirectory = dataDirectory ?? Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl");
-#if CUBE_SIMULATION
-        DataDirectory = dataDirectory ?? Path.Combine(Cube.Desktop.Appearance.AppDataPaths.LocalApplicationData, "CubeControl-Simulation");
-        for (int slot = 0; slot < 3; slot++)
-        {
-            simulatedDevice.Bank[slot * 16] = (byte)(slot * 2);
-            simulatedDevice.Bank[slot * 16 + 1] = 4;
-            simulatedDevice.Bank[slot * 16 + 2] = 8;
-            simulatedDevice.Bank[slot * 16 + 5] = 33;
-        }
-        Status = "SIMULAÇÃO — conecte o pedal virtual. Sem áudio do equipamento.";
-#endif
         Presets = Enumerable.Range(0, 3).Select(i => new PresetViewModel(i, Change)).ToArray();
         IrLibrary = new IrLibraryViewModel(() => !Busy, importedDirectory: PackStore.ImportedDirectory);
         IrLibrary.SelectionChanged += SelectLibraryIr;
@@ -259,11 +245,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         await Connection.Refresh();
         if (Connection.Input == null || Connection.Output == null) throw new InvalidOperationException("Portas MIDI do Cube Baby não selecionadas. Verifique o cabo USB e os detalhes da conexão.");
         BusyDetail = Status = "Identificando Cube Baby…";
-#if CUBE_SIMULATION
-        var opened = new CubeSession(simulatedDevice);
-#else
         var opened = new CubeSession(await WindowsMidiConnection.Open(Connection.Input.Id, Connection.Output.Id));
-#endif
         try
         {
             opened.Log += AddLog; Connection.Identity = await opened.Identify();

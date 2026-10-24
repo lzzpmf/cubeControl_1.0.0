@@ -10,13 +10,6 @@
     <Version>1.1.0</Version>
     <CubeYouTubeToolsPath Condition="'$(CubeYouTubeToolsPath)' == ''">$(ArtifactsPath)/youtube-tools</CubeYouTubeToolsPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(CubeSimulation)' == 'true'">
-    <DefineConstants>$(DefineConstants);CUBE_SIMULATION</DefineConstants>
-  </PropertyGroup>
-  <ItemGroup><Compile Remove="Simulation/**/*.cs" /></ItemGroup>
-  <ItemGroup Condition="'$(CubeSimulation)' == 'true'">
-    <Compile Include="Simulation/FakeConnection.cs" />
-  </ItemGroup>
   <ItemGroup><ProjectReference Include="../Cube.Usb/Cube.Usb.csproj" /><PackageReference Include="WPF-UI" Version="4.3.0" /></ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Cube.Studio.Core/Cube.Studio.Core.csproj" />

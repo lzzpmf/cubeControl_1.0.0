@@ -25,9 +25,6 @@ public sealed partial class EditorViewModel
         : !CanStartPhaser ? "Recurso indisponível durante a operação ou edição em RAM atual."
         : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartPhaser => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !PhaserPreviewActive
-#if CUBE_SIMULATION
-        && false
-#endif
         ;
     public bool CanRestorePhaser => Connected && !Busy && PhaserPreviewActive;
     public bool CanEditPhaser => Phaser.Loaded && (!Busy || phaserSendTask != null) && !phaserStopped;

@@ -7,7 +7,7 @@ Select PRESET mode and the desired A/B/C physically on the pedal. On the Pedalbo
 Dry signal, reverberated signal, feedback, line return and damping. Adjust gradually within the editor ranges.
 
 ## Files and restoration
-Import `.reverb.json` prepares local settings; Apply settings sends them to an active preview. Export does not write to the pedal. There is no persistent flash write or preview for this effect on the simulated device.
+Import `.reverb.json` prepares local settings; Apply settings sends them to an active preview. Export does not write to the pedal. There is no persistent flash write.
 
 Restore reverb, normal disconnection, reading again and normal closing attempt to return the original parameters. Lost connection or a context change stops writes; an attempted restoration is not confirmation of success.
 

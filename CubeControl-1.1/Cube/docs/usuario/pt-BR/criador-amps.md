@@ -20,6 +20,6 @@ Duplo clique no knob ou fader restaura a referência carregada; Backspace com fo
 - Restaurar tenta devolver a RAM capturada no início da prévia.
 - Salvar no pedal substitui o setor do slot indicado na confirmação. Essa operação é persistente e não é desfeita pelo histórico de presets.
 
-Mantenha backups e leia [Recuperação](recuperacao.md). Na edição simulada, leitura, prévia e gravação de amp no dispositivo ficam desabilitadas; arquivos locais continuam disponíveis.
+Mantenha backups e leia [Recuperação](recuperacao.md).
 
 Depois de uma gravação bem-sucedida, selecione outro amp no pedal e volte para recarregar o slot. A confirmação de bytes por leitura não comprova retenção após desligar nem a recarga física do som.

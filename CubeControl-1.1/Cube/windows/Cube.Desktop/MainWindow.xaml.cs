@@ -122,9 +122,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             if (Model.Busy || restoringOperationFocus) e.Handled = true;
         };
-#if CUBE_SIMULATION
-        Title = "CubeControl — SIMULAÇÃO TEMPORÁRIA · sem pedal físico";
-#endif
         SourceInitialized += (_, _) => Appearance.WindowWorkArea.ClampInitialSize(this);
         busyMessageTimer.Tick += (_, _) => { busyMessageIndex = (busyMessageIndex + 1) % BusyMessages.Length; UpdateBusyMessage(); };
         Model.PropertyChanged += BusyStateChanged;

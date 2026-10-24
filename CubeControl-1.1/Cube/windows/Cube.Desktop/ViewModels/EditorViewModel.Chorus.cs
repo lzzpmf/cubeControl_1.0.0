@@ -25,9 +25,6 @@ public sealed partial class EditorViewModel
         : !CanStartChorus ? "Recurso indisponível durante a operação ou edição em RAM atual."
         : "Abra as opções avançadas para ler o efeito ativo e iniciar a edição em RAM.";
     public bool CanStartChorus => CanOperate && !AmpPreviewActive && !Ir.PreviewActive && !ChorusPreviewActive
-#if CUBE_SIMULATION
-        && false
-#endif
         ;
     public bool CanRestoreChorus => Connected && !Busy && ChorusPreviewActive;
     public bool CanEditChorus => Chorus.Loaded && (!Busy || chorusSendTask != null) && !chorusStopped;

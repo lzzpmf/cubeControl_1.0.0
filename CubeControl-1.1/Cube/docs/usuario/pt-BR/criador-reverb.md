@@ -7,7 +7,7 @@ Selecione fisicamente o modo PRESET e o A/B/C desejado no pedal. Na Pedaleira, a
 Sinal direto, sinal reverberado, realimentação, retorno das linhas e amortecimento. Ajuste gradualmente dentro das faixas do editor.
 
 ## Arquivos e restauração
-Importar `.reverb.json` prepara ajustes locais; Aplicar ajustes envia para a prévia ativa. Exportar não escreve no pedal. Não há gravação persistente em flash nem prévia desse efeito no dispositivo simulado.
+Importar `.reverb.json` prepara ajustes locais; Aplicar ajustes envia para a prévia ativa. Exportar não escreve no pedal. Não há gravação persistente em flash.
 
 Restaurar reverb, desconexão normal, releitura e fechamento normal tentam devolver os parâmetros originais. Perda de conexão ou mudança de contexto interrompem os envios; uma tentativa de restauração não equivale a confirmação de sucesso.
 

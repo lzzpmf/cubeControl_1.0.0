@@ -12,9 +12,6 @@ public sealed partial class EditorViewModel
     private byte[]? ampOriginalRam;
     private string? ampPreviewIdentity;
     public bool CanUseAmp => CanOperate
-#if CUBE_SIMULATION
-        && false
-#endif
         ;
     public bool AmpPreviewActive => ampOriginalRam != null;
     public bool CanRestoreAmp => Connected && !Busy && AmpPreviewActive;

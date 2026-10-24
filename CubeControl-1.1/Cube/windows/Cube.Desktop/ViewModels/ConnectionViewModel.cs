@@ -14,12 +14,6 @@ public sealed class ConnectionViewModel : Observable
     public string Identity { get => identity; set => Set(ref identity, value); }
     public async Task Refresh()
     {
-#if CUBE_SIMULATION
-        await Task.CompletedTask;
-        Inputs = [new MidiPort("simulation-input", "Cube Baby SIMULADO")];
-        Outputs = [new MidiPort("simulation-output", "Cube Baby SIMULADO")];
-        Input = Inputs[0]; Output = Outputs[0];
-#else
         var foundInputs = await WindowsMidiConnection.Inputs();
         var foundOutputs = await WindowsMidiConnection.Outputs();
         Inputs = foundInputs; Outputs = foundOutputs;
@@ -28,6 +22,5 @@ public sealed class ConnectionViewModel : Observable
         var selected = CubeMidiPorts.Select(Inputs, Outputs);
         Input = previousInput != null && previousOutput != null ? previousInput : selected.Input;
         Output = previousInput != null && previousOutput != null ? previousOutput : selected.Output;
-#endif
     }
 }

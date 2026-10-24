@@ -1,7 +1,7 @@
 # Primeiros passos
 
 ## Instalar e abrir
-Extraia o pacote completo para uma pasta do computador e abra `CubeControl.exe`. Mantenha as pastas do pacote junto ao executável. Não é necessário instalar o SDK .NET para usar o pacote publicado. A edição de simulação é um pacote separado.
+Extraia o pacote completo para uma pasta do computador e abra `CubeControl.exe`. Mantenha as pastas do pacote junto ao executável. Não é necessário instalar o SDK .NET para usar o pacote publicado.
 
 ## Conectar o Cube Baby
 1. Ligue o Cube Baby de guitarra e conecte um cabo USB de dados ao computador.
@@ -17,7 +17,7 @@ Selecione no aplicativo o mesmo A/B/C que você escolheu fisicamente no pedal. A
 ## Personalizar a leitura
 Tema, idioma e zoom ficam no menu de reticências. A central de documentação funciona offline e sem pedal. Guias acompanham o idioma do aplicativo; PDFs indicam seu próprio idioma.
 
-O zoom vai de 50% a 200%, em passos de 10%. Use Ctrl +, Ctrl − e Ctrl 0 para aumentar, diminuir e restaurar 100%; isso não altera o DPI do Windows. Tema, idioma e zoom são compartilhados com a edição simulada.
+O zoom vai de 50% a 200%, em passos de 10%. Use Ctrl +, Ctrl − e Ctrl 0 para aumentar, diminuir e restaurar 100%; isso não altera o DPI do Windows.
 
 Se a conexão falhar, consulte [Problemas comuns](problemas.md).
 
