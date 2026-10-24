@@ -10,7 +10,7 @@ Confira se o A/B/C selecionado no aplicativo corresponde ao pedal. Verifique os 
 Ajustes ao vivo não equivalem a gravação persistente. Salve o banco para A/B/C. Os criadores de chorus/phaser/delay/reverb trabalham só em RAM; exporte seus arquivos para guardar a edição.
 
 ## A prévia ou o download do YouTube não funciona
-Confira a conexão com a internet. Para ouvir a prévia, selecione uma saída disponível e verifique Volume e Silenciar. Para baixar, confirme que a pasta escolhida continua acessível; use Alterar pasta se necessário. Se faltarem ferramentas de áudio, reinstale o pacote completo. Veja [Backing Tracks](backing-tracks.md#resolver-problemas).
+Confira a conexão com a internet e a saída de áudio disponível. Na busca do Studio, confirme que a pasta de downloads continua acessível; use Alterar pasta se necessário. Prévia e substituição da backing ficam bloqueadas durante captura. Se faltarem ferramentas de áudio, reinstale o pacote completo. Áudio interrompido pode ser recuperado pelas opções de áudio. Veja [Backing Tracks](backing-tracks.md#resolver-problemas).
 
 ## Um documento não abre
 Os guias são incluídos no pacote. Se faltarem arquivos, extraia novamente o pacote completo. PDFs precisam de um leitor associado no Windows. Links web precisam de navegador e conexão.

@@ -406,16 +406,16 @@
         {
           "language": "pt-BR",
           "title": "Backing Tracks",
-          "summary": "Busca no YouTube, prévia de áudio e download MP3.",
-          "keywords": ["MP3", "YouTube", "download", "prévia", "preview", "áudio", "audio"],
+          "summary": "Tocar com backing, velocidade e tom, metrônomo independente, tentativas de guitarra e salvar áudio.",
+          "keywords": ["Studio", "guitarra", "tentativas", "metrônomo", "velocidade", "transposição", "ASIO", "WASAPI", "MP3", "download", "prévia", "áudio"],
           "format": "markdown",
           "path": "guias/pt-BR/backing-tracks.md"
         },
         {
           "language": "en-US",
           "title": "Backing Tracks",
-          "summary": "YouTube search, audio previews and MP3 downloads.",
-          "keywords": ["MP3", "YouTube", "download", "prévia", "preview", "áudio", "audio"],
+          "summary": "Play with backing, speed and pitch, an independent metronome, guitar attempts and save audio.",
+          "keywords": ["Studio", "guitar", "attempts", "metronome", "speed", "transpose", "ASIO", "WASAPI", "MP3", "download", "preview", "audio"],
           "format": "markdown",
           "path": "guias/en-US/backing-tracks.md"
         }

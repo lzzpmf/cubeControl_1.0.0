@@ -11,6 +11,14 @@ public sealed partial class BackingTracksViewModel
     private sealed record DownloadSettings(int Version, string Folder, Dictionary<string, string>? Completed = null, bool PreviewOnHover = false);
     private readonly Dictionary<string, string> completedYouTubeDownloads = new(StringComparer.Ordinal);
     public bool IsYouTubeDownloaded(string id) => completedYouTubeDownloads.TryGetValue(id, out string? path) && File.Exists(path);
+    internal string? GetDownloadedPath(string id) => completedYouTubeDownloads.TryGetValue(id, out string? path) && File.Exists(path) ? path : null;
+    internal async Task<string?> GetOrDownloadForStudioAsync(Cube.Desktop.Services.YouTubeResult video)
+    {
+        if (GetDownloadedPath(video.Id) is { } existing) return existing;
+        if (YouTubeDownloading) return null;
+        await DownloadYouTube(video);
+        return GetDownloadedPath(video.Id);
+    }
     private void RememberYouTubeDownload(string id, string path)
     {
         completedYouTubeDownloads[id] = path;

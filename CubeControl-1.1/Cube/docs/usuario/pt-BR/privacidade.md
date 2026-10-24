@@ -33,8 +33,8 @@ O aplicativo utiliza as seguintes informações para executar as funções solic
 | Preferências de idioma, aparência, escala da interface e associações visuais | Manter a personalização do aplicativo. |
 | Arquivos selecionados por você, como WAVs, backups e imagens PNG/JPEG | Importar IRs, restaurar configurações e personalizar imagens. Imagens escolhidas podem ser copiadas para a pasta local do aplicativo. |
 | Arquivos de amp `.bin` e cópias anteriores de RAM/flash | Importar/exportar modelos do formato aceito e preservar dados para recuperação. |
-| Arquivos MP3/WAV, seus caminhos e ordem, faixa selecionada, identificador da saída de áudio, volume e mute | Organizar a lista e controlar a reprodução durante a sessão. A lista referencia os áudios; não cria cópias deles nem é restaurada ao reabrir. |
-| Trechos A/B, posição, velocidade e representação da onda | Controlar a reprodução e exportar um trecho quando solicitado. Esses ajustes de reprodução não são persistidos na configuração atual da lista. |
+| Arquivos de áudio, caminhos, backing e tentativa selecionada, dispositivos, volume e silenciar | Reproduzir o acompanhamento e gravar a guitarra durante a prática. Fontes importadas são referenciadas no local original. |
+| Trechos A/B, posição, velocidade, transposição e waveform | Controlar a prática e exportar uma tentativa aparada. O estudo não é persistido nem restaurado ao reabrir. |
 | Backups, datas de criação, identificação técnica do equipamento, nomes de arquivos e verificações de integridade | Permitir recuperação e conferir a integridade dos dados. |
 | Mensagens de conexão, operações e erros | Exibir o estado do aplicativo e auxiliar no diagnóstico de problemas. |
 
@@ -44,7 +44,7 @@ Informações técnicas não identificam necessariamente uma pessoa. Entretanto,
 
 Preferências, imagens personalizadas e metadados são armazenados, em geral, na pasta `%LOCALAPPDATA%\CubeControl` do seu usuário do Windows. A edição de simulação utiliza `%LOCALAPPDATA%\CubeControl-Simulation` para dados do editor, inclusive Backing Tracks; tema, idioma e zoom permanecem compartilhados na pasta `CubeControl`. Arquivos exportados ficam no local escolhido por você.
 
-A ordem e os caminhos da playlist ficam em `backing-playlist-v1.json`; os ajustes de reprodução permanecem em memória nesta execução. Gravações de REC ficam em `Recordings` no diretório de dados ativo, separado na simulação; o antigo `backing-tracks-v1.json` não é carregado nem atualizado. Imagens ficam em `Images`, com associações em `gear-images-v1.json`. Preferências do metrônomo, BPM manual e alinhamento por arquivo ficam em `backing-metronome-v1.json`; sons importados são copiados para `metronome-sounds`. Pasta de downloads e IDs de vídeos associados aos arquivos concluídos ficam em `youtube-downloads-v1.json` (também guarda a preferência de prévia ao passar o mouse). As cópias automáticas de recuperação de banco, IR, amp e efeitos ficam em memória durante a sessão, sem arquivos automáticos `pending-*-preview.json` nem retomada após reiniciar. Backups e ajustes exportados explicitamente ficam no destino escolhido. O [guia de recuperação](recuperacao.md) descreve esses limites.
+O estudo do Studio permanece em memória, sem restauração automática. Gravações temporárias ficam em `PracticeRecordings/<execução>` no diretório de dados ativo; descarte confirmado limpa apenas temporários próprios, e falhas preservam áudio recuperável. Arquivos antigos de playlist, metrônomo e projetos permanecem intocados. Dispositivos e buffers ficam em `studio-audio-v1.json`; retorno por software sempre inicia desligado. Pasta de downloads e IDs associados a arquivos concluídos ficam em `youtube-downloads-v1.json`, preservando preferências existentes. Preparar uma prévia por hover usa um cache limitado em memória; só Ouvir inicia som. Imagens ficam em `Images`, com associações em `gear-images-v1.json`. As cópias automáticas de recuperação de banco, IR, amp e efeitos ficam em memória, sem arquivos automáticos `pending-*-preview.json` nem retomada após reiniciar. Backups, downloads e áudios exportados ficam nos destinos escolhidos. O [guia de recuperação](recuperacao.md) descreve esses limites.
 
 Os arquivos persistentes permanecem no computador até serem substituídos ou excluídos. Não há prazo automático geral de expiração para os backups locais. Remover o executável ou a pasta de instalação não garante a exclusão desses arquivos.
 
@@ -60,13 +60,13 @@ Se você compartilhar voluntariamente arquivos ou capturas de tela por e-mail ou
 
 O Windows, serviços de sincronização ou backup configurados por você e plataformas de distribuição podem realizar tratamentos próprios, sujeitos às respectivas políticas. Esta política descreve o aplicativo e não substitui as políticas desses serviços.
 
-A busca, o download e a prévia de áudio do YouTube, inclusive a prévia acionada ao manter o mouse sobre um resultado, usam ferramentas de internet para contatar serviços externos. Consultas e solicitações de mídia estão sujeitas às políticas desses serviços. Reprodução local e documentação não exigem essas solicitações.
+A busca, o download e a preparação/reprodução de prévias de áudio do YouTube, inclusive a preparação silenciosa ao manter o mouse sobre um resultado, usam ferramentas de internet para contatar serviços externos. Consultas e solicitações de mídia estão sujeitas às políticas desses serviços. Reprodução local e documentação não exigem essas solicitações.
 
 ## 5. Controle e exclusão
 
 Você pode alterar suas preferências no aplicativo, desconectar o pedal e excluir arquivos locais ou exportados utilizando os recursos do Windows.
 
-Antes de apagar a pasta de dados, encerre eventuais prévias de IR, restaure a prévia de amp quando aplicável e feche o aplicativo. Preserve os backups que desejar manter: a exclusão pode remover personalizações e arquivos necessários à recuperação. Preferências padrão podem ser recriadas na próxima execução. Remover uma faixa da lista de Backing Tracks não exclui o áudio original; uma exportação de trecho cria outro arquivo no destino escolhido.
+Antes de apagar a pasta de dados, encerre eventuais prévias de IR, restaure a prévia de amp quando aplicável e feche o aplicativo. Preserve os backups que desejar manter: a exclusão pode remover personalizações e arquivos necessários à recuperação. Preferências padrão podem ser recriadas na próxima execução. Excluir uma tentativa no Studio permite desfazer e mantém seu áudio temporário até o descarte do estudo; importações e downloads originais permanecem intocados. Salvar áudio cria um arquivo no destino escolhido.
 
 Excluir arquivos do computador não apaga configurações já gravadas no pedal, cópias exportadas ou cópias mantidas por serviços de backup.
 

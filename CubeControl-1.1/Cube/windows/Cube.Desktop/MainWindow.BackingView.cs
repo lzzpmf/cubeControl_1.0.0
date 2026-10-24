@@ -4,10 +4,9 @@ namespace Cube.Desktop;
 public partial class MainWindow
 {
     private void IrAuditionLoopClick(object sender, System.Windows.RoutedEventArgs e) => Model.IrAudition.Loop = !Model.IrAudition.Loop;
-    private ScrollViewer BackingTracksScroll => BackingView.BackingTracksScroll;
     private void BackingKeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Escape && BackingTracks.YouTubePreviewId != null)
-        { BackingTracks.StopYouTubePreview(); e.Handled = true; }
+        { Studio.StopPreview(); e.Handled = true; }
     }
 }

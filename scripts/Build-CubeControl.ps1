@@ -12,6 +12,8 @@ $mutex = $null
 $locked = $false
 $staging = $null
 $backup = $null
+$buildArtifacts = $null
+$youTubeTools = $null
 $installed = $false
 $exitCode = 1
 
@@ -75,22 +77,32 @@ function Prepare-YouTubeTools {
     finally { $sha.Dispose() }
     $tools = Join-Path $OutputRoot 'youtube-tools'
     Assert-ChildPath $tools $OutputRoot
-    $statePath = Join-Path $tools 'versions.json'
     $required = @('yt-dlp.exe', 'deno.exe', 'ffmpeg.exe', 'ffprobe.exe', 'yt-dlp-LICENSE.txt', 'deno-LICENSE.txt')
-    if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+    # Reuse the installed package instead of retaining another copy of every tool.
+    $candidates = @((Join-Path $destination 'Tools\YouTube'),
+        (Join-Path $publishRoot "CubeControl-$version\Tools\YouTube"),
+        (Join-Path $publishRoot "CubeControl-Simulation-$version\Tools\YouTube"), $tools) | Select-Object -Unique
+    foreach ($candidate in $candidates) {
+        Assert-ChildPath $candidate $OutputRoot
+        $statePath = Join-Path $candidate 'versions.json'
+        if (!(Test-Path -LiteralPath $statePath -PathType Leaf)) { continue }
         try {
             $state = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
             $valid = $state.manifestHash -eq $manifestHash -and @($state.files).Count -ge $required.Count
             foreach ($name in $required) { if ($name -notin $state.files.path) { $valid = $false } }
             if (@($state.files.path | Where-Object { $_ -like 'Licenses\ffmpeg\*' }).Count -eq 0) { $valid = $false }
             foreach ($file in $state.files) {
-                $cached = Join-Path $tools $file.path
-                Assert-ChildPath $cached $tools
+                $cached = Join-Path $candidate $file.path
+                Assert-ChildPath $cached $candidate
                 if (!(Test-Path -LiteralPath $cached -PathType Leaf) -or
                     (Get-FileHash -LiteralPath $cached -Algorithm SHA256).Hash -ne $file.sha256) { $valid = $false; break }
             }
-            if (@(Get-ChildItem -LiteralPath $tools -Recurse -File).Count -ne @($state.files).Count + 1) { $valid = $false }
-            if ($valid) { Write-Host "YouTube tools reused from verified cache: $tools"; return }
+            if (@(Get-ChildItem -LiteralPath $candidate -Recurse -File).Count -ne @($state.files).Count + 1) { $valid = $false }
+            if ($valid) {
+                $script:youTubeTools = $candidate
+                Write-Host "YouTube tools reused from verified files: $candidate"
+                return
+            }
         } catch { Write-Host 'YouTube tool cache needs verification and preparation.' }
     }
     $temporary = Join-Path $OutputRoot ('.staging\youtube-tools-' + [Guid]::NewGuid().ToString('N'))
@@ -176,6 +188,7 @@ function Prepare-YouTubeTools {
             throw
         }
         Remove-BuildDirectory $previous $OutputRoot
+        $script:youTubeTools = $tools
         Write-Host "YouTube tools verified: $tools"
     } finally {
         $client.Dispose()
@@ -187,7 +200,7 @@ function Get-SourceHashes {
     $hashes = @{}
     $files = @(Get-ChildItem -LiteralPath $workspace -File |
         Where-Object { $_.Extension -in '.props', '.targets' -or $_.Name -in 'README.md', 'THIRD-PARTY-NOTICES.txt' })
-    foreach ($projectName in 'Cube.Desktop', 'Cube.Protocol', 'Cube.Usb') {
+    foreach ($projectName in 'Cube.Desktop', 'Cube.Protocol', 'Cube.Usb', 'Cube.Studio.Core', 'Cube.Studio.Audio') {
         $files += Get-ChildItem -LiteralPath (Join-Path $workspace $projectName) -File -Recurse |
             Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }
     }
@@ -257,8 +270,11 @@ try {
         if ($Start) { throw 'CompileOnly nao pode ser combinado com Start.' }
         # Compile managed/WPF code without publishing or running verification suites.
         $compileRoot = $OutputRoot
+        $compileTools = Join-Path $destination 'Tools\YouTube'
+        if (!(Test-Path -LiteralPath $compileTools -PathType Container)) { $compileTools = Join-Path $OutputRoot 'youtube-tools' }
         $compileArgs = @('build', $projectPath, '-c', $configuration, '-r', 'win-x64',
-            '--artifacts-path', $compileRoot)
+            '--artifacts-path', $compileRoot, "-p:CubeYouTubeToolsPath=$compileTools",
+            '-p:DebugType=None', '-p:DebugSymbols=false')
         if ($Simulation) { $compileArgs += '-p:CubeSimulation=true' }
         & dotnet @compileArgs
         if ($LASTEXITCODE -ne 0) { throw "Falha na compilacao: $compileRoot" }
@@ -273,19 +289,23 @@ try {
     $stagingRoot = Join-Path $OutputRoot '.staging'
     $staging = Join-Path $stagingRoot "$name-$token"
     $backup = Join-Path $stagingRoot "$name-previous-$token"
+    $buildArtifacts = Join-Path $stagingRoot "$name-work-$token"
     Assert-ChildPath $staging $stagingRoot
     Assert-ChildPath $backup $stagingRoot
+    Assert-ChildPath $buildArtifacts $stagingRoot
     [IO.Directory]::CreateDirectory($staging) | Out-Null
     Prepare-YouTubeTools
     $sources = Get-SourceHashes
     $publishArgs = @('publish', $projectPath, '-c', $configuration, '-r', 'win-x64',
-        '--self-contained', 'true', '--force', '--artifacts-path', $OutputRoot,
+        '--self-contained', 'true', '--artifacts-path', $buildArtifacts,
+        "-p:CubeYouTubeToolsPath=$youTubeTools",
+        '-p:DebugType=None', '-p:DebugSymbols=false',
         '-p:CubeUnifiedPublish=true', '-o', $staging)
     if ($Simulation) { $publishArgs += '-p:CubeSimulation=true' }
     & dotnet @publishArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falha na compilacao. O pacote anterior foi preservado.' }
     Assert-SameHashes $sources (Get-SourceHashes)
-    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll', 'NAudio.Core.dll', 'NAudio.Wasapi.dll', 'Tools\YouTube\yt-dlp.exe', 'Tools\YouTube\ffmpeg.exe', 'Tools\YouTube\ffprobe.exe', 'Tools\YouTube\deno.exe', 'Tools\YouTube\versions.json') {
+    foreach ($required in 'CubeControl.exe', 'CubeControl.dll', 'CubeControl.deps.json', 'CubeControl.runtimeconfig.json', 'coreclr.dll', 'NAudio.Core.dll', 'NAudio.Wasapi.dll', 'NAudio.Asio.dll', 'Cube.Studio.Core.dll', 'Cube.Studio.Audio.dll', 'CubeStudioDsp.dll', 'Licenses\Signalsmith-Stretch.txt', 'Licenses\Signalsmith-Linear.txt', 'Tools\YouTube\yt-dlp.exe', 'Tools\YouTube\ffmpeg.exe', 'Tools\YouTube\ffprobe.exe', 'Tools\YouTube\deno.exe', 'Tools\YouTube\versions.json') {
         if (-not (Test-Path -LiteralPath (Join-Path $staging $required) -PathType Leaf)) {
             throw "Arquivo obrigatorio ausente do pacote: $required"
         }
@@ -298,7 +318,7 @@ try {
         foreach ($file in Get-ChildItem -LiteralPath (Join-Path $desktop $folder) -File -Recurse) {
             if (($folder.StartsWith('Assets\Images\') -and $file.Extension -in '.png', '.jpg', '.jpeg' -and $file.Name -notmatch '_oficial_') -or
                 ($folder -eq 'Assets\ImpulseResponses' -and ($file.Extension -eq '.wav' -or $file.Name -in 'Overdriven.catalog.v1.json', 'readme.txt')) -or
-                ($folder -eq 'Localization' -and ($file.Extension -eq '.json' -or $file.Name -eq 'README.md'))) {
+                ($folder -eq 'Localization' -and $file.Extension -eq '.json')) {
                 $resources[$file.FullName.Substring($desktop.Length + 1)] = $file.FullName
             }
         }
@@ -325,13 +345,6 @@ try {
     if (Test-Path -LiteralPath (Join-Path $staging 'Assets\Archive')) {
         throw 'O acervo de alternativas nao deve acompanhar o pacote.'
     }
-    $package = @{}
-    foreach ($file in Get-ChildItem -LiteralPath $staging -File -Recurse) {
-        $package[$file.FullName.Substring($staging.Length + 1)] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
-    }
-    $info = [ordered]@{ version = $version; configuration = $configuration; runtime = 'win-x64'
-        builtAtUtc = [DateTime]::UtcNow.ToString('o'); sources = $sources; files = $package }
-    $info | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $staging 'build-info.json') -Encoding UTF8
     [IO.Directory]::CreateDirectory($publishRoot) | Out-Null
     # Keep the previous package until the validated replacement is in place.
     if (Test-Path -LiteralPath $destination) { Move-BuildDirectory $destination $backup }
@@ -349,11 +362,25 @@ try {
 } catch {
     Write-Error $_ -ErrorAction Continue
 } finally {
-    foreach ($temporary in @($staging) + $(if ($installed) { @($backup) } else { @() })) {
+    foreach ($temporary in @($staging, $buildArtifacts) + $(if ($installed) { @($backup) } else { @() })) {
         if ($temporary) {
             try { Remove-BuildDirectory $temporary (Join-Path $OutputRoot '.staging') }
             catch { Write-Warning "Nao foi possivel limpar o temporario: $temporary. $($_.Exception.Message)" }
         }
+    }
+    if ($installed) {
+        try { Remove-BuildDirectory (Join-Path $OutputRoot 'youtube-tools') $OutputRoot }
+        catch { Write-Warning "Nao foi possivel limpar o cache de ferramentas ja publicadas: $($_.Exception.Message)" }
+    }
+    if ($locked) {
+        try {
+            $stagingRoot = Join-Path $OutputRoot '.staging'
+            Assert-ChildPath $stagingRoot $OutputRoot
+            if ((Test-Path -LiteralPath $stagingRoot -PathType Container) -and
+                @(Get-ChildItem -LiteralPath $stagingRoot -Force).Count -eq 0) {
+                [IO.Directory]::Delete($stagingRoot, $false)
+            }
+        } catch { Write-Warning "Nao foi possivel remover a pasta temporaria vazia: $($_.Exception.Message)" }
     }
     if ($locked) { $mutex.ReleaseMutex() }
     if ($mutex) { $mutex.Dispose() }

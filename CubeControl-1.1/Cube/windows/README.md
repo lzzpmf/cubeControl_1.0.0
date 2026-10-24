@@ -22,7 +22,10 @@ Para abrir um pacote existente sem conexão automática, execute `CubeControl.ex
 
 ## Estrutura
 
-- `Cube.Desktop`: interface WPF, áudio, recursos e transporte de simulação.
+- `Cube.Desktop`: interface WPF, Studio para tocar e estudar em Backing Tracks, recursos e transporte de simulação do pedal.
+- `Cube.Studio.Core`: prática não persistente, acompanhamento, tentativas independentes e histórico de trim/exclusão. O editor legado continua isolado para compatibilidade dos testes, sem acesso no fluxo novo.
+- `Cube.Studio.Audio`: captura/reprodução ASIO e WASAPI, análise, mix e exportação.
+- `Cube.Studio.Audio/Native`: wrapper C++ e fontes vendorizadas do Signalsmith Stretch/Linear; `Build.ps1` gera `CubeStudioDsp.dll` em `studio-native` na raiz externa de artefatos, em `%LOCALAPPDATA%\CubeControl-BuildCache\studio-native` nos builds diretos; a publicação usa intermediários temporários.
 - `Cube.Usb`: comunicação MIDI pelas APIs do Windows.
 - `Cube.Protocol`: protocolo, fila de edição, formatos e operações do pedal.
 - `../docs/usuario`: guias publicados em português e inglês.
@@ -36,8 +39,12 @@ Atualize os guias nos dois idiomas e execute `node scripts/Build-Manual.mjs` na 
 
 O próprio `Build-CubeControl.ps1` prepara as quatro ferramentas necessárias à busca, prévia e download de áudio: yt-dlp, Deno, FFmpeg e ffprobe. As versões, URLs e hashes SHA-256 ficam no script, sem manifesto ou script auxiliar. FFmpeg usa o pacote de versão 8.1.2 Essentials, com espelhos GitHub e gyan.dev, sem depender de compilações diárias com retenção curta.
 
-As ferramentas prontas ficam em `youtube-tools` na raiz externa de saída. O build confere seus hashes e reutiliza o cache sem rede quando está íntegro. ZIPs e extrações são temporários e removidos ao terminar. Um único `versions.json` identifica as versões e valida o cache; executáveis e licenças acompanham o aplicativo em `Tools/YouTube`. Não é necessário instalar essas ferramentas no Windows. `-CompileOnly` reutiliza as mesmas pastas de intermediários, sem criar uma pasta adicional a cada execução.
+As ferramentas são reutilizadas diretamente de `Tools/YouTube` de um pacote publicado, após conferir os hashes. Na primeira publicação, `youtube-tools` na raiz externa de saída funciona apenas como cache de preparação; ele é removido depois que o pacote é instalado com sucesso. O build confere seus hashes e reutiliza o cache sem rede quando está íntegro. ZIPs e extrações são temporários e removidos ao terminar. Um único `versions.json` identifica as versões e valida o cache; executáveis e licenças acompanham o aplicativo em `Tools/YouTube`. Não é necessário instalar essas ferramentas no Windows. `-CompileOnly` reutiliza as mesmas pastas de intermediários, sem criar uma pasta adicional a cada execução.
 
 Dados do usuário ficam em `%LOCALAPPDATA%\CubeControl`; a simulação usa `CubeControl-Simulation`, com algumas preferências compartilhadas. Presets em edição, prévias em RAM e gravação persistente são operações distintas.
 
-Consulte [os guias](../docs/README.md) e [os avisos de terceiros](THIRD-PARTY-NOTICES.txt).
+O Studio inicia vazio, com duas funções fixas e sem persistir projetos. Fontes importadas permanecem nos locais originais. Tentativas temporárias ficam em `PracticeRecordings/<execução>`; descarte confirmado limpa apenas arquivos pertencentes à execução, e falhas preservam áudio recuperável. Salvar áudio exporta a tentativa aparada, com ou sem backing, para WAV24 ou MP3. Velocidade explícita e metrônomo usam contratos independentes. O DSP nativo é copiado para a saída/publicação como `CubeStudioDsp.dll`, com as licenças em `Licenses`.
+
+O manual offline acompanha o aplicativo em Assets/Documents/manual/index.html. Consulte tambem os avisos de terceiros em THIRD-PARTY-NOTICES.txt.
+
+A publicação usa intermediários isolados em .staging e os remove ao terminar, inclusive em caso de falha. Não gera build-info.json nem símbolos PDB. O modo -CompileOnly mantém bin, obj e studio-native como saída de compilação. Builds diretos e a análise do editor usam por padrão %LOCALAPPDATA%\CubeControl-BuildCache; o script define explicitamente sua própria saída externa.

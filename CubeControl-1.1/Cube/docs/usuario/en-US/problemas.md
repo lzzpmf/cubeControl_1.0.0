@@ -10,7 +10,7 @@ Check that A/B/C in the app matches the pedal. Check switches and physical secti
 Live adjustments are not persistent writes. Save the bank for A/B/C. Chorus/phaser/delay/reverb creators work only in RAM; export their files to keep the edits.
 
 ## YouTube preview or download does not work
-Check your internet connection. For preview audio, select an available output and check Volume and Mute. For downloads, verify that the selected folder is still accessible; use Change folder if necessary. If audio tools are missing, reinstall the complete package. See [Backing Tracks](backing-tracks.md#troubleshooting).
+Check your internet connection and available audio output. In Studio search, verify that the download folder remains accessible; use Change folder if needed. Previews and backing replacement are blocked during capture. Missing audio tools require reinstalling the complete package. Interrupted audio can be recovered through audio options. See [Backing Tracks](backing-tracks.md#troubleshooting).
 
 ## A document will not open
 Guides are included in the package. If files are missing, extract the complete package again. PDFs require an associated Windows reader. Web links require a browser and connection.

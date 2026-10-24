@@ -1,0 +1,106 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style x:Key="StudioButton" TargetType="Button">
+    <Setter Property="Foreground" Value="{DynamicResource CubeText}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="5,2" />
+    <Setter Property="MinWidth" Value="26" /><Setter Property="MinHeight" Value="26" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <Setter.Value><ControlTemplate TargetType="Button">
+        <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+          <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" RecognizesAccessKey="True" />
+        </Border>
+        <ControlTemplate.Triggers>
+          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="Background" Value="{DynamicResource CubeItemHover}" /></Trigger>
+          <Trigger Property="IsPressed" Value="True"><Setter TargetName="Chrome" Property="Background" Value="{DynamicResource CubeSelected}" /></Trigger>
+          <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CubeAccent}" /></Trigger>
+          <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value>
+    </Setter>
+  </Style>
+  <Style x:Key="StudioIconButton" TargetType="Button" BasedOn="{StaticResource StudioButton}">
+    <Setter Property="Width" Value="26" /><Setter Property="Height" Value="26" /><Setter Property="Padding" Value="3" />
+  </Style>
+  <Style x:Key="TransportButton" TargetType="Button" BasedOn="{StaticResource StudioButton}">
+    <Setter Property="Padding" Value="0" /><Setter Property="MinWidth" Value="0" /><Setter Property="MinHeight" Value="0" />
+    <Setter Property="Width" Value="26" /><Setter Property="Height" Value="26" />
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+      <Border x:Name="Chrome" CornerRadius="100" BorderThickness="1" BorderBrush="Transparent" Background="Transparent" ClipToBounds="True">
+        <ContentPresenter Margin="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CubeAccent}" /></Trigger>
+        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CubeAccent}" /></Trigger>
+        <Trigger Property="IsPressed" Value="True"><Setter Property="Opacity" Value="0.75" /></Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="StudioToggle" TargetType="ToggleButton">
+    <Setter Property="Foreground" Value="{DynamicResource CubeText}" />
+    <Setter Property="Background" Value="{DynamicResource CubeCanvas}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}" />
+    <Setter Property="BorderThickness" Value="1" /><Setter Property="Padding" Value="3" />
+    <Setter Property="MinWidth" Value="22" /><Setter Property="MinHeight" Value="22" />
+    <Setter Property="FontSize" Value="11" /><Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" /><Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ToggleButton">
+      <Border x:Name="Chrome" CornerRadius="4" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="Opacity" Value="0.8" /></Trigger>
+        <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CubeAccent}" /></Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate></Setter.Value></Setter>
+    <Style.Triggers><Trigger Property="IsChecked" Value="True">
+      <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}" /><Setter Property="Background" Value="{DynamicResource CubeSelected}" /><Setter Property="BorderBrush" Value="{DynamicResource CubeAccent}" />
+    </Trigger></Style.Triggers>
+  </Style>
+  <Style x:Key="SoloToggle" TargetType="ToggleButton" BasedOn="{StaticResource StudioToggle}">
+    <Style.Triggers><Trigger Property="IsChecked" Value="True">
+      <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}" /><Setter Property="Background" Value="{DynamicResource CubeSelected}" /><Setter Property="BorderBrush" Value="{DynamicResource CubeAccent}" />
+    </Trigger></Style.Triggers>
+  </Style>
+  <Style x:Key="ArmToggle" TargetType="ToggleButton" BasedOn="{StaticResource StudioToggle}">
+    <Style.Triggers><Trigger Property="IsChecked" Value="True">
+      <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}" /><Setter Property="Background" Value="{DynamicResource CubeSelected}" /><Setter Property="BorderBrush" Value="{DynamicResource CubeWarning}" /><Setter Property="Opacity" Value="1" />
+    </Trigger></Style.Triggers>
+  </Style>
+  <Style x:Key="StudioTextBox" TargetType="TextBox">
+    <Setter Property="Foreground" Value="{DynamicResource CubeText}" /><Setter Property="CaretBrush" Value="{DynamicResource CubeText}" />
+    <Setter Property="Background" Value="{DynamicResource CubeCard}" /><Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}" />
+    <Setter Property="BorderThickness" Value="1" /><Setter Property="Padding" Value="4,2" /><Setter Property="MinHeight" Value="26" />
+    <Setter Property="FontSize" Value="12" /><Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TextBox">
+      <Border x:Name="Chrome" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+        <ScrollViewer x:Name="PART_ContentHost" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+      </Border>
+      <ControlTemplate.Triggers>
+        <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CubeAccent}" /></Trigger>
+        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4" /></Trigger>
+        <Trigger Property="Validation.HasError" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource CubeWarning}" /></Trigger>
+      </ControlTemplate.Triggers>
+    </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="StudioCombo" TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+    <Setter Property="MinHeight" Value="22" /><Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="4,0" /><Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource CubeText}" />
+    <Setter Property="Background" Value="{DynamicResource CubeCard}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}" />
+  </Style>
+  <Style x:Key="FieldLabel" TargetType="TextBlock"><Setter Property="FontSize" Value="11" /><Setter Property="Foreground" Value="{DynamicResource Muted}" /><Setter Property="Margin" Value="0,0,0,4" /></Style>
+  <Style x:Key="PopupSurface" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource CubeCard}" /><Setter Property="BorderBrush" Value="{DynamicResource CubeBorder}" /><Setter Property="BorderThickness" Value="1" /><Setter Property="CornerRadius" Value="8" /><Setter Property="Padding" Value="12" />
+  </Style>
+</ResourceDictionary>

@@ -67,6 +67,7 @@ public sealed partial class BackingTracksViewModel
     public string YouTubeDownloadStatus { get => youtubeDownloadStatus; private set => Set(ref youtubeDownloadStatus, value); }
     public double YouTubePercent { get => youtubePercent; private set => Set(ref youtubePercent, value); }
     public ICommand CancelYouTubeDownload => new UiCommand(() => youtubeDownload?.Cancel(), () => YouTubeDownloading);
+    internal void RefreshSearch() => SearchYouTube();
     private async void SearchYouTube()
     {
         if (disposed) return;
@@ -106,7 +107,6 @@ public sealed partial class BackingTracksViewModel
     public async Task DownloadYouTube(YouTubeResult result)
     {
         if (YouTubeDownloading || choosingDownloadFolder || disposed) return;
-        StopYouTubePreview();
         ClearCompletedYouTubeDownload(); YouTubeFolderStatus = "";
         if (YouTubeDownloadFolder.Length == 0 && !ChooseDownloadFolder()) return;
         try { VerifyDownloadFolder(YouTubeDownloadFolder); }
@@ -118,7 +118,6 @@ public sealed partial class BackingTracksViewModel
     {
         if (YouTubeDownloading || disposed) return;
         using var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
-        StopYouTubePreview();
         ClearCompletedYouTubeDownload(); YouTubeFolderStatus = "";
         pinnedDownload = result; YouTubeDownloadMessageId = result.Id;
         YouTubeDownloadId = result.Id;

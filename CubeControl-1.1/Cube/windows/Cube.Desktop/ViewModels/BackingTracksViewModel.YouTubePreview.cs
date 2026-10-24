@@ -6,6 +6,8 @@ public sealed partial class BackingTracksViewModel
 {
     internal IYouTubePreviewService YouTubePreviewService { get; set; } = new YouTubePreviewService();
     private CancellationTokenSource? youtubePreview;
+    private CancellationTokenSource? youtubePreparation;
+    private string? youtubePreparationId;
     private Task? previewWorker;
     private TaskCompletionSource? previewPromotion;
     private readonly Dictionary<string, YouTubePreviewFrame> previewWaves = [];
@@ -36,8 +38,30 @@ public sealed partial class BackingTracksViewModel
     public bool YouTubePreviewActive { get => youtubePreviewActive; private set => Set(ref youtubePreviewActive, value); }
     internal void UpdateYouTubePreviewVolume() => Volatile.Write(ref previewGain, IsMuted ? 0 : (float)(Volume / 100));
 
+    internal async Task<YouTubePreviewFrame> PrepareYouTubePreviewAsync(YouTubeResult video, CancellationToken cancellation = default)
+    {
+        ObjectDisposedException.ThrowIf(disposed, this);
+        youtubePreparation?.Cancel();
+        using var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token, cancellation);
+        youtubePreparation = request; youtubePreparationId = video.Id;
+        try
+        {
+            var frame = await YouTubePreviewService.PrepareAsync(video, request.Token);
+            request.Token.ThrowIfCancellationRequested();
+            if (disposed || youtubePreparation != request) throw new OperationCanceledException(request.Token);
+            UpdatePreviewWave(video.Id, frame);
+            return frame;
+        }
+        finally { if (youtubePreparation == request) { youtubePreparation = null; youtubePreparationId = null; } }
+    }
+
     public void StopYouTubePreview(string? videoId = null)
     {
+        if (videoId == null || videoId == youtubePreparationId)
+        {
+            var preparation = youtubePreparation; youtubePreparation = null; youtubePreparationId = null;
+            preparation?.Cancel();
+        }
         if (videoId != null && YouTubePreviewId != videoId) return;
         var request = youtubePreview; youtubePreview = null;
         request?.Cancel();
@@ -55,10 +79,19 @@ public sealed partial class BackingTracksViewModel
     public async Task PreviewYouTube(YouTubeResult video, bool immediate = false)
     {
         if (disposed) return;
+        // Hover/selection may decode peaks, but only an explicit play action opens audio.
+        if (!immediate)
+        {
+            if (!PageVisible) return;
+            try { await PrepareYouTubePreviewAsync(video); }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { if (!disposed) { Log(ex); YouTubePreviewStatus = "Prévia indisponível. Tente novamente."; } }
+            return;
+        }
         if (immediate && youtubePreview != null && YouTubePreviewId == video.Id)
         { previewPromotion?.TrySetResult(); return; }
         StopYouTubePreview();
-        if (disposed || !PageVisible || YouTubeDownloading) return;
+        if (disposed || !PageVisible) return;
         ClearCompletedYouTubeDownload(keepRow: true);
         YouTubePreviewId = video.Id;
         if (SelectedOutput == null) { YouTubePreviewStatus = "Escolha a saída de áudio"; return; }

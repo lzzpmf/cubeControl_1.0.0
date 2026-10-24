@@ -8,6 +8,7 @@
     <ApplicationIcon>Assets/Images/Icons/desktopIcon.ico</ApplicationIcon>
     <AssemblyName>CubeControl</AssemblyName>
     <Version>1.1.0</Version>
+    <CubeYouTubeToolsPath Condition="'$(CubeYouTubeToolsPath)' == ''">$(ArtifactsPath)/youtube-tools</CubeYouTubeToolsPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(CubeSimulation)' == 'true'">
     <DefineConstants>$(DefineConstants);CUBE_SIMULATION</DefineConstants>
@@ -17,6 +18,10 @@
     <Compile Include="Simulation/FakeConnection.cs" />
   </ItemGroup>
   <ItemGroup><ProjectReference Include="../Cube.Usb/Cube.Usb.csproj" /><PackageReference Include="WPF-UI" Version="4.3.0" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Cube.Studio.Core/Cube.Studio.Core.csproj" />
+    <ProjectReference Include="../Cube.Studio.Audio/Cube.Studio.Audio.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
     <PackageReference Include="NAudio.Core" Version="3.1.0" />
@@ -54,13 +59,12 @@
     <None Include="../../docs/usuario/pt-BR/**/*" Link="Assets/Documents/guias/pt-BR/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../../docs/usuario/en-US/**/*" Link="Assets/Documents/guias/en-US/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Localization/*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <None Update="Localization/README.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Update="Assets/Images/Equipment/**/*.png;Assets/Images/Controls/Knobs/Botão Giratório Vintage de Metal e Preto.png;Assets/Images/Controls/Knobs/Botão Metálico de Controle Texturizado.png;Assets/Images/Controls/Knobs/Botão Rotativo Vintage Preto Marconi.png;Assets/Images/Controls/Knobs/Botão Vintage de Metal Dourado.png;Assets/Images/Controls/Faders/Fader Preto com Indicador Prateado.png;Assets/Images/Controls/Faders/Fader Retrô Charcoal com Faixa Creme.png;Assets/Images/Controls/Faders/Fader Retrô preto com faixa creme.png;Assets/Images/Controls/Faders/Fader Vintage de Estilo Retrô.png" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
     <None Update="Assets/Images/Equipment/**/*.jpg;Assets/Images/Equipment/**/*.jpeg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../README.md" Link="LEIA-ME.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(ArtifactsPath)/youtube-tools/**/*" Link="Tools/YouTube/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="$(CubeYouTubeToolsPath)/**/*" Link="Tools/YouTube/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -28,6 +28,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     public EditorViewModel Model { get; }
     public BackingTracksViewModel BackingTracks { get; }
+    public Cube.Desktop.Studio.ViewModels.ShellViewModel Studio { get; }
+    private Panel? footerHome;
+    private bool studioCompactNavigation;
     private bool closing;
     private bool closeInProgress;
     private readonly bool automaticConnectionEnabled;
@@ -65,8 +68,16 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Model.ImageSelectionRequested += ShowImageSelection;
         Closed += (_, _) => Model.ImageSelectionRequested -= ShowImageSelection;
         BackingTracks = new BackingTracksViewModel(Model.DataDirectory);
-        Model.IrAudition.BeforePlayback = BackingTracks.StopForIrAudition;
-        BackingTracks.BeforePlayback = Model.IrAudition.StopAsync;
+        Studio = new Cube.Desktop.Studio.ViewModels.ShellViewModel(Model.DataDirectory, BackingTracks);
+        Model.IrAudition.BeforePlayback = Studio.BeforeIrAuditionAsync;
+        Model.IrAudition.PlaybackAllowed = () => Studio.CanAuditionIr;
+        Studio.BeforePlayback = Model.IrAudition.StopAsync;
+        BackingTracks.BeforePlayback = async () =>
+        {
+            if (!Studio.CanPreviewPlayback) throw new InvalidOperationException(LanguageService.T("Finalize a gravação antes de iniciar uma prévia."));
+            await Model.IrAudition.StopAsync();
+            await Studio.BeforeYouTubePreviewAsync();
+        };
         PreviewKeyDown += SuppressStandaloneAltDown;
         PreviewKeyUp += SuppressStandaloneAltUp;
         Deactivated += (_, _) => standaloneAltPressed = false;
@@ -79,9 +90,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             else if (Navigation.SelectedItem is ListBoxItem item) item.Focus();
             e.Handled = true;
         };
-        Deactivated += (_, _) => { BackingTracks.StopYouTubePreview(); };
+        Deactivated += (_, _) => Studio.StopPreview();
         Appearance.UiDensity.Initialize();
         InitializeComponent();
+        Studio.DialogHost = DialogHost; Studio.Owner = this;
+        Studio.NavigateToStudio = () => { Tabs.SelectedIndex = 2; Navigation.SelectedIndex = 2; BackingView.Focus(); };
+        Studio.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Studio.CanAuditionIr)) CommandManager.InvalidateRequerySuggested(); };
+        footerHome = FooterActions.Parent as Panel;
         ConfigureDragDrop();
         RegisterName("IrLibraryTree", SingleIrLibrary.Tree);
         RegisterName("IrLibrarySearch", SingleIrLibrary.SearchBox); DataContext = Model;
@@ -115,7 +130,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Model.PropertyChanged += BusyStateChanged;
         Closed += (_, _) =>
         {
-            try { BackingTracks.Dispose(); }
+            try { Studio.Dispose(); BackingTracks.Dispose(); }
             catch (Exception ex) { System.Diagnostics.Debug.WriteLine(ex); }
             busyMessageTimer.Stop(); Model.PropertyChanged -= BusyStateChanged;
         };
@@ -143,6 +158,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             {
                 await Model.Initialize();
                 await BackingTracks.Initialize();
+                await Studio.InitializeAsync();
                 await Model.IrAudition.RefreshDevices();
             }
             if (automaticConnectionEnabled && !Environment.GetCommandLineArgs().Contains("--offline")) Model.StartAutomaticConnection();
@@ -155,6 +171,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             closeInProgress = true;
             try
             {
+                BackingView.FinishEdits();
+                Studio.ClosePending = true;
+                if (!await Studio.CanCloseAsync()) return;
                 if (!await Model.Ask("Fechar o CubeControl? Alterações não salvas serão descartadas.")) return;
                 IsEnabled = false;
                 // Closing must not wait indefinitely for a disconnected or busy pedal.
@@ -183,7 +202,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                     Application.Current.Shutdown();
                 }));
             }
-            finally { closeInProgress = false; }
+            catch (Exception ex)
+            {
+                IsEnabled = true;
+                System.Diagnostics.Debug.WriteLine(ex);
+                ShowNotification(new UserNotification("Não foi possível finalizar o áudio", ex.Message, Wpf.Ui.Controls.ControlAppearance.Danger));
+            }
+            finally { closeInProgress = false; if (!closing) Studio.ClosePending = false; }
         };
     }
     private bool noticeOpen;
@@ -422,7 +447,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void UpdateSaveAppearance()
     {
         Navigation.SelectedIndex = Tabs.SelectedIndex;
-        BackingTracks.PageVisible = Tabs.SelectedIndex == 2;
+        Studio.PageVisible = Tabs.SelectedIndex == 2;
         Model.IrAudition.PanelVisible = Tabs.SelectedIndex == 1;
         UpdateWorkspaceLayout();
         MoveFooterToPage();
@@ -430,7 +455,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void MoveFooterToPage()
     {
         if (FooterActions == null || Tabs == null) return;
-        var page = Tabs.SelectedIndex switch { 1 => IrScroll, 2 => BackingTracksScroll, 3 => null, 4 => HelpScroll, _ => EditorScroll };
+        if (Tabs.SelectedIndex == 2)
+        {
+            if (footerHome != null && FooterActions.Parent != footerHome)
+            { if (FooterActions.Parent is Panel old) old.Children.Remove(FooterActions); footerHome.Children.Add(FooterActions); }
+            return;
+        }
+        var page = Tabs.SelectedIndex switch { 1 => IrScroll, 3 => null, 4 => HelpScroll, _ => EditorScroll };
         if (page?.Content is not StackPanel content || FooterActions.Parent == content) return;
         if (FooterActions.Parent is Panel parent) parent.Children.Remove(FooterActions);
         content.Children.Add(FooterActions);
@@ -442,6 +473,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private int presetWheelDelta;
     private void EditorPageWheel(object sender, MouseWheelEventArgs e)
     {
+        if (Tabs.SelectedIndex == 2) return;
         // Preserve controls whose wheel has a musical/navigation meaning.
         for (DependencyObject? node = e.OriginalSource as DependencyObject; node != null && node != EditorScroll;)
         {
@@ -507,9 +539,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Grid.SetColumn(ConnectionGroup, 1);
         Grid.SetColumnSpan(ConnectionGroup, 1);
         ConnectionGroup.Margin = new Thickness(16, 0, 0, 0);
-        Grid.SetRow(NavigationHeader, compact ? 1 : 0);
-        Grid.SetColumnSpan(NavigationHeader, compact ? 3 : 1);
-        NavigationHeader.Margin = new Thickness(0, compact ? 12 : 0, 0, 0);
+        Grid.SetRow(NavigationHeader, studioCompactNavigation ? 0 : compact ? 1 : 0);
+        Grid.SetColumnSpan(NavigationHeader, studioCompactNavigation ? 1 : compact ? 3 : 1);
+        NavigationHeader.Margin = new Thickness(0, !studioCompactNavigation && compact ? 12 : 0, 0, 0);
         // Equal side columns keep A/B/C centered independently of action widths.
         bool stackActions = EditHeaderGrid.ActualWidth < 1040;
         Grid.SetRow(PresetGroup, 0); Grid.SetColumn(PresetGroup, stackActions ? 0 : 1);
@@ -580,6 +612,15 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         // At high DPI / very short work areas, keep every command reachable by scrolling
         // the content and footer beneath the permanently visible navigation.
         bool backingCompact = Tabs.SelectedIndex == 2 && (ClientArea.ActualHeight < 620 || Workspace.ActualWidth < 900);
+        if (studioCompactNavigation != backingCompact)
+        {
+            studioCompactNavigation = backingCompact;
+            Navigation.ItemsPanel = (ItemsPanelTemplate)FindResource(backingCompact ? "StudioCompactNavigationPanel" : "CubeNavigationWrapPanel");
+            ScrollViewer.SetHorizontalScrollBarVisibility(Navigation, backingCompact ? ScrollBarVisibility.Hidden : ScrollBarVisibility.Disabled);
+        }
+        Grid.SetRow(NavigationHeader, backingCompact ? 0 : HeaderGrid.ActualWidth < 1000 ? 1 : 0);
+        Grid.SetColumnSpan(NavigationHeader, backingCompact ? 1 : HeaderGrid.ActualWidth < 1000 ? 3 : 1);
+        NavigationHeader.Margin = new Thickness(0, !backingCompact && HeaderGrid.ActualWidth < 1000 ? 12 : 0, 0, 0);
         bool shortViewport = ClientArea.ActualHeight < 400 || backingCompact;
         ConnectionGroup.Visibility = backingCompact ? Visibility.Collapsed : Visibility.Visible;
         foreach (ListBoxItem item in Navigation.Items)
@@ -599,12 +640,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         // constrained page viewport in desktop mode. Never force a workspace height.
         Workspace.Height = double.NaN;
         if (AmpEditorHost?.Content is Views.AmpEditor ampEditor) ampEditor.IsCompactLayout = compact;
-        foreach (var scroll in new[] { EditorScroll, IrScroll, HelpScroll, BackingTracksScroll })
-            scroll.VerticalScrollBarVisibility = scroll == BackingTracksScroll ? ScrollBarVisibility.Hidden : compact ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Hidden;
+        foreach (var scroll in new[] { EditorScroll, IrScroll, HelpScroll })
+            scroll.VerticalScrollBarVisibility = compact ? ScrollBarVisibility.Disabled : ScrollBarVisibility.Hidden;
         FocusedArt.MaxHeight = ClientArea.ActualHeight < 764 ? 160 : 240;
         double margin = ClientArea.ActualWidth < 1000 ? 16 : 24;
         Workspace.Margin = new Thickness(margin, shortViewport ? 12 : 20, margin, 12);
-        pageScrollOwner = Tabs.SelectedIndex == 2 ? BackingTracksScroll : compact ? WorkspaceScroll
+        pageScrollOwner = Tabs.SelectedIndex == 2 ? null : compact ? WorkspaceScroll
             : Tabs.SelectedIndex switch { 1 => IrScroll, 4 => HelpScroll, _ => EditorScroll };
         SyncWindowPageScroll();
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(SyncWindowPageScroll));

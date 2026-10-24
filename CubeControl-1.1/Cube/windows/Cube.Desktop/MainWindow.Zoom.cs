@@ -36,6 +36,8 @@ public partial class MainWindow
     private void ZoomKeyDown(object sender, KeyEventArgs e)
     {
         if (Keyboard.Modifiers != ModifierKeys.Control) return;
+        if (Tabs.SelectedIndex == 2 && BackingView.IsTimelineKeyboardFocus && e.Key is Key.D0 or Key.NumPad0)
+        { BackingView.FitTimeline(); e.Handled = true; return; }
         int? value = e.Key switch
         {
             Key.Add or Key.OemPlus => ZoomService.Instance.Percent + 10,

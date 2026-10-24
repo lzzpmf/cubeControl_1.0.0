@@ -26,6 +26,7 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
     public ObservableCollection<RawGuitar> Tracks { get; } = [];
     public ObservableCollection<BackingOutput> Outputs { get; } = [];
     public Func<Task>? BeforePlayback { get; set; }
+    public Func<bool>? PlaybackAllowed { get; set; }
     public ICommand PlayPause { get; }
     public ICommand Stop { get; }
     public ICommand RefreshOutputs { get; }
@@ -33,7 +34,7 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
     public string PlayLabel => IsPlaying ? "Pausar" : "Reproduzir";
     public string Status { get => status; private set => Set(ref status, value); }
     public string TimeLabel => $"{TimeSpan.FromSeconds(audio.Snapshot.Position):mm\\:ss} / {TimeSpan.FromSeconds(duration):mm\\:ss}";
-    public bool CanStart => !disposed && !suspended && owner.CanOperate && (!owner.Ir.PreviewActive || owner.Ir.PreviewConfirmed) && selected != null && output != null;
+    public bool CanStart => !disposed && !suspended && (PlaybackAllowed?.Invoke() ?? true) && owner.CanOperate && (!owner.Ir.PreviewActive || owner.Ir.PreviewConfirmed) && selected != null && output != null;
     private bool opening, hasError, panelVisible = true;
     public bool PanelVisible { get => panelVisible; set { if (Set(ref panelVisible, value)) Notify(nameof(ShowMiniPlayer)); } }
     public bool ShowMiniPlayer => !PanelVisible && (opening || audio.Snapshot.State is BackingPlaybackState.Playing or BackingPlaybackState.Paused);
