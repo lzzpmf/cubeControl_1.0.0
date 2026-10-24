@@ -1,4 +1,13 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml" xmlns:local="clr-namespace:Cube.Desktop.Controls" xmlns:loc="clr-namespace:Cube.Desktop.Localization" xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+<!-- Spacing scale in device-independent pixels. -->
+<sys:Double x:Key="CubeSpaceXS">4</sys:Double>
+<sys:Double x:Key="CubeSpaceS">8</sys:Double>
+<sys:Double x:Key="CubeSpaceM">12</sys:Double>
+<sys:Double x:Key="CubeSpaceL">16</sys:Double>
+<sys:Double x:Key="CubeSpaceXL">24</sys:Double>
+<sys:Double x:Key="CubeSpaceXXL">32</sys:Double>
+<Thickness x:Key="CubePageTitleMargin">0,0,0,6</Thickness>
+<Thickness x:Key="CubePageDescriptionMargin">0,0,0,16</Thickness>
 <!-- Shared density and spacing metrics (DIP). -->
 <sys:Double x:Key="CubeControlHeightStandard">40</sys:Double>
 <sys:Double x:Key="CubeControlHeightCompact">32</sys:Double>
@@ -33,4 +42,12 @@
 <Style x:Key="TitleLargeText" TargetType="TextBlock"><Setter Property="FontFamily" Value="{DynamicResource CubeUiFont}"/><Setter Property="FontSize" Value="{DynamicResource CubeFontSizeTitleLarge}"/><Setter Property="LineHeight" Value="{DynamicResource CubeLineHeightTitleLarge}"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="TextWrapping" Value="Wrap"/></Style>
 <Style x:Key="DisplayText" TargetType="TextBlock"><Setter Property="FontFamily" Value="{DynamicResource CubeUiFont}"/><Setter Property="FontSize" Value="{DynamicResource CubeFontSizeDisplay}"/><Setter Property="LineHeight" Value="{DynamicResource CubeLineHeightDisplay}"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="TextWrapping" Value="Wrap"/></Style>
 <Style TargetType="TextBlock"><Setter Property="FontFamily" Value="{DynamicResource CubeUiFont}"/><Setter Property="FontSize" Value="{DynamicResource CubeFontSizeBody}"/></Style>
+<Style x:Key="CubePageTitle" TargetType="TextBlock" BasedOn="{StaticResource TitleText}">
+ <Setter Property="Margin" Value="{DynamicResource CubePageTitleMargin}"/>
+</Style>
+<Style x:Key="CubePageDescription" TargetType="TextBlock" BasedOn="{StaticResource BodyText}">
+ <Setter Property="Foreground" Value="{DynamicResource Muted}"/>
+ <Setter Property="TextWrapping" Value="Wrap"/>
+ <Setter Property="Margin" Value="{DynamicResource CubePageDescriptionMargin}"/>
+</Style>
 </ResourceDictionary>

@@ -3,6 +3,9 @@
   "Code": "en-US",
   "Name": "English",
   "Strings": {
+    "Diagnóstico": "Diagnostics",
+    "Guias e manuais do pedal": "Pedal guides and manuals",
+    "Referências complementares e manuais do fabricante.": "Additional references and manufacturer manuals.",
     "Firmware VD612 divergente do perfil de efeitos verificado. A edição normal de presets continua disponível.": "VD612 firmware differs from the verified effect profile. Normal preset editing remains available.",
     "Alias do banco VD612 diverge; releia antes de preparar o efeito.": "VD612 bank alias differs; read again before preparing the effect.",
     "Estado físico VD612 não reconhecido; releia o pedal.": "VD612 physical state is not recognized; read the pedal again.",

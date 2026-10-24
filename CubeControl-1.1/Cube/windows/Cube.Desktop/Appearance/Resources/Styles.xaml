@@ -479,6 +479,11 @@
   </Grid>
  </ControlTemplate></Setter.Value></Setter>
 </Style>
+<Style x:Key="CubeWorkspaceNavigation" TargetType="TabControl" BasedOn="{StaticResource CubeWorkspaceTabs}">
+ <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabControl">
+  <WrapPanel IsItemsHost="True" KeyboardNavigation.TabNavigation="Once" KeyboardNavigation.DirectionalNavigation="Contained"/>
+ </ControlTemplate></Setter.Value></Setter>
+</Style>
 <Style x:Key="CubeWorkspaceTab" TargetType="TabItem">
  <Setter Property="FontWeight" Value="Normal"/>
  <Setter Property="MinHeight" Value="{DynamicResource CubeControlHeightStandard}"/>
@@ -501,9 +506,12 @@
    <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"
                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-  </Border><Border Style="{StaticResource CubeSelectionMarker}" Margin="4,0,0,0"/></Grid>
+  </Border><Border Style="{StaticResource CubeSelectionMarker}" Margin="4,0,0,0"/>
+  <Border x:Name="KeyboardFocus" BorderBrush="{DynamicResource CubeFocus}" BorderThickness="2" CornerRadius="{DynamicResource CubeControlCornerRadius}" Visibility="Collapsed" IsHitTestVisible="False"/>
+  </Grid>
   <ControlTemplate.Triggers>
    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource CubeItemHover}"/></Trigger>
+   <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="KeyboardFocus" Property="Visibility" Value="Visible"/></Trigger>
    <Trigger Property="IsSelected" Value="True">
     <Setter Property="Background" Value="{DynamicResource CubeSelected}"/>
     <Setter Property="Foreground" Value="{DynamicResource CubeSelectedText}"/>

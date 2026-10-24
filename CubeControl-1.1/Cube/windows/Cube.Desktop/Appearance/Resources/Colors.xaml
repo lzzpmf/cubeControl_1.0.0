@@ -50,6 +50,17 @@
 <sys:String x:Key="CubePalette.Muted">TextFillColorSecondaryBrush</sys:String>
 <sys:String x:Key="CubePalette.CubeDisabledText">TextFillColorDisabledBrush</sys:String>
 <sys:String x:Key="CubePalette.CubeWarning">SystemFillColorCautionBrush</sys:String>
+<!-- Instrument colors adapt to the current theme; they do not indicate operation status. -->
+<Color x:Key="CubeAmpAccent.Dark">#8DB9AC</Color>
+<Color x:Key="CubeAmpAccent.Light">#226E59</Color>
+<Color x:Key="CubeAmpBandA.Dark">#FFA293</Color>
+<Color x:Key="CubeAmpBandA.Light">#A33D30</Color>
+<Color x:Key="CubeAmpBandB.Dark">#73C6DE</Color>
+<Color x:Key="CubeAmpBandB.Light">#236B80</Color>
+<Color x:Key="CubeCapacitorAccent.Dark">#F0BE72</Color>
+<Color x:Key="CubeCapacitorAccent.Light">#805216</Color>
+<Color x:Key="CubeCapacitorDisplay.Dark">#24211C</Color>
+<Color x:Key="CubeCapacitorDisplay.Light">#FFF8ED</Color>
 <!-- Functional colors retain the identity of music controls and graphs. -->
 <Color x:Key="BackingCard.Dark">#292D31</Color>
 <Color x:Key="BackingCard.Light">#FFFFFF</Color>

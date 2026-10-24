@@ -4,7 +4,6 @@ using System.Windows;
 using Cube.Desktop.Localization;
 using Cube.Desktop.ViewModels;
 using System.Windows.Input;
-using Cube.Desktop.Appearance;
 
 namespace Cube.Desktop.Views;
 
@@ -13,7 +12,6 @@ public partial class AmpEditor : UserControl
     private readonly EditorViewModel model;
     public static readonly DependencyProperty IsCompactLayoutProperty = DependencyProperty.Register(nameof(IsCompactLayout), typeof(bool), typeof(AmpEditor), new PropertyMetadata(false));
     public bool IsCompactLayout { get => (bool)GetValue(IsCompactLayoutProperty); set => SetValue(IsCompactLayoutProperty, value); }
-    private readonly Dictionary<string, object> ampBrushes = new();
     public AmpEditor(EditorViewModel model)
     {
         this.model = model; InitializeComponent(); DataContext = model;
@@ -29,21 +27,8 @@ public partial class AmpEditor : UserControl
         };
         BaseSelector.ItemsSource = EquipmentCatalog.Amps.Select(a => a.Name)
             .Concat(AmpEqPresets.All.Select(a => a.Description)).ToArray();
-        foreach (string key in new[] { "AmpAccent", "AmpBandA", "AmpBandB", "CapacitorAmber", "CapacitorDisplay" }) ampBrushes[key] = Resources[key];
-        Loaded += (_, _) => { ThemeService.Instance.Changed += UpdateColors; UpdateColors(); UpdateLayoutMode(); };
-        Unloaded += (_, _) => ThemeService.Instance.Changed -= UpdateColors;
+        Loaded += (_, _) => UpdateLayoutMode();
         SizeChanged += (_, _) => UpdateLayoutMode();
-    }
-    private void UpdateColors()
-    {
-        foreach (var entry in ampBrushes)
-            Resources[entry.Key] = ThemeService.Instance.IsHighContrast
-                ? entry.Key == "CapacitorDisplay" ? SystemColors.WindowBrush : SystemColors.WindowTextBrush
-                : ThemeService.Instance.IsLight && entry.Key == "CapacitorAmber"
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(128, 80, 13))
-                : ThemeService.Instance.IsLight && entry.Key == "CapacitorDisplay"
-                    ? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(245, 234, 221))
-                : entry.Value;
     }
     private void UpdateLayoutMode()
     {

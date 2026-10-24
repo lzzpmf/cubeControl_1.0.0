@@ -231,6 +231,11 @@ public sealed class ThemeService
         Set("BackingFuture", SystemColors.WindowTextBrush);
         Set("CubePhaserGraph", SystemColors.WindowTextBrush);
         Set("CubePurple", SystemColors.WindowTextBrush);
+        Set("CubeAmpAccent", SystemColors.WindowTextBrush);
+        Set("CubeAmpBandA", SystemColors.WindowTextBrush);
+        Set("CubeAmpBandB", SystemColors.WindowTextBrush);
+        Set("CubeCapacitorAccent", SystemColors.WindowTextBrush);
+        Set("CubeCapacitorDisplay", SystemColors.WindowBrush);
         Set("CubeKnobBase", SystemColors.WindowBrush);
         Set("CubeKnobTop", SystemColors.WindowBrush);
         Set("CubeKnobBottom", SystemColors.WindowBrush);

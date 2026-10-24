@@ -6,10 +6,6 @@
  xmlns:controls="clr-namespace:Cube.Desktop.Controls"
  Background="Transparent" Foreground="{DynamicResource CubeText}">
  <UserControl.Resources>
-  <SolidColorBrush x:Key="AmpAccent" Color="#8DB9AC"/>
-  <SolidColorBrush x:Key="AmpBandA" Color="#FFA293"/>
-  <SolidColorBrush x:Key="AmpBandB" Color="#73C6DE"/>
-  <Style x:Key="AmpSectionSelector" TargetType="ListBoxItem" BasedOn="{StaticResource CubeSelectionButtonStyle}"/>
   <Style x:Key="AmpPanel" TargetType="Border">
    <Setter Property="Padding" Value="0,16,0,0"/>
    <Setter Property="Margin" Value="0,0,0,12"/>
@@ -24,7 +20,7 @@
     <Grid>
      <ui:Button x:Name="ValueButton" Click="EditValueClick" Appearance="Transparent" HorizontalAlignment="Center" ToolTip="{loc:Translate Text='Clique ou pressione Enter para digitar. Enter confirma; Escape cancela.'}" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding ModificationState}}">
       <StackPanel Orientation="Horizontal">
-       <TextBlock x:Name="ModifiedDot" Text="●" Visibility="Hidden" Margin="0,0,4,0" Foreground="{DynamicResource AmpAccent}"/>
+       <TextBlock x:Name="ModifiedDot" Text="●" Visibility="Hidden" Margin="0,0,4,0" Foreground="{DynamicResource CubeAmpAccent}"/>
        <TextBlock x:Name="NumberText" Text="{Binding Display}"/>
       </StackPanel>
      </ui:Button>
@@ -55,12 +51,10 @@
    <StackPanel Width="144" Margin="4,4,4,12" ToolTip="{loc:Translate Value={Binding Detail}}">
     <TextBlock Text="{Binding Code}" TextAlignment="Center" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}"/>
     <TextBlock Text="{loc:Translate Value={Binding Label}}" TextAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" MinHeight="40"/>
-    <controls:Knob RestoreRequested="RestoreControlRequested" Value="{Binding Position,Mode=TwoWay}" Accent="{DynamicResource AmpAccent}" Minimum="0" Maximum="1000" FineAdjustment="True" WheelSpeedMultiplier="11.5" IsFader="True" Width="64" Height="164" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding ModificationState}}" ToolTip="{loc:Translate Text='Arraste ou role para ajustar. Shift permite ajuste fino. Duplo clique restaura o ajuste inicial; Backspace também.'}"/>
+    <controls:Knob RestoreRequested="RestoreControlRequested" Value="{Binding Position,Mode=TwoWay}" Accent="{DynamicResource CubeAmpAccent}" Minimum="0" Maximum="1000" FineAdjustment="True" WheelSpeedMultiplier="11.5" IsFader="True" Width="64" Height="164" AutomationProperties.Name="{loc:Translate Value={Binding Label}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding ModificationState}}" ToolTip="{loc:Translate Text='Arraste ou role para ajustar. Shift permite ajuste fino. Duplo clique restaura o ajuste inicial; Backspace também.'}"/>
     <ContentControl Content="{Binding}" ContentTemplate="{StaticResource AmpValue}"/>
    </StackPanel>
   </DataTemplate>
-  <SolidColorBrush x:Key="CapacitorAmber" Color="#F0BE72"/>
-  <SolidColorBrush x:Key="CapacitorDisplay" Color="#24211C"/>
   <DataTemplate x:Key="CapacitorPanel">
    <Border Padding="20" CornerRadius="{DynamicResource CubeCardCornerRadius}">
     <Border.Style><Style TargetType="Border">
@@ -74,19 +68,19 @@
      <TextBlock Text="{Binding Subtitle}" FontSize="{DynamicResource CubeFontSizeCaption}" Foreground="{DynamicResource Muted}" Margin="0,3,0,12"/>
      <WrapPanel HorizontalAlignment="Center">
       <StackPanel Width="200" Margin="0,0,8,8">
-       <ComboBox ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex,Mode=TwoWay}" HorizontalContentAlignment="Center" Padding="12,8" Background="{DynamicResource CapacitorDisplay}" Foreground="{DynamicResource CapacitorAmber}"
+       <ComboBox ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex,Mode=TwoWay}" HorizontalContentAlignment="Center" Padding="12,8" Background="{DynamicResource CubeCapacitorDisplay}" Foreground="{DynamicResource CubeCapacitorAccent}"
                  AutomationProperties.Name="{loc:Translate Value={Binding Title}}" ToolTip="{loc:Translate Text='Capacitâncias são referências de timbre. Escolha um perfil para ouvir.'}">
         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:Translate Value={Binding Label}}"/></DataTemplate></ComboBox.ItemTemplate>
        </ComboBox>
-       <controls:Knob RestoreRequested="RestoreCapacitorRequested" Value="{Binding ProfileIndex,Mode=TwoWay}" Minimum="0" Maximum="5" StepSize="1" Face="{Binding SelectorFace}" Accent="{DynamicResource CapacitorAmber}" Width="132" Height="132" Margin="0,10,0,6"
+       <controls:Knob RestoreRequested="RestoreCapacitorRequested" Value="{Binding ProfileIndex,Mode=TwoWay}" Minimum="0" Maximum="5" StepSize="1" Face="{Binding SelectorFace}" Accent="{DynamicResource CubeCapacitorAccent}" Width="132" Height="132" Margin="0,10,0,6"
                       AutomationProperties.Name="{loc:Translate Value={Binding Title}}" AutomationProperties.ItemStatus="{loc:Translate Value={Binding SelectedProfile.Label}}" ToolTip="{loc:Translate Text='Gire para escolher um perfil. Home retorna a Original. Duplo clique ou Backspace restaura o original.'}"/>
        <TextBlock Text="{loc:Translate Text='Mais magro ↔ Mais gordo'}" TextAlignment="Center" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}"/>
       </StackPanel>
       <StackPanel Width="160" Margin="0,8,16,8">
        <TextBlock Text="{loc:Translate Text='Intensidade'}" TextAlignment="Center" FontWeight="SemiBold"/>
-       <controls:Knob RestoreRequested="RestoreCapacitorRequested" Value="{Binding Intensity,Mode=TwoWay}" Minimum="0" Maximum="100" FineAdjustment="True" Face="{Binding IntensityFace}" Accent="{DynamicResource CapacitorAmber}" IsEnabled="{Binding IsActive}" Width="96" Height="96" Margin="0,16,0,4"
+       <controls:Knob RestoreRequested="RestoreCapacitorRequested" Value="{Binding Intensity,Mode=TwoWay}" Minimum="0" Maximum="100" FineAdjustment="True" Face="{Binding IntensityFace}" Accent="{DynamicResource CubeCapacitorAccent}" IsEnabled="{Binding IsActive}" Width="96" Height="96" Margin="0,16,0,4"
                       AutomationProperties.Name="{loc:Translate Text='Intensidade do perfil'}" AutomationProperties.ItemStatus="{Binding IntensityDisplay}" ToolTip="{loc:Translate Text='Dose o perfil de 0 a 100%. Shift permite ajuste fino. Duplo clique ou Backspace restaura o original.'}"/>
-       <TextBlock Text="{Binding IntensityDisplay}" TextAlignment="Center" FontSize="{DynamicResource CubeFontSizeBody}" Foreground="{DynamicResource CapacitorAmber}"/>
+       <TextBlock Text="{Binding IntensityDisplay}" TextAlignment="Center" FontSize="{DynamicResource CubeFontSizeBody}" Foreground="{DynamicResource CubeCapacitorAccent}"/>
        <TextBlock Text="{loc:Translate Text='0% preserva o original'}" FontSize="{DynamicResource CubeFontSizeCaption}" TextAlignment="Center" Foreground="{DynamicResource Muted}" Margin="0,6,0,0"/>
       </StackPanel>
      </WrapPanel>
@@ -103,10 +97,10 @@
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <StackPanel>
-     <TextBlock Text="{loc:Translate Text='Criador de amps'}" FontSize="{DynamicResource CubeFontSizeTitle}" FontWeight="SemiBold" Margin="0,0,0,8"/>
+     <TextBlock Text="{loc:Translate Text='Criador de amps'}" Style="{StaticResource CubePageTitle}"/>
      <TextBlock Text="{loc:Translate Value={Binding Amp.Name}}" FontSize="{DynamicResource CubeFontSizeSubtitle}" FontWeight="SemiBold" TextWrapping="Wrap"/>
      <WrapPanel Margin="0,4,0,12">
-      <TextBlock Text="{loc:Translate Value={Binding Amp.LocalState}}" Foreground="{DynamicResource AmpAccent}" Margin="0,0,12,0"/>
+      <TextBlock Text="{loc:Translate Value={Binding Amp.LocalState}}" Foreground="{DynamicResource CubeAmpAccent}" Margin="0,0,12,0"/>
       <TextBlock Text="{loc:Translate Value={Binding AmpSource}}" Foreground="{DynamicResource Muted}"/>
      </WrapPanel>
     </StackPanel>
@@ -119,25 +113,23 @@
      </WrapPanel>
     </StackPanel>
     <StackPanel x:Name="GlobalControls" Grid.Column="1" Grid.Row="1" IsEnabled="{Binding CanAdjustAmp}" VerticalAlignment="Top" Margin="0,8,0,0">
-     <ItemsControl ItemsSource="{Binding Amp.MainControls}" Foreground="{DynamicResource AmpAccent}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/>
+     <ItemsControl ItemsSource="{Binding Amp.MainControls}" Foreground="{DynamicResource CubeAmpAccent}" ItemTemplate="{StaticResource AmpDial}" ItemsPanel="{StaticResource AmpWrap}"/>
     </StackPanel>
    </Grid>
-   <ListBox x:Name="AmpSections" Margin="0,12,0,0" SelectedIndex="0" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Seções do amp'}">
-    <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ListBox.ItemsPanel>
-    <ListBox.ItemContainerStyle><StaticResource ResourceKey="AmpSectionSelector"/></ListBox.ItemContainerStyle>
-    <ListBoxItem Content="{loc:Translate Text='Equalização'}"/>
-    <ListBoxItem Content="{loc:Translate Text='Corpo e textura'}"/>
-    <ListBoxItem Content="{loc:Translate Text='Caráter e definição'}"/>
-    <ListBoxItem Content="{loc:Translate Text='Resposta'}" ToolTip="{loc:Translate Text='Ajustes por trecho'}"/>
-   </ListBox>
+   <TabControl x:Name="AmpSections" Style="{StaticResource CubeWorkspaceNavigation}" ItemContainerStyle="{StaticResource CubeWorkspaceTab}" Margin="0,12,0,0" SelectedIndex="0" Background="Transparent" BorderThickness="0" Padding="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="{loc:Translate Text='Seções do amp'}">
+    <TabItem Header="{loc:Translate Text='Equalização'}"/>
+    <TabItem Header="{loc:Translate Text='Corpo e textura'}"/>
+    <TabItem Header="{loc:Translate Text='Caráter e definição'}"/>
+    <TabItem Header="{loc:Translate Text='Resposta'}" ToolTip="{loc:Translate Text='Ajustes por trecho'}"/>
+   </TabControl>
   </StackPanel>
   <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-   <TextBlock Text="{loc:Translate Value={Binding AmpSavedMessage}}" Foreground="{DynamicResource AmpAccent}"/>
+   <TextBlock Text="{loc:Translate Value={Binding AmpSavedMessage}}" Style="{StaticResource BodyText}" AutomationProperties.LiveSetting="Polite"/>
    <WrapPanel Margin="0,0,0,8"><TextBlock Text="{loc:Translate Text='Destino ao salvar:'}" Margin="0,0,8,0" Foreground="{DynamicResource Muted}"/><TextBlock Text="{Binding Amp.Destination}" TextWrapping="Wrap"/></WrapPanel>
-   <ui:InfoBar Template="{DynamicResource ActionInfoBarTemplate}" IsOpen="{Binding AmpPreviewActive}" IsClosable="False" Severity="Warning" Message="{loc:Translate Text='Prévia de AMP ativa na RAM. Nenhum slot foi gravado.'}" Margin="0,0,0,8"><ui:Button Content="{loc:Translate Text='Encerrar prévia'}" Command="{Binding EndAmpPreview}" Appearance="Transparent" Margin="0"/></ui:InfoBar>
-   <TextBlock x:Name="AmpFeedback" Text="{loc:Translate Value={Binding AmpPreviewMessage}}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+   <ui:InfoBar Template="{DynamicResource ActionInfoBarTemplate}" IsOpen="{Binding AmpPreviewActive}" IsClosable="False" Severity="Informational" Message="{loc:Translate Text='Prévia de AMP ativa na RAM. Nenhum slot foi gravado.'}" Margin="0,0,0,8"></ui:InfoBar>
+   <TextBlock AutomationProperties.LiveSetting="Polite" x:Name="AmpFeedback" Text="{loc:Translate Value={Binding AmpPreviewMessage}}" TextWrapping="Wrap" Margin="0,0,0,6"/>
    <WrapPanel>
-    <ui:Button Content="{loc:Translate Text='Encerrar prévia'}" Click="RestoreClick" ToolTip="{loc:Translate Text='Volta ao som anterior à edição, sem apagar presets.'}" IsEnabled="{Binding CanRestoreAmp}" Appearance="Primary" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSpeakerMute24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
+    <ui:Button Content="{loc:Translate Text='Encerrar prévia'}" Click="RestoreClick" ToolTip="{loc:Translate Text='Volta ao som anterior à edição, sem apagar presets.'}" IsEnabled="{Binding CanRestoreAmp}" Appearance="Secondary" Margin="0,0,8,8"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSpeakerMute24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
     <ui:Button Content="{loc:Translate Text='Salvar no pedal'}" Click="WriteClick" ToolTip="{loc:Translate Text='Grava no slot do amp selecionado após confirmação.'}" IsEnabled="{Binding CanSaveAmp}" Appearance="Primary" Margin="0,0,0,8"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconSave24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
    </WrapPanel>
   </StackPanel>
@@ -150,11 +142,11 @@
       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
       <StackPanel x:Name="EqPlot">
        <WrapPanel Margin="0,0,0,8">
-        <TextBlock Text="A ━" Foreground="{DynamicResource AmpBandA}" FontWeight="SemiBold" Margin="0,0,16,0"/>
-        <TextBlock Text="B ┄" Foreground="{DynamicResource AmpBandB}" FontWeight="SemiBold" Margin="0,0,16,0"/>
+        <TextBlock Text="A ━" Foreground="{DynamicResource CubeAmpBandA}" FontWeight="SemiBold" Margin="0,0,16,0"/>
+        <TextBlock Text="B ┄" Foreground="{DynamicResource CubeAmpBandB}" FontWeight="SemiBold" Margin="0,0,16,0"/>
         <TextBlock Text="{loc:Translate Text='Combinada'}" Foreground="{DynamicResource Muted}"/>
        </WrapPanel>
-       <controls:AmpEqGraph x:Name="EqGraph" ToolTip="{loc:Translate Text='Arraste A ou B: horizontal altera frequência; vertical altera reforço/corte. Role sobre A ou B para ajustar Q.'}" Model="{Binding Amp}" BandABrush="{DynamicResource AmpBandA}" BandBBrush="{DynamicResource AmpBandB}" SelectedFilter="{Binding SelectedIndex,ElementName=EqFilter,Mode=TwoWay}" Height="320" AutomationProperties.Name="{loc:Translate Text='Equalização'}"/>
+       <controls:AmpEqGraph x:Name="EqGraph" ToolTip="{loc:Translate Text='Arraste A ou B: horizontal altera frequência; vertical altera reforço/corte. Role sobre A ou B para ajustar Q.'}" Model="{Binding Amp}" BandABrush="{DynamicResource CubeAmpBandA}" BandBBrush="{DynamicResource CubeAmpBandB}" SelectedFilter="{Binding SelectedIndex,ElementName=EqFilter,Mode=TwoWay}" Height="320" AutomationProperties.Name="{loc:Translate Text='Equalização'}"/>
        <TextBlock Text="{loc:Translate Text='Resposta calculada dos dois filtros; não é uma medição do amp.'}" Foreground="{DynamicResource Muted}" FontSize="{DynamicResource CubeFontSizeCaption}" TextWrapping="Wrap" Margin="0,4,12,8"/>
       </StackPanel>
       <StackPanel x:Name="EqControlsPanel" Grid.Column="1" Margin="12,0,0,0">
@@ -166,7 +158,7 @@
         </Style.Triggers></Style></TextBlock.Style>
        </TextBlock>
        <ItemsControl x:Name="SelectedEqControls" ItemTemplate="{StaticResource AmpEqDial}" ItemsPanel="{StaticResource AmpWrap}">
-        <ItemsControl.Style><Style TargetType="ItemsControl"><Setter Property="ItemsSource" Value="{Binding Amp.EqAControls}"/><Setter Property="Foreground" Value="{DynamicResource AmpBandA}"/><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqFilter}" Value="1"><Setter Property="ItemsSource" Value="{Binding Amp.EqBControls}"/><Setter Property="Foreground" Value="{DynamicResource AmpBandB}"/></DataTrigger></Style.Triggers></Style></ItemsControl.Style>
+        <ItemsControl.Style><Style TargetType="ItemsControl"><Setter Property="ItemsSource" Value="{Binding Amp.EqAControls}"/><Setter Property="Foreground" Value="{DynamicResource CubeAmpBandA}"/><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqFilter}" Value="1"><Setter Property="ItemsSource" Value="{Binding Amp.EqBControls}"/><Setter Property="Foreground" Value="{DynamicResource CubeAmpBandB}"/></DataTrigger></Style.Triggers></Style></ItemsControl.Style>
        </ItemsControl>
        <ui:Button Content="{loc:Translate Text='Restaurar banda'}" Click="ResetBandClick" Tag="{Binding SelectedIndex,ElementName=EqFilter}" Appearance="Transparent" HorizontalAlignment="Left">
         <ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeButtonStyle}"><Setter Property="IsEnabled" Value="{Binding Amp.ChangeEqA}"/><Style.Triggers><DataTrigger Binding="{Binding SelectedIndex,ElementName=EqFilter}" Value="1"><Setter Property="IsEnabled" Value="{Binding Amp.ChangeEqB}"/></DataTrigger></Style.Triggers></Style></ui:Button.Style>
