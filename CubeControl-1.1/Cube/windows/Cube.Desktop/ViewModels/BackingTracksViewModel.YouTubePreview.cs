@@ -5,6 +5,8 @@ namespace Cube.Desktop.ViewModels;
 public sealed partial class BackingTracksViewModel
 {
     internal IYouTubePreviewService YouTubePreviewService { get; set; } = new YouTubePreviewService();
+    internal Task<YouTubePreparedAudio> PrepareSessionPreviewAsync(YouTubeResult video, CancellationToken cancellation)
+        => YouTubePreviewService.PrepareAudioAsync(video, cancellation);
     private CancellationTokenSource? youtubePreview;
     private CancellationTokenSource? youtubePreparation;
     private string? youtubePreparationId;

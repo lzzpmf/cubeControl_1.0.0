@@ -44,7 +44,7 @@ internal sealed class WasapiBackend : IAudioBackend
         {
             var builder = new WasapiPlayerBuilder().WithDevice(outputDevice).WithEventSync().WithMmcssThreadPriority("Pro Audio")
                 .WithLatency(Math.Max(3, (int)Math.Ceiling(settings.BufferFrames * 1000d / settings.SampleRate)));
-            player = settings.Exclusive ? builder.WithExclusiveMode().Build() : builder.WithSharedMode().WithLowLatency().Build();
+            player = settings.Exclusive ? builder.WithExclusiveMode().Build() : builder.WithSharedMode().Build();
             player.PlaybackStopped += (_, e) => { if (e.Exception != null) Volatile.Write(ref error, e.Exception.Message); };
             player.Init(ring.ToWaveProvider());
             if (!string.IsNullOrEmpty(settings.InputId)) inputDevice = enumerator.GetDevice(settings.InputId);
@@ -65,7 +65,7 @@ internal sealed class WasapiBackend : IAudioBackend
         if (inputDevice == null) throw new InvalidOperationException("Escolha uma entrada de áudio para gravar.");
         var builder = new WasapiRecorderBuilder().WithDevice(inputDevice).WithEventSync().WithMmcssThreadPriority("Pro Audio")
             .WithBufferLength(Math.Max(5, (int)Math.Ceiling(settings.BufferFrames * 1000d / settings.SampleRate)));
-        recorder = settings.Exclusive ? builder.WithExclusiveMode().Build() : builder.WithSharedMode().WithLowLatency().Build();
+        recorder = settings.Exclusive ? builder.WithExclusiveMode().Build() : builder.WithSharedMode().Build();
         var format = recorder.WaveFormat;
         if (settings.InputChannel < 0 || settings.InputChannel + settings.InputChannels > format.Channels)
         { recorder.Dispose(); recorder = null; throw new InvalidOperationException("Os canais de entrada selecionados não estão disponíveis."); }
@@ -101,18 +101,18 @@ internal sealed class AsioBackend : IAudioBackend
         try
         {
             var caps = device.Capabilities;
-            if (caps.NbOutputChannels < 2) throw new InvalidOperationException("O driver ASIO precisa oferecer uma saída estéreo.");
+            if (settings.OutputChannel < 0 || settings.OutputChannel + 2 > caps.NbOutputChannels)
+                throw new InvalidOperationException("Os canais de saída ASIO selecionados não estão disponíveis.");
             bool capture = !string.IsNullOrEmpty(settings.InputId);
             if (capture && settings.InputChannel + settings.InputChannels > caps.NbInputChannels)
                 throw new InvalidOperationException("Os canais ASIO selecionados não estão disponíveis.");
             if (capture) Capture = new(SampleRate, 0, settings.InputChannels);
             device.InitDuplex(new AsioDuplexOptions { SampleRate = SampleRate, BufferSize = settings.BufferFrames,
                 InputChannels = capture ? Enumerable.Range(settings.InputChannel, settings.InputChannels).ToArray() : [],
-                OutputChannels = [0, 1], Processor = Process });
+                OutputChannels = [settings.OutputChannel, settings.OutputChannel + 1], Processor = Process });
             output = new float[device.FramesPerBuffer * 2];
             Capabilities = new(new[] { 44100, 48000, 96000 }.Where(device.IsSampleRateSupported).ToArray(),
-                new[] { 64, 128, 256, 512, 1024, 2048 }.Where(n => n >= caps.BufferMinSize && n <= caps.BufferMaxSize &&
-                    (caps.BufferGranularity <= 0 || (n - caps.BufferMinSize) % caps.BufferGranularity == 0)).Append(caps.BufferPreferredSize).Distinct().Order().ToArray(),
+                SupportedBufferSizes(caps.BufferMinSize, caps.BufferMaxSize, caps.BufferGranularity, caps.BufferPreferredSize),
                 caps.NbInputChannels, caps.NbOutputChannels, device.CurrentSampleRate, device.FramesPerBuffer);
             device.Stopped += (_, e) => { if (e.Exception != null) Volatile.Write(ref error, e.Exception.Message); };
             device.DriverResetRequest += (_, _) => Volatile.Write(ref error, "Configuração ASIO alterada. Aplique novamente o dispositivo; a gravação parcial foi preservada.");
@@ -120,6 +120,14 @@ internal sealed class AsioBackend : IAudioBackend
         }
         catch { device.Dispose(); throw; }
     }
+    internal static int[] SupportedBufferSizes(int minimum, int maximum, int granularity, int preferred)
+    {
+        bool Supported(int size) => size is >= 32 and <= 8192 && size >= minimum && size <= maximum
+            && (granularity == -1 ? (size & (size - 1)) == 0 : granularity <= 0 || (size - minimum) % granularity == 0);
+        return new[] { 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, minimum, maximum, preferred }
+            .Where(Supported).Distinct().Order().ToArray();
+    }
+
     private void Process(in AsioProcessBuffers buffers)
     {
         ring.Read(output.AsSpan(0, buffers.Frames * 2));

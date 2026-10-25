@@ -128,7 +128,7 @@ public sealed partial class ShellViewModel
         {
             StatusMessage = "Salvando áudio…";
             await _audio.ExportAsync(snapshot, path, new StudioExportOptions { Format = format, SampleRate = _settings.SampleRate,
-                Start = attempt.AudibleStart, End = attempt.End, IncludeMetronome = false },
+                Start = attempt.AudibleStart, End = attempt.AudibleStart + OriginalAttemptClip(attempt).Duration, IncludeMetronome = false },
                 new Progress<double>(value => OperationProgress = Math.Clamp(value * 100, 0, 100)), operation.Token);
             _exportedPaths.Add(path);
             if (generation == _sessionGeneration) Editor.MarkAttemptExported(attempt.Id, revision);

@@ -33,6 +33,25 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
     private long _sessionGeneration, _backingIntent;
     private StudioTransportSnapshot _state = new(false, false, 0, 0);
     private bool _metronomeEnabled;
+    private bool _visualUpdatesEnabled = true;
+    internal void SetVisualActivity(bool enabled)
+    {
+        _visualUpdatesEnabled = enabled;
+        if (enabled && PageVisible)
+        {
+            // Playback can reach EOF (or be stopped) while visual projection is suspended.
+            Project.Position = Math.Clamp(Session.Position, 0, Project.Duration);
+            OnPropertyChanged(nameof(MetronomePulse));
+        }
+        UpdateUiCadence();
+    }
+    private void UpdateUiCadence()
+    {
+        if (_timer is null || _disposed) return;
+        bool animated = _state.IsPlaying || _state.IsRecording || _state.IsPreviewPlaying || _state.IsMetronomeRunning || _hoverResult != null;
+        var interval = TimeSpan.FromMilliseconds(_visualUpdatesEnabled && PageVisible && animated ? 1000d / 30 : 250);
+        if (_timer.Interval != interval) _timer.Interval = interval;
+    }
     private double _metronomeBpm = 100, _metronomeVolumeDb = -12;
     private string _meter = "4/4", _metronomeSound = "Click";
 
@@ -56,11 +75,13 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
         BackCommand = Command(() => Seek(Project.Position - 5), () => CanEditTimeline);
         ForwardCommand = Command(() => Seek(Project.Position + 5), () => CanEditTimeline);
         PlayPauseCommand = Command(() => Run(PlayPauseAsync), () => CanTransport && (IsRecording || HasAudio));
+        PlayCommand = Command(() => Run(PlayPauseAsync), () => CanTransport && HasAudio && !IsPlaying && !IsRecording);
+        PauseCommand = Command(() => Run(PauseTransportAsync), () => CanTransport && (IsPlaying || IsRecording || _state.IsPreviewPlaying));
         StopCommand = Command(() => Run(StopAsync), () => !_transportBusy);
         RecordCommand = Command(() => Run(ToggleRecordingAsync), () => CanTransport);
-        ToggleLoopCommand = Command(() => { if (!Session.LoopEnabled && Session.LoopEnd <= Session.LoopStart) SetLoop(0, Project.Duration); else { Session.LoopEnabled = !Session.LoopEnabled; SyncPresentation(); } }, () => CanEditTimeline);
-        SetLoopStartCommand = Command(() => SetLoop(Project.Position, Math.Max(Project.Position + .15, Session.LoopEnd)), () => CanEditTimeline);
-        SetLoopEndCommand = Command(() => SetLoop(Math.Min(Session.LoopStart, Math.Max(0, Project.Position - .15)), Project.Position), () => CanEditTimeline);
+        ToggleLoopCommand = Command(ToggleLoop, () => CanEditTimeline && HasAudio);
+        SetLoopStartCommand = Command(() => SetLoopMarker(true), () => CanEditTimeline && HasAudio);
+        SetLoopEndCommand = Command(() => SetLoopMarker(false), () => CanEditTimeline && HasAudio);
         ToggleMetronomeCommand = Command(() => MetronomeEnabled = !MetronomeEnabled, () => !_closePending && !IsBusy);
         TapTempoCommand = Command(TapTempo, () => !_closePending && !IsBusy);
         ClearStudyCommand = Command(() => Run(ClearStudyAsync), () => CanEditTimeline);
@@ -79,14 +100,14 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
         ResetSpeedCommand = Command(() => SpeedPercent = 100, () => IsTempoEditable);
         SearchCommand = Command(() => Downloader.RefreshSearch());
         CancelOperationCommand = Command(() => _operation?.Cancel(), () => _operation != null);
-        ApplyAudioSettingsCommand = Command(() => Run(() => ExecuteTransportAsync(ApplyAudioSettingsAsync)), () => CanChangeAudioSettings);
+        ApplyAudioSettingsCommand = Command(() => Run(() => ExecuteTransportAsync(ApplyAudioSettingsAsync)), () => CanApplyAudioSettings);
         RefreshAudioDevicesCommand = Command(() => Run(RefreshAudioDevicesAsync), () => CanChangeAudioSettings);
         AsioControlPanelCommand = Command(() => Run(() => ExecuteTransportAsync(OpenAsioPanelAsync)), () => IsAsio && CanChangeAudioSettings);
         OpenStudioCommand = Command(() => NavigateToStudio?.Invoke());
         RecoverRecordingsCommand = Command(() => Run(RecoverRecordingsAsync), () => CanEditTimeline);
         HelpCommand = Command(() => Run(() => ShowMessageAsync("Atalhos do Studio", "Espaço: reproduzir/pausar · R: gravar · M: metrônomo · L: repetir A/B · Delete: excluir tentativa · Ctrl+Z/Y: desfazer/refazer · Ctrl+I: importar · Ctrl+0 na timeline: enquadrar.")));
         SyncPresentation();
-        _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(33) };
+        _timer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromMilliseconds(250) };
         _timer.Tick += Tick; _timer.Start();
     }
 
@@ -117,25 +138,29 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
     public bool CanRedo => Editor.CanRedo && CanEditTimeline;
     public bool CanPreviewPlayback => CanEditTimeline;
     public bool CanAuditionIr => CanEditTimeline;
-    public bool PageVisible { get => _pageVisible; set { if (Set(ref _pageVisible, value)) { Downloader.PageVisible = value; if (!value) StopPreview(); OnPropertyChanged(nameof(ShowMiniPlayer)); } } }
+    public bool PageVisible { get => _pageVisible; set { if (Set(ref _pageVisible, value)) { Downloader.PageVisible = value; SetVisualActivity(_visualUpdatesEnabled); if (!value) StopPreview(); OnPropertyChanged(nameof(ShowMiniPlayer)); } } }
     public bool ShowMiniPlayer => !PageVisible && (IsPlaying || IsRecording || _state.IsMetronomeRunning);
     public string ProjectTitle => Session.Backing?.Name ?? T("Cube Studio");
-    public string TimeDisplay => FormatPosition(Project.Position);
-    public string TransportStatus => T(IsRecording ? "Gravando" : IsPlaying ? "Reproduzindo" : _state.IsMetronomeRunning ? "Metrônomo" : "Parado");
+    public string TimeDisplay => FormatPosition(Session.Position) + " / " + FormatPosition(Session.Backing?.Duration ?? Session.Duration);
+    public string CompactTimeDisplay => $"{TimeSpan.FromSeconds(Math.Max(0, Session.Position)):mm\\:ss} / {TimeSpan.FromSeconds(Math.Max(0, Session.Backing?.Duration ?? Session.Duration)):mm\\:ss}";
+    public string TransposeSemitonesText => (Session.Semitones > 0 ? "+" : "") + Session.Semitones + " " + T("semitons");
+    public string MetronomeVolumePercentText => $"{(MetronomeVolumeDb <= -61 ? 0 : Math.Pow(10, MetronomeVolumeDb / 20) * 100):0}%";
+    public string TransportStatus => T(IsRecording ? "Gravando" : _state.IsPreviewPlaying ? "Prévia" : IsPlaying ? "Reproduzindo" : _state.IsMetronomeRunning ? "Metrônomo" : "Parado");
     public string PlayToolTip => T(IsPlaying ? "Pausar · Espaço" : "Reproduzir · Espaço");
     public string TransposeText => (Session.Semitones > 0 ? "+" : "") + Session.Semitones + " st";
     public double SpeedPercent { get => Session.SpeedPercent; set { if (IsTempoEditable) Session.SpeedPercent = value; } }
     public string SpeedText => SpeedPercent.ToString("0.#", CultureInfo.CurrentCulture) + "%";
     public double MinSpeedPercent => 25;
     public double MaxSpeedPercent => 200;
-    public bool MetronomeEnabled { get => _metronomeEnabled; set { if (Set(ref _metronomeEnabled, value)) Run(() => UpdateMetronomeAsync()); } }
-    public double MetronomeBpm { get => _metronomeBpm; set { if (Set(ref _metronomeBpm, Math.Clamp(double.IsFinite(value) ? value : 100, 30, 300))) Run(() => UpdateMetronomeAsync()); } }
-    public double MetronomeVolumeDb { get => _metronomeVolumeDb; set { if (Set(ref _metronomeVolumeDb, Math.Clamp(double.IsFinite(value) ? value : -12, -61, 6))) Run(() => UpdateMetronomeAsync()); } }
-    public string Meter { get => _meter; set { if (Meters.Contains(value) && Set(ref _meter, value)) Run(() => UpdateMetronomeAsync()); } }
-    public string MetronomeSound { get => _metronomeSound; set { if (MetronomeSounds.Contains(value) && Set(ref _metronomeSound, value)) Run(() => UpdateMetronomeAsync()); } }
+    public bool MetronomeEnabled { get => _metronomeEnabled; set { if (Set(ref _metronomeEnabled, value)) RunMetronomeUpdate(); } }
+    public double MetronomeBpm { get => _metronomeBpm; set { if (Set(ref _metronomeBpm, Math.Clamp(double.IsFinite(value) ? value : 100, 30, 300))) RunMetronomeUpdate(); } }
+    public double MetronomeVolumeDb { get => _metronomeVolumeDb; set { if (Set(ref _metronomeVolumeDb, Math.Clamp(double.IsFinite(value) ? value : -12, -61, 6))) { OnPropertyChanged(nameof(MetronomeVolumePercentText)); RunMetronomeUpdate(); } } }
+    public string Meter { get => _meter; set { if (Meters.Contains(value) && Set(ref _meter, value)) RunMetronomeUpdate(); } }
+    public string MetronomeSound { get => _metronomeSound; set { if (MetronomeSounds.Contains(value) && Set(ref _metronomeSound, value)) RunMetronomeUpdate(); } }
     public string MetronomeToolTip => T("Metrônomo independente da velocidade da backing");
     public bool MetronomePulse => _state.IsMetronomePulse;
-    public string StatusMessage { get => T(_statusMessage); private set { _statusMessage = value; OnPropertyChanged(); } }
+    public string StatusMessage { get => T(_statusMessage); private set { _statusMessage = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasActionableStatus)); } }
+    public bool HasActionableStatus => _statusMessage is not ("Pronto" or "Backing pronta para tocar" or "Dispositivo de áudio configurado" or "Gravando");
     public string TapStatus { get => T(_tapStatus); private set { _tapStatus = value; OnPropertyChanged(); } }
     public double OperationProgress { get => _operationProgress; private set => Set(ref _operationProgress, value); }
     public IReadOnlyList<string> Meters => ProjectModel.AvailableMeters;
@@ -146,6 +171,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
     public RelayCommand BackCommand { get; }
     public RelayCommand ForwardCommand { get; }
     public RelayCommand PlayPauseCommand { get; }
+    public RelayCommand PlayCommand { get; }
+    public RelayCommand PauseCommand { get; }
     public RelayCommand StopCommand { get; }
     public RelayCommand RecordCommand { get; }
     public RelayCommand ToggleLoopCommand { get; }
@@ -188,17 +215,56 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
     }
     public void SetTempoFromUi(double bpm) { _taps.Clear(); MetronomeBpm = bpm; }
     public void SetSpeedFromUi(double percent) => SpeedPercent = percent;
+    private const double MinimumLoopDuration = .15;
+    private bool ValidLoop(double start, double end) => double.IsFinite(start) && double.IsFinite(end)
+        && start >= 0 && end <= Project.Duration && end - start >= MinimumLoopDuration - 1e-9;
+
+    private void ToggleLoop()
+    {
+        if (!CanEditTimeline || !HasAudio) return;
+        if (!Session.LoopEnabled && !ValidLoop(Session.LoopStart, Session.LoopEnd))
+            SetLoopBounds(0, Project.Duration, true);
+        else SetLoopBounds(Session.LoopStart, Session.LoopEnd, !Session.LoopEnabled);
+    }
+
+    private void SetLoopMarker(bool startMarker)
+    {
+        if (!CanEditTimeline || !HasAudio) return;
+        double start = startMarker ? Project.Position : Session.LoopStart;
+        double end = startMarker ? Session.LoopEnd : Project.Position;
+        // A and B are independent markers. Never silently move the other marker
+        // or enable repetition while the musician is still choosing a section.
+        if (ValidLoop(start, end)) SetLoopBounds(start, end, Session.LoopEnabled);
+    }
+
     public void SetLoop(double start, double end)
     {
-        if (!CanEditTimeline) return;
-        Session.LoopStart = Math.Clamp(start, 0, Math.Max(0, Project.Duration - .15));
-        Session.LoopEnd = Math.Clamp(end, Session.LoopStart + .15, Project.Duration);
-        Session.LoopEnabled = true; SyncPresentation();
+        if (!CanEditTimeline || !HasAudio || !double.IsFinite(start) || !double.IsFinite(end)) return;
+        start = Math.Clamp(start, 0, Project.Duration);
+        end = Math.Clamp(end, 0, Project.Duration);
+        if (ValidLoop(start, end)) SetLoopBounds(start, end, true);
     }
+
+    private void SetLoopBounds(double start, double end, bool enabled)
+    {
+        _projecting = true;
+        try { Session.LoopStart = start; Session.LoopEnd = end; Session.LoopEnabled = enabled; }
+        finally { _projecting = false; }
+        SyncLoopPresentation();
+    }
+
+    private void SyncLoopPresentation()
+    {
+        Project.LoopStart = Session.LoopStart;
+        Project.LoopEnd = Session.LoopEnd;
+        Project.LoopEnabled = Session.LoopEnabled;
+        QueueSnapshot();
+    }
+
     public void TrimSelectedAttempt(double start, double duration)
     {
         if (!CanEditTimeline || SelectedAttempt is not { } attempt) return;
-        double framesPerSecond = attempt.SourceSampleRate / (attempt.RecordedSpeed * attempt.ClockRatio);
+        double framesPerSecond = attempt.SourceSampleRate / (Session.Speed * attempt.ClockRatio);
         long first = Math.Clamp((long)Math.Round((start - attempt.Start) * framesPerSecond), 0, attempt.SourceFrameCount - 1);
         long last = Math.Clamp((long)Math.Round((start + duration - attempt.Start) * framesPerSecond), first + 1, attempt.SourceFrameCount);
         Editor.TrimAttempt(attempt.Id, first, last); SyncPresentation();
@@ -214,24 +280,40 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
             double median = intervals.Length % 2 == 1 ? intervals[intervals.Length / 2] : (intervals[intervals.Length / 2 - 1] + intervals[intervals.Length / 2]) / 2;
             _metronomeBpm = Math.Clamp(60000 / Math.Max(1, median), 30, 300); OnPropertyChanged(nameof(MetronomeBpm));
         }
-        Run(() => UpdateMetronomeAsync(true));
+        RunMetronomeUpdate(true);
         TapStatus = _taps.Count < 2 ? "TAP · toque novamente" : $"TAP · {_taps.Count} · {MetronomeBpm:0.#} BPM";
     }
     public void ClosePopups() { IsMetronomeOptionsOpen = IsAudioOptionsOpen = false; }
-    private void PracticeChanged(object? sender, PropertyChangedEventArgs e) { if (!_projecting) SyncPresentation(); }
+    private void PracticeChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_projecting) return;
+        if (ReferenceEquals(sender, Session))
+        {
+            if (e.PropertyName is nameof(PracticeSession.Position)) { Project.Position = Session.Position; return; }
+            if (e.PropertyName is nameof(PracticeSession.LoopStart) or nameof(PracticeSession.LoopEnd) or nameof(PracticeSession.LoopEnabled))
+            { SyncLoopPresentation(); return; }
+        }
+        SyncPresentation();
+    }
     private void TrackChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_projecting || e.PropertyName is not (nameof(TrackModel.VolumeDb) or nameof(TrackModel.IsMuted))) return;
+        if (_projecting || e.PropertyName is not (nameof(TrackModel.VolumeDb) or nameof(TrackModel.IsMuted) or nameof(TrackModel.Pan) or nameof(TrackModel.IsSolo))) return;
         var track = (TrackModel)sender!;
         var mix = track == Project.Tracks[0] ? Session.BackingMix : Session.AttemptMix;
-        mix.VolumeDb = track.VolumeDb; mix.Muted = track.IsMuted; QueueSnapshot();
+        _projecting = true;
+        try { mix.VolumeDb = track.VolumeDb; mix.Muted = track.IsMuted; mix.Pan = track.Pan / 100; mix.Solo = track.IsSolo; }
+        finally { _projecting = false; }
+        QueueSnapshot();
+        if (track == Project.Tracks[0] && _state.IsPreviewPlaying)
+            Run(() => _audio.SetPreviewVolumeAsync(mix.Muted ? -61 : mix.VolumeDb, _lifetime.Token));
     }
     private void SyncPresentation()
     {
         _projecting = true;
         try
         {
-            Project.Duration = Math.Max(Math.Max(30, Session.Duration), IsRecording ? _state.Duration : 0);
+            Project.Duration = HasAudio || IsRecording ? Math.Max(1, Math.Max(Session.Duration, IsRecording ? _state.Duration : 0)) : 30;
+            Project.Duration = Math.Max(Project.Duration, SelectedAttempt is { } selected ? selected.AudibleStart + OriginalAttemptClip(selected).Duration : 0);
             Project.Position = Session.Position;
             Project.Semitones = Session.Semitones;
             Project.LoopStart = Session.LoopStart; Project.LoopEnd = Session.LoopEnd; Project.LoopEnabled = Session.LoopEnabled;
@@ -240,14 +322,26 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
             {
                 var track = Project.Tracks[i]; var source = sources[i];
                 track.Clips.Clear();
-                if (source != null) track.Clips.Add(ProjectClip(source));
+                if (source != null)
+                {
+                    var clip = ProjectClip(source);
+                    if (source is PracticeAttempt attempt)
+                    {
+                        var audioClip = OriginalAttemptClip(attempt);
+                        clip.Duration = audioClip.Duration;
+                        clip.SourceDuration = attempt.AudioDuration * Session.Speed * attempt.ClockRatio;
+                        clip.SourceOffset = attempt.TrimStartFrame / (double)attempt.SourceSampleRate * Session.Speed * attempt.ClockRatio;
+                        clip.RecordedSpeed = Session.Speed;
+                    }
+                    track.Clips.Add(clip);
+                }
                 var mix = i == 0 ? Session.BackingMix : Session.AttemptMix;
-                track.VolumeDb = mix.VolumeDb; track.IsMuted = mix.Muted;
+                track.VolumeDb = mix.VolumeDb; track.IsMuted = mix.Muted; track.Pan = mix.Pan * 100; track.IsSolo = mix.Solo;
             }
         }
         finally { _projecting = false; }
         QueueSnapshot(); PeaksChanged?.Invoke(this, EventArgs.Empty);
-        foreach (var name in new[] { nameof(ProjectTitle), nameof(TimeDisplay), nameof(SelectedAttempt), nameof(Attempts), nameof(TransposeText), nameof(SpeedPercent), nameof(SpeedText), nameof(HasAudio) }) OnPropertyChanged(name);
+        foreach (var name in new[] { nameof(ProjectTitle), nameof(TimeDisplay), nameof(CompactTimeDisplay), nameof(TransposeSemitonesText), nameof(SelectedAttempt), nameof(Attempts), nameof(TransposeText), nameof(SpeedPercent), nameof(SpeedText), nameof(HasAudio) }) OnPropertyChanged(name);
         RefreshTransport();
     }
     private static ClipModel ProjectClip(PracticeSource source)
@@ -259,7 +353,8 @@ public sealed partial class ShellViewModel : ViewModelBase, IDisposable, IStudio
     }
     private void RefreshTransport()
     {
-        foreach (var name in new[] { nameof(IsPlaying), nameof(IsRecording), nameof(IsStopped), nameof(CanEditTimeline), nameof(CanReplaceBacking), nameof(CanChangeAudioSettings), nameof(IsTempoEditable), nameof(TransportStatus), nameof(PlayToolTip), nameof(CanUndo), nameof(CanRedo), nameof(CanPreviewPlayback), nameof(CanAuditionIr), nameof(ShowMiniPlayer), nameof(IsBusy) }) OnPropertyChanged(name);
+        UpdateUiCadence();
+        foreach (var name in new[] { nameof(IsPlaying), nameof(IsRecording), nameof(IsStopped), nameof(CanEditTimeline), nameof(CanReplaceBacking), nameof(CanChangeAudioSettings), nameof(CanApplyAudioSettings), nameof(IsTempoEditable), nameof(TransportStatus), nameof(PlayToolTip), nameof(CanUndo), nameof(CanRedo), nameof(CanPreviewPlayback), nameof(CanAuditionIr), nameof(ShowMiniPlayer), nameof(IsBusy) }) OnPropertyChanged(name);
         foreach (var command in _commands) command.RaiseCanExecuteChanged();
     }
     private void LanguageChanged(object? sender, PropertyChangedEventArgs e)

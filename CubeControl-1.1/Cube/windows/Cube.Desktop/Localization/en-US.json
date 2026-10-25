@@ -3,6 +3,16 @@
   "Code": "en-US",
   "Name": "English",
   "Strings": {
+    "Buscar músicas": "Search music",
+    "Buscar por artista, faixa ou estilo...": "Search by artist, track or style...",
+    "Prévia e downloads": "Preview and downloads",
+    "[   Definir A   ]": "[   Set A   ]",
+    "[   Definir B   ]": "[   Set B   ]",
+    "semitons": "semitones",
+    "Tom e velocidade": "Pitch and speed",
+    "Somente acompanhamento": "Backing only",
+    "Ligar / desligar": "On / off",
+    "Faixas": "Tracks",
     "Diagnóstico": "Diagnostics",
     "Guias e manuais do pedal": "Pedal guides and manuals",
     "Referências complementares e manuais do fabricante.": "Additional references and manufacturer manuals.",
@@ -2457,6 +2467,14 @@
     "Há tentativas que ainda não foram salvas em áudio. Descartá-las?": "Some attempts have not been saved as audio. Discard them?",
     "Atalhos do Studio": "Studio shortcuts",
     "Espaço: reproduzir/pausar · R: gravar · M: metrônomo · L: repetir A/B · Delete: excluir tentativa · Ctrl+Z/Y: desfazer/refazer · Ctrl+I: importar · Ctrl+0 na timeline: enquadrar.": "Space: play/pause · R: record · M: metronome · L: repeat A/B · Delete: delete attempt · Ctrl+Z/Y: undo/redo · Ctrl+I: import · Ctrl+0 in timeline: fit.",
-    "Abrir Studio": "Open Studio"
+    "Abrir Studio": "Open Studio",
+    "Adicionar à sessão": "Add to session",
+    "Canais de saída": "Output channels",
+    "Dispositivo ASIO": "ASIO device",
+    "Taxa": "Rate",
+    "Áudio pronto.": "Audio ready.",
+    "WASAPI permite selecionar entrada e saída separadamente.": "WASAPI allows separate input and output selection.",
+    "Aguarde a atualização dos dispositivos de áudio.": "Wait for the audio device list to finish updating.",
+    "Escolha uma taxa e um buffer disponíveis para o dispositivo.": "Choose a sample rate and buffer size supported by the device."
   }
 }

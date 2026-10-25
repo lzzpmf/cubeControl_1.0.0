@@ -114,7 +114,7 @@ public sealed partial class BackingTracksViewModel
         { YouTubeFolderStatus = YouTubeDownloadStatus = "Pasta de downloads indisponível. Use Alterar pasta."; return; }
         await DownloadYouTubeTo(result, AvailableDownloadPath(YouTubeDownloadFolder, result.Title, result.Id));
     }
-    internal async Task DownloadYouTubeTo(YouTubeResult result, string destination)
+    internal async Task DownloadYouTubeTo(YouTubeResult result, string destination, bool originalAudio = false)
     {
         if (YouTubeDownloading || disposed) return;
         using var request = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
@@ -126,10 +126,12 @@ public sealed partial class BackingTracksViewModel
         RefreshYouTubePresentation();
         try
         {
-            await YouTubeService.DownloadAsync(result, destination, new Progress<YouTubeProgress>(p =>
-            { if (!disposed && youtubeDownload == request && !request.IsCancellationRequested) { YouTubeDownloadStatus = p.Stage; YouTubePercent = Math.Clamp(p.Percent, 0, 100); } }), request.Token);
+            var progress = new Progress<YouTubeProgress>(p =>
+            { if (!disposed && youtubeDownload == request && !request.IsCancellationRequested) { YouTubeDownloadStatus = p.Stage; YouTubePercent = Math.Clamp(p.Percent, 0, 100); } });
+            if (originalAudio) destination = await YouTubeService.DownloadOriginalAsync(result, destination, progress, request.Token);
+            else await YouTubeService.DownloadAsync(result, destination, progress, request.Token);
             request.Token.ThrowIfCancellationRequested();
-            if (!disposed) { RememberYouTubeDownload(result.Id, destination); YouTubeDownloadStatus = "MP3 salvo."; }
+            if (!disposed) { RememberYouTubeDownload(result.Id, destination); YouTubeDownloadStatus = originalAudio ? "Áudio pronto." : "MP3 salvo."; }
         }
         catch (OperationCanceledException) { if (!disposed) YouTubeDownloadStatus = "Download cancelado."; }
         catch (Exception ex) { if (!disposed) YouTubeDownloadStatus = YouTubeError(ex); }

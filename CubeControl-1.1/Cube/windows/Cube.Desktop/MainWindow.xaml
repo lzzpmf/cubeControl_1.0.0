@@ -184,7 +184,7 @@
 
  </ui:FluentWindow.Resources>
  <Grid Background="{DynamicResource CubeWindowBackground}"><Grid.RowDefinitions><RowDefinition Height="36"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-  <ui:TitleBar Title="CubeControl"><ui:TitleBar.Icon><ui:ImageIcon Source="{DynamicResource CubeAppIcon}"/></ui:TitleBar.Icon></ui:TitleBar>
+  <ui:TitleBar x:Name="WindowTitleBar" Title="CubeControl"><ui:TitleBar.Icon><ui:ImageIcon Source="{DynamicResource CubeAppIcon}"/></ui:TitleBar.Icon></ui:TitleBar>
   <Grid x:Name="ClientArea" Grid.Row="1">
   <Grid.LayoutTransform><ScaleTransform ScaleX="0.9" ScaleY="0.9"/></Grid.LayoutTransform>
   <Grid x:Name="Workspace" Margin="24,20,24,12">

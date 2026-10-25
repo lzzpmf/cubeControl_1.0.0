@@ -15,6 +15,8 @@ public interface IYouTubeAudioService
 {
     Task<IReadOnlyList<YouTubeResult>> SearchAsync(string query, CancellationToken cancellation);
     Task DownloadAsync(YouTubeResult video, string destination, IProgress<YouTubeProgress> progress, CancellationToken cancellation);
+    async Task<string> DownloadOriginalAsync(YouTubeResult video, string destination, IProgress<YouTubeProgress> progress, CancellationToken cancellation)
+    { await DownloadAsync(video, destination, progress, cancellation); return destination; }
 }
 
 public sealed class YouTubeAudioService(string? toolsDirectory = null) : IYouTubeAudioService
@@ -51,6 +53,31 @@ public sealed class YouTubeAudioService(string? toolsDirectory = null) : IYouTub
         return results.Take(10).ToArray();
     }
     private static string Text(JsonElement element, string name) => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString()! : "";
+    public async Task<string> DownloadOriginalAsync(YouTubeResult video, string destination, IProgress<YouTubeProgress> progress, CancellationToken cancellation)
+    {
+        string parent = Path.GetDirectoryName(Path.GetFullPath(destination))!;
+        string temporary = Path.Combine(parent, ".cube-session-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(temporary);
+        try
+        {
+            progress.Report(new("Baixando áudio…", 0));
+            // Retain the provider's audio container. MP3 re-encoding is not needed to play a session.
+            await ProcessRunner(Tool("yt-dlp"), Common().Concat(new[] { "--no-simulate", "--match-filters", "!is_live & !is_upcoming",
+                "-f", "bestaudio[ext=m4a]/bestaudio", "--concurrent-fragments", "4", "--newline", "--progress",
+                "--progress-template", "download:PROGRESS:%(progress._percent_str)s", "-o", Path.Combine(temporary, "audio.%(ext)s"), "--", video.Url }), cancellation,
+                line => { if (line.StartsWith("PROGRESS:") && double.TryParse(line[9..].Trim().TrimEnd('%'), NumberStyles.Float, CultureInfo.InvariantCulture, out var percent)) progress.Report(new("Baixando áudio…", percent)); });
+            var audio = Directory.EnumerateFiles(temporary).SingleOrDefault(p => Path.GetExtension(p).ToLowerInvariant() is ".m4a" or ".webm" or ".opus" or ".ogg" or ".aac" or ".mp3" or ".mp4");
+            if (audio == null || new FileInfo(audio).Length == 0) throw new IOException("Não foi possível obter o áudio da faixa.");
+            string target = Path.ChangeExtension(destination, Path.GetExtension(audio));
+            string stem = Path.GetFileNameWithoutExtension(target); int suffix = 2;
+            while (File.Exists(target) || Directory.Exists(target)) target = Path.Combine(parent, $"{stem} ({suffix++}){Path.GetExtension(audio)}");
+            cancellation.ThrowIfCancellationRequested();
+            File.Move(audio, target);
+            progress.Report(new("Áudio pronto.", 100));
+            return target;
+        }
+        finally { try { Directory.Delete(temporary, true); } catch (IOException) { } catch (UnauthorizedAccessException) { } }
+    }
     public async Task DownloadAsync(YouTubeResult video, string destination, IProgress<YouTubeProgress> progress, CancellationToken cancellation)
     {
         Tool("ffmpeg"); Tool("ffprobe");

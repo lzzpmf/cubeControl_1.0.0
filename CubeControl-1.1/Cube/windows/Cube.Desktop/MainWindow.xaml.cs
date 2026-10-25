@@ -324,11 +324,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     internal Action<Appearance.ControlFinish> SelectControlFinish { get; set; } = Appearance.ThemeService.Instance.SelectFinish;
     private void MoreOptionsClick(object sender, RoutedEventArgs e)
     {
-        if (MoreOptionsButton.ContextMenu is { IsOpen: true } opened) { opened.IsOpen = false; return; }
+        var anchor = sender as FrameworkElement ?? MoreOptionsButton;
+        if (anchor.ContextMenu is { IsOpen: true } opened) { opened.IsOpen = false; return; }
         // Rebuild on opening so translations and persisted selections are always current.
         var menu = new ContextMenu
         {
-            PlacementTarget = MoreOptionsButton,
+            PlacementTarget = anchor,
             Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
             MinWidth = 260,
             UseLayoutRounding = true,
@@ -340,22 +341,22 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             if (!menu.IsOpen || menu.Template.FindName("Border", menu) is not FrameworkElement surface) return;
             var root = (FrameworkElement)PresentationSource.FromVisual(menu).RootVisual;
-            var anchor = MoreOptionsButton.PointToScreen(new Point(MoreOptionsButton.ActualWidth, MoreOptionsButton.ActualHeight));
+            var screenAnchor = anchor.PointToScreen(new Point(anchor.ActualWidth, anchor.ActualHeight));
             var rootOrigin = root.PointToScreen(new Point());
             var edge = surface.PointToScreen(new Point(surface.ActualWidth, 0));
-            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(MoreOptionsButton);
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(anchor);
             // Absolute placement avoids applying the client's 90% transform a second time.
             menu.PlacementTarget = null;
             menu.Placement = System.Windows.Controls.Primitives.PlacementMode.AbsolutePoint;
-            menu.HorizontalOffset = (anchor.X - (edge.X - rootOrigin.X)) / dpi.DpiScaleX;
-            menu.VerticalOffset = anchor.Y / dpi.DpiScaleY + 4;
+            menu.HorizontalOffset = (screenAnchor.X - (edge.X - rootOrigin.X)) / dpi.DpiScaleX;
+            menu.VerticalOffset = screenAnchor.Y / dpi.DpiScaleY + 4;
             // Changing placement also reanchors the template margin; settle it before final alignment.
             for (int pass = 0; pass < 3; pass++)
             {
                 await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
                 if (!menu.IsOpen) return;
                 edge = surface.PointToScreen(new Point(surface.ActualWidth, 0));
-                menu.HorizontalOffset += (anchor.X - edge.X) / dpi.DpiScaleX;
+                menu.HorizontalOffset += (screenAnchor.X - edge.X) / dpi.DpiScaleX;
             }
             Controls.SurfaceMotion.SetEnabled(surface, true);
         }
@@ -432,7 +433,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 }
             };
         menu.Closed += (_, _) => { if (MoreOptionsButton.IsEnabled) MoreOptionsButton.Focus(); };
-        MoreOptionsButton.ContextMenu = menu;
+        anchor.ContextMenu = menu;
         menu.IsOpen = true;
     }
     private void ManageIrsClick(object sender, RoutedEventArgs e)

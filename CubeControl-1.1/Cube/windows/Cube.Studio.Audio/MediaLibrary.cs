@@ -14,6 +14,7 @@ internal sealed record PreparedMedia(string OriginalPath, string PcmPath, double
 internal sealed class MediaLibrary(string dataDirectory, string? toolsDirectory)
 {
     private readonly ConcurrentDictionary<string, PreparedMedia> prepared = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, StudioMediaInfo> analyzed = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim preparation = new(1, 1);
     private readonly string cacheDirectory = Path.Combine(dataDirectory, "StudioCache");
     internal string Tool(string name)
@@ -70,14 +71,17 @@ internal sealed class MediaLibrary(string dataDirectory, string? toolsDirectory)
     internal async Task<StudioMediaInfo> Analyze(string path, CancellationToken cancellation)
     {
         var media = await Prepare(path, cancellation).ConfigureAwait(false);
+        if (analyzed.TryGetValue(media.PcmPath, out var cached)) return cached;
         return await Task.Run(() =>
         {
             var peaks = ReadPeaks(media.PcmPath, cancellation);
-            var music = MusicAnalysis.Analyze(media.PcmPath, cancellation);
-            return new StudioMediaInfo(media.OriginalPath, media.Duration, media.SourceSampleRate, media.SourceChannels,
-                peaks, music.Bpm > 0 && music.TempoConfidence >= .25 ? music.Bpm : null,
-                music.KeyConfidence >= .25 && music.Key != "Não definido" ? music.Key : null,
-                music.TempoConfidence, music.KeyConfidence);
+            // Loading/preview needs the decoded waveform, not a multi-segment tonal FFT.
+            // Key/BPM estimation is deliberately outside the interactive load path.
+            var result = new StudioMediaInfo(media.OriginalPath, media.Duration, media.SourceSampleRate, media.SourceChannels, peaks);
+            cancellation.ThrowIfCancellationRequested();
+            if (analyzed.Count >= 16 && analyzed.Keys.FirstOrDefault() is { } evict) analyzed.TryRemove(evict, out _);
+            analyzed[media.PcmPath] = result;
+            return result;
         }, cancellation).ConfigureAwait(false);
     }
 

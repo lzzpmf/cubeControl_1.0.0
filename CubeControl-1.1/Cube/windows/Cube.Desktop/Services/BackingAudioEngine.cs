@@ -72,7 +72,7 @@ public sealed class BackingAudioEngine : IDisposable
         {
             while (!commands.IsCompleted)
             {
-                if (commands.TryTake(out var command, 40)) command();
+                if (commands.TryTake(out var command, snapshot.State == BackingPlaybackState.Playing ? 40 : Timeout.Infinite)) command();
                 if (snapshot.State == BackingPlaybackState.Playing)
                     try { UpdatePosition(); } catch (Exception ex) { CloseAudio(); snapshot = snapshot with { State = BackingPlaybackState.Error, Error = ex }; }
             }

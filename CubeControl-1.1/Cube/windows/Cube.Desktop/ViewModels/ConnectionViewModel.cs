@@ -4,6 +4,10 @@ namespace Cube.Desktop.ViewModels;
 
 public sealed class ConnectionViewModel : Observable
 {
+    private readonly Services.MidiDeviceDiscovery discovery = new();
+    internal event Action? PortsChanged { add => discovery.Changed += value; remove => discovery.Changed -= value; }
+    internal void StartWatching() => discovery.Start();
+    internal void StopWatching() => discovery.Dispose();
     private MidiPort[] inputs = [], outputs = [];
     private MidiPort? input, output;
     private string identity = "Desconectado";
@@ -14,8 +18,7 @@ public sealed class ConnectionViewModel : Observable
     public string Identity { get => identity; set => Set(ref identity, value); }
     public async Task Refresh()
     {
-        var foundInputs = await WindowsMidiConnection.Inputs();
-        var foundOutputs = await WindowsMidiConnection.Outputs();
+        var (foundInputs, foundOutputs) = await discovery.Refresh(true);
         Inputs = foundInputs; Outputs = foundOutputs;
         var previousInput = Inputs.FirstOrDefault(p => p.Id == Input?.Id);
         var previousOutput = Outputs.FirstOrDefault(p => p.Id == Output?.Id);

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using NAudio.Wave.SampleProviders;
 
 namespace Cube.Studio.Audio;
 
@@ -15,6 +16,7 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
     private readonly Func<StudioAudioSettings, AudioRing, IAudioBackend> createBackend;
     private readonly SemaphoreSlim snapshotUpdate = new(1, 1);
     private readonly BlockingCollection<Action> commands = new();
+    private readonly AutoResetEvent workAvailable = new(false);
     private readonly Thread worker;
     private readonly CancellationTokenSource lifetime = new();
     private readonly Dictionary<string, PreparedMedia> sources = new(StringComparer.OrdinalIgnoreCase);
@@ -38,6 +40,11 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
     private StereoPeakGuard? monitorGuard;
     private long lastUnderruns;
     private int underrunStreak;
+    private RawSourceWaveStream? previewStream;
+    private ISampleProvider? previewSamples;
+    private double previewClockStart, previewDuration, previewPosition;
+    private bool previewEnded;
+    private int renderLeadFrames;
 
     public StudioAudioEngine(string dataDirectory, string? toolsDirectory = null)
         : this(dataDirectory, toolsDirectory, (settings, ring) => settings.Driver == StudioDriver.Asio ? new AsioBackend(settings, ring) : new WasapiBackend(settings, ring)) { }
@@ -50,7 +57,7 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
         media = new(this.dataDirectory, toolsDirectory);
         try { if (File.Exists(settingsPath)) settings = JsonSerializer.Deserialize<StudioAudioSettings>(File.ReadAllText(settingsPath)) ?? new(); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { Debug.WriteLine(ex); }
-        worker = new Thread(Work) { IsBackground = true, Name = "Cube Studio Audio" };
+        worker = new Thread(Work) { IsBackground = true, Name = "Cube Studio Audio", Priority = ThreadPriority.AboveNormal };
         worker.SetApartmentState(ApartmentState.STA); worker.Start();
     }
 
@@ -69,6 +76,7 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
             catch (OperationCanceledException ex) { result.TrySetCanceled(ex.CancellationToken); }
             catch (Exception ex) { lastError = ex.Message; Publish(); result.TrySetException(ex); }
         });
+        workAvailable.Set();
         return result.Task;
     }
     private Task Invoke(Action action, CancellationToken cancellation = default) => Invoke(() => { action(); return true; }, cancellation);
@@ -80,8 +88,15 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
         foreach (var flow in new[] { DataFlow.Render, DataFlow.Capture })
             foreach (var device in enumerator.EnumerateAudioEndPoints(flow, DeviceState.Active))
                 using (device)
-                using (var client = device.CreateAudioClient())
-                    devices.Add(new(device.ID, device.FriendlyName, StudioDriver.Wasapi, flow == DataFlow.Capture, client.MixFormat.Channels));
+                {
+                    // An unplugged or inaccessible endpoint must not hide all other devices.
+                    try
+                    {
+                        using var client = device.CreateAudioClient();
+                        devices.Add(new(device.ID, device.FriendlyName, StudioDriver.Wasapi, flow == DataFlow.Capture, client.MixFormat.Channels));
+                    }
+                    catch (Exception ex) when (ex is COMException or InvalidOperationException) { Debug.WriteLine(ex); }
+                }
         foreach (string driver in AsioDevice.GetDriverNames())
         { devices.Add(new(driver, driver, StudioDriver.Asio, false, 0)); devices.Add(new(driver, driver, StudioDriver.Asio, true, 0)); }
         return devices;
@@ -97,8 +112,7 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
             using var device = AsioDevice.Open(value.OutputId);
             var caps = device.Capabilities;
             return new StudioAudioCapabilities(new[] { 44100, 48000, 96000 }.Where(device.IsSampleRateSupported).ToArray(),
-                new[] { 64, 128, 256, 512, 1024, 2048 }.Where(n => n >= caps.BufferMinSize && n <= caps.BufferMaxSize &&
-                    (caps.BufferGranularity <= 0 || (n - caps.BufferMinSize) % caps.BufferGranularity == 0)).Append(caps.BufferPreferredSize).Distinct().Order().ToArray(),
+                AsioBackend.SupportedBufferSizes(caps.BufferMinSize, caps.BufferMaxSize, caps.BufferGranularity, caps.BufferPreferredSize),
                 caps.NbInputChannels, caps.NbOutputChannels, device.CurrentSampleRate, caps.BufferPreferredSize);
         }
         using var enumerator = new MMDeviceEnumerator();
@@ -158,14 +172,60 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
     }
 
     public Task PlayAsync(CancellationToken cancellation = default) => Invoke(() =>
-    { if (!playing) { if (position >= project.Duration && recording == null) position = project.LoopEnabled ? project.LoopStart : 0; StartPlayback(); } }, cancellation);
+    { StopPreviewCore(); if (!playing) { if (position >= project.Duration && recording == null) position = project.LoopEnabled ? project.LoopStart : 0; StartPlayback(); } }, cancellation);
+
+    public Task PlayPreviewAsync(StudioPreviewAudio preview, CancellationToken cancellation = default) => Invoke(() =>
+    {
+        if (recording != null) throw new InvalidOperationException("Conclua a gravação antes de ouvir uma prévia.");
+        if (preview.SampleRate is < 8000 or > 192000 || preview.Channels is < 1 or > 2 || preview.Pcm16.Length == 0 ||
+            preview.Pcm16.Length % (preview.Channels * 2) != 0 || !double.IsFinite(preview.VolumeDb))
+            throw new ArgumentException("Prévia de áudio inválida.");
+        StopPreviewCore(); UpdatePosition(); playing = false; PauseOutput(); renderer?.Dispose(); renderer = null;
+        metronome.Configure(metronome.Settings with { Enabled = false }, false);
+        EnsureBackend();
+        previewStream = new RawSourceWaveStream(new MemoryStream(preview.Pcm16, writable: false), new WaveFormat(preview.SampleRate, 16, preview.Channels));
+        ISampleProvider provider = previewStream.ToSampleProvider();
+        if (preview.Channels == 1) provider = new MonoToStereoSampleProvider(provider);
+        if (preview.SampleRate != settings.SampleRate) provider = new WdlResamplingSampleProvider(provider, settings.SampleRate);
+        previewSamples = new VolumeSampleProvider(provider) { Volume = (float)AudioRenderer.Gain(preview.VolumeDb) };
+        previewDuration = previewStream.TotalTime.TotalSeconds; previewPosition = 0; previewEnded = false;
+        previewClockStart = backend!.PlayedSeconds; FillPreviewOutput();
+        ring!.MediaEnabled = true; backend.Start(); outputRunning = true; lastError = null; Publish();
+    }, cancellation);
+
+    public Task StopPreviewAsync(CancellationToken cancellation = default) => Invoke(() => { StopPreviewCore(); Publish(); }, cancellation);
+    public Task SetPreviewVolumeAsync(double volumeDb, CancellationToken cancellation = default) => Invoke(() =>
+    {
+        if (!double.IsFinite(volumeDb)) throw new ArgumentOutOfRangeException(nameof(volumeDb));
+        if (previewSamples is VolumeSampleProvider gain) gain.Volume = (float)AudioRenderer.Gain(volumeDb);
+    }, cancellation);
+    private void StopPreviewCore()
+    {
+        if (previewSamples == null) return;
+        PauseOutput(); previewSamples = null; previewStream?.Dispose(); previewStream = null;
+        previewPosition = previewDuration = 0; previewEnded = false;
+    }
+    private void FillPreviewOutput()
+    {
+        if (previewSamples == null || ring == null || backend == null) return;
+        while (ring.Count < renderLeadFrames * 2 && ring.Free >= renderBuffer.Length && !previewEnded)
+        {
+            int count = previewSamples.Read(renderBuffer);
+            if (count == 0) { previewEnded = true; break; }
+            ring.Write(renderBuffer.AsSpan(0, count));
+        }
+        previewPosition = Math.Clamp(backend.PlayedSeconds - previewClockStart, 0, previewDuration);
+        if (previewEnded && ring.Count == 0) StopPreviewCore();
+    }
     public Task PauseAsync(CancellationToken cancellation = default) => Invoke(() =>
     {
+        StopPreviewCore();
         if (recording != null) FinishRecordingCore(false);
         UpdatePosition(); playing = false; SuspendMedia(); renderer?.Dispose(); renderer = null; Publish();
     }, cancellation);
     public Task StopAsync(CancellationToken cancellation = default) => Invoke(() =>
     {
+        StopPreviewCore();
         if (recording != null) FinishRecordingCore(false);
         metronome.Configure(metronome.Settings with { Enabled = false }, false);
         playing = false; PauseOutput(); renderer?.Dispose(); renderer = null; position = 0; lastError = null; Publish();
@@ -310,11 +370,16 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
         monitorGuard = new(settings.SampleRate);
         backend = createBackend(settings, ring);
         capabilities = backend.Capabilities;
+        renderLeadFrames = Math.Max(capabilities.EffectiveBufferFrames * 4, settings.SampleRate / 25);
+        ring.WorkAvailable = workAvailable;
+        ring.LowWaterSamples = renderLeadFrames;
         renderBuffer = new float[Math.Clamp(capabilities.EffectiveBufferFrames, 128, 1024) * 2];
     }
     private void StartPlayback()
     {
         EnsureBackend(); SuspendMedia();
+        if (project.LoopEnabled && (position < project.LoopStart || position >= project.LoopEnd))
+            position = project.LoopStart;
         renderer?.Dispose();
         double end = project.LoopEnabled ? project.LoopEnd : recording != null ? 86400 : project.Duration;
         renderer = new(project, sources, position, end, settings.SampleRate, project.LoopEnabled, false);
@@ -359,7 +424,7 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
     private void FillOutput()
     {
         if (!playing || renderer == null || ring == null) return;
-        int target = Math.Max(capabilities.EffectiveBufferFrames * 2, settings.SampleRate / 100) * 2;
+        int target = renderLeadFrames * 2;
         while (ring.Count < target && ring.Free >= renderBuffer.Length && !ended)
         {
             int count = renderer.Read(renderBuffer);
@@ -432,23 +497,35 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
         {
             while (!commands.IsCompleted)
             {
-                if (commands.TryTake(out var action, 3)) action();
+                while (commands.TryTake(out var action)) action();
+                if (commands.IsCompleted) break;
                 try
                 {
+                    if (backend?.Capture is { } capture) capture.WorkAvailable = workAvailable;
                     if (backend?.Error is { } error) throw new IOException(error);
-                    DrainCapture(); FillOutput(); UpdatePosition();
+                    DrainCapture(); FillPreviewOutput(); FillOutput(); UpdatePosition();
+                    if (ring is { } outputRing)
+                    {
+                        outputRing.LowWaterSamples = renderLeadFrames;
+                        if (outputRing.Count >= outputRing.LowWaterSamples) outputRing.ArmRefill();
+                    }
                     if (playing && ring != null)
                     {
                         long current = Interlocked.Read(ref ring.Underruns);
                         if (!ended && current > lastUnderruns) underrunStreak++; else underrunStreak = 0;
                         lastUnderruns = current;
-                        if (underrunStreak >= 3) throw new IOException("O áudio sofreu interrupções. Aumente o buffer do dispositivo.");
+                        // A late scheduling slice must not abort a healthy device. Refill with
+                        // extra headroom; backend errors and capture overflow still fail safely.
+                        if (underrunStreak > 0) renderLeadFrames = Math.Min(Math.Max(settings.SampleRate / 5, capabilities.EffectiveBufferFrames * 4), Math.Max(renderLeadFrames + capabilities.EffectiveBufferFrames, renderLeadFrames * 2));
                         if (ended && ring.Count == 0 && recording == null)
                         { playing = false; position = project.Duration; SuspendMedia(); renderer?.Dispose(); renderer = null; }
                     }
                     Publish();
                 }
                 catch (Exception ex) { Fail(ex); }
+                // Hardware consumption/capture and commands wake this thread. The bounded
+                // active fallback detects device errors/EOF and publishes clocks, not audio polling.
+                workAvailable.WaitOne(outputRunning || recording != null ? 20 : Timeout.Infinite);
             }
         }
         finally { recording?.Dispose(); renderer?.Dispose(); backend?.Dispose(); }
@@ -469,11 +546,13 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
     }
     private void CloseBackend()
     {
+        StopPreviewCore();
         PauseOutput(); backend?.Dispose(); backend = null; ring = null; monitorRing = null; monitorGuard = null;
         renderer?.Dispose(); renderer = null;
     }
     private void Publish() => state = new(playing, recording != null, position, Math.Max(project.Duration, position), outputRunning ? ring?.Peak ?? outputPeak : 0, inputPeak,
-        AudibleLoopPass(), lastError, outputRunning && metronome.Settings.Enabled, outputRunning && metronome.Settings.Enabled && metronome.IsPulse);
+        AudibleLoopPass(), lastError, outputRunning && metronome.Settings.Enabled, outputRunning && metronome.Settings.Enabled && metronome.IsPulse,
+        previewSamples != null, previewPosition, previewDuration);
     private long AudibleLoopPass()
     {
         if (!playing || backend == null || !project.LoopEnabled) return 0;
@@ -487,7 +566,7 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
     private static StudioSnapshot Freeze(StudioSnapshot snapshot) => snapshot with { Tracks = snapshot.Tracks.Select(t => t with { Clips = t.Clips.ToArray() }).ToArray() };
     private static void ValidateSettings(StudioAudioSettings value)
     {
-        if (value.SampleRate is not (44100 or 48000 or 96000) || value.BufferFrames is < 32 or > 8192 || value.InputChannel < 0 || value.InputChannels is < 1 or > 2 ||
+        if (value.SampleRate is not (44100 or 48000 or 96000) || value.BufferFrames is < 32 or > 8192 || value.InputChannel < 0 || value.OutputChannel < 0 || value.InputChannels is < 1 or > 2 ||
             !double.IsFinite(value.RecordingOffsetMilliseconds) || Math.Abs(value.RecordingOffsetMilliseconds) > 1000) throw new ArgumentException("Configuração de áudio inválida.");
     }
     private static void ValidateSnapshot(StudioSnapshot snapshot)
@@ -515,9 +594,9 @@ public sealed class StudioAudioEngine : IStudioAudioEngine
         try { await Invoke(() => { playing = false; if (recording != null) FinishRecordingCore(true); CloseBackend(); }).ConfigureAwait(false); }
         finally
         {
-            disposed = true; commands.CompleteAdding();
+            disposed = true; commands.CompleteAdding(); workAvailable.Set();
             await Task.Run(worker.Join).ConfigureAwait(false);
-            commands.Dispose(); lifetime.Dispose();
+            commands.Dispose(); workAvailable.Dispose(); lifetime.Dispose();
         }
     }
     public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();

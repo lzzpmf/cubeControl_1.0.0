@@ -8,7 +8,7 @@ public sealed class PlaybackResultViewModel(YouTubeResult video) : ViewModelBase
     public YouTubeResult Video { get; } = video;
     public string Title => Video.Title;
     public string Genre => Video.Channel;
-    public string Details => Video.Channel + " · " + LanguageService.T("Origem") + ": YouTube";
+    public string Details => Video.Channel + " · " + Metadata;
     public double Duration => Video.Duration;
     public double? Bpm { get; internal set; }
     public string? Key { get; internal set; }
@@ -24,6 +24,14 @@ public sealed class PlaybackResultViewModel(YouTubeResult video) : ViewModelBase
     public bool IsPinned { get; internal set; }
     public bool IsPreviewPinned => IsPinned;
     public double PreviewPosition { get; internal set; }
+    internal void UpdatePreviewPosition(double position)
+    {
+        if (PreviewPosition == position) return;
+        bool textChanged = (int)PreviewPosition != (int)position;
+        PreviewPosition = position;
+        OnPropertyChanged(nameof(PreviewPosition)); OnPropertyChanged(nameof(PreviewProgress));
+        if (textChanged) OnPropertyChanged(nameof(PreviewText));
+    }
     public double PreviewDuration { get; internal set; } = 30;
     public float[] Peaks { get; internal set; } = [];
     public double PreviewProgress => Math.Clamp(PreviewPosition / Math.Max(.001, PreviewDuration), 0, 1);

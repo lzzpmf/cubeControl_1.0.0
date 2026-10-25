@@ -61,11 +61,12 @@ public sealed class PracticeAttempt : PracticeSource
 public sealed class PracticeMix : ObservableObject
 {
     private double _volumeDb, _pan;
-    private bool _muted;
+    private bool _muted, _solo;
     public double VolumeDb { get => _volumeDb; set => Set(ref _volumeDb, Bounded(value, -61, 6)); }
     public double Pan { get => _pan; set => Set(ref _pan, Bounded(value, -1, 1)); }
     public bool Muted { get => _muted; set => Set(ref _muted, value); }
-    internal void Reset() { VolumeDb = 0; Pan = 0; Muted = false; }
+    public bool Solo { get => _solo; set => Set(ref _solo, value); }
+    internal void Reset() { VolumeDb = 0; Pan = 0; Muted = false; Solo = false; }
 }
 
 /// <summary>One backing and independent performances for this application run. No project persistence.</summary>

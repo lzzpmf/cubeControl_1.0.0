@@ -4,6 +4,13 @@ using System.Windows.Data;
 
 namespace Cube.Desktop.Studio;
 
+public sealed class SampleRateTextConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => double.TryParse(value?.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var rate) ? $"{rate / 1000:0.#} kHz" : value ?? "";
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
 public sealed class DecibelTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

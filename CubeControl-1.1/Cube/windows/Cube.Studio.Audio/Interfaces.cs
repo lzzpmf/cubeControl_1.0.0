@@ -20,6 +20,9 @@ public interface IStudioTransport
     Task PauseAsync(CancellationToken cancellation = default);
     Task StopAsync(CancellationToken cancellation = default);
     Task SeekAsync(double position, CancellationToken cancellation = default);
+    Task PlayPreviewAsync(StudioPreviewAudio preview, CancellationToken cancellation = default);
+    Task StopPreviewAsync(CancellationToken cancellation = default);
+    Task SetPreviewVolumeAsync(double volumeDb, CancellationToken cancellation = default);
 }
 
 public interface IStudioCapture

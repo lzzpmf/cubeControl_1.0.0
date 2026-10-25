@@ -13,6 +13,7 @@ public sealed record StudioAudioSettings
     public int BufferFrames { get; init; } = 256;
     public int InputChannel { get; init; }
     public int InputChannels { get; init; } = 1;
+    public int OutputChannel { get; init; }
     public bool Monitoring { get; init; }
     public bool Exclusive { get; init; }
     public double RecordingOffsetMilliseconds { get; init; }
@@ -67,7 +68,10 @@ public sealed record StudioMetronomeSettings(bool Enabled = false, double Bpm = 
 
 public sealed record StudioTransportSnapshot(bool IsPlaying, bool IsRecording, double Position,
     double Duration, float OutputPeak = 0, float InputPeak = 0, long LoopPass = 0, string? Error = null,
-    bool IsMetronomeRunning = false, bool IsMetronomePulse = false);
+    bool IsMetronomeRunning = false, bool IsMetronomePulse = false,
+    bool IsPreviewPlaying = false, double PreviewPosition = 0, double PreviewDuration = 0);
+
+public sealed record StudioPreviewAudio(byte[] Pcm16, int SampleRate, int Channels, double VolumeDb = 0);
 
 public sealed record StudioMediaInfo(string Path, double Duration, int SampleRate, int Channels,
     float[] Peaks, double? Bpm = null, string? Key = null, double TempoConfidence = 0, double KeyConfidence = 0);

@@ -17,14 +17,17 @@ internal sealed partial class YouTubePreviewService
     internal Func<YouTubeResult, string, CancellationToken, Task<byte[]>>? PreparePcmForTest { get; set; }
 
     /// <summary>Decodes at most 30 seconds into bounded RAM. This path never creates an audio endpoint.</summary>
-    public Task<YouTubePreviewFrame> PrepareAsync(YouTubeResult video, CancellationToken cancellation)
+    public async Task<YouTubePreviewFrame> PrepareAsync(YouTubeResult video, CancellationToken cancellation)
+        => (await PrepareAudioAsync(video, cancellation)).Waveform;
+
+    public Task<YouTubePreparedAudio> PrepareAudioAsync(YouTubeResult video, CancellationToken cancellation)
         => Task.Run(async () =>
         {
             await gate.WaitAsync(cancellation);
             try
             {
                 cancellation.ThrowIfCancellationRequested();
-                if (TryPrepared(video.Id, out var previous)) return CopyFrame(previous.Frame);
+                if (TryPrepared(video.Id, out var previous)) return new YouTubePreparedAudio(previous.Pcm, CopyFrame(previous.Frame));
                 bool cached = cache.TryGet(video.Id, out string metadata);
                 for (int attempt = 0; ; attempt++)
                 {
@@ -46,7 +49,7 @@ internal sealed partial class YouTubePreviewService
                         var peaks = new YouTubePreviewPeaks(); peaks.Append(pcm);
                         var frame = peaks.Snapshot(length / 176400d, 0);
                         StorePrepared(video.Id, new(pcm, frame));
-                        return CopyFrame(frame);
+                        return new YouTubePreparedAudio(pcm, CopyFrame(frame));
                     }
                     catch (Exception) when (cached && attempt == 0 && !cancellation.IsCancellationRequested)
                     { cache.Remove(video.Id); cached = false; }

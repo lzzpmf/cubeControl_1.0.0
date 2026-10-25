@@ -93,7 +93,7 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
         RefreshOutputs = new UiCommand(() => _ = RefreshDevices());
         owner.PropertyChanged += OwnerChanged;
         owner.Ir.PropertyChanged += IrChanged;
-        timer.Tick += (_, _) => Refresh(); timer.Start();
+        timer.Tick += (_, _) => Refresh();
     }
     private void OwnerChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -108,6 +108,7 @@ public sealed class IrAuditionViewModel : Observable, IDisposable
         float peak = audio.ConsumePeak();
         OutputMeter = outputEnvelope.Update(peak, IsPlaying, System.Diagnostics.Stopwatch.GetTimestamp() / (double)System.Diagnostics.Stopwatch.Frequency);
         OutputLevel = IsPlaying ? Math.Clamp(peak, 0, 1) * 100 : 0;
+        if (IsPlaying || opening) timer.Start(); else timer.Stop();
         Notify(nameof(Progress)); Notify(nameof(ConnectionLabel)); Notify(nameof(OutputStateLabel)); Notify(nameof(ContextStatus));
         CommandManager.InvalidateRequerySuggested();
     }

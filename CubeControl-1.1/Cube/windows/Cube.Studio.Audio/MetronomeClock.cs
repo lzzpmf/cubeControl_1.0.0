@@ -4,11 +4,34 @@ namespace Cube.Studio.Audio;
 // The hardware callback only reads an immutable control record and processes preallocated samples.
 internal sealed class MetronomeClock
 {
+    // Normalize the synthesized source to 0 dBFS before the user's gain.
+    // Built once outside the audio callback; keep the existing output peak guard
+    // for positive gain and sums with backing audio.
+    private static readonly double[] sourcePeaks = [
+        SourcePeak(2400, 160), SourcePeak(1700, 160),
+        SourcePeak(1000, 160), SourcePeak(700, 160),
+        SourcePeak(1600, 160), SourcePeak(1100, 160),
+        SourcePeak(1800, 90), SourcePeak(1200, 90)];
+
+    private static double SourcePeak(double frequency, double decay)
+    {
+        double peak = 0;
+        for (int i = 0; i <= 11520; i++)
+        {
+            double age = i / 192000d;
+            peak = Math.Max(peak, Math.Abs(Math.Sin(age * frequency * 2 * Math.PI)
+                * Math.Min(1, age / .0007) * Math.Exp(-age * decay)));
+        }
+        return peak;
+    }
+
     private sealed record Control(StudioMetronomeSettings Settings, long Reset);
     private Control control = new(new(), 0);
     private long appliedReset = -1, beat;
     private double phase;
     private bool pulse;
+    internal MetronomeClock() => _ = sourcePeaks.Length;
+
     internal bool IsPulse => Volatile.Read(ref pulse);
     internal StudioMetronomeSettings Settings => Volatile.Read(ref control).Settings;
 
@@ -28,7 +51,8 @@ internal sealed class MetronomeClock
         double increment = settings.Bpm / (60 * sampleRate) * (eighths ? 2 : 1);
         double period = 60 / settings.Bpm / (eighths ? 2 : 1);
         int beats = settings.Meter == "3/4" ? 3 : eighths ? 6 : 4;
-        double volume = .35 * AudioRenderer.Gain(settings.VolumeDb);
+        double volume = AudioRenderer.Gain(settings.VolumeDb);
+        int soundIndex = settings.Sound switch { "Madeira" => 2, "Bloco" => 4, "Beep" => 6, _ => 0 };
         for (int i = 0; i + 1 < stereo.Length; i += 2)
         {
             double age = phase * period;
@@ -41,7 +65,9 @@ internal sealed class MetronomeClock
                     "Beep" => accent ? 1800 : 1200, _ => accent ? 2400 : 1700
                 };
                 double envelope = Math.Min(1, age / .0007) * Math.Exp(-age * (settings.Sound == "Beep" ? 90 : 160));
-                float click = (float)(volume * Math.Sin(age * frequency * 2 * Math.PI) * envelope);
+                double normalized = Math.Clamp(Math.Sin(age * frequency * 2 * Math.PI) * envelope
+                    / sourcePeaks[soundIndex + (accent ? 0 : 1)], -1, 1);
+                float click = (float)(volume * normalized);
                 stereo[i] += click; stereo[i + 1] += click;
             }
             phase += increment;

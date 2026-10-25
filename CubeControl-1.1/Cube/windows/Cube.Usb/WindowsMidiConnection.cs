@@ -23,9 +23,9 @@ public sealed class WindowsMidiConnection : IMidiConnection
     }
 
     public static async Task<MidiPort[]> Inputs() =>
-        (await DeviceInformation.FindAllAsync(MidiInPort.GetDeviceSelector()).AsTask().WaitAsync(TimeSpan.FromSeconds(2.5))).Select(d => new MidiPort(d.Id, d.Name)).ToArray();
+        (await DeviceInformation.FindAllAsync(MidiInPort.GetDeviceSelector()).AsTask().WaitAsync(TimeSpan.FromSeconds(2.5)).ConfigureAwait(false)).Select(d => new MidiPort(d.Id, d.Name)).ToArray();
     public static async Task<MidiPort[]> Outputs() =>
-        (await DeviceInformation.FindAllAsync(MidiOutPort.GetDeviceSelector()).AsTask().WaitAsync(TimeSpan.FromSeconds(2.5))).Select(d => new MidiPort(d.Id, d.Name)).ToArray();
+        (await DeviceInformation.FindAllAsync(MidiOutPort.GetDeviceSelector()).AsTask().WaitAsync(TimeSpan.FromSeconds(2.5)).ConfigureAwait(false)).Select(d => new MidiPort(d.Id, d.Name)).ToArray();
 
     public static async Task<WindowsMidiConnection> Open(string inputId, string outputId)
     {

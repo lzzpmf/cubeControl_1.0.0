@@ -20,6 +20,65 @@ namespace Cube.Desktop.Studio.Controls;
 public sealed class TimelineControl : FrameworkElement
 {
     public const double RulerHeight = 26;
+    private double EffectiveRulerHeight => RulerHeight;
+    public static readonly DependencyProperty VisibleTrackIndexProperty = DependencyProperty.Register(
+        nameof(VisibleTrackIndex), typeof(int), typeof(TimelineControl), new FrameworkPropertyMetadata(-1, FrameworkPropertyMetadataOptions.AffectsRender));
+    public int VisibleTrackIndex { get => (int)GetValue(VisibleTrackIndexProperty); set => SetValue(VisibleTrackIndexProperty, value); }
+    public void MatchViewport(TimelineControl other)
+    {
+        _zoom = other._zoom; _viewStart = other._viewStart;
+        InvalidateContent();
+    }
+    private readonly DrawingVisual _cursorVisual = new();
+    private readonly TranslateTransform _cursorTransform = new();
+    private DrawingGroup? _contentDrawing;
+    private readonly Dictionary<string, Brush> _drawingBrushes = new();
+    private bool _contentDirty = true, _drawingContent;
+    private double _drawingDuration, _drawingScale;
+    private int _contentBuildCount;
+    protected override int VisualChildrenCount => 1;
+    protected override Visual GetVisualChild(int index) => index == 0 ? _cursorVisual : throw new ArgumentOutOfRangeException(nameof(index));
+    private void InvalidateContent()
+    {
+        _contentDirty = true;
+        base.InvalidateVisual();
+    }
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+        if (e.Property == ThemeRevisionProperty || e.Property == VisibleTrackIndexProperty || e.Property == PracticeModeProperty || e.Property == PeakProviderProperty)
+            InvalidateContent();
+    }
+    private void UpdateCursor()
+    {
+        double x = Project == null ? -100 : TimeToX(Project.Position);
+        _cursorVisual.Opacity = IsVisible && x >= 0 && x <= ActualWidth ? 1 : 0;
+        _cursorTransform.X = x;
+    }
+    private void RebuildCursor()
+    {
+        using var dc = _cursorVisual.RenderOpen();
+        if (Project == null || ActualHeight < 1) return;
+        var accent = ResourceBrush(VisibleTrackIndex >= 0 ? "BackingPlayhead" : "CubeAccent", "#86B8FF");
+        double top = VisibleTrackIndex >= 0 ? EffectiveRulerHeight - 10 : 0;
+        dc.DrawLine(new Pen(accent, 1.5), new Point(0, top), new Point(0, ActualHeight));
+        var marker = new StreamGeometry();
+        using (var path = marker.Open())
+        {
+            path.BeginFigure(new Point(-7, top), true, true);
+            path.LineTo(new Point(7, top), true, false);
+            path.LineTo(new Point(0, top + 9), true, false);
+        }
+        marker.Freeze(); dc.DrawGeometry(accent, null, marker);
+    }
+    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+    {
+        base.OnRenderSizeChanged(sizeInfo); InvalidateContent();
+    }
+    protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
+    {
+        base.OnDpiChanged(oldDpi, newDpi); InvalidateContent();
+    }
     private const double MinimumClipDuration = .15;
     private readonly List<INotifyPropertyChanged> _propertySubscriptions = [];
     private readonly List<INotifyCollectionChanged> _collectionSubscriptions = [];
@@ -61,13 +120,16 @@ public sealed class TimelineControl : FrameworkElement
 
     public TimelineControl()
     {
+        AddVisualChild(_cursorVisual);
+        _cursorVisual.Transform = _cursorTransform;
+        IsVisibleChanged += (_, _) => { if (IsVisible) InvalidateContent(); };
         SetResourceReference(ThemeRevisionProperty, "CubeThemeRevision");
         Focusable = true;
         ClipToBounds = true;
         AllowDrop = true;
         ToolTip = LanguageService.T("Clique: posicionar cursor · S: dividir · Ctrl+scroll: altura da track · Shift+scroll: zoom");
         Loaded += (_, _) => { RewireSubscriptions(); if (PeakProvider is { } peaks) { peaks.PeaksChanged -= PeaksChanged; peaks.PeaksChanged += PeaksChanged; } LanguageService.Instance.PropertyChanged += LanguageChanged; };
-        Unloaded += (_, _) => { CancelGesture(); DetachSubscriptions(); if (PeakProvider is { } peaks) peaks.PeaksChanged -= PeaksChanged; LanguageService.Instance.PropertyChanged -= LanguageChanged; };
+        Unloaded += (_, _) => { _contentDrawing = null; CancelGesture(); DetachSubscriptions(); if (PeakProvider is { } peaks) peaks.PeaksChanged -= PeaksChanged; LanguageService.Instance.PropertyChanged -= LanguageChanged; };
     }
 
     /// <summary>Use this same calculation for the adjacent native track headers.</summary>
@@ -89,23 +151,43 @@ public sealed class TimelineControl : FrameworkElement
         _zoom = 1;
         _viewStart = 0;
         ViewChanged?.Invoke(this, EventArgs.Empty);
-        InvalidateVisual();
+        InvalidateContent();
     }
 
     protected override Size MeasureOverride(Size availableSize) => new(
         double.IsFinite(availableSize.Width) ? availableSize.Width : 600,
         double.IsFinite(availableSize.Height) ? availableSize.Height : 350);
 
-    private double TotalDuration => Math.Max(1, Math.Max(Project?.Duration ?? 80,
+    private double TotalDuration => _drawingContent ? _drawingDuration : CalculateDuration();
+    private double CalculateDuration() => Math.Max(1, Math.Max(Project?.Duration ?? 80,
         Project?.Tracks.SelectMany(track => track.Clips).Select(clip => clip.Start + clip.Duration).DefaultIfEmpty(0).Max() ?? 0));
     private double VisibleDuration => TotalDuration / Math.Max(1, _zoom);
-    private double PixelsPerSecond => ActualWidth / Math.Max(.001, VisibleDuration);
+    private double PixelsPerSecond => _drawingContent ? _drawingScale : ActualWidth / Math.Max(.001, VisibleDuration);
     private double TimeToX(double time) => (time - _viewStart) * PixelsPerSecond;
     private double XToTime(double x) => Math.Clamp(_viewStart + x / Math.Max(.001, PixelsPerSecond), 0, TotalDuration);
 
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
+        if (!IsVisible) return;
+        if (_contentDirty || _contentDrawing == null)
+        {
+            _drawingBrushes.Clear();
+            _drawingDuration = CalculateDuration();
+            _drawingScale = ActualWidth / Math.Max(.001, _drawingDuration / Math.Max(1, _zoom));
+            var drawing = new DrawingGroup();
+            _drawingContent = true;
+            try { using var content = drawing.Open(); DrawContent(content); }
+            finally { _drawingContent = false; }
+            if (drawing.CanFreeze) drawing.Freeze();
+            _contentDrawing = drawing; _contentDirty = false; _contentBuildCount++;
+            RebuildCursor();
+        }
+        dc.DrawDrawing(_contentDrawing);
+        UpdateCursor();
+    }
+    private void DrawContent(DrawingContext dc)
+    {
         var background = ResourceBrush("CubeCanvas", "#191C22");
         var surface = ResourceBrush("CubeCard", "#232730");
         var line = ResourceBrush("CubeBorder", "#3B4351");
@@ -125,30 +207,15 @@ public sealed class TimelineControl : FrameworkElement
             var clips = DisplayClips(track).ToList();
             var muted = track.IsMuted || (anySolo && !track.IsSolo);
             if (muted) dc.PushOpacity(.45);
-            foreach (var clip in clips) DrawClip(dc, clip, lane, index);
+            foreach (var clip in clips) DrawClip(dc, clip, lane, Project.Tracks.IndexOf(track));
             DrawCrossfades(dc, clips, lane);
             if (muted) dc.Pop();
             if (clips.Count == 0)
-                DrawText(dc, LanguageService.T(PracticeMode ? index == 0 ? "Importe um áudio ou escolha uma backing" : "Grave sua guitarra · R" : "Arraste um áudio"), new Point(14, lane.Top + lane.Height / 2 - 7), ResourceBrush("Muted", "#B5BFCE"), ActualWidth - 28);
+                DrawText(dc, LanguageService.T(PracticeMode ? Project.Tracks.IndexOf(track) == 0 ? "Importe um áudio ou escolha uma backing" : "Grave sua guitarra" : "Arraste um áudio"), new Point(14, lane.Top + lane.Height / 2 - 7), ResourceBrush("Muted", "#B5BFCE"), ActualWidth - 28);
             dc.Pop();
         }
-        dc.DrawRectangle(surface, null, new Rect(0, 0, ActualWidth, Math.Min(RulerHeight, ActualHeight)));
+        dc.DrawRectangle(surface, null, new Rect(0, 0, ActualWidth, Math.Min(EffectiveRulerHeight, ActualHeight)));
         DrawRuler(dc);
-        var cursorX = TimeToX(Project.Position);
-        if (cursorX >= 0 && cursorX <= ActualWidth)
-        {
-            var accent = ResourceBrush("CubeAccent", "#86B8FF");
-            dc.DrawLine(new Pen(accent, 1.5), new Point(cursorX, 0), new Point(cursorX, ActualHeight));
-            var marker = new StreamGeometry();
-            using (var context = marker.Open())
-            {
-                context.BeginFigure(new Point(cursorX - 4, 0), true, true);
-                context.LineTo(new Point(cursorX + 4, 0), true, false);
-                context.LineTo(new Point(cursorX, 5), true, false);
-            }
-            marker.Freeze();
-            dc.DrawGeometry(accent, null, marker);
-        }
         dc.DrawLine(new Pen(line, 1), new Point(.5, 0), new Point(.5, ActualHeight));
     }
 
@@ -165,7 +232,7 @@ public sealed class TimelineControl : FrameworkElement
         for (var time = first; time <= _viewStart + VisibleDuration + seconds; time += seconds)
         {
             var x = TimeToX(time);
-            if (x >= 0 && x <= ActualWidth) dc.DrawLine(pen, new Point(x, RulerHeight), new Point(x, ActualHeight));
+            if (x >= 0 && x <= ActualWidth) dc.DrawLine(pen, new Point(x, EffectiveRulerHeight), new Point(x, ActualHeight));
         }
     }
 
@@ -175,9 +242,9 @@ public sealed class TimelineControl : FrameworkElement
         var (start, end) = LoopBounds();
         var left = Math.Clamp(TimeToX(start), 0, ActualWidth);
         var right = Math.Clamp(TimeToX(end), 0, ActualWidth);
-        if (right > left && ActualHeight > RulerHeight)
+        if (right > left && ActualHeight > EffectiveRulerHeight)
             dc.DrawRectangle(OpacityBrush(ResourceBrush("CubeAccent", "#86B8FF"), .055), null,
-                new Rect(left, RulerHeight, right - left, ActualHeight - RulerHeight));
+                new Rect(left, EffectiveRulerHeight, right - left, ActualHeight - EffectiveRulerHeight));
     }
 
     private void DrawRuler(DrawingContext dc)
@@ -190,17 +257,17 @@ public sealed class TimelineControl : FrameworkElement
         for (var time = first; time <= _viewStart + VisibleDuration; time += step)
         {
             var x = TimeToX(time);
-            var label = FormatTime(time, step);
+            var label = VisibleTrackIndex >= 0 && step >= 1 ? $"{(int)(time / 60)}:{(int)time % 60:00}" : FormatTime(time, step);
             var width = TextWidth(label);
-            DrawText(dc, label, new Point(Math.Clamp(x + 4, 2, Math.Max(2, ActualWidth - width - 2)), 1), secondary, width + 1);
+            DrawText(dc, label, new Point(Math.Clamp(x + 4, 2, Math.Max(2, ActualWidth - width - 2)), VisibleTrackIndex >= 0 ? 4 : 1), secondary, width + 1);
         }
-        if (Project is null || (!Project.LoopEnabled && _gesture?.Kind != DragKind.LoopSelection)) return;
+        if (Project is null || (Project.LoopEnd <= Project.LoopStart && _gesture?.Kind != DragKind.LoopSelection)) return;
         var (start, end) = LoopBounds();
         var left = Math.Clamp(TimeToX(start), 0, ActualWidth);
         var right = Math.Clamp(TimeToX(end), 0, ActualWidth);
         if (right <= left) return;
         var accent = ResourceBrush("CubeAccent", "#86B8FF");
-        var bar = new Rect(left, RulerHeight - 10, right - left, 10);
+        var bar = new Rect(left, EffectiveRulerHeight - 10, right - left, 10);
         dc.DrawRoundedRectangle(ResourceBrush("CubeSelected", "#243D5F"), null, bar, 2, 2);
         dc.DrawLine(new Pen(accent, 2), new Point(left + 1, bar.Top), new Point(left + 1, bar.Bottom));
         dc.DrawLine(new Pen(accent, 2), new Point(right - 1, bar.Top), new Point(right - 1, bar.Bottom));
@@ -211,13 +278,47 @@ public sealed class TimelineControl : FrameworkElement
         }
     }
 
+    private void DrawPracticeWaveform(DrawingContext dc, DisplayClip clip, Rect lane, int index)
+    {
+        var rect = ClipRect(clip, lane);
+        if (rect.Right < 0 || rect.Left > ActualWidth) return;
+        var brush = ThemeService.Instance.IsHighContrast ? SystemColors.WindowTextBrush
+            : ResourceBrush(index == 0 ? "BackingPlayed" : "BackingFuture", "#82ACD2");
+        dc.DrawRectangle(null, new Pen(ResourceBrush("CubeBorder", "#3B4351"), .5), new Rect(0, lane.Top, ActualWidth, lane.Height));
+        var centre = lane.Top + lane.Height / 2;
+        var amplitude = Math.Max(2, lane.Height / 2 - 5);
+        var sourceStart = clip.Model.SourceTimeAt(clip.Model.Start);
+        var ratio = clip.Model.SourceTimeAt(clip.Model.Start + 1) - sourceStart;
+        var geometry = new StreamGeometry();
+        using (var path = geometry.Open())
+        {
+            for (double x = Math.Max(0, rect.Left); x < Math.Min(rect.Right, ActualWidth); x += 1.5)
+            {
+                var time = sourceStart + (clip.SourceOffset - clip.Model.SourceOffset + (x - rect.Left) / Math.Max(.001, PixelsPerSecond)) * ratio;
+                var peak = PeakProvider?.GetPeak(clip.Model, time, 1.5 / Math.Max(.001, PixelsPerSecond) * ratio) ?? 0;
+                var height = Math.Max(.5, (float.IsFinite(peak) ? Math.Clamp(peak, 0, 1) : 0) * amplitude);
+                path.BeginFigure(new Point(x, centre - height), false, false);
+                path.LineTo(new Point(x, centre + height), true, false);
+            }
+        }
+        geometry.Freeze();
+        dc.DrawGeometry(null, new Pen(brush, 1.3), geometry);
+    }
+
     private void DrawClip(DrawingContext dc, DisplayClip clip, Rect lane, int trackIndex)
     {
         if (lane.Height < 20) return;
+        if (PracticeMode && VisibleTrackIndex >= 0)
+        {
+            DrawPracticeWaveform(dc, clip, lane, trackIndex);
+            return;
+        }
         var rect = ClipRect(clip, lane);
         if (rect.Right < 0 || rect.Left > ActualWidth) return;
         var guitar = trackIndex is 1 or 2;
-        var stroke = ResourceBrush(guitar ? "BackingPlayed" : "CubeAccent", guitar ? "#8AD4B1" : "#86B8FF");
+        var stroke = PracticeMode
+            ? ResourceBrush(guitar ? "BackingFuture" : "BackingPlayed", guitar ? "#82ACD2" : "#80B8A8")
+            : ResourceBrush(guitar ? "BackingPlayed" : "CubeAccent", guitar ? "#8AD4B1" : "#86B8FF");
         var fill = ResourceBrush(guitar ? "CubeInset" : "CubeSelected", guitar ? "#254237" : "#243D5F");
         var selected = Project?.SelectedClipId == clip.Model.Id;
         if (ThemeService.Instance.IsHighContrast)
@@ -290,7 +391,7 @@ public sealed class TimelineControl : FrameworkElement
         if (Project is null) return;
         Focus();
         var point = e.GetPosition(this);
-        if (point.Y < RulerHeight)
+        if (point.Y < EffectiveRulerHeight)
         {
             if (PracticeMode && CanEdit && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
@@ -299,7 +400,7 @@ public sealed class TimelineControl : FrameworkElement
                 e.Handled = true;
                 return;
             }
-            if (CanEdit && Project.LoopEnabled && point.Y >= RulerHeight - 13)
+            if (CanEdit && Project.LoopEnd > Project.LoopStart && point.Y >= EffectiveRulerHeight - 13)
             {
                 var startDistance = Math.Abs(point.X - TimeToX(Project.LoopStart));
                 var endDistance = Math.Abs(point.X - TimeToX(Project.LoopEnd));
@@ -361,7 +462,7 @@ public sealed class TimelineControl : FrameworkElement
         {
             case DragKind.Move:
                 gesture.Start = Math.Clamp(Snap(gesture.OriginalStart + delta), 0, Math.Max(0, TotalDuration - gesture.OriginalDuration));
-                gesture.TargetTrackId = TrackAt(Math.Clamp(point.Y, RulerHeight + 1, Math.Max(RulerHeight + 1, ActualHeight - 1)))?.Id ?? gesture.TrackId;
+                gesture.TargetTrackId = TrackAt(Math.Clamp(point.Y, EffectiveRulerHeight + 1, Math.Max(EffectiveRulerHeight + 1, ActualHeight - 1)))?.Id ?? gesture.TrackId;
                 break;
             case DragKind.TrimLeft:
                 var minimumStart = Math.Max(0, gesture.OriginalStart - gesture.OriginalSourceOffset);
@@ -389,7 +490,7 @@ public sealed class TimelineControl : FrameworkElement
                 break;
         }
         Cursor = gesture.Kind == DragKind.Move ? Cursors.SizeAll : Cursors.SizeWE;
-        InvalidateVisual();
+        InvalidateContent();
         e.Handled = true;
     }
 
@@ -416,7 +517,7 @@ public sealed class TimelineControl : FrameworkElement
                 });
         }
         Cursor = Cursors.Arrow;
-        InvalidateVisual();
+        InvalidateContent();
         e.Handled = true;
     }
 
@@ -490,14 +591,14 @@ public sealed class TimelineControl : FrameworkElement
             _zoom = Math.Clamp(_zoom * (e.Delta > 0 ? 1.25 : .8), 1, 32);
             _viewStart = Math.Clamp(anchor - point.X / Math.Max(.001, ActualWidth) * VisibleDuration, 0, Math.Max(0, TotalDuration - VisibleDuration));
             ViewChanged?.Invoke(this, EventArgs.Empty);
-            InvalidateVisual();
+            InvalidateContent();
             e.Handled = true;
         }
         else if (_zoom > 1)
         {
             _viewStart = Math.Clamp(_viewStart - Math.Sign(e.Delta) * VisibleDuration * .12, 0, Math.Max(0, TotalDuration - VisibleDuration));
             ViewChanged?.Invoke(this, EventArgs.Empty);
-            InvalidateVisual();
+            InvalidateContent();
             e.Handled = true;
         }
     }
@@ -536,10 +637,10 @@ public sealed class TimelineControl : FrameworkElement
             e.Effects = _dropTrack is null ? DragDropEffects.None : DragDropEffects.Copy;
         }
         else { _dropTrack = null; e.Effects = DragDropEffects.None; }
-        InvalidateVisual();
+        InvalidateContent();
         e.Handled = true;
     }
-    protected override void OnDragLeave(DragEventArgs e) { base.OnDragLeave(e); _dropTrack = null; InvalidateVisual(); }
+    protected override void OnDragLeave(DragEventArgs e) { base.OnDragLeave(e); _dropTrack = null; InvalidateContent(); }
     protected override void OnDrop(DragEventArgs e)
     {
         base.OnDrop(e);
@@ -548,7 +649,7 @@ public sealed class TimelineControl : FrameworkElement
         var track = TrackAt(point.Y);
         if (CanEdit && track is not null && e.Data.GetData(DataFormats.FileDrop) is string[] paths && paths.Length > 0)
             FilesDropped?.Invoke(this, new TimelineFilesDroppedEventArgs(paths, track.Id, XToTime(point.X)));
-        InvalidateVisual();
+        InvalidateContent();
         e.Handled = true;
     }
 
@@ -573,7 +674,7 @@ public sealed class TimelineControl : FrameworkElement
         }
         else
         {
-            Cursor = point.Y < RulerHeight ? Cursors.IBeam : Cursors.Arrow;
+            Cursor = point.Y < EffectiveRulerHeight ? Cursors.IBeam : Cursors.Arrow;
             ToolTip = LanguageService.T(PracticeMode ? "Clique: posicionar cursor · Shift+arraste na régua: A/B · Shift+rolagem: zoom · Ctrl+0: enquadrar" : "Clique: posicionar cursor · Ctrl+scroll: altura da track · Shift+scroll: zoom · Ctrl+0: enquadrar projeto");
         }
     }
@@ -591,8 +692,14 @@ public sealed class TimelineControl : FrameworkElement
     {
         var result = new List<(TrackModel Track, Rect Bounds)>();
         if (Project is null) return result;
-        var heights = CalculateTrackHeights(Project, ActualHeight - RulerHeight);
-        var y = RulerHeight;
+        if (VisibleTrackIndex >= 0)
+        {
+            if (VisibleTrackIndex < Project.Tracks.Count)
+                result.Add((Project.Tracks[VisibleTrackIndex], new Rect(0, EffectiveRulerHeight, Math.Max(0, ActualWidth), Math.Max(0, ActualHeight - EffectiveRulerHeight))));
+            return result;
+        }
+        var heights = CalculateTrackHeights(Project, ActualHeight - EffectiveRulerHeight);
+        var y = EffectiveRulerHeight;
         for (var i = 0; i < Project.Tracks.Count; i++)
         {
             result.Add((Project.Tracks[i], new Rect(0, y, Math.Max(0, ActualWidth), heights[i])));
@@ -632,7 +739,7 @@ public sealed class TimelineControl : FrameworkElement
         _gesture = null;
         if (IsMouseCaptured) ReleaseMouseCapture();
         Cursor = Cursors.Arrow;
-        InvalidateVisual();
+        InvalidateContent();
     }
     private void RewireSubscriptions()
     {
@@ -653,7 +760,7 @@ public sealed class TimelineControl : FrameworkElement
                 foreach (var take in clip.Takes) Subscribe(take);
             }
         }
-        InvalidateVisual();
+        InvalidateContent();
     }
     private void Subscribe(object item)
     {
@@ -677,8 +784,15 @@ public sealed class TimelineControl : FrameworkElement
     }
     private void ModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        // Volume and pan are rendered by the adjacent native knobs, not the waveform.
+        if (sender is TrackModel && e.PropertyName is nameof(TrackModel.VolumeDb) or nameof(TrackModel.Pan)) return;
+        if (ReferenceEquals(sender, Project) && e.PropertyName == nameof(ProjectModel.Position))
+        {
+            if (IsVisible) UpdateCursor();
+            return;
+        }
         _viewStart = Math.Clamp(_viewStart, 0, Math.Max(0, TotalDuration - VisibleDuration));
-        InvalidateVisual();
+        InvalidateContent();
     }
     private void ModelCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => RewireSubscriptions();
     private static void ProjectChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -688,11 +802,11 @@ public sealed class TimelineControl : FrameworkElement
         timeline.ResetView();
         timeline.RewireSubscriptions();
     }
-    private void LanguageChanged(object? sender, PropertyChangedEventArgs e) => InvalidateVisual();
+    private void LanguageChanged(object? sender, PropertyChangedEventArgs e) => InvalidateContent();
     private void PeaksChanged(object? sender, EventArgs e)
     {
-        if (Dispatcher.CheckAccess()) InvalidateVisual();
-        else Dispatcher.BeginInvoke(InvalidateVisual);
+        if (Dispatcher.CheckAccess()) InvalidateContent();
+        else Dispatcher.BeginInvoke(InvalidateContent);
     }
     private static void PeaksProviderChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -705,7 +819,14 @@ public sealed class TimelineControl : FrameworkElement
         if (!(bool)e.NewValue) ((TimelineControl)d).CancelGesture();
     }
 
-    private Brush ResourceBrush(string key, string fallback) => TryFindResource(key) as Brush ?? new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallback));
+    private Brush ResourceBrush(string key, string fallback)
+    {
+        if (_drawingBrushes.TryGetValue(key, out var cached)) return cached;
+        var brush = (TryFindResource(key) as Brush)?.CloneCurrentValue() ?? new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallback));
+        if (brush.CanFreeze) brush.Freeze();
+        _drawingBrushes[key] = brush;
+        return brush;
+    }
     private static Brush OpacityBrush(Brush brush, double opacity)
     {
         var clone = brush.Clone();
@@ -717,12 +838,12 @@ public sealed class TimelineControl : FrameworkElement
     {
         if (maxWidth <= 1) return;
         var formatted = new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-            new Typeface("Segoe UI"), 11, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip)
+            new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), TryFindResource("CubeFontSizeCaption") is double fontSize ? fontSize : 12, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip)
         { MaxTextWidth = maxWidth, MaxLineCount = 1, Trimming = TextTrimming.CharacterEllipsis };
         dc.DrawText(formatted, origin);
     }
     private double TextWidth(string text) => new FormattedText(text, CultureInfo.CurrentUICulture, FlowDirection.LeftToRight,
-        new Typeface("Segoe UI"), 11, Brushes.Black, VisualTreeHelper.GetDpi(this).PixelsPerDip).Width;
+        new Typeface(TryFindResource("CubeUiFont") as FontFamily ?? new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal), TryFindResource("CubeFontSizeCaption") is double fontSize ? fontSize : 12, Brushes.Black, VisualTreeHelper.GetDpi(this).PixelsPerDip).Width;
     private static string FormatTime(double seconds, double interval)
     {
         var time = TimeSpan.FromSeconds(Math.Max(0, seconds));

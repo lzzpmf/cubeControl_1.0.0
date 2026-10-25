@@ -16,7 +16,15 @@ public sealed partial class BackingTracksViewModel
     {
         if (GetDownloadedPath(video.Id) is { } existing) return existing;
         if (YouTubeDownloading) return null;
-        await DownloadYouTube(video);
+        if (string.IsNullOrWhiteSpace(YouTubeDownloadFolder))
+        {
+            string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyMusic), "CubeControl", "BackingTracks");
+            Directory.CreateDirectory(folder);
+            VerifyDownloadFolder(folder);
+            SaveYouTubeDownloadSettings(folder);
+            YouTubeDownloadFolder = folder;
+        }
+        await DownloadYouTubeTo(video, AvailableDownloadPath(YouTubeDownloadFolder, video.Title, video.Id), originalAudio: true);
         return GetDownloadedPath(video.Id);
     }
     private void RememberYouTubeDownload(string id, string path)

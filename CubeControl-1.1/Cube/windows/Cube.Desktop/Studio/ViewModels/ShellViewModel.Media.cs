@@ -36,7 +36,7 @@ public sealed partial class ShellViewModel
         _backingPreparation?.Cancel();
         return ++_backingIntent;
     }
-    internal async Task LoadBackingAsync(string path, long intent, long generation)
+    internal async Task LoadBackingAsync(string path, long intent, long generation, bool discardWithoutPrompt = false)
     {
         if (IsRecording || IsBusy || _closePending || intent != _backingIntent || generation != _sessionGeneration || _disposed) return;
         using var preparation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
@@ -48,7 +48,7 @@ public sealed partial class ShellViewModel
             if (media.Duration < ClipModel.MinimumDuration) throw new InvalidDataException(T("O áudio é curto demais."));
             preparation.Token.ThrowIfCancellationRequested();
             if (intent != _backingIntent || generation != _sessionGeneration || !CanReplaceBacking || _disposed) return;
-            if (!await ConfirmDiscardAsync()) return;
+            if (!discardWithoutPrompt && !await ConfirmDiscardAsync()) return;
             // A dialog or an analysis can finish after the musician chose another backing.
             if (intent != _backingIntent || generation != _sessionGeneration || !CanReplaceBacking || _disposed) return;
             await ExecuteTransportAsync(async () =>
@@ -71,22 +71,31 @@ public sealed partial class ShellViewModel
     {
         var backing = Session.Backing;
         var attempt = IsRecording ? null : SelectedAttempt;
+        var attemptClip = attempt == null ? null : OriginalAttemptClip(attempt);
         return new StudioSnapshot
         {
             PlaybackRate = Session.SpeedPercent / 100, Semitones = Session.Semitones,
             Duration = Math.Max(IsRecording ? Math.Min(86400, Session.Position + .15) : 0,
-                Math.Max(Session.LoopEnabled ? Session.LoopEnd : 0, Math.Max(backing?.End ?? 0, attempt?.End ?? 0))),
+                Math.Max(Session.LoopEnabled ? Session.LoopEnd : 0, Math.Max(backing?.End ?? 0, attemptClip == null ? 0 : attemptClip.Start + attemptClip.Duration))),
             LoopEnabled = Session.LoopEnabled, LoopStart = Session.LoopStart, LoopEnd = Session.LoopEnd,
             MetronomeEnabled = false,
             Tracks = new[]
             {
-                new StudioTrack { Id = Project.Tracks[0].Id, VolumeDb = Session.BackingMix.VolumeDb, Muted = Session.BackingMix.Muted,
+                new StudioTrack { Id = Project.Tracks[0].Id, VolumeDb = Session.BackingMix.VolumeDb, Muted = Session.BackingMix.Muted, Pan = Session.BackingMix.Pan, Solo = Session.BackingMix.Solo,
                     Clips = includeBacking && backing != null ? [AudioClip(backing)] : [] },
-                new StudioTrack { Id = Project.Tracks[1].Id, VolumeDb = Session.AttemptMix.VolumeDb, Muted = Session.AttemptMix.Muted,
-                    Clips = attempt != null ? [AudioClip(attempt)] : [] }
+                new StudioTrack { Id = Project.Tracks[1].Id, VolumeDb = Session.AttemptMix.VolumeDb, Muted = Session.AttemptMix.Muted, Pan = Session.AttemptMix.Pan, Solo = Session.AttemptMix.Solo,
+                    Clips = attemptClip != null ? [attemptClip] : [] }
             }
         };
     }
+    // The transport uses backing-reference seconds. Compensate that clock for the
+    // guitar so its PCM is heard at its original pitch and speed, including exports.
+    private StudioClip OriginalAttemptClip(PracticeAttempt attempt) => AudioClip(attempt) with
+    {
+        Duration = attempt.Duration * Session.Speed / attempt.RecordedSpeed,
+        RecordedSpeed = Session.Speed,
+        RecordedPitch = Session.Semitones
+    };
     private static StudioClip AudioClip(PracticeSource source) => new()
     {
         Id = source.Id, Path = source.SourcePath!, Start = source.AudibleStart, Duration = source.Duration,

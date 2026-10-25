@@ -17,6 +17,9 @@ internal sealed class AudioRing : ISampleProvider
     private readonly StereoPeakGuard peakGuard;
     internal MetronomeClock? Metronome { get; set; }
     internal volatile bool MediaEnabled = true;
+    internal AutoResetEvent? WorkAvailable;
+    internal int LowWaterSamples;
+    private int refillRequested;
     internal float Peak;
     internal long Underruns;
     internal int Count { get { var current = Volatile.Read(ref storage); return (int)(Volatile.Read(ref current.Write) - Volatile.Read(ref current.Read)); } }
@@ -42,6 +45,8 @@ internal sealed class AudioRing : ISampleProvider
             samples.AsSpan(index, first).CopyTo(destination); samples.AsSpan(0, count - first).CopyTo(destination[first..]);
             if (count < destination.Length) { destination[count..].Clear(); Interlocked.Increment(ref Underruns); }
             Volatile.Write(ref current.Read, r + count);
+            if (Volatile.Read(ref current.Write) - (r + count) < LowWaterSamples && Interlocked.Exchange(ref refillRequested, 1) == 0)
+                WorkAvailable?.Set();
         }
         else destination.Clear();
         var metronome = Metronome;
@@ -57,7 +62,8 @@ internal sealed class AudioRing : ISampleProvider
     }
     // Swap on the producer thread. A callback already reading the old buffer finishes safely;
     // the metronome continues on its independent clock without stopping the device.
-    internal void Clear() { Volatile.Write(ref storage, new(capacity)); Interlocked.Exchange(ref Underruns, 0); }
+    internal void ArmRefill() => Volatile.Write(ref refillRequested, 0);
+    internal void Clear() { Volatile.Write(ref storage, new(capacity)); Interlocked.Exchange(ref Underruns, 0); ArmRefill(); }
 }
 
 internal sealed class CapturePacket(int samples)
@@ -77,6 +83,7 @@ internal sealed class CaptureQueue
     private readonly int channels, firstChannel;
     private long write, read;
     internal volatile bool Enabled;
+    internal AutoResetEvent? WorkAvailable;
     internal int Overflow;
     internal readonly int SampleRate;
     internal int Channels => channels;
@@ -116,6 +123,7 @@ internal sealed class CaptureQueue
         packet.Discontinuity = (flags & AudioClientBufferFlags.DataDiscontinuity) != 0;
         packet.OutputSeconds = double.NaN;
         Volatile.Write(ref write, write + 1);
+        WorkAvailable?.Set();
     }
     internal void Asio(in AsioProcessBuffers buffers, double outputSeconds)
     {
@@ -129,6 +137,7 @@ internal sealed class CaptureQueue
         packet.Time = buffers.SystemTimeNanoseconds > 0 ? buffers.SystemTimeNanoseconds / 1e9 : ClockSeconds;
         packet.OutputSeconds = outputSeconds;
         packet.Discontinuity = false; Volatile.Write(ref write, write + 1);
+        WorkAvailable?.Set();
     }
     internal CapturePacket? Peek() => read < Volatile.Read(ref write) ? packets[read % packets.Length] : null;
     internal void Release() => Volatile.Write(ref read, read + 1);

@@ -7,6 +7,9 @@ namespace Cube.Desktop.Studio.Controls;
 /// <summary>A recording glyph on the same selectable control finish used by Cube's player.</summary>
 public sealed class RecordButtonFace : FrameworkElement
 {
+    public static readonly DependencyProperty IsRecordingProperty = DependencyProperty.Register(
+        nameof(IsRecording), typeof(bool), typeof(RecordButtonFace), new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+    public bool IsRecording { get => (bool)GetValue(IsRecordingProperty); set => SetValue(IsRecordingProperty, value); }
     private static readonly DependencyProperty ThemeRevisionProperty = DependencyProperty.Register("ThemeRevision", typeof(int), typeof(RecordButtonFace), new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender));
     public RecordButtonFace()
     {
@@ -26,6 +29,7 @@ public sealed class RecordButtonFace : FrameworkElement
             dc.DrawImage(face, new Rect(center.X - face.Width * scale / 2, center.Y - face.Height * scale / 2, face.Width * scale, face.Height * scale));
         }
         else dc.DrawEllipse(SystemColors.WindowBrush, new Pen(glyph, 1), center, size * .44, size * .44);
-        dc.DrawEllipse(glyph, null, center, size * .14, size * .14);
+        var recordingBrush = ThemeService.Instance.IsHighContrast ? glyph : IsRecording ? Brushes.Red : Brushes.IndianRed;
+        dc.DrawEllipse(recordingBrush, null, center, size * .14, size * .14);
     }
 }

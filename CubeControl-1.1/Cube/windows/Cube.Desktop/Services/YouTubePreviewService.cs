@@ -9,9 +9,12 @@ namespace Cube.Desktop.Services;
 
 internal interface IYouTubePreviewService
 {
+    Task<YouTubePreparedAudio> PrepareAudioAsync(YouTubeResult video, CancellationToken cancellation);
     Task<YouTubePreviewFrame> PrepareAsync(YouTubeResult video, CancellationToken cancellation);
     Task PlayAsync(YouTubeResult video, string outputId, Func<float> volume, Func<CancellationToken, Task> beforeStart, Action started, CancellationToken cancellation, Action<YouTubePreviewFrame>? progress = null);
 }
+
+internal sealed record YouTubePreparedAudio(byte[] Pcm16, YouTubePreviewFrame Waveform);
 
 // One worker owns the decoder and audio endpoint until both have been released.
 // PCM is streamed through a bounded buffer; no preview files are created.

@@ -8,13 +8,35 @@ public sealed partial class EditorViewModel
     private bool checkingConnection, automaticConnectionPaused, disposed;
     private DateTime nextAutomaticAttempt;
     private bool automaticConnectionAttempt;
+    private DateTime nextPortRefresh;
+    private DispatcherTimer? portsChangedTimer;
 
     internal void StartAutomaticConnection()
     {
         if (disposed || connectionTimer != null) return;
-        connectionTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(600) };
+        connectionTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         connectionTimer.Tick += CheckAutomaticConnection;
+        portsChangedTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        portsChangedTimer.Tick += PortsChanged_Tick;
+        Connection.PortsChanged += PortsChanged;
+        Connection.StartWatching();
         connectionTimer.Start();
+    }
+    private void PortsChanged()
+    {
+        var timer = portsChangedTimer;
+        if (timer == null) return;
+        timer.Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (disposed || portsChangedTimer == null) return;
+            nextPortRefresh = nextAutomaticAttempt = DateTime.MinValue;
+            portsChangedTimer.Stop(); portsChangedTimer.Start();
+        }));
+    }
+    private async void PortsChanged_Tick(object? sender, EventArgs e)
+    {
+        portsChangedTimer?.Stop();
+        await TryAutomaticConnection();
     }
 
     private async void CheckAutomaticConnection(object? sender, EventArgs e) =>
@@ -46,7 +68,8 @@ public sealed partial class EditorViewModel
                 }
                 return;
             }
-            if (DateTime.UtcNow < nextAutomaticAttempt) return;
+            if (DateTime.UtcNow < nextAutomaticAttempt || refreshPorts == null && DateTime.UtcNow < nextPortRefresh) return;
+            nextPortRefresh = DateTime.UtcNow.AddSeconds(10);
             await (refreshPorts ?? Connection.Refresh)();
             // Enumeration yields to the UI: a manual operation or shutdown may have started.
             if (Eligible() && Connection.Input != null && Connection.Output != null)
@@ -68,6 +91,11 @@ public sealed partial class EditorViewModel
     private void StopAutomaticConnection()
     {
         disposed = true;
+        Connection.PortsChanged -= PortsChanged;
+        Connection.StopWatching();
+        portsChangedTimer?.Stop();
+        if (portsChangedTimer != null) portsChangedTimer.Tick -= PortsChanged_Tick;
+        portsChangedTimer = null;
         connectionTimer?.Stop();
         if (connectionTimer != null) connectionTimer.Tick -= CheckAutomaticConnection;
         connectionTimer = null;
