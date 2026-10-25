@@ -1,8 +1,0 @@
-.tools/dotnet/
-**/bin/
-**/obj/
-windows/artifacts/
-
-artifacts/
-__pycache__/
-*.pyc

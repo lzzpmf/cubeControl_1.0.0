@@ -677,13 +677,13 @@
     <ui:Button Content="{loc:Translate Text='Parar'}" Command="{Binding Stop}"/>
    </WrapPanel>
   </Border>
-  <Border x:Name="StudioMiniPlayer" DataContext="{Binding Studio,RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowMiniPlayer,Converter={StaticResource Visible}}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="24" Padding="12" CornerRadius="{DynamicResource CubeCardCornerRadius}" Background="{DynamicResource CubeFloatingSurface}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
-   <WrapPanel>
+  <Border x:Name="StudioMiniPlayer" DataContext="{Binding Studio,RelativeSource={RelativeSource AncestorType=Window}}" Visibility="{Binding ShowMiniPlayer,Converter={StaticResource Visible}}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="24" Padding="12" CornerRadius="{DynamicResource CubeCardCornerRadius}" Background="{DynamicResource CubeFloatingSurface}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="{DynamicResource CubeSurfaceBorderThickness}">
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="{Binding TransportStatus}" VerticalAlignment="Center" Margin="0,0,12,0"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource BodyStrongText}"><Style.Triggers><DataTrigger Binding="{Binding IsRecording}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
-    <TextBlock Text="{Binding TimeDisplay}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-    <ui:Button Content="{loc:Translate Text='Parar'}" Command="{Binding StopCommand}" Margin="0,0,8,0"/>
-    <ui:Button Content="{loc:Translate Text='Abrir Studio'}" Command="{Binding OpenStudioCommand}"/>
-   </WrapPanel>
+    <TextBlock Grid.Column="1" Text="{Binding TimeDisplay}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+    <ui:Button Grid.Column="2" Content="{loc:Translate Text='Parar'}" Command="{Binding StopCommand}" Height="36" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+    <ui:Button Grid.Column="3" Content="{loc:Translate Text='Abrir Studio'}" Command="{Binding OpenStudioCommand}" Height="36" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0"/>
+   </Grid>
   </Border>
   <Border x:Name="BusyOverlay" local:SurfaceMotion.Enabled="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="420" MaxWidth="420" Margin="20" SnapsToDevicePixels="True" UseLayoutRounding="True" IsHitTestVisible="False" Visibility="{Binding ShowBusyPanel,Converter={StaticResource Visible}}">
    <Grid>
