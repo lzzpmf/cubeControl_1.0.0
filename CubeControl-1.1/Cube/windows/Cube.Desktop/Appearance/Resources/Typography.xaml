@@ -8,6 +8,12 @@
 <sys:Double x:Key="CubeSpaceXXL">32</sys:Double>
 <Thickness x:Key="CubePageTitleMargin">0,0,0,6</Thickness>
 <Thickness x:Key="CubePageDescriptionMargin">0,0,0,16</Thickness>
+<!-- Workspace limits in logical units, before the explicit user zoom. -->
+<sys:Double x:Key="CubePedalboardMaxWidth">1600</sys:Double>
+<sys:Double x:Key="CubeIrGridMaxWidth">1600</sys:Double>
+<sys:Double x:Key="CubeHelpMaxWidth">1200</sys:Double>
+<sys:Double x:Key="CubeAmpHeaderMaxWidth">1200</sys:Double>
+<sys:Double x:Key="CubeEqMaxWidth">2200</sys:Double>
 <!-- Shared density and spacing metrics (DIP). -->
 <sys:Double x:Key="CubeControlHeightStandard">40</sys:Double>
 <sys:Double x:Key="CubeControlHeightCompact">32</sys:Double>

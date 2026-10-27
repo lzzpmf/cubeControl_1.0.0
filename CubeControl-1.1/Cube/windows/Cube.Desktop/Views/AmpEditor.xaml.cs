@@ -32,7 +32,7 @@ public partial class AmpEditor : UserControl
     }
     private void UpdateLayoutMode()
     {
-        bool headerWide = ActualWidth >= 800, eqWide = ActualWidth >= 960;
+        bool headerWide = AmpHeader.ActualWidth >= 800, eqWide = ActualWidth >= 960;
         AmpHeader.ColumnDefinitions[1].Width = headerWide ? GridLength.Auto : new GridLength(0);
         Grid.SetColumn(GlobalControls, headerWide ? 1 : 0); Grid.SetRow(GlobalControls, headerWide ? 1 : 2);
         GlobalControls.Margin = new Thickness(0, headerWide ? 8 : 16, 0, 0);
@@ -42,6 +42,19 @@ public partial class AmpEditor : UserControl
         double width = Math.Max(152, Math.Floor((ActualWidth - 24) / 152) * 152);
         AFirstGroup.Width = Math.Min(760, width); ASecondGroup.Width = Math.Min(456, width);
         BFirstGroup.Width = BSecondGroup.Width = Math.Min(456, width); BThirdGroup.Width = Math.Min(304, width);
+        UpdateGraphHeight();
+    }
+    private void EqViewportChanged(object sender, SizeChangedEventArgs e) => UpdateGraphHeight();
+    private void EqViewportScrolled(object sender, ScrollChangedEventArgs e)
+    {
+        if (e.ViewportHeightChange != 0) UpdateGraphHeight();
+    }
+    private void UpdateGraphHeight()
+    {
+        if (EqGraph == null || EqViewport == null) return;
+        double chrome = EqSurface != null && EqSurface.DesiredSize.Height > 0 && EqGraph.ActualHeight > 0
+            ? Math.Max(0, EqSurface.DesiredSize.Height - EqGraph.ActualHeight) : 150;
+        EqGraph.Height = IsCompactLayout ? 280 : Math.Clamp(EqViewport.ActualHeight - chrome - 1, 280, 640);
     }
     private void EditValueClick(object sender, RoutedEventArgs e)
     {

@@ -6,7 +6,7 @@ namespace Cube.Desktop.Appearance;
 
 internal static class UiDensity
 {
-    public static double Factor => .9 * ZoomService.Instance.Percent / 100d;
+    public static double Factor => ZoomService.Instance.Percent / 100d;
     private static bool initialized;
 
     public static void Initialize()
@@ -15,7 +15,7 @@ internal static class UiDensity
         initialized = true;
         // These detached popup windows do not inherit the client's transform.
         // ComboBox and submenu template Popups already inherit it from WPF;
-        // deliberately leave those alone to avoid a second 10% reduction.
+        // deliberately leave those alone to avoid applying zoom twice.
         EventManager.RegisterClassHandler(typeof(ContextMenu), ContextMenu.OpenedEvent,
             new RoutedEventHandler((sender, _) => Scale((FrameworkElement)sender)));
         EventManager.RegisterClassHandler(typeof(ToolTip), ToolTip.OpenedEvent,

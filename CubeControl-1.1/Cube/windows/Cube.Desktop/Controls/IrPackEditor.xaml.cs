@@ -16,6 +16,12 @@ public partial class IrPackEditor : UserControl
     private Border? pressedCard;
     private Point cardPressPosition;
     public IrPackEditor() => InitializeComponent();
+    internal void SetViewportHeight(double height)
+    {
+        Height = height;
+        PackBodyScroll.VerticalScrollBarVisibility = double.IsFinite(height)
+            ? ScrollBarVisibility.Auto : ScrollBarVisibility.Disabled;
+    }
     private void OpenMenuClick(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement element && element.ContextMenu is { } menu)

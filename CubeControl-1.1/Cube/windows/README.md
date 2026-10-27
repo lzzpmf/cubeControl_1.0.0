@@ -32,6 +32,8 @@ Para abrir um pacote existente sem conexão automática, execute `CubeControl.ex
 
 ## Documentação e ferramentas de build
 
+### Manual e pacote
+
 Atualize os guias nos dois idiomas e execute `node scripts/Build-Manual.mjs` na raiz após mudanças no conteúdo. `scripts/Validate-Documentation.ps1` verifica o catálogo e o manual e é chamado pelo build.
 
 O próprio `Build-CubeControl.ps1` prepara as quatro ferramentas necessárias à busca, prévia e download de áudio: yt-dlp, Deno, FFmpeg e ffprobe. As versões, URLs e hashes SHA-256 ficam no script, sem manifesto ou script auxiliar. FFmpeg usa o pacote de versão 8.1.2 Essentials, com espelhos GitHub e gyan.dev, sem depender de compilações diárias com retenção curta.

@@ -3,8 +3,8 @@
   "inputs": {
     "scripts/Build-Manual.mjs": "2b3cb0a23e940c3c9a44893da24e810b5de18dcf55d0beec141d500ecb636692",
     "CubeControl-1.1/Cube/docs/usuario/catalogo.v1.json": "e3397a60c5555e22d71db3658427a13570614aaebd9c819395425affcb4829eb",
-    "CubeControl-1.1/Cube/docs/usuario/pt-BR/primeiros-passos.md": "497671c5cbf959a81adf3e5f2c831c041e40c482d425856fd64816dc5e3f7106",
-    "CubeControl-1.1/Cube/docs/usuario/en-US/primeiros-passos.md": "20ff30553dc07122696bcbd8e2736e10a37d6758e3eb20726db9dee5ecfb3de8",
+    "CubeControl-1.1/Cube/docs/usuario/pt-BR/primeiros-passos.md": "54d6bc63119c9493e0f32202a890304158efd7b80aaf3b55c54495190488e683",
+    "CubeControl-1.1/Cube/docs/usuario/en-US/primeiros-passos.md": "806c7b9613996b296614f3dffc2b1be37fcf65a646dd33c3c65487ad75165f0a",
     "CubeControl-1.1/Cube/docs/usuario/pt-BR/pedaleira.md": "8b488bf76002f2dfb51d99c7a2154d2ccc478a74df90d8d2775729c64a032a2c",
     "CubeControl-1.1/Cube/docs/usuario/en-US/pedaleira.md": "bb31bed7b74121ace99a21d96d865667f5d04853893771856bfd98468f475732",
     "CubeControl-1.1/Cube/docs/usuario/pt-BR/presets.md": "cbc4ceff558bcb201d551fb03793cb0f766bb7a35bd1bdfe00f5dfad31cd65ba",

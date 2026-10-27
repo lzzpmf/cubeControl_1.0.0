@@ -24,7 +24,8 @@
    <Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers>
   </Style>
  </UserControl.Resources>
- <StackPanel>
+ <Grid><Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+ <ScrollViewer x:Name="PackBodyScroll" VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled"><StackPanel>
   <TextBlock Text="{loc:Translate Text='Packs de IRs'}" Style="{StaticResource SectionTitle}"/>
   <TextBlock Text="{loc:Translate Text='Escolha um pack ou monte até oito IRs. Revise a seleção e a distância antes de aplicar.'}" Style="{StaticResource HelpText}" Margin="0,4,0,8"/>
   <TextBlock Text="{loc:Translate Text='1 · Escolher pack'}" Style="{StaticResource CaptionText}" Margin="0,0,0,8"/>
@@ -52,7 +53,7 @@
   </local:AdaptivePanel>
   <TextBlock Text="{loc:Translate Value={Binding DisplayTitle}}" Style="{StaticResource SectionTitle}" TextWrapping="Wrap"/>
   <TextBlock Text="{Binding PackSummary}" Style="{StaticResource CaptionText}" Margin="0,6,0,0"/>
-  <TextBlock MaxHeight="32" TextTrimming="CharacterEllipsis" Margin="0,4,0,8"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PackNotice}">
+  <TextBlock  Margin="0,4,0,8"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PackNotice}">
    <Setter Property="Text" Value="{Binding Description}"/><Setter Property="ToolTip" Value="{Binding Description}"/>
    <Style.Triggers><DataTrigger Binding="{Binding ReadOnly}" Value="True"><Setter Property="Text" Value="{loc:Translate Value={Binding Description}}"/><Setter Property="ToolTip" Value="{loc:Translate Value={Binding Description}}"/></DataTrigger></Style.Triggers>
   </Style></TextBlock.Style></TextBlock>
@@ -62,10 +63,10 @@
   </StackPanel>
   <ui:InfoBar x:Name="PackCreationNotice" Severity="Warning" IsClosable="False" IsOpen="{Binding HasDraftNotice}" Visibility="{Binding HasDraftNotice,Converter={StaticResource Visible}}" Title="{loc:Translate Value={Binding DraftNoticeTitle}}" Message="{loc:Translate Value={Binding DraftNotice}}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
   <TextBlock Text="{loc:Translate Text='2 · Montar ou visualizar'}" Style="{StaticResource CaptionText}" Margin="0,0,0,12"/>
-    <ItemsControl ItemsSource="{Binding Slots}">
-     <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:IrPackGridPanel MinimumCardWidth="180"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+    <ItemsControl MaxWidth="{DynamicResource CubeIrGridMaxWidth}" ItemsSource="{Binding Slots}">
+     <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:IrPackGridPanel MinimumCardWidth="240"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
-      <Border FocusVisualStyle="{DynamicResource DefaultControlFocusVisualStyle}" x:Name="SlotCard" CornerRadius="{DynamicResource CubeCardCornerRadius}" Padding="12" Focusable="True" AllowDrop="True"
+      <Border FocusVisualStyle="{DynamicResource DefaultControlFocusVisualStyle}" x:Name="SlotCard" CornerRadius="{DynamicResource CubeCardCornerRadius}" Padding="12,8" Focusable="True" AllowDrop="True"
        Loaded="SlotLoaded" PreviewKeyDown="SlotKeyDown" PreviewMouseLeftButtonDown="SlotMouseDown" PreviewMouseMove="SlotMouseMove" PreviewMouseLeftButtonUp="SlotMouseUp" ToolTip="{loc:Translate Value={Binding PreviewHint}}"
 
        AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{loc:Translate Value={Binding PreviewHint}}">
@@ -89,32 +90,32 @@
        </ContextMenu></Border.ContextMenu>
        <Grid>
         <StackPanel>
-         <TextBlock Text="{Binding Title}" Style="{StaticResource CaptionText}" Height="40" Margin="0,0,44,0" VerticalAlignment="Center"/>
+         <TextBlock Text="{Binding Title}" Style="{StaticResource CaptionText}" MinHeight="24" TextWrapping="Wrap" Margin="0,0,44,0" VerticalAlignment="Center"/>
          <StackPanel x:Name="SlotContent">
-         <local:GearArt Kind="cab" Image="{Binding Image}" Accent="{DynamicResource CubeAccent}" Height="112" Margin="0,4,0,8" ToolTip="{loc:Translate Value={Binding ImageHint}}" AutomationProperties.HelpText="{loc:Translate Value={Binding ImageHint}}"/>
+         <local:GearArt Kind="cab" Image="{Binding Image}" Accent="{DynamicResource CubeAccent}" Height="112" Margin="0,2,0,4" ToolTip="{loc:Translate Value={Binding ImageHint}}" AutomationProperties.HelpText="{loc:Translate Value={Binding ImageHint}}"/>
          <StackPanel Visibility="{Binding IsPreviewSending,Converter={StaticResource Visible}}" Margin="0,0,0,8">
           <ProgressBar Style="{StaticResource InfiniteProgressBar}" AutomationProperties.Name="{loc:Translate Value={Binding PreviewSendingText}}" AutomationProperties.HelpText="{Binding Title}"/>
           <TextBlock Text="{loc:Translate Value={Binding PreviewSendingText}}" Style="{StaticResource HelpText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite"/>
          </StackPanel>
-         <TextBlock Text="{loc:Translate Value={Binding Name}}" Style="{StaticResource CaptionText}" Foreground="{DynamicResource CubeText}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="40" ToolTip="{Binding Name}"/>
+         <TextBlock Text="{loc:Translate Value={Binding Name}}" Style="{StaticResource CaptionText}" Foreground="{DynamicResource CubeText}" TextAlignment="Center" TextWrapping="Wrap" ToolTip="{Binding Name}"/>
          <TextBlock Text="{Binding CaptureSummary}" Style="{StaticResource PackNotice}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-         <StackPanel Margin="0,8,0,4" HorizontalAlignment="Stretch">
-          <TextBlock Text="{loc:Translate Text='Volume'}" Style="{StaticResource HelpText}" HorizontalAlignment="Center"/>
-          <local:MicrophoneFader Value="{Binding DistanceValue,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Minimum="0" Maximum="99" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" Orientation="Horizontal" Height="40" MaxWidth="180" HorizontalAlignment="Stretch" IsEnabled="{Binding CanSetDistance}" ToolTip="{loc:Translate Text='O movimento ajusta o volume do IR; não altera a distância física da captura.'}" AutomationProperties.Name="{loc:Translate Text='Volume'}" AutomationProperties.HelpText="{Binding Title}"/>
-          <Grid MaxWidth="180" Height="24" Margin="0,2,0,0">
-           <ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker124}" FontSize="20" Width="20" Height="20" HorizontalAlignment="Left" Foreground="{DynamicResource Muted}" Focusable="False" ToolTip="{loc:Translate Text='Menos volume'}" AutomationProperties.Name="{loc:Translate Text='Menos volume'}"/>
-           <ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker224}" FontSize="20" Width="20" Height="20" HorizontalAlignment="Right" Foreground="{DynamicResource Muted}" Focusable="False" ToolTip="{loc:Translate Text='Mais volume'}" AutomationProperties.Name="{loc:Translate Text='Mais volume'}"/>
+         <StackPanel Margin="0,4,0,0" HorizontalAlignment="Stretch">
+          <Grid MaxWidth="220" Height="40" HorizontalAlignment="Stretch">
+           <Grid.ColumnDefinitions><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/></Grid.ColumnDefinitions>
+           <ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker124}" FontSize="20" Width="20" Height="20" Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource Muted}" Focusable="False" ToolTip="{loc:Translate Text='Menos volume'}" AutomationProperties.Name="{loc:Translate Text='Menos volume'}"/>
+          <local:MicrophoneFader Grid.Column="1" x:Name="SlotVolumeFader" Value="{Binding DistanceValue,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Minimum="0" Maximum="99" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" Orientation="Horizontal" Height="40" MaxWidth="180" HorizontalAlignment="Stretch" IsEnabled="{Binding CanSetDistance}" ToolTip="{loc:Translate Text='O movimento ajusta o volume do IR; não altera a distância física da captura.'}" AutomationProperties.Name="{loc:Translate Text='Volume'}" AutomationProperties.HelpText="{Binding Title}"/>
+           <ui:SymbolIcon Symbol="{StaticResource CubeIconSpeaker224}" FontSize="20" Width="20" Height="20" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{DynamicResource Muted}" Focusable="False" ToolTip="{loc:Translate Text='Mais volume'}" AutomationProperties.Name="{loc:Translate Text='Mais volume'}"/>
           </Grid>
           <TextBlock Text="{loc:Translate Value={Binding PreviewStatus}}" Style="{StaticResource PackNotice}" TextWrapping="Wrap" Margin="0,4,0,0"/>
          </StackPanel>
-         <TextBlock Text="{loc:Translate Value={Binding Problem}}" Style="{StaticResource PackNotice}" MaxHeight="32" TextTrimming="CharacterEllipsis" ToolTip="{Binding Problem}"/>
+         <TextBlock Text="{loc:Translate Value={Binding Problem}}" Style="{StaticResource PackNotice}"  ToolTip="{Binding Problem}"/>
          </StackPanel>
         </StackPanel>
         <ui:Button HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding Remove}" Appearance="Transparent" Width="40" Height="40" Padding="0" AutomationProperties.Name="{loc:Translate Text='Remover IR'}" AutomationProperties.HelpText="{Binding Title}" ToolTip="{loc:Translate Text='Remover IR'}">
          <ui:Button.Style><Style TargetType="ui:Button" BasedOn="{StaticResource CubeIconButtonStyle}">
-          <Setter Property="Visibility" Value="Visible"/>
+          <Setter Property="Visibility" Value="Hidden"/>
           <Style.Triggers>
-           <DataTrigger Binding="{Binding ShowRemove}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+           <DataTrigger Binding="{Binding IsMouseOver,ElementName=SlotCard}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
           </Style.Triggers>
          </Style></ui:Button.Style>
          <ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconDelete24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon>
@@ -127,7 +128,8 @@
     </ItemsControl>
     <TextBlock Text="{loc:Translate Text='Arraste um IR para um slot. Arraste os cartões para trocar suas posições.'}" Style="{StaticResource HelpText}" Margin="0,12,0,8"/>
     <TextBlock Text="{loc:Translate Text='Ajuste a distância nos cartões ou na revisão antes de aplicar.'}" Style="{StaticResource HelpText}" Margin="0,0,0,16"/>
-  <WrapPanel x:Name="PackActions" Margin="0,12,0,4" HorizontalAlignment="Right">
+</StackPanel></ScrollViewer>
+ <StackPanel Grid.Row="1">  <WrapPanel x:Name="PackActions" Margin="0,12,0,4" HorizontalAlignment="Right">
    <WrapPanel Margin="0,0,16,8">
     <ui:Button x:Name="ReviewPackButton" Content="{loc:Translate Text='Aplicar'}" Command="{Binding Owner.ApplyIrPack}" Appearance="Primary" Margin="0,0,8,8" ToolTip="{loc:Translate Text='Aplica os IRs preenchidos e seus volumes nos slots do pedal.'}"><ui:Button.Icon><ui:SymbolIcon Symbol="{StaticResource CubeIconArrowReset24}" FontSize="{DynamicResource CubeIconSizeAction}"/></ui:Button.Icon></ui:Button>
     <ui:Button x:Name="RestorePackButton" Content="{loc:Translate Text='Restaurar IRs originais'}" Command="{Binding Owner.RestoreOriginalIrs}" Margin="0,0,0,8" ToolTip="{loc:Translate Text='Disponível quando os arquivos originais BFI/BFIN estão instalados.'}" ToolTipService.ShowOnDisabled="True"/>
@@ -141,6 +143,6 @@
   <TextBlock Text="{loc:Translate Value={Binding Owner.PackCatalogProblems}}" Style="{StaticResource PackNotice}" AutomationProperties.LiveSetting="Polite"/>
   <TextBlock Text="{loc:Translate Value={Binding Problems}}" Style="{StaticResource PackNotice}" AutomationProperties.LiveSetting="Polite"/>
   <TextBlock Text="{loc:Translate Value={Binding Message}}" Style="{StaticResource PackNotice}" AutomationProperties.LiveSetting="Polite" Margin="0,4,0,12"/>
-
- </StackPanel>
+</StackPanel>
+ </Grid>
 </UserControl>

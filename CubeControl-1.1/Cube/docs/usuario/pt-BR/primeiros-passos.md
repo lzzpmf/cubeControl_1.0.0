@@ -19,6 +19,8 @@ Tema, idioma e zoom ficam no menu de reticências. A central de documentação f
 
 O zoom vai de 50% a 200%, em passos de 10%. Use Ctrl +, Ctrl − e Ctrl 0 para aumentar, diminuir e restaurar 100%; isso não altera o DPI do Windows.
 
+Em 100%, a interface usa seu tamanho base, sem redução adicional. A janela tem mínimo normal de 1280 × 720 unidades lógicas; se a escala do Windows deixar uma área útil menor, ela se ajusta a essa área. As seções reorganizam seus grupos e oferecem rolagem quando necessário. Pistas e gráficos aproveitam o espaço adicional, enquanto os controles mantêm seu tamanho.
+
 Se a conexão falhar, consulte [Problemas comuns](problemas.md).
 
 ## Encontrar ajuda

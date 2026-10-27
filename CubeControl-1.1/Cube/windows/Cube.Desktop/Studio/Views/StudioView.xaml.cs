@@ -85,11 +85,28 @@ public partial class StudioView : UserControl
         if (sender is ContextMenu menu) StudioPopupScale.Apply(menu);
     }
     private void Workspace_SizeChanged(object sender, SizeChangedEventArgs e)
+        => UpdateWorkspaceLayout();
+
+    private void StudyViewportChanged(object sender, SizeChangedEventArgs e)
+        => UpdateWorkspaceLayout();
+
+    private void UpdateWorkspaceLayout()
     {
         if (ControlsRow == null || WorkspaceLayout == null || PlaybackDrawer == null) return;
-        bool stackedSearch = e.NewSize.Width < 1050;
-        bool stackedControls = e.NewSize.Width < 700;
-        WorkspaceLayout.ColumnDefinitions[1].Width = stackedSearch ? new GridLength(0) : new GridLength(0.46, GridUnitType.Star);
+        double width = Math.Max(0, StudyScroll.ActualWidth - 20);
+        double height = Math.Max(0, StudyScroll.ActualHeight - 8);
+        bool stackedSearch = width < 1200;
+        double searchWidth = Math.Clamp(width * .25, 332, 452);
+        bool stackedControls = (stackedSearch ? width : width - searchWidth) < 700;
+        // Give star rows a finite budget even inside the page ScrollViewer. A tall
+        // search panel spanning auto/star rows must not inflate the track minimum.
+        double required = ControlsRow.DesiredSize.Height + 296 + StudyActions.DesiredSize.Height
+            + (stackedSearch ? 448 : 0);
+        WorkspaceLayout.Height = Math.Max(height, required);
+        WorkspaceLayout.ColumnDefinitions[1].Width = new GridLength(stackedSearch ? 0 : searchWidth);
+        PlaybackDrawer.MaxHeight = stackedSearch ? 440 : double.PositiveInfinity;
+        PlaybackDrawer.VerticalAlignment = VerticalAlignment.Stretch;
+        PlaybackDrawer.Height = stackedSearch ? 440 : double.NaN;
         Grid.SetColumn(PlaybackDrawer, stackedSearch ? 0 : 1);
         Grid.SetRow(PlaybackDrawer, stackedSearch ? 2 : 0);
         Grid.SetRowSpan(PlaybackDrawer, stackedSearch ? 1 : 2);
@@ -151,6 +168,12 @@ public partial class StudioView : UserControl
     }
     private void Playback_MouseEnter(object sender, MouseEventArgs e) { if (sender is FrameworkElement { DataContext: PlaybackResultViewModel result }) _viewModel?.PreviewHover(result, true); }
     private void Playback_MouseLeave(object sender, MouseEventArgs e) { if (sender is FrameworkElement { DataContext: PlaybackResultViewModel result }) _viewModel?.PreviewHover(result, false); }
+    private void Playback_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is FrameworkElement card && !Within(e.NewFocus as DependencyObject, card)
+            && card.DataContext is PlaybackResultViewModel result)
+            _viewModel?.PreviewHover(result, false);
+    }
     private void PlaybackDetails_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { DataContext: PlaybackResultViewModel result } button)
@@ -192,6 +215,22 @@ public partial class StudioView : UserControl
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (_viewModel is not { } vm || !IsVisible || !IsKeyboardFocusWithin) return;
+        if (Keyboard.Modifiers == ModifierKeys.None
+            && e.OriginalSource is FrameworkElement { DataContext: PlaybackResultViewModel result } source)
+        {
+            // Space on the card previews; Space/Enter on its button keeps the download action.
+            if (e.Key == Key.Space && source is Border)
+            {
+                if (!e.IsRepeat && vm.TogglePreviewCommand.CanExecute(result)) vm.TogglePreviewCommand.Execute(result);
+                e.Handled = true;
+                return;
+            }
+            if (e.Key == Key.Escape)
+            {
+                vm.StopPreview(); e.Handled = true; return;
+            }
+            if (e.Key == Key.Space && source is Button) return;
+        }
         if (e.Key == Key.Escape && (vm.IsAudioOptionsOpen || vm.IsMetronomeOptionsOpen))
         {
             FinishEdits(); vm.ClosePopups(); Timeline.Focus(); e.Handled = true; return;

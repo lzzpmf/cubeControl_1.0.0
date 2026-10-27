@@ -19,6 +19,8 @@ Theme, language and zoom are in the ellipsis menu. Documentation works offline w
 
 Zoom ranges from 50% to 200% in 10% steps. Use Ctrl +, Ctrl − and Ctrl 0 to increase, decrease and reset to 100%; this does not change Windows DPI.
 
+At 100%, the interface uses its base size without an additional reduction. The normal minimum window size is 1280 × 720 logical units; when Windows scaling leaves a smaller work area, the window fits that area. Sections rearrange their groups and provide scrolling when needed. Tracks and graphs use additional space while controls retain their size.
+
 For connection issues, see [Troubleshooting](problemas.md).
 
 ## Find help

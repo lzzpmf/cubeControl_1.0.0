@@ -394,7 +394,7 @@ public sealed partial class ShellViewModel
         }
         if (_capturePending && !_transportBusy && (!_state.IsRecording || !string.IsNullOrEmpty(error)))
             Run(() => ExecuteTransportAsync(async () => { if (!_capturePending) return; await FinishCaptureAsync(); if (!string.IsNullOrEmpty(error)) StatusMessage = error; }));
-        if (_hoverResult is { } result && _tapClock.Elapsed.TotalSeconds - _hoverSince >= .45) { _hoverResult = null; StartPreview(result); }
+        if (_hoverResult is { } result && _tapClock.Elapsed.TotalSeconds - _hoverSince >= .05) { _hoverResult = null; StartPreview(result); }
         if (_previewResult == null && _renderDirty && _snapshotWorker.IsCompleted && !_transportBusy && !IsBusy && _tapClock.Elapsed.TotalSeconds >= _snapshotRetryAfter) Run(FlushSnapshotAsync);
         UpdateUiCadence();
     }

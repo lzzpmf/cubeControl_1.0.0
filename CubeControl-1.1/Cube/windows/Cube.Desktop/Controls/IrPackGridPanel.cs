@@ -13,26 +13,39 @@ public sealed class IrPackGridPanel : Panel
         value => value is double width && double.IsFinite(width) && width > 0);
     public double MinimumCardWidth { get => (double)GetValue(MinimumCardWidthProperty); set => SetValue(MinimumCardWidthProperty, value); }
     private int columns;
-    private double rowHeight;
+    private double[] rowHeights = [];
     protected override Size MeasureOverride(Size available)
     {
         double width = double.IsInfinity(available.Width) ? MinimumCardWidth * 4 + Gap * 3 : available.Width;
         columns = width >= MinimumCardWidth * 4 + Gap * 3 ? 4 : width >= MinimumCardWidth * 2 + Gap ? 2 : 1;
         double cellWidth = Math.Max(0, (width - Gap * (columns - 1)) / columns);
-        rowHeight = 0;
-        foreach (UIElement child in InternalChildren)
-        {
-            child.Measure(new Size(cellWidth, double.PositiveInfinity));
-            rowHeight = Math.Max(rowHeight, child.DesiredSize.Height);
-        }
         int rows = (InternalChildren.Count + columns - 1) / columns;
-        return new Size(width, rows * rowHeight + Math.Max(0, rows - 1) * Gap);
+        rowHeights = new double[rows];
+        for (int i = 0; i < InternalChildren.Count; i++)
+        {
+            UIElement child = InternalChildren[i];
+            child.Measure(new Size(cellWidth, double.PositiveInfinity));
+            int row = i / columns;
+            rowHeights[row] = Math.Max(rowHeights[row], child.DesiredSize.Height);
+        }
+        double height = Math.Max(0, rows - 1) * Gap;
+        foreach (double rowHeight in rowHeights) height += rowHeight;
+        return new Size(width, height);
     }
     protected override Size ArrangeOverride(Size final)
     {
         double cellWidth = Math.Max(0, (final.Width - Gap * (columns - 1)) / columns);
-        for (int i = 0; i < InternalChildren.Count; i++)
-            InternalChildren[i].Arrange(new Rect(i % columns * (cellWidth + Gap), i / columns * (rowHeight + Gap), cellWidth, rowHeight));
+        double top = 0;
+        for (int row = 0; row < rowHeights.Length; row++)
+        {
+            for (int column = 0; column < columns; column++)
+            {
+                int index = row * columns + column;
+                if (index >= InternalChildren.Count) break;
+                InternalChildren[index].Arrange(new Rect(column * (cellWidth + Gap), top, cellWidth, rowHeights[row]));
+            }
+            top += rowHeights[row] + Gap;
+        }
         return final;
     }
 }

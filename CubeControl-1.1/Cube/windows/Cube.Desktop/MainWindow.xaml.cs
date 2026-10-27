@@ -93,6 +93,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Deactivated += (_, _) => Studio.StopPreview();
         Appearance.UiDensity.Initialize();
         InitializeComponent();
+        IrPacksCard.IsVisibleChanged += (_, _) => Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.Loaded, new Action(UpdatePageBudgets));
         Studio.DialogHost = DialogHost; Studio.Owner = this;
         Studio.NavigateToStudio = () => { Tabs.SelectedIndex = 2; Navigation.SelectedIndex = 2; BackingView.Focus(); };
         Studio.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(Studio.CanAuditionIr)) CommandManager.InvalidateRequerySuggested(); };
@@ -122,7 +124,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             if (Model.Busy || restoringOperationFocus) e.Handled = true;
         };
-        SourceInitialized += (_, _) => Appearance.WindowWorkArea.ClampInitialSize(this);
+        SourceInitialized += (_, _) => Appearance.WindowWorkArea.Attach(this);
         busyMessageTimer.Tick += (_, _) => { busyMessageIndex = (busyMessageIndex + 1) % BusyMessages.Length; UpdateBusyMessage(); };
         Model.PropertyChanged += BusyStateChanged;
         Closed += (_, _) =>
@@ -453,7 +455,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void MoveFooterToPage()
     {
         if (FooterActions == null || Tabs == null) return;
-        if (Tabs.SelectedIndex == 2)
+        if (Tabs.SelectedIndex is 2 or 3)
         {
             if (footerHome != null && FooterActions.Parent != footerHome)
             { if (FooterActions.Parent is Panel old) old.Children.Remove(FooterActions); footerHome.Children.Add(FooterActions); }
@@ -619,12 +621,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Grid.SetRow(NavigationHeader, backingCompact ? 0 : HeaderGrid.ActualWidth < 1000 ? 1 : 0);
         Grid.SetColumnSpan(NavigationHeader, backingCompact ? 1 : HeaderGrid.ActualWidth < 1000 ? 3 : 1);
         NavigationHeader.Margin = new Thickness(0, !backingCompact && HeaderGrid.ActualWidth < 1000 ? 12 : 0, 0, 0);
-        bool shortViewport = ClientArea.ActualHeight < 400 || backingCompact;
+        bool shortViewport = ClientArea.ActualHeight < 764 || backingCompact;
         ConnectionGroup.Visibility = backingCompact ? Visibility.Collapsed : Visibility.Visible;
         foreach (ListBoxItem item in Navigation.Items)
         {
             if (item.Content is not StackPanel row) continue;
-            row.Children[0].Visibility = shortViewport ? Visibility.Collapsed : Visibility.Visible;
+            row.Children[0].Visibility = ClientArea.ActualHeight < 400 ? Visibility.Collapsed : Visibility.Visible;
             if (row.Children[1] is StackPanel labels)
                 labels.Children[1].Visibility = shortViewport ? Visibility.Collapsed : Visibility.Visible;
             if (shortViewport) item.MinHeight = 32; else item.ClearValue(FrameworkElement.MinHeightProperty);
@@ -632,7 +634,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             else item.ClearValue(Control.PaddingProperty);
         }
         HeaderGrid.Margin = new Thickness(0, 0, 0, shortViewport ? 8 : 20);
-        bool compact = Tabs.SelectedIndex == 3 || ClientArea.ActualHeight < 764 || Workspace.ActualWidth < 1000;
+        bool compact = ClientArea.ActualHeight < 764 || Workspace.ActualWidth < 1000;
         WorkspaceScroll.VerticalScrollBarVisibility = Tabs.SelectedIndex == 2 ? ScrollBarVisibility.Disabled : compact ? ScrollBarVisibility.Hidden : ScrollBarVisibility.Disabled;
         // A single scrolling owner: natural content height in compact mode, a
         // constrained page viewport in desktop mode. Never force a workspace height.
@@ -644,10 +646,22 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         double margin = ClientArea.ActualWidth < 1000 ? 16 : 24;
         Workspace.Margin = new Thickness(margin, shortViewport ? 12 : 20, margin, 12);
         pageScrollOwner = Tabs.SelectedIndex == 2 ? null : compact ? WorkspaceScroll
-            : Tabs.SelectedIndex switch { 1 => IrScroll, 4 => HelpScroll, _ => EditorScroll };
+            : Tabs.SelectedIndex switch { 1 => IrScroll, 3 => null, 4 => HelpScroll, _ => EditorScroll };
         SyncWindowPageScroll();
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(SyncWindowPageScroll));
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() => { UpdatePageBudgets(); SyncWindowPageScroll(); }));
     }
+    private void UpdatePageBudgets()
+    {
+        if (Tabs.SelectedIndex != 1 || !IrPacksCard.IsVisible) return;
+        var top = IrPacksCard.TranslatePoint(new Point(), WorkspaceScroll).Y;
+        // Remove the current scroll displacement: budget is independent of scrolling.
+        top += WorkspaceScroll.VerticalOffset + IrScroll.VerticalOffset;
+        double height = Math.Max(0, WorkspaceScroll.ActualHeight - top - 48);
+        bool bounded = IrSectionPanel.ActualWidth >= 1040 && height >= 520;
+        IrPacksCard.SetViewportHeight(bounded ? height : double.NaN);
+        SingleIrLibrary.SetViewportHeight(bounded ? height : double.NaN);
+    }
+
     private void HelpSectionExpanded(object sender, RoutedEventArgs e)
     {
         // Ignore expansion events bubbling up from controls inside a section.

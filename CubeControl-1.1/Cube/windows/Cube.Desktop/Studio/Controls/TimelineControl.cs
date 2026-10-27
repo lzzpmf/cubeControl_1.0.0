@@ -156,7 +156,7 @@ public sealed class TimelineControl : FrameworkElement
 
     protected override Size MeasureOverride(Size availableSize) => new(
         double.IsFinite(availableSize.Width) ? availableSize.Width : 600,
-        double.IsFinite(availableSize.Height) ? availableSize.Height : 350);
+        double.IsFinite(availableSize.Height) ? availableSize.Height : PracticeMode ? 94 : 350);
 
     private double TotalDuration => _drawingContent ? _drawingDuration : CalculateDuration();
     private double CalculateDuration() => Math.Max(1, Math.Max(Project?.Duration ?? 80,
@@ -286,23 +286,47 @@ public sealed class TimelineControl : FrameworkElement
             : ResourceBrush(index == 0 ? "BackingPlayed" : "BackingFuture", "#82ACD2");
         dc.DrawRectangle(null, new Pen(ResourceBrush("CubeBorder", "#3B4351"), .5), new Rect(0, lane.Top, ActualWidth, lane.Height));
         var centre = lane.Top + lane.Height / 2;
-        var amplitude = Math.Max(2, lane.Height / 2 - 5);
+        var amplitude = Math.Max(2, lane.Height / 2 - 10);
+        var left = Math.Max(0, rect.Left);
+        var right = Math.Min(rect.Right, ActualWidth);
+        if (right <= left) return;
+        // Static decoration stays in the cached content drawing, separate from the playhead.
+        dc.DrawLine(new Pen(OpacityBrush(brush, .18), .5), new Point(left, centre), new Point(right, centre));
         var sourceStart = clip.Model.SourceTimeAt(clip.Model.Start);
         var ratio = clip.Model.SourceTimeAt(clip.Model.Start + 1) - sourceStart;
         var geometry = new StreamGeometry();
         using (var path = geometry.Open())
         {
-            for (double x = Math.Max(0, rect.Left); x < Math.Min(rect.Right, ActualWidth); x += 1.5)
+            for (double x = left; x < right; x += 2)
             {
                 var time = sourceStart + (clip.SourceOffset - clip.Model.SourceOffset + (x - rect.Left) / Math.Max(.001, PixelsPerSecond)) * ratio;
-                var peak = PeakProvider?.GetPeak(clip.Model, time, 1.5 / Math.Max(.001, PixelsPerSecond) * ratio) ?? 0;
+                var peak = PeakProvider?.GetPeak(clip.Model, time, 2 / Math.Max(.001, PixelsPerSecond) * ratio) ?? 0;
                 var height = Math.Max(.5, (float.IsFinite(peak) ? Math.Clamp(peak, 0, 1) : 0) * amplitude);
                 path.BeginFigure(new Point(x, centre - height), false, false);
                 path.LineTo(new Point(x, centre + height), true, false);
             }
         }
         geometry.Freeze();
-        dc.DrawGeometry(null, new Pen(brush, 1.3), geometry);
+        dc.DrawGeometry(null, WaveformPen(brush, 1.4), geometry);
+    }
+
+    private static Pen WaveformPen(Brush color, double thickness)
+    {
+        Brush ink = color;
+        if (!ThemeService.Instance.IsHighContrast && color is SolidColorBrush solid)
+        {
+            var gradient = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
+            var edge = solid.Color;
+            edge.A = (byte)(edge.A * .58);
+            gradient.GradientStops.Add(new GradientStop(edge, 0));
+            gradient.GradientStops.Add(new GradientStop(solid.Color, .5));
+            gradient.GradientStops.Add(new GradientStop(edge, 1));
+            gradient.Freeze();
+            ink = gradient;
+        }
+        var pen = new Pen(ink, thickness) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        if (pen.CanFreeze) pen.Freeze();
+        return pen;
     }
 
     private void DrawClip(DrawingContext dc, DisplayClip clip, Rect lane, int trackIndex)
@@ -351,7 +375,7 @@ public sealed class TimelineControl : FrameworkElement
                 }
             }
             geometry.Freeze();
-            dc.DrawGeometry(null, new Pen(stroke, 1), geometry);
+            dc.DrawGeometry(null, WaveformPen(stroke, 1.4), geometry);
         }
         if (rect.Width > 12 && (!PracticeMode || trackIndex == 1))
         {

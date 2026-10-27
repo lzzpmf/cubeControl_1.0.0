@@ -9,6 +9,10 @@ namespace Cube.Desktop.Controls;
 
 public partial class IrLibraryBrowser : UserControl
 {
+    internal void SetViewportHeight(double height)
+    {
+        IrLibraryTree.MaxHeight = double.IsFinite(height) ? Math.Max(320, height - 180) : 420;
+    }
     public IrLibraryBrowser()
     {
         InitializeComponent();

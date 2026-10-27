@@ -43,7 +43,7 @@
         </Border>
       </DataTemplate>
       <DataTemplate x:Key="PlaybackTemplate">
-        <Border Margin="0,0,0,8" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource CubeBorder}" CornerRadius="6" MouseEnter="Playback_MouseEnter" MouseLeave="Playback_MouseLeave" ToolTip="{Binding Details}">
+        <Border x:Name="PlaybackCard" Focusable="True" LostKeyboardFocus="Playback_LostKeyboardFocus" AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding PreviewActionText}" Margin="0,0,0,8" Padding="10" BorderThickness="1" BorderBrush="{DynamicResource CubeBorder}" CornerRadius="6" MouseEnter="Playback_MouseEnter" MouseLeave="Playback_MouseLeave" ToolTip="{Binding Details}">
           <Border.Style>
             <Style TargetType="Border" BasedOn="{StaticResource StudyCard}">
               <Style.Triggers>
@@ -60,8 +60,25 @@
             </DockPanel>
             <DockPanel LastChildFill="True">
               <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                <Button Style="{StaticResource StudioButton}" ToolTip="{Binding PreviewActionText}" AutomationProperties.Name="{Binding PreviewActionText}" Width="36" Height="34" Command="{Binding DataContext.TogglePreviewCommand, RelativeSource={RelativeSource AncestorType={x:Type views:StudioView}}}" CommandParameter="{Binding}" Padding="4" MinHeight="28" BorderBrush="{DynamicResource CubeBorder}"><ui:SymbolIcon Symbol="Headphones24" FontSize="18"/></Button>
-                <Button Style="{StaticResource StudioButton}" ToolTip="{loc:Translate Text='Adicionar à sessão'}" AutomationProperties.Name="{loc:Translate Text='Adicionar à sessão'}" Width="36" Height="34" Command="{Binding DataContext.UseBackingCommand, RelativeSource={RelativeSource AncestorType={x:Type views:StudioView}}}" CommandParameter="{Binding}" Background="{DynamicResource CubeAccent}" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Padding="4" MinHeight="28" Margin="6,0,0,0"><ui:SymbolIcon Symbol="Add24" FontSize="20"/></Button>
+                <Button ToolTip="{loc:Translate Text='Baixar'}" AutomationProperties.Name="{loc:Translate Text='Baixar'}" Width="36" Height="34" Command="{Binding DataContext.UseBackingCommand, RelativeSource={RelativeSource AncestorType={x:Type views:StudioView}}}" CommandParameter="{Binding}" Background="{DynamicResource CubeAccent}" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Padding="4" MinHeight="28">
+                  <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource StudioButton}">
+                      <Setter Property="Opacity" Value="0"/>
+                      <Setter Property="IsHitTestVisible" Value="False"/>
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, ElementName=PlaybackCard}" Value="True">
+                          <Setter Property="Opacity" Value="1"/>
+                          <Setter Property="IsHitTestVisible" Value="True"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsKeyboardFocusWithin, ElementName=PlaybackCard}" Value="True">
+                          <Setter Property="Opacity" Value="1"/>
+                          <Setter Property="IsHitTestVisible" Value="True"/>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </Button.Style>
+                  <ui:SymbolIcon Symbol="{StaticResource CubeIconArrowDownload24}" FontSize="20"/>
+                </Button>
               </StackPanel>
               <WrapPanel VerticalAlignment="Center">
                 <TextBlock Text="{Binding Genre}" Style="{StaticResource HelpText}" TextWrapping="Wrap" Margin="0,0,6,0"/>
@@ -80,18 +97,14 @@
       <RowDefinition Height="*" />
       <RowDefinition Height="36" />
     </Grid.RowDefinitions>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,2,8">
+    <ScrollViewer x:Name="StudyScroll" SizeChanged="StudyViewportChanged" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,2,8">
       <Grid x:Name="WorkspaceLayout">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="0.46*" />
+          <ColumnDefinition Width="360" />
         </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <Grid x:Name="ControlsRow" Grid.Row="0" Margin="0,0,0,8">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid x:Name="ControlsRow" SizeChanged="StudyViewportChanged" Grid.Row="0" Margin="0,0,0,8">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
@@ -181,20 +194,20 @@
             </StackPanel>
           </Border>
         </Grid>
-        <StackPanel x:Name="StudyArea" Grid.Row="1">
+        <Grid x:Name="StudyArea" Grid.Row="1"><Grid.RowDefinitions><RowDefinition Height="*" MinHeight="148"/><RowDefinition Height="*" MinHeight="148"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
           <Border x:Name="BackingCard" Style="{StaticResource StudyCard}" Padding="12,4,12,8" Margin="0,0,0,8">
             <Grid>
               <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="158"/></Grid.ColumnDefinitions>
               <Grid.RowDefinitions>
                 <RowDefinition Height="34" />
-                <RowDefinition Height="94" />
+                <RowDefinition Height="*" MinHeight="94" />
               </Grid.RowDefinitions>
               <ContentControl x:Name="BackingHeader" Grid.Column="1" Grid.RowSpan="2" ContentTemplate="{StaticResource TrackHeaderTemplate}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
               <TextBlock Text="{loc:Translate Value={Binding Content.Name, ElementName=BackingHeader}}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center" Margin="4,0,8,0" TextWrapping="Wrap"/>
               <controls:TimelineControl x:Name="Timeline" Grid.Row="1" VisibleTrackIndex="0" Project="{Binding Project}" PracticeMode="True" SnapEnabled="False" CanEdit="{Binding CanEditTimeline}" CanSeek="{Binding CanEditTimeline}" PeakProvider="{Binding PeakProvider}" SeekRequested="Timeline_SeekRequested" EditRequested="Timeline_EditRequested" FilesDropped="Timeline_FilesDropped" ViewChanged="Timeline_ViewChanged" AutomationProperties.Name="{loc:Translate Text='Acompanhamento'}" />
             </Grid>
           </Border>
-          <Border x:Name="GuitarCard" Style="{StaticResource StudyCard}" Padding="12,4,12,8" Margin="0,0,0,8">
+          <Border x:Name="GuitarCard" Grid.Row="1" Style="{StaticResource StudyCard}" Padding="12,4,12,8" Margin="0,0,0,8">
             <Border.ContextMenu>
               <ContextMenu Opened="ContextMenu_Opened" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                 <MenuItem StaysOpenOnClick="True">
@@ -212,14 +225,14 @@
               <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="158"/></Grid.ColumnDefinitions>
               <Grid.RowDefinitions>
                 <RowDefinition Height="34" />
-                <RowDefinition Height="94" />
+                <RowDefinition Height="*" MinHeight="94" />
               </Grid.RowDefinitions>
               <ContentControl x:Name="GuitarHeader" Grid.Column="1" Grid.RowSpan="2" ContentTemplate="{StaticResource TrackHeaderTemplate}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
               <TextBlock Text="{loc:Translate Value={Binding Content.Name, ElementName=GuitarHeader}}" Style="{StaticResource BodyStrongText}" VerticalAlignment="Center" Margin="4,0,8,0" TextWrapping="Wrap"/>
               <controls:TimelineControl x:Name="GuitarTimeline" Grid.Row="1" VisibleTrackIndex="1" Project="{Binding Project}" PracticeMode="True" SnapEnabled="False" CanEdit="{Binding CanEditTimeline}" CanSeek="{Binding CanEditTimeline}" PeakProvider="{Binding PeakProvider}" SeekRequested="Timeline_SeekRequested" EditRequested="Timeline_EditRequested" FilesDropped="Timeline_FilesDropped" ViewChanged="Timeline_ViewChanged" AutomationProperties.Name="{loc:Translate Text='Minha guitarra'}" />
             </Grid>
           </Border>
-          <Border x:Name="StudyActions" Style="{StaticResource StudyCard}" Padding="8">
+          <Border x:Name="StudyActions" SizeChanged="StudyViewportChanged" Grid.Row="2" Style="{StaticResource StudyCard}" Padding="8">
             <WrapPanel>
               <ToggleButton Style="{StaticResource StudioToggle}" Content="Loop A/B" IsChecked="{Binding Project.LoopEnabled, Mode=OneWay}" Command="{Binding ToggleLoopCommand}" Height="32" Padding="8,0" Margin="0,0,8,0" />
               <Button Style="{StaticResource StudioButton}" Content="{loc:Translate Text='A'}" Command="{Binding SetLoopStartCommand}" Width="32" />
@@ -230,7 +243,7 @@
                 <Button Style="{StaticResource StudioIconButton}" Command="{Binding ClearStudyCommand}" Margin="8,0,0,0" ToolTip="{loc:Translate Text='Limpar estudo'}" AutomationProperties.Name="{loc:Translate Text='Limpar estudo'}"><ui:SymbolIcon Symbol="Delete24" FontSize="18" /></Button>
             </WrapPanel>
           </Border>
-        </StackPanel>
+        </Grid>
         <Border x:Name="PlaybackDrawer" Grid.Column="1" Style="{StaticResource StudyCard}" Margin="12,0,0,0" MinHeight="350" Grid.RowSpan="2">
           <Grid>
             <Grid.RowDefinitions>
@@ -250,7 +263,7 @@
               <ui:SymbolIcon Symbol="Search24" FontSize="18" HorizontalAlignment="Left" Margin="8,0" IsHitTestVisible="False" />
             </Grid>
             <Grid Grid.Row="2">
-              <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="460">
+              <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{Binding Results}" ItemTemplate="{StaticResource PlaybackTemplate}" />
               </ScrollViewer>
               <TextBlock Text="{Binding NoResultsMessage}" Style="{StaticResource HelpText}" Margin="0,12" IsHitTestVisible="False" />
