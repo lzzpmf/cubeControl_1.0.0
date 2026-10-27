@@ -7,7 +7,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
-$workspace = Join-Path $repositoryRoot 'CubeControl-1.1\Cube\windows'
+$workspace = Join-Path $repositoryRoot 'CubeControl\Cube\windows'
 $mutex = $null
 $locked = $false
 $staging = $null

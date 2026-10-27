@@ -1,8 +1,8 @@
 param([string]$PackageRoot)
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
-$guides = Join-Path $repo 'CubeControl-1.1\Cube\docs\usuario'
-$manuals = Join-Path $repo 'CubeControl-1.1\Cube\windows\Cube.Desktop\Assets\Documents'
+$guides = Join-Path $repo 'CubeControl\Cube\docs\usuario'
+$manuals = Join-Path $repo 'CubeControl\Cube\windows\Cube.Desktop\Assets\Documents'
 $catalogPath = Join-Path $guides 'catalogo.v1.json'
 $catalog = Get-Content -LiteralPath $catalogPath -Raw -Encoding UTF8 | ConvertFrom-Json
 if ($catalog.version -ne 1 -or -not $catalog.documents) { throw 'Catalogo documental invalido.' }
@@ -68,14 +68,14 @@ foreach ($source in $paths.Keys) {
         }
     }
 }
-$manualRoot = Join-Path $repo 'CubeControl-1.1\Cube\docs\manual'
+$manualRoot = Join-Path $repo 'CubeControl\Cube\docs\manual'
 $manifest = Get-Content -LiteralPath (Join-Path $manualRoot 'sources.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 foreach ($inputFile in $manifest.inputs.PSObject.Properties) {
     if ((Get-FileHash -LiteralPath (Join-Path $repo $inputFile.Name) -Algorithm SHA256).Hash -ne $inputFile.Value) {
         throw "Manual HTML desatualizado. Execute node scripts/Build-Manual.mjs: $($inputFile.Name)"
     }
 }
-[xml]$desktopProject = Get-Content -LiteralPath (Join-Path $repo 'CubeControl-1.1\Cube\windows\Cube.Desktop\Cube.Desktop.csproj') -Raw
+[xml]$desktopProject = Get-Content -LiteralPath (Join-Path $repo 'CubeControl\Cube\windows\Cube.Desktop\Cube.Desktop.csproj') -Raw
 if ($manifest.version -ne $desktopProject.SelectSingleNode('/Project/PropertyGroup/Version').InnerText) { throw 'Versao do manual desatualizada. Execute node scripts/Build-Manual.mjs.' }
 foreach ($file in Get-ChildItem -LiteralPath $manualRoot -File -Recurse) {
     $resources['Assets\Documents\manual\' + $file.FullName.Substring($manualRoot.Length + 1)] = $file.FullName

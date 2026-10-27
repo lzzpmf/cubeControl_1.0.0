@@ -4,10 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const root = path.join(repo, 'CubeControl-1.1/Cube/docs/manual');
-const guides = path.join(repo, 'CubeControl-1.1/Cube/docs/usuario');
+const root = path.join(repo, 'CubeControl/Cube/docs/manual');
+const guides = path.join(repo, 'CubeControl/Cube/docs/usuario');
 const catalog = JSON.parse(fs.readFileSync(path.join(guides, 'catalogo.v1.json'), 'utf8'));
-const version = fs.readFileSync(path.join(repo, 'CubeControl-1.1/Cube/windows/Cube.Desktop/Cube.Desktop.csproj'), 'utf8').match(/<Version>(.*?)<\/Version>/)[1];
+const version = fs.readFileSync(path.join(repo, 'CubeControl/Cube/windows/Cube.Desktop/Cube.Desktop.csproj'), 'utf8').match(/<Version>(.*?)<\/Version>/)[1];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const slug = s => s.toLowerCase().replace(/[^\p{L}\p{N}_\-\s]/gu, '').replace(/ /g, '-');
 const inline = s => s.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g).map(t => {
@@ -107,13 +107,13 @@ ${current>=0?`<nav class="pagination" aria-label="${w.menu}"><a href="${current?
 }
 // Keep direct-open distribution self-contained, including the hardware references.
 for(const d of catalog.documents.filter(d=>d.category==='manuais')) for(const v of d.versions) {
- const dest=path.join(root,'references',v.path);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(path.join(repo,'CubeControl-1.1/Cube/windows/Cube.Desktop/Assets/Documents',v.path),dest);
+ const dest=path.join(root,'references',v.path);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(path.join(repo,'CubeControl/Cube/windows/Cube.Desktop/Assets/Documents',v.path),dest);
 }
 fs.mkdirSync(path.join(root,'assets'),{recursive:true});
-fs.copyFileSync(path.join(repo,'CubeControl-1.1/Cube/windows/Cube.Desktop/Assets/Images/Equipment/Devices/SINCO-CubeBaby.png'),path.join(root,'assets/cube-baby.png'));
-write('index.html','<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>cubeControl · Manual</title><link rel="stylesheet" href="assets/manual.css"><script src="assets/theme.js"></script></head><body><main class="language-page"><p class="eyebrow">cubeControl · 1.1.0</p><h1>Manual do usuário<br><span lang="en">User manual</span></h1><p>Escolha o idioma / Choose your language</p><div class="hero-actions"><a class="primary" href="pt-BR/index.html" lang="pt-BR">Português</a><a href="en-US/index.html" lang="en-US">English →</a></div></main></body></html>');
-const inputs=['scripts/Build-Manual.mjs','CubeControl-1.1/Cube/docs/usuario/catalogo.v1.json',...order.flatMap(id=>['pt-BR','en-US'].map(l=>`CubeControl-1.1/Cube/docs/usuario/${l}/${id}.md`)),
- 'CubeControl-1.1/Cube/windows/Cube.Desktop/Assets/Images/Equipment/Devices/SINCO-CubeBaby.png',
- ...catalog.documents.filter(d=>d.category==='manuais').flatMap(d=>d.versions.map(v=>'CubeControl-1.1/Cube/windows/Cube.Desktop/Assets/Documents/'+v.path))];
+fs.copyFileSync(path.join(repo,'CubeControl/Cube/windows/Cube.Desktop/Assets/Images/Equipment/Devices/SINCO-CubeBaby.png'),path.join(root,'assets/cube-baby.png'));
+write('index.html','<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>cubeControl · Manual</title><link rel="stylesheet" href="assets/manual.css"><script src="assets/theme.js"></script></head><body><main class="language-page"><p class="eyebrow">cubeControl · 1.0.0</p><h1>Manual do usuário<br><span lang="en">User manual</span></h1><p>Escolha o idioma / Choose your language</p><div class="hero-actions"><a class="primary" href="pt-BR/index.html" lang="pt-BR">Português</a><a href="en-US/index.html" lang="en-US">English →</a></div></main></body></html>');
+const inputs=['scripts/Build-Manual.mjs','CubeControl/Cube/docs/usuario/catalogo.v1.json',...order.flatMap(id=>['pt-BR','en-US'].map(l=>`CubeControl/Cube/docs/usuario/${l}/${id}.md`)),
+ 'CubeControl/Cube/windows/Cube.Desktop/Assets/Images/Equipment/Devices/SINCO-CubeBaby.png',
+ ...catalog.documents.filter(d=>d.category==='manuais').flatMap(d=>d.versions.map(v=>'CubeControl/Cube/windows/Cube.Desktop/Assets/Documents/'+v.path))];
 write('sources.json',JSON.stringify({version,inputs:Object.fromEntries(inputs.map(p=>[p,createHash('sha256').update(fs.readFileSync(path.join(repo,p))).digest('hex')]))},null,2)+'\n');
 console.log(`Generated ${order.length*2+3} pages for cubeControl ${version}.`);

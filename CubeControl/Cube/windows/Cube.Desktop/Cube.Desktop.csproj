@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets/Images/Icons/desktopIcon.ico</ApplicationIcon>
+    <AssemblyName>CubeControl</AssemblyName>
+    <Version>1.0.0</Version>
+    <CubeYouTubeToolsPath Condition="'$(CubeYouTubeToolsPath)' == ''">$(ArtifactsPath)/youtube-tools</CubeYouTubeToolsPath>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../Cube.Usb/Cube.Usb.csproj" /><PackageReference Include="WPF-UI" Version="4.3.0" /></ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Cube.Studio.Core/Cube.Studio.Core.csproj" />
+    <ProjectReference Include="../Cube.Studio.Audio/Cube.Studio.Audio.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
+    <PackageReference Include="NAudio.Core" Version="3.1.0" />
+    <PackageReference Include="NAudio.Wasapi" Version="3.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <CatalogImage Include="Assets/Archive/Images/Cabeçotes/**/*;Assets/Archive/Images/Caixas/**/*;Assets/Archive/Images/Pedais/**/*;Assets/Archive/Images/Guitarras/**/*;Assets/Archive/Images/Dispositivos/**/*;Assets/Archive/Images/Equipment/**/*;Assets/Archive/Images/Racks/**/*">
+      <Eligible>false</Eligible>
+      <Eligible Condition="('%(Extension)' == '.png' Or '%(Extension)' == '.jpg' Or '%(Extension)' == '.jpeg') And !$([System.Text.RegularExpressions.Regex]::IsMatch('%(Filename)', '(?i)^(Botão|Botao|Fader|footswitch|knob|switch|interruptor)'))">true</Eligible>
+    </CatalogImage>
+    <CatalogImage Remove="@(CatalogImage->WithMetadataValue('Eligible', 'false'))" />
+    <CatalogImage Update="@(CatalogImage)">
+      <CatalogTargetPath>Assets/Images/Catalog/$([System.IO.Path]::GetRelativePath('$(MSBuildProjectDirectory)/Assets/Archive/Images', '%(FullPath)'))</CatalogTargetPath>
+    </CatalogImage>
+    <None Remove="@(CatalogImage)" />
+    <None Include="@(CatalogImage)" Link="%(CatalogTargetPath)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Assets/Firmwares/**/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/RawWaves/*.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/IrPacks.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/ImpulseResponses/**/*.wav" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/ImpulseResponses/Overdriven.catalog.v1.json;Assets/ImpulseResponses/Overdriven.fr/**/readme.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Resource Include="Assets/Images/Icons/*.png" />
+    <Resource Include="Assets/Images/Controls/BackingTrack/*.png" />
+    <Resource Include="Assets/Images/Controls/Finishes/**/*.png" />
+    <Resource Include="Assets/Images/Controls/Knobs/knob_oficial_01.png;Assets/Images/Controls/Faders/fader_oficial_01.png" />
+    <Resource Include="Assets/Images/Controls/Faders/fader_horizontal_oficial_01.png" />
+    <Resource Include="Assets/Images/Controls/Switches/footswitch_oficial_01.png" />
+    <Resource Include="Assets/Images/Controls/Switches/chave_seletora_oficial_01_on.png;Assets/Images/Controls/Switches/chave_seletora_oficial_01_off.png" />
+    <EmbeddedResource Include="Assets/FactoryAmps.bin" LogicalName="Cube.FactoryAmps" />
+    <None Update="Assets/Documents/manuais/**/*.pdf" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../docs/manual/**/*" Link="Assets/Documents/manual/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../docs/usuario/catalogo.v1.json" Link="Assets/Documents/catalogo.v1.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../docs/usuario/pt-BR/**/*" Link="Assets/Documents/guias/pt-BR/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../../docs/usuario/en-US/**/*" Link="Assets/Documents/guias/en-US/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Localization/*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets/Images/Equipment/**/*.png;Assets/Images/Controls/Knobs/Botão Giratório Vintage de Metal e Preto.png;Assets/Images/Controls/Knobs/Botão Metálico de Controle Texturizado.png;Assets/Images/Controls/Knobs/Botão Rotativo Vintage Preto Marconi.png;Assets/Images/Controls/Knobs/Botão Vintage de Metal Dourado.png;Assets/Images/Controls/Faders/Fader Preto com Indicador Prateado.png;Assets/Images/Controls/Faders/Fader Retrô Charcoal com Faixa Creme.png;Assets/Images/Controls/Faders/Fader Retrô preto com faixa creme.png;Assets/Images/Controls/Faders/Fader Vintage de Estilo Retrô.png" CopyToOutputDirectory="Always" CopyToPublishDirectory="Always" />
+    <None Update="Assets/Images/Equipment/**/*.jpg;Assets/Images/Equipment/**/*.jpeg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="../THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../README.md" Link="LEIA-ME.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(CubeYouTubeToolsPath)/**/*" Link="Tools/YouTube/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
