@@ -240,3 +240,6 @@ x86/
 /tmp/
 /output/
 /.codex-remote-attachments/
+
+# Local archive of auxiliary files
+/_old/

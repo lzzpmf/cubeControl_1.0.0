@@ -10,11 +10,14 @@ using Wpf.Ui.Controls;
 
 namespace Cube.Desktop.Appearance;
 
-public enum ThemeMode { System, Light, Dark }
+public enum ThemeMode { System, Light, Dark, Graphite, MidnightBlue, Forest, Wine, VintageAmber, Sand, Ice }
 public enum ControlFinish
 {
     Official, BrushedSilver, RetroIvory, GraphiteCopper,
-    BlackIvory, IndustrialBlack, TexturedSteel, MarconiBlack, VintageBrass, IvoryGold, ChromeSkullBlue
+    BlackIvory, IndustrialBlack, TexturedSteel, MarconiBlack, VintageBrass, IvoryGold, ChromeSkullBlue,
+    Vasco, Flamengo, Fluminense, Botafogo, Skeleton, Cartoon, Anime, Boho, Papercut,
+    ReceiverSilverBlue, ReceiverChampagne, TurntableWalnut, TurntableDirectDrive,
+    MiniSystemTitanium, MiniSystemBlackRed
 }
 
 public sealed class ThemeSettings
@@ -60,6 +63,9 @@ public sealed class ThemeService
     private Window? window;
     private bool watching;
     private HwndSource? iconSource;
+    private readonly ThemePaletteResources paletteResources = new();
+    private ThemePalette? ActivePalette => IsHighContrast ? null : ThemeCatalog.Get(Mode).Palette;
+    internal Func<bool> ReadWindowsHighContrast { get; set; } = () => SystemParameters.HighContrast;
     internal Func<bool> ReadWindowsLightTheme { get; set; } = () =>
         Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "SystemUsesLightTheme", 1) is not int value || value != 0;
     internal Func<bool> ReadWindowsTransparency { get; set; } = () =>
@@ -72,11 +78,20 @@ public sealed class ThemeService
         applyingBackdrop = true;
         try
         {
-            bool enabled = !IsHighContrast && !SystemParameters.HighContrast && ReadWindowsTransparency()
+            bool enabled = !IsHighContrast && !ReadWindowsHighContrast() && ReadWindowsTransparency()
                 && WindowBackdrop.IsSupported(WindowBackdropType.Mica);
             UsesBackdrop = enabled;
             ApplySurfaceMaterials(enabled);
-            Application.Current.Resources["CubeWindowBackground"] = enabled ? Brushes.Transparent : Brush("CubeCanvas");
+            var resources = Application.Current.Resources;
+            resources["CubeWindowBackground"] = enabled ? Brushes.Transparent : Brush("CubeCanvas");
+            // Retain Mica, but tint it for custom palettes so the wallpaper cannot wash out their colors.
+            Color? tint = ActivePalette?.Canvas;
+            if (enabled && tint is Color color)
+            {
+                color.A = ThemePalette.WindowTintAlpha;
+                resources["CubeCanvasSurface"] = ThemePaletteResources.Brush(color);
+            }
+            else resources["CubeCanvasSurface"] = resources["CubeWindowBackground"];
             if (window is FluentWindow fluent)
             {
                 // Keep the existing chrome object: replacing it after load in WPF UI
@@ -95,7 +110,7 @@ public sealed class ThemeService
     internal void ApplySurfaceMaterials(bool enabled)
     {
         var resources = Application.Current.Resources;
-        if (IsHighContrast || SystemParameters.HighContrast)
+        if (IsHighContrast || ReadWindowsHighContrast())
         {
             foreach (string key in new[] { "CubeItemRest", "CubeItemHover", "CubeComboField", "CubeComboFieldHover",
                 "BackingCard", "CubeCard", "CubeInset", "CubeWell" }) resources[key] = SystemColors.WindowBrush;
@@ -114,7 +129,8 @@ public sealed class ThemeService
             ("CubeItemRest", 90), ("CubeItemHover", 135), ("CubeSelectedBrush", 180),
             ("CubeComboField", 140), ("CubeComboFieldHover", 170), ("BackingCard", 120),
             ("CubeCard", 100), ("CubeInset", 80), ("CubeWell", 110) })
-            Surface(key, (Color)resources[key + (IsLight ? ".Light" : ".Dark")], alpha);
+            Surface(key, ActivePalette is { } palette && palette.Colors.TryGetValue(key, out var color)
+                ? color : (Color)resources[key + (IsLight ? ".Light" : ".Dark")], alpha);
         resources["CubeSelected"] = resources["CubeSelectedBrush"];
         resources["CubeLibraryItemBackground"] = IsLight ? resources["CubeItemRest"] : Brushes.Transparent;
     }
@@ -129,7 +145,11 @@ public sealed class ThemeService
     private IntPtr WindowThemeMessage(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
         // Keep observing the shell theme even when the app uses a manual theme.
-        if (message is 0x001A or 0x031A) { RefreshWindowIcon(); RefreshBackdrop(); } // WM_SETTINGCHANGE / WM_THEMECHANGED
+        if (message is 0x001A or 0x031A)
+        {
+            if (IsHighContrast != ReadWindowsHighContrast()) Apply();
+            else { RefreshWindowIcon(); RefreshBackdrop(); }
+        } // WM_SETTINGCHANGE / WM_THEMECHANGED
         return IntPtr.Zero;
     }
     private int revision;
@@ -152,6 +172,12 @@ public sealed class ThemeService
         Mode = ThemeSettings.Load(settingsPath);
         Finish = ThemeSettings.LoadFinish(settingsPath);
         ApplicationThemeManager.Changed += OnThemeChanged;
+        SystemParameters.StaticPropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(SystemParameters.HighContrast) || Application.Current?.Dispatcher is not { } dispatcher) return;
+            if (dispatcher.CheckAccess()) Apply();
+            else dispatcher.BeginInvoke(Apply);
+        };
     }
     public void Initialize() => Apply();
     public void Attach(Window target)
@@ -194,24 +220,30 @@ public sealed class ThemeService
     }
     internal void Preview(ThemeMode mode)
     {
+        if (!Enum.IsDefined(mode)) throw new ArgumentOutOfRangeException(nameof(mode));
         Mode = mode; Apply();
     }
     private void Apply()
     {
         StopWatching();
-        if (Mode == ThemeMode.System)
+        // The library also derives its accent during Apply; remove our overrides first.
+        paletteResources.Reset(Application.Current.Resources);
+        if (ReadWindowsHighContrast())
+            ApplicationThemeManager.Apply(ApplicationTheme.HighContrast, WindowBackdropType.None, true);
+        else if (Mode == ThemeMode.System)
         {
             ApplicationThemeManager.ApplySystemTheme();
             if (window?.IsLoaded == true) { SystemThemeWatcher.Watch(window, WindowBackdropType.None, true); watching = true; }
         }
-        else ApplicationThemeManager.Apply(Mode == ThemeMode.Light ? ApplicationTheme.Light : ApplicationTheme.Dark, WindowBackdropType.None, true);
+        else ApplicationThemeManager.Apply(ThemeCatalog.Get(Mode).IsLight ? ApplicationTheme.Light : ApplicationTheme.Dark, WindowBackdropType.None, true);
         OnThemeChanged(ApplicationThemeManager.GetAppTheme(), default);
     }
     private void OnThemeChanged(ApplicationTheme theme, Color accent)
     {
-        IsHighContrast = theme == ApplicationTheme.HighContrast;
-        IsLight = theme == ApplicationTheme.Light;
+        IsHighContrast = ReadWindowsHighContrast() || theme == ApplicationTheme.HighContrast;
+        IsLight = !IsHighContrast && (Mode == ThemeMode.System ? theme == ApplicationTheme.Light : ThemeCatalog.Get(Mode).IsLight);
         var resources = Application.Current.Resources;
+        paletteResources.Reset(resources);
         resources["CubeSurfaceBorderThickness"] = new Thickness(IsLight && !IsHighContrast ? 1 : 0);
         resources["CubeSurfaceBorderBrush"] = IsLight && !IsHighContrast
             ? new SolidColorBrush(Color.FromRgb(226, 226, 226)) : Brushes.Transparent;
@@ -257,6 +289,7 @@ public sealed class ThemeService
             string source = (string)resources["CubePalette." + alias];
             resources[alias] = Brush(source);
         }
+        if (ActivePalette is { } palette) paletteResources.Apply(resources, palette);
         if (IsHighContrast)
         {
             foreach (string key in new[] { "CubeCanvas", "CubeCard", "CubeFloatingSurface", "CubeInset", "CubeWell" }) resources[key] = SystemColors.WindowBrush;
@@ -267,7 +300,7 @@ public sealed class ThemeService
         }
         resources["BackingMuteActive"] = IsHighContrast ? SystemColors.WindowTextBrush : new SolidColorBrush(IsLight ? Color.FromRgb(164, 76, 12) : Color.FromRgb(255, 169, 82));
         resources["BackingSoloActive"] = IsHighContrast ? SystemColors.WindowTextBrush : new SolidColorBrush(IsLight ? Color.FromRgb(128, 98, 0) : Color.FromRgb(255, 219, 77));
-        resources["CubeSelectionIndicator"] = IsHighContrast ? SystemColors.HighlightTextBrush : resources["CubeAccent"];
+        resources["CubeSelectionIndicator"] = IsHighContrast ? SystemColors.HighlightTextBrush : resources["CubeFocus"];
         ControlArtwork.Apply(resources, Finish, IsLight, IsHighContrast);
         RefreshBackdrop();
         resources["CubeThemeRevision"] = ++revision;

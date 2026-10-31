@@ -39,7 +39,7 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         }
     }
     public bool Connected => session != null;
-    public bool CanEdit => Connected && (!Busy || liveParameterOperation) && !blocked && edited != null && !Ir.PreviewActive && !AmpPreviewActive;
+    public bool CanEdit => Connected && (!Busy || liveParameterOperation || InitialCatalogLoading) && !blocked && edited != null && !Ir.PreviewActive && !AmpPreviewActive;
     public bool CanOperate => Connected && !Busy && !blocked;
     public bool CanConnect => !Connected && !Busy;
     public bool HasBank => edited != null;
@@ -105,9 +105,9 @@ public sealed partial class EditorViewModel : Observable, IDisposable
         Connect = Command(ConnectAsync, () => CanConnect);
         Disconnect = Command(DisconnectAsync, () => Connected && !Busy, changesEffects: true);
         Reload = Command(async () => { if (!Dirty || await Ask("Reler o banco atual e descartar as alterações locais?")) { await RestorePreviewAsync(); await LoadBank(); Completed("Presets atualizados com a leitura do pedal."); } }, () => Connected && !Busy, changesEffects: true);
-        Save = new UiCommand(async () => { if (CanEdit && Dirty) await Execute(SaveAsync, changesEffects: true); }, () => CanEdit && Dirty);
+        Save = new UiCommand(async () => { if (CanEdit && CanOperate && Dirty) await Execute(SaveAsync, changesEffects: true); }, () => CanEdit && CanOperate && Dirty);
         Export = Command(ExportAsync, () => HasBank && !Busy);
-        Import = Command(ImportAsync, () => CanEdit, changesEffects: true);
+        Import = Command(ImportAsync, () => CanEdit && !Busy, changesEffects: true);
         ChooseWav = Command(ChooseWavAsync, () => !Busy);
         PreviewIr = Command(PreviewAsync, () => CanOperate && Ir.Audio != null);
         EndPreview = new UiCommand(async () => await Execute(EndPreviewAsync, packPreviewEdit: true), () => Connected && !Busy && originalRam != null);
@@ -275,8 +275,14 @@ public sealed partial class EditorViewModel : Observable, IDisposable
                 baseline = previousBaseline;
                 UpdateStates();
             }
-            await RefreshInventoryAsync();
-            await RefreshKnownAmpArtworkAsync();
+            InitialCatalogLoading = true;
+            try
+            {
+                await RefreshInventoryAsync();
+                await RefreshKnownAmpArtworkAsync();
+                if (queue != null && !blocked) await queue.Flush();
+            }
+            finally { InitialCatalogLoading = false; }
         }
         finally { LoadingDevice = wasLoading; }
         NotifyUser("Pedal reconhecido", originalRam == null

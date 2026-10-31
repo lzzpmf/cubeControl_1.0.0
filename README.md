@@ -8,8 +8,6 @@ Aplicativo para Windows que reúne edição do pedal por USB-MIDI, criação de 
 
 [Primeiros passos](#primeiros-passos) · [Recursos](#conheça-os-recursos) · [Compilação](#compilar-a-partir-do-código) · [Documentação](#documentação) · [Contribuir](#contribuir)
 
-![Pedaleira com presets A/B/C e edição de timbre.](docs/screenshots/pedaleira.png)
-
 ## O que você pode fazer
 
 | Área | Principais funções |
@@ -21,6 +19,16 @@ Aplicativo para Windows que reúne edição do pedal por USB-MIDI, criação de 
 | **Dispositivo e ajuda** | Consultar a conexão USB, abrir manuais e acessar recuperação e diagnóstico. |
 
 ## Conheça os recursos
+
+### Aparência e personalização
+
+- **Dez opções de tema:** Sistema, Claro, Escuro, Grafite, Azul Meia-Noite, Floresta, Vinho, Âmbar Vintage, Areia e Gelo.
+- Os **sete temas adicionais não usam bordas decorativas** nos cards e demais superfícies; a separação visual vem do contraste entre fundos. Claro original do Windows, Escuro e Sistema mantêm seus estilos.
+- **26 acabamentos de controles**, escolhidos independentemente do tema, incluindo estilos metálicos, retrô, times, Skeleton, Cartoon, Anime, Boho e Papercut, além de receivers, vitrolas e mini systems.
+- Tema e acabamento são salvos entre sessões. O acabamento Oficial acompanha o tema, e o alto contraste do Windows tem prioridade sobre as paletas personalizadas.
+- Zoom da interface de **50% a 200%**.
+
+Essas melhorias fazem parte da **versão 1.0.0**. Veja as [notas da versão](RELEASE-NOTES.md).
 
 ### Pedaleira: construa seu timbre
 
@@ -34,8 +42,6 @@ Escolha um preset e ajuste o som em uma interface com knobs, chaves e referênci
 
 Selecionar A/B/C no aplicativo define o destino da edição. Para ouvir o preset correspondente, selecione o mesmo footswitch no pedal. Os criadores avançados de efeitos trabalham em RAM; seus ajustes não são gravados na flash.
 
-![Catálogo visual de amplificadores.](docs/screenshots/catalogo-amps.png)
-
 [Guia da Pedaleira](CubeControl/Cube/docs/usuario/pt-BR/pedaleira.md) · [Presets e arquivos](CubeControl/Cube/docs/usuario/pt-BR/presets.md) · [Criadores de efeitos](CubeControl/Cube/docs/usuario/pt-BR/criadores-efeitos.md)
 
 ### IRs: encontre o gabinete para seu som
@@ -48,8 +54,6 @@ Busque por marca, gabinete ou captação, carregue arquivos WAV e compare opçõ
 - Controle de distância, leitura e exportação de backup e restauração de IR.
 - Pré-escuta de trechos de guitarra pelo pedal conectado.
 
-![Impulso, resposta em frequência e prévia de IR.](docs/screenshots/irs-analise.png)
-
 #### Packs de IRs
 
 Organize conjuntos de até **oito IRs** por estilo ou preferência. Arraste arquivos da biblioteca para os slots e troque as posições dos cartões para reorganizar o pack.
@@ -58,8 +62,6 @@ Organize conjuntos de até **oito IRs** por estilo ou preferência. Arraste arqu
 - Ajustes individuais por slot e revisão antes da aplicação.
 - Importação e exportação de packs portáteis `.cubeirpack.zip`, incluindo os WAVs.
 - Slots vazios preservam o conteúdo correspondente do pedal ao aplicar o pack.
-
-![Organização de um pack de oito IRs.](docs/screenshots/irs-packs.png)
 
 [Guia de IRs e gabinetes](CubeControl/Cube/docs/usuario/pt-BR/irs.md)
 
@@ -76,8 +78,6 @@ Um espaço de estudo com duas faixas: **Acompanhamento** e **Minha guitarra**. I
 - Exportação de guitarra com backing ou somente guitarra em **WAV 24 bits** ou **MP3 320 kbps**.
 - Miniplayer para acompanhar a prática ao navegar por outras áreas do app.
 
-![Acompanhamento, metrônomo, busca e gravação.](docs/screenshots/backing-tracks.png)
-
 Tom e velocidade afetam a backing; a guitarra mantém o áudio original. O metrônomo não entra na exportação. O Studio funciona por sessão: exporte as tentativas que deseja guardar, pois não há salvamento ou restauração de projetos.
 
 [Guia de Backing Tracks](CubeControl/Cube/docs/usuario/pt-BR/backing-tracks.md)
@@ -93,25 +93,6 @@ Escolha um modelo base ou importe um BIN compatível e explore os ajustes com pr
 - Perfis de **resposta e capacitores**, com intensidade ajustável.
 - Importação e exportação do modelo, prévia em RAM e gravação no slot escolhido.
 
-![Equalização com curvas A, B e combinada.](docs/screenshots/criador-amps-eq.png)
-
-<details>
-<summary><strong>Explore os painéis de criação</strong></summary>
-
-**Corpo e textura:** ganho adicional, corpo, médio-graves, médios, punch e suavidade.
-
-![Painel Corpo e textura.](docs/screenshots/criador-amps-corpo.png)
-
-**Caráter e definição:** caráter de captação, ressonâncias, corpo dos graves e definição.
-
-![Painel Caráter e definição.](docs/screenshots/criador-amps-carater.png)
-
-**Resposta:** perfis de capacitores de acoplamento e de derivação de cátodo, com intensidade ajustável.
-
-![Painel Resposta e capacitores.](docs/screenshots/criador-amps-resposta.png)
-
-</details>
-
 A curva de EQ representa a resposta calculada dos filtros, não uma medição do amp. Os perfis são propostas para escuta. O criador utiliza o formato de amp aceito pelo pedal; não importa modelos NAM.
 
 [Guia do Criador de amps](CubeControl/Cube/docs/usuario/pt-BR/criador-amps.md)
@@ -126,8 +107,6 @@ Consulte a comunicação e encontre orientações sem sair do aplicativo.
 - Histórico de operações da sessão e registro de comunicação USB.
 - Recuperação de presets e IRs originais, quando os recursos necessários estão disponíveis.
 - Fluxo de reinstalação ou atualização de firmware compatível.
-
-![Manuais, recuperação e diagnóstico USB.](docs/screenshots/dispositivo-ajuda.png)
 
 [Backups e recuperação](CubeControl/Cube/docs/usuario/pt-BR/recuperacao.md) · [Problemas comuns](CubeControl/Cube/docs/usuario/pt-BR/problemas.md)
 

@@ -1,12 +1,27 @@
 # cubeControl 1.0.0
 
-Versão de lançamento preparada a partir do commit `79761e3` (`cubeControl_1.0.0`).
+Notas atualizadas para o estado atual do projeto, mantendo a versão **1.0.0**.
+
+## Aparência e personalização
+
+- Sete temas adicionais: Grafite, Azul Meia-Noite, Floresta, Vinho, Âmbar Vintage, Areia e Gelo, além de Sistema, Claro e Escuro.
+- Remoção das bordas decorativas nos sete temas novos. Cards, campos e demais superfícies se distinguem pelo contraste dos fundos, preservando os indicadores de foco.
+- Temas Claro original do Windows, Escuro e Sistema preservados.
+- Catálogo ampliado para 26 acabamentos independentes do tema: metálicos, retrô, times, Skeleton, Cartoon, Anime, Boho, Papercut, receivers, vitrolas e mini systems.
+- Preferências de tema e acabamento persistidas entre sessões; alto contraste do Windows tem prioridade sobre as paletas personalizadas.
+
+## Recursos da versão
 
 - Configuração do Cube Baby por USB-MIDI, edição de presets, IRs e criadores de timbres já presentes na base.
 - Backing Tracks com reprodução, prática e exportação de áudio.
 - Manual offline em português e inglês incluído no pacote.
 - Identificação do aplicativo e manifesto normalizada para 1.0.0; fontes organizadas em `CubeControl`, sem versão no caminho.
-- Branches `MAIN`, `DEV` e `MASTER` sincronizadas no commit de lançamento, com histórico anterior preservado em tags de arquivo.
+
+## Organização do projeto
+
+- Materiais auxiliares e artefatos de verificação separados dos arquivos usados para executar e compilar o aplicativo.
+- Código, recursos visuais, catálogos, firmwares, manuais e licenças necessários ao pacote preservados.
+- README atualizado para a estrutura atual, sem referências às capturas de tela removidas da árvore ativa.
 
 ## Executar e compilar
 

@@ -165,17 +165,28 @@ public sealed partial class EditorViewModel
     {
         inventory.Clear(); RebuildCabinets(); Status = "Lendo os oito slots de IR…";
         InventoryReadCount = 0; ReadingInventory = true;
-        BusyDetail = "Presets carregados. Lendo cabinets: 0/8. Aguarde para editar.";
+        BusyDetail = "Identificando cabinets: 0/8…";
         bool acceptingProgress = true;
         var progress = new Progress<TransferProgress>(p =>
         {
             if (!acceptingProgress) return;
             InventoryReadCount = p.Done;
-            BusyDetail = Status = $"Presets carregados. Lendo cabinets: {p.Done}/{p.Total}. Aguarde para editar.";
+            BusyDetail = Status = $"Identificando cabinets: {p.Done}/{p.Total}…";
         });
         try
         {
-            var sectors = await session!.ReadIrInventory(progress);
+            byte[][] sectors;
+            if (InitialCatalogLoading)
+            {
+                // Release the session gate between slots so live edits can reach the pedal.
+                sectors = new byte[8][];
+                for (int slot = 0; slot < sectors.Length; slot++)
+                {
+                    sectors[slot] = await session!.ReadIrSlot(slot);
+                    ((IProgress<TransferProgress>)progress).Report(new("Identificando cabinets", slot + 1, 8));
+                }
+            }
+            else sectors = await session!.ReadIrInventory(progress);
             BusyDetail = "Identificando os cabinets lidos…";
             for (int i = 0; i < 8; i++) UpdateCabinet(i, sectors[i]);
             InventoryReadCount = 8;

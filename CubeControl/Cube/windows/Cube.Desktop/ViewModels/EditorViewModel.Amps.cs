@@ -106,7 +106,7 @@ public sealed partial class EditorViewModel
             Notify(nameof(IsAmpPreviewSending)); Notify(nameof(CanAdjustAmp)); Notify(nameof(CanEditAmpLocally));
         }
     }
-    public bool CanOpenGearGallery => !Busy && (IsAmp || CanEdit);
+    public bool CanOpenGearGallery => (!Busy || InitialCatalogLoading) && (IsAmp || CanEdit);
     private byte[]? ampSlotRecovery;
 
     public async Task<bool> ReadAmpAsync(int? sourceSlot = null)

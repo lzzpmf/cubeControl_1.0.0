@@ -43,6 +43,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void UpdateBusyMessage() => BusyMessage.Text = LanguageService.T(BusyMessages[busyMessageIndex]);
     private void BusyStateChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(EditorViewModel.InitialCatalogLoading) && Model.InitialCatalogLoading)
+            operationFocus = null;
         if (e.PropertyName != nameof(EditorViewModel.Busy)) return;
         if (Model.Busy) operationFocus = Keyboard.FocusedElement;
         else if (operationFocus is UIElement target)
@@ -122,7 +124,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         };
         Workspace.RequestBringIntoView += (_, e) =>
         {
-            if (Model.Busy || restoringOperationFocus) e.Handled = true;
+            if ((Model.Busy && !Model.InitialCatalogLoading) || restoringOperationFocus) e.Handled = true;
         };
         SourceInitialized += (_, _) => Appearance.WindowWorkArea.Attach(this);
         busyMessageTimer.Tick += (_, _) => { busyMessageIndex = (busyMessageIndex + 1) % BusyMessages.Length; UpdateBusyMessage(); };
@@ -375,8 +377,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             Icon = Cube.Desktop.Appearance.AppIcons.Create(symbol, navigation: true)
         };
         var themeMenu = Entry("Tema", Wpf.Ui.Controls.SymbolRegular.Color24);
-        foreach (var (mode, label) in new[] { (Appearance.ThemeMode.System, "Sistema"), (Appearance.ThemeMode.Light, "Claro"), (Appearance.ThemeMode.Dark, "Escuro") })
+        foreach (var definition in Appearance.ThemeCatalog.All)
         {
+            var mode = definition.Mode;
+            var label = definition.Label;
             var item = new MenuItem { Header = LanguageService.T(label), Style = (Style)FindResource("PreferenceMenuItem"), Template = (ControlTemplate)FindResource("PreferenceMenuItemTemplate"), Tag = Appearance.ThemeService.Instance.Mode == mode };
             item.Click += async (_, args) =>
             {
@@ -784,7 +788,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     }
     private void AmpCatalogClick(object sender, RoutedEventArgs e)
     {
-        if (Model.Busy) return;
+        if (Model.Busy && !Model.InitialCatalogLoading) return;
         Model.SelectedStage = 0;
         GalleryClick(sender, e);
     }
@@ -872,7 +876,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private async void GalleryClick(object sender, RoutedEventArgs e)
     {
-        if (galleryOpen || !Model.HasGallery || Model.Busy || (!Model.IsAmp && !Model.CanEdit)) return;
+        if (galleryOpen || !Model.HasGallery || (Model.Busy && !Model.InitialCatalogLoading) || (!Model.IsAmp && !Model.CanEdit)) return;
         galleryOpen = true;
         int ampDestination = Model.SelectedAmp.Value;
         var gallery = new Views.GearGallery(Model.IsAmp ? Model.AmpGalleryItems : Model.Cabinets, Model.FocusedGear, Model.IsAmp);

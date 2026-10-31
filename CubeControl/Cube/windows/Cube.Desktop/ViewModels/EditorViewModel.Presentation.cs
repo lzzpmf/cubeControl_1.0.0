@@ -66,7 +66,7 @@ public sealed partial class EditorViewModel
     }
     private bool loadingDevice;
     public bool LoadingDevice { get => loadingDevice; private set { if (Set(ref loadingDevice, value)) RefreshPresentation(); } }
-    public bool ShowConnectAction => !Connected || LoadingDevice;
+    public bool ShowConnectAction => !Connected || (LoadingDevice && !InitialCatalogLoading);
     public string ConnectActionLabel => LoadingDevice ? "Carregando dispositivo" : "Conectar e carregar";
     public string HeaderConnectionStatus => blocked ? "Conexão requer atenção" : ConnectionSummary;
     public string BankSaveStatus => Dirty ? "Alterações não gravadas" : "Banco A/B/C sem alterações pendentes";
@@ -76,7 +76,14 @@ public sealed partial class EditorViewModel
     private bool readingInventory;
     private bool searchingPorts;
     public bool SearchingPorts { get => searchingPorts; private set { if (Set(ref searchingPorts, value)) RefreshPresentation(); } }
-    public bool ShowBusyPanel => Busy && !awaitingPackReview && !liveParameterOperation && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
+    private bool initialCatalogLoading;
+    public bool InitialCatalogLoading
+    {
+        get => initialCatalogLoading;
+        private set { if (Set(ref initialCatalogLoading, value)) Refresh(); }
+    }
+    public bool ShowStartupProgress => LoadingDevice || InitialCatalogLoading;
+    public bool ShowBusyPanel => Busy && !ShowStartupProgress && !awaitingPackReview && !liveParameterOperation && !SearchingPorts && !IsAmpPreviewSending && !PhaserBackgroundOperation && !ChorusBackgroundOperation && !ReverbBackgroundOperation && !DelayBackgroundOperation;
     public bool ShowBusyRing => ShowBusyPanel && !ReadingInventory && !ShowTransferProgress;
     public bool ShowTransferProgress => Busy && !ReadingInventory && Ir.TransferActive && Ir.HasMeasuredProgress;
     public string BusyDetail { get => busyDetail; private set => Set(ref busyDetail, value); }
@@ -150,6 +157,6 @@ public sealed partial class EditorViewModel
         Notify(nameof(EditNoticeSeverity));
         Notify(nameof(ShowEndPreviewNotice));
         Notify(nameof(ShowEndAmpPreviewNotice)); Notify(nameof(EndIrPreviewLabel)); Notify(nameof(EndAmpPreviewLabel));
-        foreach (string name in new[] { nameof(ShowBusyPanel), nameof(ShowBusyRing), nameof(ShowTransferProgress), nameof(ShowConnectAction), nameof(ConnectActionLabel), nameof(HeaderConnectionStatus), nameof(BankSaveStatus), nameof(SaveAppearance), nameof(ConnectionSummary), nameof(EditAvailability), nameof(HasEditNotice), nameof(IrAvailability), nameof(FactoryAvailability) }) Notify(name);
+        foreach (string name in new[] { nameof(ShowStartupProgress), nameof(ShowBusyPanel), nameof(ShowBusyRing), nameof(ShowTransferProgress), nameof(ShowConnectAction), nameof(ConnectActionLabel), nameof(HeaderConnectionStatus), nameof(BankSaveStatus), nameof(SaveAppearance), nameof(ConnectionSummary), nameof(EditAvailability), nameof(HasEditNotice), nameof(IrAvailability), nameof(FactoryAvailability) }) Notify(name);
     }
 }

@@ -183,7 +183,7 @@
 
 
  </ui:FluentWindow.Resources>
- <Grid Background="{DynamicResource CubeWindowBackground}"><Grid.RowDefinitions><RowDefinition Height="36"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+ <Grid Background="{DynamicResource CubeCanvasSurface}"><Grid.RowDefinitions><RowDefinition Height="36"/><RowDefinition Height="*"/></Grid.RowDefinitions>
   <ui:TitleBar x:Name="WindowTitleBar" Title="CubeControl"><ui:TitleBar.Icon><ui:ImageIcon Source="{DynamicResource CubeAppIcon}"/></ui:TitleBar.Icon></ui:TitleBar>
   <Grid x:Name="ClientArea" Grid.Row="1">
   <Grid.LayoutTransform><ScaleTransform ScaleX="0.9" ScaleY="0.9"/></Grid.LayoutTransform>
@@ -683,6 +683,15 @@
     <ui:Button Grid.Column="2" Content="{loc:Translate Text='Parar'}" Command="{Binding StopCommand}" Height="36" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
     <ui:Button Grid.Column="3" Content="{loc:Translate Text='Abrir Studio'}" Command="{Binding OpenStudioCommand}" Height="36" VerticalAlignment="Center" VerticalContentAlignment="Center" Margin="0"/>
    </Grid>
+  </Border>
+  <Border x:Name="InitialCatalogProgress" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Background="{DynamicResource CubeFloatingSurface}" BorderBrush="{DynamicResource CubeBorder}" BorderThickness="0,1,0,0" IsHitTestVisible="False" Visibility="{Binding ShowStartupProgress,Converter={StaticResource Visible}}">
+   <StackPanel>
+    <StackPanel Margin="24,12,24,10">
+     <local:LiveStatusText AutomationProperties.LiveSetting="Polite" Text="{loc:Translate Value={Binding BusyDetail}}" Style="{StaticResource BodyStrongText}" TextAlignment="Center" TextWrapping="Wrap"/>
+     <TextBlock Text="{loc:Translate Text='Você já pode ajustar o timbre e navegar pelo app.'}" Style="{StaticResource HelpText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="{Binding InitialCatalogLoading,Converter={StaticResource Visible}}"/>
+    </StackPanel>
+    <ProgressBar Style="{StaticResource InfiniteProgressBar}" HorizontalAlignment="Stretch" AutomationProperties.Name="{loc:Translate Value={Binding BusyDetail}}"/>
+   </StackPanel>
   </Border>
   <Border x:Name="BusyOverlay" local:SurfaceMotion.Enabled="True" HorizontalAlignment="Center" VerticalAlignment="Center" Width="420" MaxWidth="420" Margin="20" SnapsToDevicePixels="True" UseLayoutRounding="True" IsHitTestVisible="False" Visibility="{Binding ShowBusyPanel,Converter={StaticResource Visible}}">
    <Grid>
