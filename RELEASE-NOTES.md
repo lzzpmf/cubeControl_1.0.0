@@ -25,6 +25,10 @@ Notas atualizadas para o estado atual do projeto, mantendo a versão **1.0.0**.
 
 ## Executar e compilar
 
+- Fluxo de geração de instalador EXE com `scripts/Build-Installer.ps1` e Inno Setup, mantendo a versão 1.0.0.
+- Pacote de instalação completo para Windows x64, com runtime .NET e recursos incluídos, instalação para todos os usuários em Arquivos de Programas, com permissão de administrador, atalho no menu Iniciar, atalho opcional na área de trabalho e desinstalador.
+- Instalador gerado fora do repositório, com arquivo SHA-256 para conferência de integridade. O compilador Inno Setup é necessário apenas no computador que gera o instalador.
+
 Destino do pacote Windows x64: `C:\CubeControl-Build\publish\CubeControl-1.0.0`. Abra `CubeControl.exe`; use `--offline` para iniciar sem conexão automática. O manual está em `Assets/Documents/manual/index.html`.
 
 Para compilar, instale SDK .NET 10, Visual Studio Build Tools com MSVC x64 e Windows SDK e execute `.\scripts\Build-CubeControl.ps1` na raiz. Consulte o [README](README.md) para os demais comandos.

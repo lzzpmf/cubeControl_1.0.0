@@ -114,6 +114,12 @@ Consulte a comunicação e encontre orientações sem sair do aplicativo.
 
 ### Usar um pacote compilado
 
+Quando distribuído como instalador, execute **`CubeControl-1.0.0-Setup-x64.exe`**. Ele inclui o runtime .NET e os recursos do aplicativo, instala para todos os usuários em `C:\Program Files\cubeControl` por padrão e solicita permissão de administrador, cria um atalho no menu Iniciar e oferece um atalho opcional na área de trabalho. A remoção é feita pelos aplicativos instalados do Windows. Não é necessário receber a pasta de build nem instalar o SDK .NET.
+
+O instalador atende Windows x64, a partir do Windows 10 build 19041. Preferências, gravações e backups salvos fora da pasta de instalação são preservados na desinstalação. Drivers ASIO específicos da interface de áudio devem ser instalados separadamente quando utilizados.
+
+Para a distribuição em pasta:
+
 1. Extraia o **pacote completo** para uma pasta do computador.
 2. Mantenha os recursos e subpastas junto de `CubeControl.exe`.
 3. Conecte o Cube Baby de guitarra com um **cabo USB de dados**.
@@ -206,6 +212,25 @@ node scripts/Build-Manual.mjs
 ```
 
 Consulte as [instruções detalhadas de compilação](CubeControl/Cube/windows/README.md) para os diretórios de artefatos e a preparação das ferramentas.
+
+### Organização do código
+
+### Gerar o instalador EXE
+
+Instale o [Inno Setup](https://jrsoftware.org/isdl.php) 6.3 ou superior no computador de desenvolvimento. Depois execute:
+
+```powershell
+# Publica o pacote completo e gera o instalador
+.\scripts\Build-Installer.ps1
+
+# Reutiliza um pacote completo já publicado e atualizado
+.\scripts\Build-Installer.ps1 -SkipPublish
+
+# Informa o compilador caso não seja localizado automaticamente
+.\scripts\Build-Installer.ps1 -CompilerPath 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+```
+
+Saída: `C:\CubeControl-Build\installer\CubeControl-1.0.0-Setup-x64.exe`, acompanhada de um arquivo SHA-256. Compartilhe apenas o `.exe` para instalar em outro PC. A versão é lida do projeto; o fluxo atual mantém **1.0.0**. O script não assina digitalmente o instalador.
 
 ### Organização do código
 
