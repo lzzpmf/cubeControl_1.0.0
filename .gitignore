@@ -243,3 +243,7 @@ x86/
 
 # Local archive of auxiliary files
 /_old/
+
+# Installer archives are distributed through GitHub Releases
+/CubeControl-*-Setup-*.7z
+/CubeControl-*-Setup-*.7z.sha256
